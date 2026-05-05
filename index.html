@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>麗與牛工作區域 | Workspace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <h1><i class="fa-solid fa-briefcase"></i> 麗與牛工作區域</h1>
+                <p>Li & Niu Workspace - 出攤與連線管理</p>
+            </div>
+            
+            <div class="header-actions">
+                <div class="filters-container">
+                    <div class="filter-group">
+                        <label for="filterMonth">擺攤月份</label>
+                        <select id="filterMonth">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterOrganizer">主辦單位</label>
+                        <select id="filterOrganizer">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterLocation">地點</label>
+                        <select id="filterLocation">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterParticipants">參與者</label>
+                        <select id="filterParticipants">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button id="searchBtn" class="btn btn-primary">
+                        <i class="fa-solid fa-magnifying-glass"></i> 搜尋
+                    </button>
+                    <button id="sortBtn" class="btn btn-secondary">
+                        <i class="fa-solid fa-sort"></i> 排序資料
+                    </button>
+                    <button id="addBtn" class="btn btn-primary">
+                        <i class="fa-solid fa-plus"></i> 新增紀錄
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <div class="table-container">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>擺攤月份</th>
+                            <th>開始時間</th>
+                            <th>結束時間</th>
+                            <th>主辦</th>
+                            <th>地點</th>
+                            <th>參與者</th>
+                            <th>攤數</th>
+                            <th>總金額</th>
+                            <th>一攤金額</th>
+                            <th>已繳費</th>
+                            <th>付費者</th>
+                            <th>是否結清</th>
+                            <th>操作</th>
+                            <th>備註</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Data will be populated here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="noResults" class="no-results hidden">
+                <i class="fa-solid fa-folder-open"></i>
+                <p>找不到符合的紀錄</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Record Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle"><i class="fa-solid fa-file-circle-plus"></i> 新增擺攤紀錄</h2>
+                <button class="close-btn" id="closeModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="addForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="month">擺攤月份 (YYYY/MM)</label>
+                        <input type="text" id="month" name="month" placeholder="2025/04" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="startDate">開始時間</label>
+                        <input type="date" id="startDate" name="startDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endDate">結束時間</label>
+                        <input type="date" id="endDate" name="endDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="organizer">主辦</label>
+                        <input type="text" id="organizer" name="organizer" placeholder="方舟市集">
+                    </div>
+                    <div class="form-group">
+                        <label for="location">地點</label>
+                        <input type="text" id="location" name="location" placeholder="北車地下街" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="participants">參與者</label>
+                        <input type="text" id="participants" name="participants" placeholder="麗+牛" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="stallCount">攤數</label>
+                        <input type="number" id="stallCount" name="stallCount" min="1" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="totalAmount">總金額</label>
+                        <input type="number" id="totalAmount" name="totalAmount" min="0" value="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="payer">付費者</label>
+                        <input type="text" id="payer" name="payer" placeholder="麗">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="remarks">備註</label>
+                        <input type="text" id="remarks" name="remarks" placeholder="取消並退款等...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="cancelBtn" class="btn btn-secondary">取消</button>
+                    <button type="submit" class="btn btn-primary">儲存紀錄</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
