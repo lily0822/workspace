@@ -3,156 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>麗與牛工作區域</title>
+    <title>麗與牛工作區域 | Portal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .portal-container {
+            max-width: 1000px;
+            margin: 4rem auto;
+            padding: 0 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+        }
+        .portal-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+        .portal-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 3rem 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+        }
+        .portal-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+        .portal-icon {
+            font-size: 3.5rem;
+            color: var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+        .portal-card:hover .portal-icon {
+            transform: scale(1.1);
+        }
+        .portal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .portal-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .portal-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        <header class="app-header">
-            <div class="header-content">
-                <h1><i class="fa-solid fa-briefcase"></i> 麗與牛工作區域</h1>
-                <p>Li & Niu Workspace - 出攤與連線管理</p>
-            </div>
-            
-            <div class="header-actions">
-                <div class="filters-container">
-                    <div class="filter-group">
-                        <label for="filterMonth">擺攤月份</label>
-                        <select id="filterMonth">
-                            <option value="">全部</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label for="filterOrganizer">主辦單位</label>
-                        <select id="filterOrganizer">
-                            <option value="">全部</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label for="filterLocation">地點</label>
-                        <select id="filterLocation">
-                            <option value="">全部</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label for="filterParticipants">參與者</label>
-                        <select id="filterParticipants">
-                            <option value="">全部</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="btn-group">
-                    <button id="searchBtn" class="btn btn-primary">
-                        <i class="fa-solid fa-magnifying-glass"></i> 搜尋
-                    </button>
-                    <button id="sortBtn" class="btn btn-secondary">
-                        <i class="fa-solid fa-sort"></i> 排序資料
-                    </button>
-                    <button id="addBtn" class="btn btn-primary">
-                        <i class="fa-solid fa-plus"></i> 新增紀錄
-                    </button>
-                </div>
-            </div>
+    <div class="portal-container">
+        <header class="app-header" style="flex-direction: column; text-align: center; padding: 3rem; gap: 1rem;">
+            <h1 style="font-size: 2rem; justify-content: center;"><i class="fa-solid fa-briefcase"></i> 麗與牛工作區域</h1>
+            <p style="font-size: 1.1rem; color: var(--text-secondary);">請選擇您要管理的後台區域</p>
         </header>
 
-        <main class="app-main">
-            <div class="table-container">
-                <table id="dataTable">
-                    <thead>
-                        <tr>
-                            <th>擺攤月份</th>
-                            <th>開始時間</th>
-                            <th>結束時間</th>
-                            <th>主辦</th>
-                            <th>地點</th>
-                            <th>參與者</th>
-                            <th>攤數</th>
-                            <th>總金額</th>
-                            <th>一攤金額</th>
-                            <th>已繳費</th>
-                            <th>付費者</th>
-                            <th>是否結清</th>
-                            <th>操作</th>
-                            <th>備註</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <!-- Data will be populated here by JavaScript -->
-                    </tbody>
-                </table>
-            </div>
-            <div id="noResults" class="no-results hidden">
-                <i class="fa-solid fa-folder-open"></i>
-                <p>找不到符合的紀錄</p>
-            </div>
+        <main class="portal-grid">
+            <a href="connection.html" class="portal-card">
+                <i class="portal-icon fa-solid fa-plane"></i>
+                <div class="portal-title">連線區域</div>
+                <div class="portal-desc">管理代購連線時程與清單</div>
+            </a>
+            
+            <a href="stalls.html" class="portal-card">
+                <i class="portal-icon fa-solid fa-store"></i>
+                <div class="portal-title">擺攤區域</div>
+                <div class="portal-desc">管理市集出攤紀錄與排程</div>
+            </a>
+            
+            <a href="accounting.html" class="portal-card">
+                <i class="portal-icon fa-solid fa-file-invoice-dollar"></i>
+                <div class="portal-title">記帳區域</div>
+                <div class="portal-desc">管理營收、對帳與繳費狀態</div>
+            </a>
         </main>
     </div>
-
-    <!-- Add Record Modal -->
-    <div id="addModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modalTitle"><i class="fa-solid fa-file-circle-plus"></i> 新增擺攤紀錄</h2>
-                <button class="close-btn" id="closeModalBtn"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form id="addForm">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="month">擺攤月份 (YYYY/MM)</label>
-                        <input type="text" id="month" name="month" placeholder="2025/04" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="startDate">開始時間</label>
-                        <input type="date" id="startDate" name="startDate" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="endDate">結束時間</label>
-                        <input type="date" id="endDate" name="endDate" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="organizer">主辦</label>
-                        <input type="text" id="organizer" name="organizer" placeholder="方舟市集">
-                    </div>
-                    <div class="form-group">
-                        <label for="location">地點</label>
-                        <input type="text" id="location" name="location" placeholder="北車地下街" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="participants">參與者</label>
-                        <input type="text" id="participants" name="participants" placeholder="麗+牛" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="stallCount">攤數</label>
-                        <input type="number" id="stallCount" name="stallCount" min="1" value="1" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="totalAmount">總金額</label>
-                        <input type="number" id="totalAmount" name="totalAmount" min="0" value="0">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="payer">付費者</label>
-                        <input type="text" id="payer" name="payer" placeholder="麗">
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label for="remarks">備註</label>
-                        <input type="text" id="remarks" name="remarks" placeholder="取消並退款等...">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" id="cancelBtn" class="btn btn-secondary">取消</button>
-                    <button type="submit" class="btn btn-primary">儲存紀錄</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script src="script.js"></script>
 </body>
 </html>
