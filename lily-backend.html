@@ -230,7 +230,6 @@
                         <thead>
                             <tr>
                                 <th>廠商名稱</th>
-                                <th>聯繫方式</th>
                                 <th>廠商地點</th>
                                 <th>幣種</th>
                                 <th>網址</th>
@@ -257,7 +256,7 @@
                             <tr>
                                 <th style="width: 50px; text-align: center;"><i class="fa-solid fa-chevron-down"></i></th>
                                 <th style="width: 200px;">訂貨日期</th>
-                                <th>廠商</th>
+                                <th>叫貨處</th>
                                 <th style="width: 100px;">幣種</th>
                                 <th style="width: 150px;">總項目數</th>
                                 <th style="width: 150px;">總金額</th>
@@ -327,10 +326,6 @@
                     <input type="text" id="w-name" placeholder="請輸入廠商名稱">
                 </div>
                 <div class="form-group">
-                    <label>聯繫方式</label>
-                    <input type="text" id="w-contact" placeholder="電話、Line ID 等">
-                </div>
-                <div class="form-group">
                     <label>廠商地點</label>
                     <input type="text" id="w-location" placeholder="例如：韓國東大門">
                 </div>
@@ -373,7 +368,7 @@
                         <input type="date" id="batch-date">
                     </div>
                     <div class="form-group">
-                        <label>廠商</label>
+                        <label>叫貨處</label>
                         <select id="batch-vendor"></select>
                     </div>
                 </div>
@@ -443,7 +438,7 @@
                     <input type="date" id="edit-main-date">
                 </div>
                 <div class="form-group">
-                    <label>廠商</label>
+                    <label>叫貨處</label>
                     <select id="edit-main-vendor"></select>
                 </div>
             </div>
@@ -611,7 +606,7 @@
             
             websites.forEach(w => {
                 tbody.innerHTML += `<tr>
-                    <td>${w.name}</td><td>${w.contact}</td><td>${w.location}</td>
+                    <td>${w.name}</td><td>${w.location}</td>
                     <td>${w.currency}</td>
                     <td>${w.link ? `<a href="${w.link}" target="_blank" style="color:#ec4899;"><i class="fa-solid fa-link"></i></a>` : '-'}</td>
                     <td>${w.notes}</td>
@@ -629,14 +624,13 @@
                 const w = websites.find(x => x.id === id);
                 document.getElementById('websiteId').value = w.id;
                 document.getElementById('w-name').value = w.name;
-                document.getElementById('w-contact').value = w.contact;
                 document.getElementById('w-location').value = w.location;
                 document.getElementById('w-currency').value = w.currency;
                 document.getElementById('w-link').value = w.link || '';
                 document.getElementById('w-notes').value = w.notes;
             } else {
                 document.getElementById('websiteId').value = '';
-                document.getElementById('w-name').value = ''; document.getElementById('w-contact').value = '';
+                document.getElementById('w-name').value = ''; 
                 document.getElementById('w-location').value = ''; document.getElementById('w-link').value = '';
                 document.getElementById('w-notes').value = '';
             }
@@ -647,7 +641,7 @@
             const id = document.getElementById('websiteId').value;
             const data = {
                 id: id ? parseInt(id) : Date.now(),
-                name: document.getElementById('w-name').value, contact: document.getElementById('w-contact').value,
+                name: document.getElementById('w-name').value, contact: "",
                 location: document.getElementById('w-location').value, currency: document.getElementById('w-currency').value,
                 link: document.getElementById('w-link').value, notes: document.getElementById('w-notes').value
             };
@@ -666,9 +660,21 @@
             if(!orders.length) return tbody.innerHTML = '<tr><td colspan="6" class="empty-state">尚無訂單資料</td></tr>';
 
             orders.forEach(o => {
-                const vendor = vendors.find(v => v.id == o.vendorId) || { name: '未知', currency: '' };
+                let source = vendors.find(v => v.id == o.vendorId);
+                let isWebsite = false;
+                if (!source) {
+                    source = websites.find(w => w.id == o.vendorId);
+                    if (source) isWebsite = true;
+                }
+                source = source || { name: '未知', currency: '' };
+
                 const totalItems = o.items.reduce((sum, i) => sum + parseInt(i.qty || 0), 0);
                 const totalPrice = o.items.reduce((sum, i) => sum + (parseInt(i.price || 0) * parseInt(i.qty || 0)), 0);
+                
+                let sourceNameHtml = source.name;
+                if (isWebsite && source.link) {
+                    sourceNameHtml = `<a href="${source.link}" target="_blank" style="color: #ec4899; text-decoration: none;"><i class="fa-solid fa-link" style="margin-right:0.25rem;"></i>${source.name}</a>`;
+                }
                 
                 // Main Order Row
                 const tr = document.createElement('tr');
@@ -677,8 +683,8 @@
                         <i class="fa-solid fa-chevron-right transition-transform"></i>
                     </td>
                     <td><span class="date-link" onclick="toggleOrderRow(${o.id}, this.parentElement.previousElementSibling)">${o.date}</span></td>
-                    <td>${vendor.name}</td>
-                    <td>${vendor.currency}</td>
+                    <td>${sourceNameHtml}</td>
+                    <td>${source.currency}</td>
                     <td>${totalItems} 件</td>
                     <td>${totalPrice.toLocaleString()}</td>
                     <td style="display: flex; gap: 0.5rem; justify-content: center;">
@@ -767,8 +773,19 @@
         function openBatchAddModal(orderId = null) {
             currentEditingOrderId = orderId;
             const vSelect = document.getElementById('batch-vendor');
-            vSelect.innerHTML = '<option value="">請選擇廠商</option>';
-            vendors.forEach(v => vSelect.innerHTML += `<option value="${v.id}">${v.name}</option>`);
+            
+            let options = '<option value="">請選擇叫貨處</option>';
+            if(vendors.length) {
+                options += '<optgroup label="叫貨處管理">';
+                vendors.forEach(v => options += `<option value="${v.id}">${v.name}</option>`);
+                options += '</optgroup>';
+            }
+            if(websites.length) {
+                options += '<optgroup label="購物網站訂購管理">';
+                websites.forEach(w => options += `<option value="${w.id}">${w.name}</option>`);
+                options += '</optgroup>';
+            }
+            vSelect.innerHTML = options;
 
             const container = document.getElementById('batch-items-container');
             container.innerHTML = '';
@@ -959,8 +976,19 @@
             document.getElementById('edit-main-date').value = o.date;
             
             const vSelect = document.getElementById('edit-main-vendor');
-            vSelect.innerHTML = '<option value="">請選擇廠商</option>';
-            vendors.forEach(v => vSelect.innerHTML += `<option value="${v.id}">${v.name}</option>`);
+            
+            let options = '<option value="">請選擇叫貨處</option>';
+            if(vendors.length) {
+                options += '<optgroup label="叫貨處管理">';
+                vendors.forEach(v => options += `<option value="${v.id}">${v.name}</option>`);
+                options += '</optgroup>';
+            }
+            if(websites.length) {
+                options += '<optgroup label="購物網站訂購管理">';
+                websites.forEach(w => options += `<option value="${w.id}">${w.name}</option>`);
+                options += '</optgroup>';
+            }
+            vSelect.innerHTML = options;
             vSelect.value = o.vendorId;
             
             document.getElementById('editOrderMainModal').classList.add('active');
