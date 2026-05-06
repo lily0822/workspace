@@ -8,243 +8,148 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
-            --sidebar-bg: #1e293b; /* Dark slate */
-            --sidebar-bg-dark: #0f172a; /* Very dark slate */
+            --sidebar-bg: #1e293b;
+            --sidebar-bg-dark: #0f172a;
             --sidebar-hover: #334155;
             --sidebar-active: #1e293b;
             --topbar-bg: #0f172a;
-            --primary-color: #10b981; /* Green */
+            --primary-color: #10b981;
+            --primary-hover: #059669;
             --text-light: #f8fafc;
             --text-muted: #94a3b8;
-            --bg-color: #f0fdf4; /* Light green background for content */
+            --text-dark: #1e293b;
+            --bg-color: #f0fdf4;
+            --border-color: #fbcfe8;
+            --table-hover: #fce7f3;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; color: var(--text-dark); }
 
         /* Sidebar */
-        .sidebar {
-            width: 260px;
-            background-color: var(--sidebar-bg-dark);
-            color: var(--text-light);
-            display: flex;
-            flex-direction: column;
-            transition: width 0.3s ease;
-            z-index: 100;
-        }
-
-        .sidebar-header {
-            height: 60px;
-            display: flex;
-            align-items: center;
-            padding: 0 1.5rem;
-            background-color: var(--topbar-bg);
-            font-size: 1.25rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            gap: 10px;
-        }
-
-        .sidebar-header i {
-            color: var(--primary-color);
-        }
-
-        .sidebar-menu {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1rem 0;
-        }
-
-        .menu-item {
-            padding: 0.75rem 1.5rem;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .menu-item:hover {
-            background-color: var(--sidebar-hover);
-            color: white;
-        }
-
-        .menu-item.active {
-            background-color: var(--sidebar-active);
-            color: white;
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .menu-item i.icon {
-            width: 24px;
-            font-size: 1.1rem;
-            margin-right: 10px;
-        }
-
-        .menu-item .chevron {
-            margin-left: auto;
-            font-size: 0.8rem;
-            transition: transform 0.3s ease;
-        }
-
-        .menu-item.expanded .chevron {
-            transform: rotate(180deg);
-        }
-
-        /* Submenu */
-        .submenu {
-            background-color: rgba(0, 0, 0, 0.2);
-            display: none;
-        }
-
-        .submenu.open {
-            display: block;
-        }
-
-        .submenu-item {
-            padding: 0.6rem 1.5rem 0.6rem 3.5rem;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .submenu-item:hover {
-            color: white;
-            background-color: rgba(255, 255, 255, 0.05);
-        }
+        .sidebar { width: 260px; background-color: var(--sidebar-bg-dark); color: var(--text-light); display: flex; flex-direction: column; transition: width 0.3s ease; z-index: 100; overflow-x: hidden; white-space: nowrap; }
+        .sidebar-header { height: 60px; display: flex; align-items: center; padding: 0 1.5rem; background-color: var(--topbar-bg); font-size: 1.25rem; font-weight: 700; letter-spacing: 1px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); gap: 10px; overflow: hidden; white-space: nowrap; }
+        .sidebar-header i { color: var(--primary-color); }
+        .sidebar-menu { flex: 1; overflow-y: auto; padding: 1rem 0; overflow-x: hidden; white-space: nowrap; }
+        .menu-item { padding: 0.75rem 1.5rem; display: flex; align-items: center; cursor: pointer; transition: all 0.2s ease; color: var(--text-muted); font-weight: 500; }
+        .menu-item:hover { background-color: var(--sidebar-hover); color: white; }
+        .menu-item.active { background-color: var(--sidebar-active); color: white; border-left: 4px solid var(--primary-color); }
+        .menu-item i.icon { width: 24px; font-size: 1.1rem; margin-right: 10px; }
+        .menu-item .chevron { margin-left: auto; font-size: 0.8rem; transition: transform 0.3s ease; }
+        .menu-item.expanded .chevron { transform: rotate(180deg); }
+        .submenu { background-color: rgba(0, 0, 0, 0.2); display: none; }
+        .submenu.open { display: block; }
+        .submenu-item { padding: 0.6rem 1.5rem 0.6rem 3.5rem; color: var(--text-muted); font-size: 0.9rem; cursor: pointer; transition: all 0.2s ease; }
+        .submenu-item:hover, .submenu-item.active { color: white; background-color: rgba(255, 255, 255, 0.05); }
+        .submenu-item.active { color: var(--primary-color); font-weight: 600; }
 
         /* Main Content */
-        .main-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .topbar { height: 60px; background-color: white; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); z-index: 90; }
+        .topbar-left { display: flex; align-items: center; gap: 1rem; height: 100%; }
+        /* Tabs System */
+        .tabs-container { display: flex; gap: 0.25rem; margin-left: 1rem; overflow-x: auto; scrollbar-width: none; align-items: flex-end; align-self: flex-end; height: 100%; }
+        .tabs-container::-webkit-scrollbar { display: none; }
+        .tab-item { display: flex; align-items: center; gap: 0.5rem; padding: 0 1rem; background-color: #f1f5f9; color: #64748b; border-radius: 0.5rem 0.5rem 0 0; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: all 0.2s ease; border: 1px solid #e2e8f0; border-bottom: none; height: 40px; white-space: nowrap; margin-bottom: -1px; }
+        .tab-item:hover { background-color: #e2e8f0; }
+        .tab-item.active { background-color: var(--bg-color); color: var(--primary-color); position: relative; z-index: 1; border-bottom: 2px solid var(--bg-color); padding-bottom: 2px; }
+        .tab-item .close-tab { font-size: 0.75rem; color: #94a3b8; padding: 0.15rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; transition: all 0.2s; }
+        .tab-item .close-tab:hover { background-color: #cbd5e1; color: #1e293b; }
+        .menu-toggle { cursor: pointer; font-size: 1.25rem; color: #475569; transition: color 0.2s ease; }
+        .menu-toggle:hover { color: var(--primary-color); }
+        .topbar-right { display: flex; align-items: center; gap: 1.5rem; color: #475569; }
+        .topbar-icon { cursor: pointer; position: relative; font-size: 1.1rem; }
+        .topbar-icon:hover { color: var(--primary-color); }
+        .user-profile { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background-color: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .content { flex: 1; padding: 2rem; overflow-y: auto; position: relative; }
+        .section-container { display: none; flex-direction: column; gap: 1.5rem; animation: fadeIn 0.3s ease; }
+        .section-container.active { display: flex; }
 
-        /* Topbar */
-        .topbar {
-            height: 60px;
-            background-color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            z-index: 90;
-        }
+        /* Welcome Section */
+        #section-welcome { height: 100%; align-items: center; justify-content: center; }
+        .welcome-text { font-size: 6rem; font-weight: 800; background: linear-gradient(135deg, var(--primary-color), #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; opacity: 0; transform: translateY(20px); animation: fadeInUp 0.8s ease forwards; position: relative; z-index: 2; }
+        .demo-text { position: absolute; font-size: 15rem; font-weight: 900; color: rgba(236, 72, 153, 0.03); white-space: nowrap; z-index: 1; pointer-events: none; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
-        .topbar-left {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
+        /* Header & Actions */
+        .page-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color); }
+        .page-title { font-size: 1.5rem; font-weight: 700; color: var(--text-dark); }
+        .toolbar { display: flex; gap: 0.5rem; align-items: center; }
+        
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; }
+        .btn-primary { background-color: var(--primary-color); color: white; box-shadow: 0 2px 4px rgba(236, 72, 153, 0.3); }
+        .btn-primary:hover { background-color: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 6px rgba(236, 72, 153, 0.4); }
+        .btn-secondary { background-color: #e2e8f0; color: #475569; }
+        .btn-secondary:hover { background-color: #cbd5e1; }
+        .btn-success { background-color: #10b981; color: white; }
+        .btn-success:hover { background-color: #059669; }
+        .btn-danger { background-color: #ef4444; color: white; }
+        .btn-danger:hover { background-color: #dc2626; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+        .btn-icon { background: none; border: none; font-size: 1rem; cursor: pointer; color: #94a3b8; transition: color 0.2s; }
+        .btn-icon:hover { color: var(--primary-color); }
+        .btn-action-edit { background-color: #3b82f6; color: white; border: none; }
+        .btn-action-edit:hover { background-color: #2563eb; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(59,130,246,0.3); }
+        .btn-action-delete { background-color: #ef4444; color: white; border: none; }
+        .btn-action-delete:hover { background-color: #dc2626; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(239,68,68,0.3); }
 
-        .menu-toggle {
-            cursor: pointer;
-            font-size: 1.25rem;
-            color: #475569;
-            transition: color 0.2s ease;
-        }
+        /* Tables */
+        .table-wrapper { background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 1rem 1.5rem; border-bottom: 1px solid #f1f5f9; font-size: 0.875rem; color: #334155; }
+        th { background-color: #f8fafc; color: #475569; font-weight: 600; }
+        tbody > tr:not(.sub-row):hover { background-color: var(--table-hover); }
+        .empty-state { text-align: center; padding: 3rem; color: #94a3b8; }
+        .date-link { color: var(--primary-color); text-decoration: underline; cursor: pointer; font-weight: 600; }
+        .date-link:hover { color: var(--primary-hover); }
+        
+        /* Sub Tables */
+        .sub-row { display: none; background-color: #f8fafc; }
+        .sub-row.active { display: table-row; animation: fadeIn 0.3s ease; }
+        .sub-table-container { padding: 1rem 1.5rem; border-left: 4px solid var(--primary-color); background: white; margin: 0.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .sub-table { width: 100%; margin-top: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; overflow: hidden; }
+        .sub-table th, .sub-table td { padding: 0.5rem 1rem; border-bottom: 1px solid #e2e8f0; text-align: center; }
+        .sub-table th { background-color: #f1f5f9; font-size: 0.8rem; }
+        .sub-toolbar { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; justify-content: flex-end; }
+        
+        /* Modals */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(15, 23, 42, 0.5); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+        .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
+        .modal-content { background: white; border-radius: 1rem; width: 100%; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); transform: translateY(20px); animation: slideUp 0.3s ease forwards; }
+        .modal-content.large { max-width: 1000px; }
+        .modal-header { padding: 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .modal-header h3 { font-size: 1.25rem; color: var(--text-dark); }
+        .close-btn { background: none; border: none; font-size: 1.25rem; color: #94a3b8; cursor: pointer; }
+        .close-btn:hover { color: #475569; }
+        .modal-body { padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; flex: 1; }
+        .modal-footer { padding: 1.25rem 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 0.75rem; background-color: #f8fafc; border-bottom-left-radius: 1rem; border-bottom-right-radius: 1rem; flex-shrink: 0; }
 
-        .menu-toggle:hover {
-            color: var(--primary-color);
-        }
-
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            color: #475569;
-        }
-
-        .topbar-icon {
-            cursor: pointer;
-            position: relative;
-            font-size: 1.1rem;
-        }
-
-        .topbar-icon:hover {
-            color: var(--primary-color);
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
-            font-weight: 500;
-        }
-
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background-color: var(--primary-color);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
-        /* Content Area */
-        .content {
-            flex: 1;
-            padding: 2rem;
-            overflow-y: auto;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .welcome-text {
-            font-size: 6rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary-color), #059669);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.8s ease forwards;
-            position: relative;
-            z-index: 2;
-        }
-
-        .demo-text {
-            position: absolute;
-            font-size: 15rem;
-            font-weight: 900;
-            color: rgba(16, 185, 129, 0.03);
-            white-space: nowrap;
-            z-index: 1;
-            pointer-events: none;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        @keyframes fadeInUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+        .form-row { display: flex; gap: 1rem; align-items: flex-start; }
+        .form-group { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+        .form-group label { font-size: 0.875rem; font-weight: 500; color: #475569; }
+        .form-group input, .form-group select { padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: inherit; font-size: 0.875rem; color: #334155; transition: border-color 0.2s; width: 100%; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1); }
+        
+        .dynamic-row { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr 1fr 40px; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+        .dynamic-row input, .dynamic-row select { min-width: 0; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.25rem; font-size: 0.8rem; }
+        .dynamic-header { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr 1fr 40px; gap: 0.5rem; font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; text-align: left; }
+        .dynamic-header span { padding-left: 0.5rem; }
+        
+        .hide-tracking.dynamic-header, .hide-tracking .dynamic-row { grid-template-columns: 2fr 2fr 1fr 1fr 40px; }
+        .hide-tracking .col-tracking, .hide-tracking.col-tracking { display: none !important; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Loading Overlay */
+        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.7); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(2px); }
+        .loading-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
+        .spinner { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: var(--primary-color); animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -256,20 +161,18 @@
             <span>大牛後台</span>
         </div>
         <div class="sidebar-menu">
-            <!-- Menu Group 1 -->
             <div class="menu-group">
                 <div class="menu-item expanded" onclick="toggleSubmenu(this)">
                     <i class="icon fa-solid fa-users-gear"></i>
-                    <span>廠商管理</span>
+                    <span>叫貨管理</span>
                     <i class="chevron fa-solid fa-angle-down"></i>
                 </div>
                 <div class="submenu open">
-                    <div class="submenu-item">廠商名稱管理</div>
-                    <div class="submenu-item">訂貨明細</div>
+                    <div class="submenu-item" onclick="openTab('vendors', '叫貨處管理')">叫貨處管理</div>
+                    <div class="submenu-item" onclick="openTab('vendors-orders', '廠商叫貨明細')">廠商叫貨明細</div>
+                    <div class="submenu-item" onclick="openTab('website-orders', '購物網站叫貨明細')">購物網站叫貨明細</div>
                 </div>
             </div>
-
-            <!-- Menu Group 2 -->
             <div class="menu-group">
                 <div class="menu-item" onclick="toggleSubmenu(this)">
                     <i class="icon fa-solid fa-chart-line"></i>
@@ -289,8 +192,11 @@
     <div class="main-wrapper">
         <header class="topbar">
             <div class="topbar-left">
-                <i class="fa-solid fa-bars menu-toggle" id="menuToggle"></i>
-                <a href="index.html" style="text-decoration: none; color: #475569; font-size: 0.9rem; margin-left: 1rem;"><i class="fa-solid fa-house"></i> 回 Portal</a>
+                <div style="display: flex; align-items: center; gap: 1rem; height: 100%;">
+                    <i class="fa-solid fa-bars menu-toggle" id="menuToggle"></i>
+                    <a href="index.html" style="text-decoration: none; color: #475569; font-size: 0.9rem;"><i class="fa-solid fa-house"></i> 回到主選單</a>
+                </div>
+                <div class="tabs-container" id="tabsContainer"></div>
             </div>
             <div class="topbar-right">
                 <div class="topbar-icon"><i class="fa-regular fa-bell"></i></div>
@@ -303,36 +209,1350 @@
         </header>
 
         <main class="content">
-            <div class="demo-text">DANIEL ADMIN</div>
-            <h1 class="welcome-text">Welcome!</h1>
+            <!-- Welcome Section -->
+            <div id="section-welcome" class="section-container active">
+                <div class="demo-text">DANIEL ADMIN</div>
+                <h1 class="welcome-text">Welcome!</h1>
+            </div>
+
+            <!-- Vendor Management Section -->
+            <div id="section-vendors" class="section-container">
+                <div class="page-header">
+                    <h2 class="page-title">叫貨處管理</h2>
+                    <button class="btn btn-primary" onclick="openVendorModal()"><i class="fa-solid fa-plus"></i> 新增廠商</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>廠商名稱</th>
+                                <th>聯繫方式</th>
+                                <th>廠商地點</th>
+                                <th>幣種</th>
+                                <th>備註</th>
+                                <th style="width: 100px; text-align: center;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vendor-tbody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Websites Table -->
+                <div class="page-header" style="margin-top: 3rem;">
+                    <h2 class="page-title">購物網站訂購管理</h2>
+                    <button class="btn btn-primary" onclick="openWebsiteModal()"><i class="fa-solid fa-plus"></i> 新增購物網站</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>廠商名稱</th>
+                                <th>廠商地點</th>
+                                <th>幣種</th>
+                                <th>網址</th>
+                                <th>備註</th>
+                                <th style="width: 100px; text-align: center;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="website-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Vendors Orders Section -->
+            <div id="section-vendors-orders" class="section-container">
+                <div class="page-header" style="flex-wrap: wrap; gap: 1rem; border-bottom: none; padding-bottom: 0;">
+                    <h2 class="page-title" style="flex: 1 1 100%;">廠商叫貨明細</h2>
+                    <div class="filter-bar" style="display: flex; gap: 1rem; align-items: flex-end; background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; flex: 1;">
+                        <div class="form-group" style="flex: initial; min-width: 150px;">
+                            <label>廠商</label>
+                            <select id="filter-v-vendor">
+                                <option value="">全部</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: initial; width: 140px;">
+                            <label>商品名稱</label>
+                            <input type="text" id="filter-v-item-name" placeholder="輸入關鍵字...">
+                        </div>
+                        <div class="form-group" style="flex: initial; width: 140px;">
+                            <label>開始日期</label>
+                            <input type="date" id="filter-v-date-start">
+                        </div>
+                        <div class="form-group" style="flex: initial; width: 140px;">
+                            <label>結束日期</label>
+                            <input type="date" id="filter-v-date-end">
+                        </div>
+                        <button class="btn btn-primary" style="height: 38px; margin-bottom: 2px;" onclick="renderVendorsOrders()"><i class="fa-solid fa-magnifying-glass"></i> 搜索</button>
+                        <button class="btn btn-secondary" style="height: 38px; margin-bottom: 2px;" onclick="clearVendorOrderFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
+                    </div>
+                    <div class="toolbar" style="align-self: flex-end; margin-bottom: 2px; height: 38px;">
+                        <button class="btn btn-primary" style="height: 100%;" onclick="openBatchAddModal()"><i class="fa-solid fa-plus"></i> 批量新增訂單</button>
+                    </div>
+                </div>
+                <div style="border-bottom: 2px solid var(--border-color); margin-bottom: 1rem; margin-top: 1rem;"></div>
+                <div id="vendor-orders-container" style="display: flex; flex-direction: column; gap: 2rem;">
+                    <!-- Dynamic rendering here -->
+                </div>
+            </div>
+
+            <!-- Website Orders Section -->
+            <div id="section-website-orders" class="section-container">
+                <div class="page-header" style="flex-wrap: wrap; gap: 1rem; border-bottom: none; padding-bottom: 0;">
+                    <h2 class="page-title" style="flex: 1 1 100%;">購物網站叫貨明細</h2>
+                    <div class="filter-bar" style="display: flex; gap: 1rem; align-items: flex-end; background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; flex: 1;">
+                        <div class="form-group" style="flex: initial; min-width: 150px;">
+                            <label>購物網站</label>
+                            <select id="filter-w-vendor">
+                                <option value="">全部</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: initial; width: 140px;">
+                            <label>商品名稱</label>
+                            <input type="text" id="filter-w-item-name" placeholder="輸入關鍵字...">
+                        </div>
+                        <div class="form-group" style="flex: initial; width: 140px;">
+                            <label>開始日期</label>
+                            <input type="date" id="filter-w-date-start">
+                        </div>
+                        <div class="form-group" style="flex: initial; width: 140px;">
+                            <label>結束日期</label>
+                            <input type="date" id="filter-w-date-end">
+                        </div>
+                        <div class="form-group" style="flex: initial; width: 120px;">
+                            <label>出貨狀態</label>
+                            <select id="filter-w-shipped-status">
+                                <option value="">全部</option>
+                                <option value="未出貨">未出貨</option>
+                                <option value="已出貨">已出貨</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" style="height: 38px; margin-bottom: 2px;" onclick="renderWebsiteOrders()"><i class="fa-solid fa-magnifying-glass"></i> 搜索</button>
+                        <button class="btn btn-secondary" style="height: 38px; margin-bottom: 2px;" onclick="clearWebsiteOrderFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
+                    </div>
+                    <div class="toolbar" style="align-self: flex-end; margin-bottom: 2px; height: 38px;">
+                        <button class="btn btn-primary" style="height: 100%;" onclick="openBatchAddModal()"><i class="fa-solid fa-plus"></i> 批量新增訂單</button>
+                    </div>
+                </div>
+                <div style="border-bottom: 2px solid var(--border-color); margin-bottom: 1rem; margin-top: 1rem;"></div>
+                <div class="table-wrapper">
+                    <table style="table-layout: fixed;">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px; text-align: center;"><i class="fa-solid fa-chevron-down"></i></th>
+                                <th style="width: 150px;">訂貨日期</th>
+                                <th>購物網站</th>
+                                <th style="width: 80px;">幣種</th>
+                                <th style="width: 100px;">總件數</th>
+                                <th style="width: 100px;">總金額</th>
+                                <th style="width: 180px; text-align: center;">出貨狀態</th>
+                                <th style="width: 100px; text-align: center;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="website-order-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
         </main>
     </div>
 
+    <!-- Vendor Modal -->
+    <div class="modal-overlay" id="vendorModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="vendorModalTitle">新增廠商</h3>
+                <button class="close-btn" onclick="closeVendorModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="vendorId">
+                <div class="form-group">
+                    <label>廠商名稱</label>
+                    <input type="text" id="v-name" placeholder="請輸入廠商名稱">
+                </div>
+                <div class="form-group">
+                    <label>聯繫方式</label>
+                    <input type="text" id="v-contact" placeholder="電話、Line ID 等">
+                </div>
+                <div class="form-group">
+                    <label>廠商地點</label>
+                    <input type="text" id="v-location" placeholder="例如：韓國東大門">
+                </div>
+                <div class="form-group">
+                    <label>幣種</label>
+                    <select id="v-currency">
+                        <option value="TWD">台幣 (TWD)</option>
+                        <option value="JPY">日幣 (JPY)</option>
+                        <option value="KRW">韓元 (KRW)</option>
+                        <option value="CNY">人民幣 (CNY)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>備註</label>
+                    <input type="text" id="v-notes" placeholder="其他注意事項">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeVendorModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveVendor()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Website Modal -->
+    <div class="modal-overlay" id="websiteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="websiteModalTitle">新增購物網站</h3>
+                <button class="close-btn" onclick="closeWebsiteModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="websiteId">
+                <div class="form-group">
+                    <label>廠商名稱</label>
+                    <input type="text" id="w-name" placeholder="請輸入廠商名稱">
+                </div>
+                <div class="form-group">
+                    <label>廠商地點</label>
+                    <input type="text" id="w-location" placeholder="例如：韓國東大門">
+                </div>
+                <div class="form-group">
+                    <label>幣種</label>
+                    <select id="w-currency">
+                        <option value="TWD">台幣 (TWD)</option>
+                        <option value="JPY">日幣 (JPY)</option>
+                        <option value="KRW">韓元 (KRW)</option>
+                        <option value="CNY">人民幣 (CNY)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>網址</label>
+                    <input type="url" id="w-link" placeholder="例如：https://...">
+                </div>
+                <div class="form-group">
+                    <label>備註</label>
+                    <input type="text" id="w-notes" placeholder="其他注意事項">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeWebsiteModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveWebsite()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch Add Order Items Modal -->
+    <div class="modal-overlay" id="batchAddModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>批量新增訂單商品</h3>
+                <button class="close-btn" onclick="closeBatchAddModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>訂貨日期</label>
+                        <input type="date" id="batch-date">
+                    </div>
+                    <div class="form-group">
+                        <label>叫貨處</label>
+                        <select id="batch-vendor" onchange="toggleBatchWebsiteMeta()"></select>
+                    </div>
+                </div>
+                <div class="form-row" id="batch-website-meta" style="display: none; margin-top: 1rem;">
+                    <div class="form-group">
+                        <label>訂單編號</label>
+                        <input type="text" id="batch-order-no" placeholder="請輸入訂單編號">
+                    </div>
+                    <div class="form-group">
+                        <label>出貨單號</label>
+                        <input type="text" id="batch-tracking-no" placeholder="請輸入出貨單號">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                    <button class="btn btn-secondary" onclick="document.getElementById('excel-upload').click()"><i class="fa-solid fa-file-excel" style="color: #10b981;"></i> 匯入 EXCEL 訂單</button>
+                    <input type="file" id="excel-upload" accept=".xlsx, .xls, .csv" style="display:none;" onchange="handleExcelUpload(event)">
+                </div>
+                <hr style="border:0; border-top: 1px solid #e2e8f0; margin: 1rem 0;">
+                
+                <div class="dynamic-header" id="batch-dynamic-header">
+                    <span>商品名稱</span>
+                    <span>商品連結</span>
+                    <span>數量</span>
+                    <span>單價</span>
+                    <span class="col-tracking">出貨單號</span>
+                    <span></span>
+                </div>
+                <div id="batch-items-container">
+                    <!-- Dynamic rows inserted here -->
+                </div>
+                <button class="btn btn-secondary" style="align-self: flex-start; margin-top: 0.5rem;" onclick="addBatchRow()">
+                    <i class="fa-solid fa-plus"></i> 增加行數
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeBatchAddModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveBatchOrder()">保存訂單</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch Edit Items Modal -->
+    <div class="modal-overlay" id="batchEditModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>批量編輯商品</h3>
+                <button class="close-btn" onclick="closeBatchEditModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="dynamic-header">
+                    <span>商品名稱</span>
+                    <span>商品連結</span>
+                    <span>數量</span>
+                    <span>單價</span>
+                    <span>出貨單號</span>
+                    <span></span>
+                </div>
+                <div id="batch-edit-container">
+                    <!-- Dynamic rows inserted here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeBatchEditModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveBatchEdit()">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Main Order Modal -->
+    <div class="modal-overlay" id="editOrderMainModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>編輯主訂單</h3>
+                <button class="close-btn" onclick="closeEditOrderMainModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-main-order-id">
+                <div class="form-group">
+                    <label>訂貨日期</label>
+                    <input type="date" id="edit-main-date">
+                </div>
+                <div class="form-group">
+                    <label>叫貨處</label>
+                    <select id="edit-main-vendor" onchange="toggleEditWebsiteMeta()"></select>
+                </div>
+                <div class="form-row" id="edit-website-meta" style="display: none; margin-top: 1rem;">
+                    <div class="form-group">
+                        <label>訂單編號</label>
+                        <input type="text" id="edit-main-order-no" placeholder="請輸入訂單編號">
+                    </div>
+                    <div class="form-group">
+                        <label>出貨單號</label>
+                        <input type="text" id="edit-main-tracking-no" placeholder="請輸入出貨單號">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditOrderMainModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveEditOrderMain()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div style="margin-top: 1rem; color: white; font-weight: 500;">處理中...</div>
+    </div>
+
     <script>
-        function toggleSubmenu(element) {
-            // Toggle expanded class on the clicked menu item
-            element.classList.toggle('expanded');
+        // --- Navigation & Tabs ---
+        let openTabs = [];
+        let activeTab = 'welcome';
+
+        function openTab(name, title) {
+            if (!openTabs.find(t => t.name === name)) {
+                openTabs.push({ name, title });
+            }
+            activateTab(name);
+        }
+
+        function activateTab(name) {
+            activeTab = name;
+            renderTabs();
+            document.querySelectorAll('.section-container').forEach(s => s.classList.remove('active'));
+            const section = document.getElementById('section-' + name);
+            if(section) section.classList.add('active');
             
-            // Toggle open class on the adjacent submenu
-            const submenu = element.nextElementSibling;
-            if (submenu.classList.contains('open')) {
-                submenu.classList.remove('open');
+            // Update sidebar active state
+            document.querySelectorAll('.submenu-item').forEach(e => e.classList.remove('active'));
+            const activeMenuItem = document.querySelector(`.submenu-item[onclick*="openTab('${name}'"]`);
+            if(activeMenuItem) activeMenuItem.classList.add('active');
+            
+            if(name === 'vendors') { renderVendors(); renderWebsites(); }
+            if(name === 'vendors-orders') renderVendorsOrders();
+            if(name === 'website-orders') renderWebsiteOrders();
+        }
+
+        function closeTab(name, event) {
+            event.stopPropagation();
+            openTabs = openTabs.filter(t => t.name !== name);
+            
+            if (activeTab === name) {
+                if (openTabs.length > 0) {
+                    activateTab(openTabs[openTabs.length - 1].name);
+                } else {
+                    activateTab('welcome');
+                }
             } else {
-                submenu.classList.add('open');
+                renderTabs();
             }
         }
 
-        // Toggle sidebar
-        const menuToggle = document.getElementById('menuToggle');
-        const sidebar = document.getElementById('sidebar');
+        async function toggleOrderStatus(orderId, btn, event) {
+            if (event) event.stopPropagation();
+            const o = orders.find(x => x.id === orderId);
+            if(o) {
+                if (o.shipped !== '已出貨') {
+                    const today = new Date().toISOString().split('T')[0];
+                    const date = prompt('請填寫出貨日期 (YYYY-MM-DD)：', today);
+                    if (date === null) return;
+                    o.shipped = '已出貨';
+                    o.shippedDate = date;
+                } else {
+                    o.shipped = '未出貨';
+                    o.shippedDate = '';
+                }
+                
+                if (o.shipped === '已出貨') {
+                    btn.className = 'btn btn-sm btn-success';
+                    btn.innerHTML = `<i class="fa-solid fa-check"></i> 已出貨 ${o.shippedDate ? `(${o.shippedDate})` : ''}`;
+                } else {
+                    btn.className = 'btn btn-sm btn-danger';
+                    btn.innerHTML = '<i class="fa-solid fa-xmark"></i> 未出貨';
+                }
 
-        menuToggle.addEventListener('click', () => {
-            if (sidebar.style.width === '0px') {
-                sidebar.style.width = '260px';
-            } else {
-                sidebar.style.width = '0px';
+                await fetchAPI('saveOrder', o, null, true);
             }
+        }
+
+        async function toggleItemShipped(orderId, itemId, btn) {
+            const o = orders.find(x => x.id === orderId);
+            if(o) {
+                const item = o.items.find(i => String(i.itemId) === String(itemId));
+                if(item) {
+                    item.shipped = item.shipped === '已出貨' ? '未出貨' : '已出貨';
+                    
+                    if (item.shipped === '已出貨') {
+                        btn.className = 'btn btn-sm btn-success';
+                        btn.innerHTML = '<i class="fa-solid fa-check"></i> 已出貨';
+                    } else {
+                        btn.className = 'btn btn-sm btn-danger';
+                        btn.innerHTML = '<i class="fa-solid fa-xmark"></i> 未出貨';
+                    }
+
+                    await fetchAPI('saveOrder', o, null, true);
+                }
+            }
+        }
+
+        function renderTabs() {
+            const container = document.getElementById('tabsContainer');
+            if (!container) return;
+            
+            container.innerHTML = openTabs.map(t => `
+                <div class="tab-item ${t.name === activeTab ? 'active' : ''}" onclick="activateTab('${t.name}')">
+                    ${t.title}
+                    <span class="close-tab" onclick="closeTab('${t.name}', event)"><i class="fa-solid fa-xmark"></i></span>
+                </div>
+            `).join('');
+        }
+
+        // --- Sidebar ---
+        function toggleSubmenu(el) { el.classList.toggle('expanded'); el.nextElementSibling.classList.toggle('open'); }
+        document.getElementById('menuToggle').addEventListener('click', () => {
+            const sb = document.getElementById('sidebar');
+            sb.style.width = sb.style.width === '0px' ? '260px' : '0px';
         });
+
+        // --- Data & API ---
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxfSGNNWO2Do9TtuxphKcD7m6TB63mDyPo86uS9SLfKSKi13wPgp5dVfiBG1-QGfDiN/exec';
+        let vendors = [];
+        let websites = [];
+        let orders = [];
+
+        function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
+        function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
+
+        function processAPIData(dataOrders) {
+            dataOrders.forEach(o => {
+                if (o.date && o.date.includes('T')) {
+                    const d = new Date(o.date);
+                    if (!isNaN(d)) {
+                        o.date = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                    }
+                }
+                o.orderNo = '';
+                o.trackingNo = '';
+                o.shipped = '未出貨';
+                if(o.items && o.items.length > 0 && o.items[0].isMeta) {
+                    const meta = o.items.shift();
+                    o.orderNo = meta.orderNo || '';
+                    o.trackingNo = meta.trackingNo || '';
+                    o.shipped = meta.shipped || '未出貨';
+                    o.shippedDate = meta.shippedDate || '';
+                }
+            });
+            return dataOrders;
+        }
+
+        async function fetchAPI(action, payload = null, id = null, skipRender = false) {
+            showLoading();
+            try {
+                const body = { action: action };
+                if (payload) {
+                    body.payload = JSON.parse(JSON.stringify(payload));
+                    if(action === 'saveOrder') {
+                        body.payload.items.unshift({
+                            isMeta: true,
+                            orderNo: body.payload.orderNo || '',
+                            trackingNo: body.payload.trackingNo || '',
+                            shipped: body.payload.shipped || '未出貨',
+                            shippedDate: body.payload.shippedDate || ''
+                        });
+                    }
+                }
+                if (id) body.id = id;
+
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(body),
+                });
+                const result = await res.json();
+                
+                if (result.status === 'success') {
+                    vendors = result.data.vendors || [];
+                    websites = result.data.websites || [];
+                    orders = processAPIData(result.data.orders || []);
+                    if (!skipRender) {
+                        populateFilterVendors();
+                        renderVendors();
+                        renderWebsites();
+                        if (activeTab === 'vendors-orders') renderVendorsOrders();
+                        if (activeTab === 'website-orders') renderWebsiteOrders();
+                    }
+                } else {
+                    alert('發生錯誤: ' + result.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('網路錯誤，請稍後再試。');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function loadData() {
+            showLoading();
+            try {
+                const res = await fetch(API_URL);
+                const result = await res.json();
+                vendors = result.vendors || [];
+                websites = result.websites || [];
+                orders = processAPIData(result.orders || []);
+                populateFilterVendors();
+                renderVendors();
+                renderWebsites();
+                if (activeTab === 'vendors-orders') renderVendorsOrders();
+                if (activeTab === 'website-orders') renderWebsiteOrders();
+            } catch (err) {
+                console.error(err);
+                alert('無法載入資料，請檢查網路連線。');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 頁面載入時初始化資料
+        window.addEventListener('DOMContentLoaded', loadData);
+
+        function populateFilterVendors() {
+            const vSelectNormal = document.getElementById('filter-v-vendor');
+            const vSelectWebsite = document.getElementById('filter-w-vendor');
+            
+            if(vSelectNormal) {
+                const currentValN = vSelectNormal.value;
+                let optionsN = '<option value="">全部</option>';
+                vendors.forEach(v => optionsN += `<option value="${v.id}">${v.name}</option>`);
+                vSelectNormal.innerHTML = optionsN;
+                if(currentValN) vSelectNormal.value = currentValN;
+            }
+
+            if(vSelectWebsite) {
+                const currentValW = vSelectWebsite.value;
+                let optionsW = '<option value="">全部</option>';
+                websites.forEach(w => optionsW += `<option value="${w.id}">${w.name}</option>`);
+                vSelectWebsite.innerHTML = optionsW;
+                if(currentValW) vSelectWebsite.value = currentValW;
+            }
+        }
+
+        // --- Vendors ---
+        function renderVendors() {
+            const tbody = document.getElementById('vendor-tbody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            if(!vendors.length) return tbody.innerHTML = '<tr><td colspan="6" class="empty-state">尚無廠商資料</td></tr>';
+            
+            vendors.forEach(v => {
+                tbody.innerHTML += `<tr>
+                    <td>${v.name}</td><td>${v.contact}</td><td>${v.location}</td>
+                    <td>${v.currency}</td><td>${v.notes}</td>
+                    <td style="display: flex; gap: 0.5rem; justify-content: center;">
+                        <button class="btn btn-sm btn-action-edit" onclick="openVendorModal(${v.id})"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-sm btn-action-delete" onclick="deleteVendor(${v.id})"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function openVendorModal(id = null) {
+            document.getElementById('vendorModalTitle').innerText = id ? '編輯廠商' : '新增廠商';
+            if(id) {
+                const v = vendors.find(x => x.id === id);
+                document.getElementById('vendorId').value = v.id;
+                document.getElementById('v-name').value = v.name;
+                document.getElementById('v-contact').value = v.contact;
+                document.getElementById('v-location').value = v.location;
+                document.getElementById('v-currency').value = v.currency;
+                document.getElementById('v-notes').value = v.notes;
+            } else {
+                document.getElementById('vendorId').value = '';
+                document.getElementById('v-name').value = ''; document.getElementById('v-contact').value = '';
+                document.getElementById('v-location').value = ''; document.getElementById('v-notes').value = '';
+                document.getElementById('v-currency').value = 'TWD';
+            }
+            document.getElementById('vendorModal').classList.add('active');
+        }
+        function closeVendorModal() { document.getElementById('vendorModal').classList.remove('active'); }
+        async function saveVendor() {
+            const id = document.getElementById('vendorId').value;
+            const data = {
+                id: id ? parseInt(id) : Date.now(),
+                name: document.getElementById('v-name').value, contact: document.getElementById('v-contact').value,
+                location: document.getElementById('v-location').value, currency: document.getElementById('v-currency').value,
+                notes: document.getElementById('v-notes').value
+            };
+            if(!data.name) return alert('請填寫廠商名稱');
+            closeVendorModal();
+            await fetchAPI('saveVendor', data);
+        }
+        async function deleteVendor(id) {
+            if(confirm('確定要刪除這個廠商嗎？')) { await fetchAPI('deleteVendor', null, id); }
+        }
+
+        // --- Websites ---
+        function renderWebsites() {
+            const tbody = document.getElementById('website-tbody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            if(!websites.length) return tbody.innerHTML = '<tr><td colspan="7" class="empty-state">尚無購物網站資料</td></tr>';
+            
+            websites.forEach(w => {
+                tbody.innerHTML += `<tr>
+                    <td>${w.name}</td><td>${w.location}</td>
+                    <td>${w.currency}</td>
+                    <td>${w.link ? `<a href="${w.link}" target="_blank" style="color:#ec4899;"><i class="fa-solid fa-link"></i></a>` : '-'}</td>
+                    <td>${w.notes}</td>
+                    <td style="display: flex; gap: 0.5rem; justify-content: center;">
+                        <button class="btn btn-sm btn-action-edit" onclick="openWebsiteModal(${w.id})"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-sm btn-action-delete" onclick="deleteWebsite(${w.id})"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function openWebsiteModal(id = null) {
+            document.getElementById('websiteModalTitle').innerText = id ? '編輯購物網站' : '新增購物網站';
+            if(id) {
+                const w = websites.find(x => x.id === id);
+                document.getElementById('websiteId').value = w.id;
+                document.getElementById('w-name').value = w.name;
+                document.getElementById('w-location').value = w.location;
+                document.getElementById('w-currency').value = w.currency;
+                document.getElementById('w-link').value = w.link || '';
+                document.getElementById('w-notes').value = w.notes;
+            } else {
+                document.getElementById('websiteId').value = '';
+                document.getElementById('w-name').value = ''; 
+                document.getElementById('w-location').value = ''; document.getElementById('w-link').value = '';
+                document.getElementById('w-notes').value = '';
+                document.getElementById('w-currency').value = 'TWD';
+            }
+            document.getElementById('websiteModal').classList.add('active');
+        }
+        function closeWebsiteModal() { document.getElementById('websiteModal').classList.remove('active'); }
+        async function saveWebsite() {
+            const id = document.getElementById('websiteId').value;
+            const data = {
+                id: id ? parseInt(id) : Date.now(),
+                name: document.getElementById('w-name').value, contact: "",
+                location: document.getElementById('w-location').value, currency: document.getElementById('w-currency').value,
+                link: document.getElementById('w-link').value, notes: document.getElementById('w-notes').value
+            };
+            if(!data.name) return alert('請填寫購物網站名稱');
+            closeWebsiteModal();
+            await fetchAPI('saveWebsite', data);
+        }
+        async function deleteWebsite(id) {
+            if(confirm('確定要刪除這個購物網站嗎？')) { await fetchAPI('deleteWebsite', null, id); }
+        }
+
+        function clearVendorOrderFilters() {
+            document.getElementById('filter-v-vendor').value = '';
+            document.getElementById('filter-v-item-name').value = '';
+            document.getElementById('filter-v-date-start').value = '';
+            document.getElementById('filter-v-date-end').value = '';
+            renderVendorsOrders();
+        }
+
+        function clearWebsiteOrderFilters() {
+            document.getElementById('filter-w-vendor').value = '';
+            document.getElementById('filter-w-item-name').value = '';
+            document.getElementById('filter-w-date-start').value = '';
+            document.getElementById('filter-w-date-end').value = '';
+            document.getElementById('filter-w-shipped-status').value = '';
+            renderWebsiteOrders();
+        }
+
+        // --- Orders ---
+        function renderVendorsOrders() {
+            const container = document.getElementById('vendor-orders-container');
+            container.innerHTML = '';
+            
+            const filterVendor = document.getElementById('filter-v-vendor')?.value;
+            const filterStart = document.getElementById('filter-v-date-start')?.value;
+            const filterEnd = document.getElementById('filter-v-date-end')?.value;
+            const filterItemName = document.getElementById('filter-v-item-name')?.value.trim().toLowerCase();
+
+            let vendorOrders = orders.filter(o => vendors.some(v => v.id == o.vendorId));
+
+            if (filterVendor) vendorOrders = vendorOrders.filter(o => o.vendorId == filterVendor);
+            if (filterStart) vendorOrders = vendorOrders.filter(o => o.date >= filterStart);
+            if (filterEnd) vendorOrders = vendorOrders.filter(o => o.date <= filterEnd);
+            if (filterItemName) {
+                vendorOrders = vendorOrders.filter(o => o.items && o.items.some(item => item.name && item.name.toLowerCase().includes(filterItemName)));
+            }
+
+            if(!vendorOrders.length) return container.innerHTML = '<div class="empty-state">尚無符合的廠商訂單資料</div>';
+
+            // Group by vendor
+            const grouped = {};
+            vendorOrders.forEach(o => {
+                if(!grouped[o.vendorId]) grouped[o.vendorId] = [];
+                grouped[o.vendorId].push(o);
+            });
+
+            for (const vendorId in grouped) {
+                const vendor = vendors.find(v => v.id == vendorId) || { name: '未知' };
+                const vOrders = grouped[vendorId];
+                
+                const groupDiv = document.createElement('div');
+                groupDiv.style.border = '1px solid #e2e8f0';
+                groupDiv.style.borderRadius = '0.5rem';
+                groupDiv.style.overflow = 'hidden';
+
+                const header = document.createElement('div');
+                header.style.background = '#f1f5f9';
+                header.style.padding = '1rem 1.5rem';
+                header.style.fontWeight = '600';
+                header.style.color = '#334155';
+                header.innerHTML = `<i class="fa-solid fa-store" style="color: #64748b; margin-right: 0.5rem;"></i> ${vendor.name} <span style="font-size: 0.85rem; color: #94a3b8; font-weight: normal; margin-left: 0.5rem;">(共 ${vOrders.length} 筆訂單)</span>`;
+                groupDiv.appendChild(header);
+
+                const tableWrapper = document.createElement('div');
+                tableWrapper.className = 'table-wrapper';
+                tableWrapper.style.margin = '0';
+                tableWrapper.style.border = 'none';
+                tableWrapper.style.borderRadius = '0';
+
+                const table = document.createElement('table');
+                table.style.tableLayout = 'fixed';
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th style="width: 50px; text-align: center;"><i class="fa-solid fa-chevron-down"></i></th>
+                            <th style="width: 200px;">訂貨日期</th>
+                            <th style="width: 100px;">幣種</th>
+                            <th style="width: 150px;">總項目數</th>
+                            <th style="width: 150px;">總金額</th>
+                            <th style="width: 100px; text-align: center;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                `;
+                const tbody = table.querySelector('tbody');
+                
+                vOrders.forEach(o => {
+                    const totalItems = o.items.reduce((sum, i) => sum + parseInt(i.qty || 0), 0);
+                    const totalPrice = o.items.reduce((sum, i) => sum + (parseInt(i.price || 0) * parseInt(i.qty || 0)), 0);
+                    
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="text-align: center; cursor: pointer;" onclick="toggleOrderRow(${o.id}, this)">
+                            <i class="fa-solid fa-chevron-right transition-transform"></i>
+                        </td>
+                        <td><span class="date-link" onclick="toggleOrderRow(${o.id}, this.parentElement.previousElementSibling)">${o.date}</span></td>
+                        <td>${vendor.currency}</td>
+                        <td>${totalItems} 件</td>
+                        <td>${totalPrice.toLocaleString()}</td>
+                        <td style="display: flex; gap: 0.5rem; justify-content: center;">
+                            <button class="btn btn-sm btn-action-edit" onclick="openEditOrderMainModal(${o.id})"><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn btn-sm btn-action-delete" onclick="deleteOrder(${o.id})"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+
+                    const subTr = document.createElement('tr');
+                    subTr.className = 'sub-row';
+                    subTr.id = `sub-row-${o.id}`;
+                    
+                    let subHtml = `<td colspan="6">
+                        <div class="sub-table-container">
+                            <div class="sub-toolbar" style="display: flex; justify-content: flex-end; align-items: center;">
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button class="btn btn-sm btn-primary" onclick="openBatchAddModal(${o.id})"><i class="fa-solid fa-plus"></i> 新增商品</button>
+                                    <button class="btn btn-sm btn-secondary" onclick="batchEditItems(${o.id})"><i class="fa-solid fa-pen"></i> 批量編輯</button>
+                                    <button class="btn btn-sm btn-danger" onclick="batchDeleteItems(${o.id})"><i class="fa-solid fa-trash"></i> 批量刪除</button>
+                                </div>
+                            </div>
+                            <table class="sub-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px; text-align: center;"><input type="checkbox" onchange="toggleAllItems(${o.id}, this)"></th>
+                                        <th style="width: 50px; text-align: center;">編號</th>
+                                        <th>商品名稱</th>
+                                        <th>商品連結</th>
+                                        <th style="width: 80px;">數量</th>
+                                        <th style="width: 80px;">單價</th>
+                                        <th style="width: 100px;">總價格</th>
+                                        <th style="width: 120px; text-align: center;">出貨狀態</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                    
+                    if(o.items.length === 0) {
+                        subHtml += `<tr><td colspan="8" style="text-align:center; color:#94a3b8;">無商品明細</td></tr>`;
+                    } else {
+                        o.items.forEach((item, index) => {
+                            const itemTotal = (parseInt(item.price||0) * parseInt(item.qty||0)).toLocaleString();
+                            const itemShipped = item.shipped || '未出貨';
+                            subHtml += `<tr>
+                                <td style="text-align: center;"><input type="checkbox" class="item-chk-${o.id}" value="${item.itemId}"></td>
+                                <td style="text-align: center; color: #64748b; font-weight: 500;">${index + 1}</td>
+                                <td>${item.name}</td>
+                                <td>${item.link ? `<a href="${item.link}" target="_blank"><i class="fa-solid fa-link"></i></a>` : '-'}</td>
+                                <td>${item.qty}</td>
+                                <td>${item.price}</td>
+                                <td style="font-weight: 600;">${itemTotal}</td>
+                                <td style="text-align: center;">
+                                    <button class="btn btn-sm ${itemShipped === '已出貨' ? 'btn-success' : 'btn-danger'}" onclick="toggleItemShipped(${o.id}, '${item.itemId}', this)">
+                                        ${itemShipped === '已出貨' ? '<i class="fa-solid fa-check"></i> 已出貨' : '<i class="fa-solid fa-xmark"></i> 未出貨'}
+                                    </button>
+                                </td>
+                            </tr>`;
+                        });
+                    }
+                    subHtml += `</tbody></table></div></td>`;
+                    subTr.innerHTML = subHtml;
+                    tbody.appendChild(subTr);
+                });
+                
+                tableWrapper.appendChild(table);
+                groupDiv.appendChild(tableWrapper);
+                container.appendChild(groupDiv);
+            }
+        }
+
+        function renderWebsiteOrders() {
+            const tbody = document.getElementById('website-order-tbody');
+            tbody.innerHTML = '';
+            
+            const filterVendor = document.getElementById('filter-w-vendor')?.value;
+            const filterStart = document.getElementById('filter-w-date-start')?.value;
+            const filterEnd = document.getElementById('filter-w-date-end')?.value;
+            const filterItemName = document.getElementById('filter-w-item-name')?.value.trim().toLowerCase();
+            const filterShippedStatus = document.getElementById('filter-w-shipped-status')?.value;
+
+            let websiteOrders = orders.filter(o => websites.some(w => w.id == o.vendorId));
+
+            if (filterVendor) websiteOrders = websiteOrders.filter(o => o.vendorId == filterVendor);
+            if (filterStart) websiteOrders = websiteOrders.filter(o => o.date >= filterStart);
+            if (filterEnd) websiteOrders = websiteOrders.filter(o => o.date <= filterEnd);
+            if (filterItemName) {
+                websiteOrders = websiteOrders.filter(o => o.items && o.items.some(item => item.name && item.name.toLowerCase().includes(filterItemName)));
+            }
+            if (filterShippedStatus) {
+                websiteOrders = websiteOrders.filter(o => o.shipped === filterShippedStatus);
+            }
+
+            if(!websiteOrders.length) return tbody.innerHTML = '<tr><td colspan="8" class="empty-state">尚無符合的購物網站訂單資料</td></tr>';
+
+            websiteOrders.forEach(o => {
+                const source = websites.find(w => w.id == o.vendorId) || { name: '未知', currency: '' };
+                const totalItems = o.items.reduce((sum, i) => sum + parseInt(i.qty || 0), 0);
+                const totalPrice = o.items.reduce((sum, i) => sum + (parseInt(i.price || 0) * parseInt(i.qty || 0)), 0);
+                
+                let sourceNameHtml = source.name;
+                if (source.link) {
+                    sourceNameHtml = `<a href="${source.link}" target="_blank" style="color: #ec4899; text-decoration: none;"><i class="fa-solid fa-link" style="margin-right:0.25rem;"></i>${source.name}</a>`;
+                }
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="text-align: center; cursor: pointer;" onclick="toggleOrderRow(${o.id}, this)">
+                        <i class="fa-solid fa-chevron-right transition-transform"></i>
+                    </td>
+                    <td><span class="date-link" onclick="toggleOrderRow(${o.id}, this.parentElement.previousElementSibling)">${o.date}</span></td>
+                    <td>${sourceNameHtml}</td>
+                    <td>${source.currency}</td>
+                    <td>${totalItems} 件</td>
+                    <td>${totalPrice.toLocaleString()}</td>
+                    <td style="text-align: center;">
+                        <button class="btn btn-sm ${o.shipped === '已出貨' ? 'btn-success' : 'btn-danger'}" onclick="toggleOrderStatus(${o.id}, this, event)">
+                            ${o.shipped === '已出貨' ? `<i class="fa-solid fa-check"></i> 已出貨 ${o.shippedDate ? `(${o.shippedDate})` : ''}` : '<i class="fa-solid fa-xmark"></i> 未出貨'}
+                        </button>
+                    </td>
+                    <td style="display: flex; gap: 0.5rem; justify-content: center;">
+                        <button class="btn btn-sm btn-action-edit" onclick="openEditOrderMainModal(${o.id})"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-sm btn-action-delete" onclick="deleteOrder(${o.id})"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                const subTr = document.createElement('tr');
+                subTr.className = 'sub-row';
+                subTr.id = `sub-row-${o.id}`;
+                
+                let metaHtml = '';
+                if (o.orderNo || o.trackingNo) {
+                    metaHtml = `
+                        <div style="background: #fdf2f8; color: #be185d; padding: 0.5rem 1rem; border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.9rem; font-weight: 500; display: flex; gap: 1.5rem;">
+                            ${o.orderNo ? `<span><i class="fa-solid fa-hashtag"></i> 訂單編號: ${o.orderNo}</span>` : ''}
+                            ${o.trackingNo ? `<span><i class="fa-solid fa-truck-fast"></i> 出貨單號: ${o.trackingNo}</span>` : ''}
+                        </div>
+                    `;
+                }
+
+                let subHtml = `<td colspan="8">
+                    <div class="sub-table-container">
+                        ${metaHtml}
+                        <div class="sub-toolbar" style="display: flex; justify-content: flex-end; align-items: center;">
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-sm btn-primary" onclick="openBatchAddModal(${o.id})"><i class="fa-solid fa-plus"></i> 新增商品</button>
+                                <button class="btn btn-sm btn-secondary" onclick="batchEditItems(${o.id})"><i class="fa-solid fa-pen"></i> 批量編輯</button>
+                                <button class="btn btn-sm btn-danger" onclick="batchDeleteItems(${o.id})"><i class="fa-solid fa-trash"></i> 批量刪除</button>
+                            </div>
+                        </div>
+                        <table class="sub-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px; text-align: center;"><input type="checkbox" onchange="toggleAllItems(${o.id}, this)"></th>
+                                    <th style="width: 50px; text-align: center;">編號</th>
+                                    <th>商品名稱</th>
+                                    <th>商品連結</th>
+                                    <th>數量</th>
+                                    <th>單價</th>
+                                    <th>總價格</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                
+                if(o.items.length === 0) {
+                    subHtml += `<tr><td colspan="7" style="text-align:center; color:#94a3b8;">無商品明細</td></tr>`;
+                } else {
+                    o.items.forEach((item, index) => {
+                        const itemTotal = (parseInt(item.price||0) * parseInt(item.qty||0)).toLocaleString();
+                        subHtml += `<tr>
+                            <td style="text-align: center;"><input type="checkbox" class="item-chk-${o.id}" value="${item.itemId}"></td>
+                            <td style="text-align: center; color: #64748b; font-weight: 500;">${index + 1}</td>
+                            <td>${item.name}</td>
+                            <td>${item.link ? `<a href="${item.link}" target="_blank"><i class="fa-solid fa-link"></i></a>` : '-'}</td>
+                            <td>${item.qty}</td>
+                            <td>${item.price}</td>
+                            <td style="font-weight: 600;">${itemTotal}</td>
+                        </tr>`;
+                    });
+                }
+                subHtml += `</tbody></table></div></td>`;
+                subTr.innerHTML = subHtml;
+                tbody.appendChild(subTr);
+            });
+        }
+
+        function toggleOrderRow(orderId, iconCell) {
+            const subRow = document.getElementById(`sub-row-${orderId}`);
+            const icon = iconCell.querySelector('i');
+            if(subRow.classList.contains('active')) {
+                subRow.classList.remove('active');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-right');
+            } else {
+                subRow.classList.add('active');
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-chevron-down');
+            }
+        }
+
+        async function deleteOrder(id) {
+            if(confirm('確定要刪除整筆訂貨單嗎？')) { await fetchAPI('deleteOrder', null, id); }
+        }
+
+        function toggleAllItems(orderId, checkbox) {
+            const chks = document.querySelectorAll(`.item-chk-${orderId}`);
+            chks.forEach(c => c.checked = checkbox.checked);
+        }
+
+        // --- Batch Add ---
+        let currentEditingOrderId = null; // null means new order
+
+        function toggleBatchWebsiteMeta() {
+            const vendorId = document.getElementById('batch-vendor').value;
+            const isWebsite = websites.some(w => w.id == vendorId);
+            document.getElementById('batch-website-meta').style.display = isWebsite ? 'flex' : 'none';
+            
+            const dynamicHeader = document.getElementById('batch-dynamic-header');
+            const itemsContainer = document.getElementById('batch-items-container');
+            if (isWebsite) {
+                if (dynamicHeader) dynamicHeader.classList.add('hide-tracking');
+                if (itemsContainer) itemsContainer.classList.add('hide-tracking');
+            } else {
+                if (dynamicHeader) dynamicHeader.classList.remove('hide-tracking');
+                if (itemsContainer) itemsContainer.classList.remove('hide-tracking');
+            }
+        }
+        function toggleEditWebsiteMeta() {
+            const vendorId = document.getElementById('edit-main-vendor').value;
+            const isWebsite = websites.some(w => w.id == vendorId);
+            document.getElementById('edit-website-meta').style.display = isWebsite ? 'flex' : 'none';
+        }
+
+        function openBatchAddModal(orderId = null) {
+            currentEditingOrderId = orderId;
+            const vSelect = document.getElementById('batch-vendor');
+            
+            let options = '<option value="">請選擇叫貨處</option>';
+            if(vendors.length) {
+                options += '<optgroup label="叫貨處管理">';
+                vendors.forEach(v => options += `<option value="${v.id}">${v.name}</option>`);
+                options += '</optgroup>';
+            }
+            if(websites.length) {
+                options += '<optgroup label="購物網站訂購管理">';
+                websites.forEach(w => options += `<option value="${w.id}">${w.name}</option>`);
+                options += '</optgroup>';
+            }
+            vSelect.innerHTML = options;
+
+            const container = document.getElementById('batch-items-container');
+            container.innerHTML = '';
+            
+            if (orderId) {
+                // Adding to existing order
+                const o = orders.find(x => x.id === orderId);
+                document.getElementById('batch-date').value = o.date;
+                document.getElementById('batch-vendor').value = o.vendorId;
+                document.getElementById('batch-date').disabled = true;
+                document.getElementById('batch-vendor').disabled = true;
+                document.getElementById('batchAddModal').querySelector('h3').innerText = '新增商品至訂單';
+                document.getElementById('batch-order-no').value = o.orderNo || '';
+                document.getElementById('batch-tracking-no').value = o.trackingNo || '';
+                document.getElementById('batch-order-no').disabled = true;
+                document.getElementById('batch-tracking-no').disabled = true;
+            } else {
+                // New Order
+                document.getElementById('batch-date').value = new Date().toISOString().split('T')[0];
+                document.getElementById('batch-vendor').value = '';
+                document.getElementById('batch-date').disabled = false;
+                document.getElementById('batch-vendor').disabled = false;
+                document.getElementById('batchAddModal').querySelector('h3').innerText = '批量新增訂單商品';
+                document.getElementById('batch-order-no').value = '';
+                document.getElementById('batch-tracking-no').value = '';
+                document.getElementById('batch-order-no').disabled = false;
+                document.getElementById('batch-tracking-no').disabled = false;
+            }
+            toggleBatchWebsiteMeta();
+            
+            // Add one empty row
+            addBatchRow();
+            document.getElementById('batchAddModal').classList.add('active');
+        }
+
+        function closeBatchAddModal() { document.getElementById('batchAddModal').classList.remove('active'); }
+
+        function addBatchRow() {
+            const div = document.createElement('div');
+            div.className = 'dynamic-row batch-new-row';
+            div.innerHTML = `
+                <input type="text" class="r-name" placeholder="商品名稱">
+                <input type="text" class="r-link" placeholder="網址">
+                <input type="number" class="r-qty" placeholder="數量" value="1">
+                <input type="number" class="r-price" placeholder="單價">
+                <input type="text" class="r-tracking col-tracking" placeholder="單號">
+                <button class="btn-icon" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
+            `;
+            document.getElementById('batch-items-container').appendChild(div);
+        }
+
+        function handleExcelUpload(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ''});
+                
+                const container = document.getElementById('batch-items-container');
+                const existingRows = container.querySelectorAll('.batch-new-row');
+                let hasData = false;
+                existingRows.forEach(r => {
+                    if(r.querySelector('.r-name').value.trim() !== '') hasData = true;
+                });
+                if(!hasData) container.innerHTML = ''; // clear empty rows
+                
+                jsonData.forEach((row, index) => {
+                    if(!row || row.length === 0) return;
+                    
+                    const trackingOrderLevel = row[0] ? String(row[0]).trim() : '';
+                    const orderNoOrderLevel = row[1] ? String(row[1]).trim() : '';
+                    
+                    if(index === 1 || index === 0) {
+                        const bOrder = document.getElementById('batch-order-no');
+                        const bTracking = document.getElementById('batch-tracking-no');
+                        if(orderNoOrderLevel && !bOrder.value && !orderNoOrderLevel.includes('訂單')) bOrder.value = orderNoOrderLevel;
+                        if(trackingOrderLevel && !bTracking.value && !trackingOrderLevel.includes('出貨')) bTracking.value = trackingOrderLevel;
+                    }
+
+                    const name = row[2] ? String(row[2]).trim() : '';
+                    if(!name) return;
+                    // skip header
+                    if(index === 0 && (name.includes('商品') || name.includes('名稱'))) return;
+
+                    const link = row[3] ? String(row[3]).trim() : '';
+                    const price = row[4] ? String(row[4]).trim() : '';
+                    const qty = row[5] ? String(row[5]).trim() : '1';
+                    const shippedRaw = row[6] ? String(row[6]).trim() : '否';
+                    const shipped = (shippedRaw === '是' || shippedRaw.toUpperCase() === 'Y' || shippedRaw === 'Yes') ? '是' : '否';
+                    const tracking = '';
+
+                    const div = document.createElement('div');
+                    div.className = 'dynamic-row batch-new-row';
+                    div.innerHTML = `
+                        <input type="text" class="r-name" placeholder="商品名稱" value="${name}">
+                        <input type="text" class="r-link" placeholder="網址" value="${link}">
+                        <input type="number" class="r-qty" placeholder="數量" value="${qty}">
+                        <input type="number" class="r-price" placeholder="單價" value="${price}">
+                        <input type="text" class="r-tracking col-tracking" placeholder="單號" value="${tracking}">
+                        <button class="btn-icon" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
+                    `;
+                    container.appendChild(div);
+                });
+                
+                document.getElementById('excel-upload').value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function saveBatchOrder() {
+            const date = document.getElementById('batch-date').value;
+            const vendorId = document.getElementById('batch-vendor').value;
+            if(!date || !vendorId) return alert('請選擇日期與廠商');
+
+            const rows = document.querySelectorAll('.batch-new-row');
+            const newItems = [];
+            rows.forEach(r => {
+                const name = r.querySelector('.r-name').value;
+                if(name) {
+                    newItems.push({
+                        itemId: Date.now() + Math.random(),
+                        name: name,
+                        link: r.querySelector('.r-link').value,
+                        price: r.querySelector('.r-price').value || 0,
+                        qty: r.querySelector('.r-qty').value || 1,
+                        tracking: r.querySelector('.r-tracking').value
+                    });
+                }
+            });
+
+            if(newItems.length === 0) return alert('請至少填寫一個商品名稱');
+
+            let orderData;
+            if (currentEditingOrderId) {
+                orderData = orders.find(x => x.id === currentEditingOrderId);
+                orderData.items.push(...newItems);
+            } else {
+                orderData = {
+                    id: Date.now(),
+                    date: date,
+                    vendorId: parseInt(vendorId),
+                    orderNo: document.getElementById('batch-order-no').value,
+                    trackingNo: document.getElementById('batch-tracking-no').value,
+                    items: newItems
+                };
+            }
+            
+            closeBatchAddModal();
+            await fetchAPI('saveOrder', orderData);
+            
+            // Automatically expand the modified order
+            setTimeout(() => {
+                const orderId = currentEditingOrderId || orderData.id;
+                const row = document.getElementById(`sub-row-${orderId}`);
+                if(row) {
+                    row.classList.add('active');
+                    const icon = row.previousElementSibling.querySelector('i');
+                    icon.classList.remove('fa-chevron-right'); icon.classList.add('fa-chevron-down');
+                }
+            }, 100);
+        }
+
+        // --- Batch Edit & Delete ---
+        async function batchDeleteItems(orderId) {
+            const chks = document.querySelectorAll(`.item-chk-${orderId}:checked`);
+            if(chks.length === 0) return alert('請先勾選要刪除的商品');
+            if(confirm(`確定要刪除勾選的 ${chks.length} 件商品嗎？`)) {
+                const o = orders.find(x => x.id === orderId);
+                const idsToRemove = Array.from(chks).map(c => parseFloat(c.value));
+                o.items = o.items.filter(item => !idsToRemove.includes(item.itemId));
+                
+                await fetchAPI('saveOrder', o);
+                
+                setTimeout(() => {
+                    const row = document.getElementById(`sub-row-${orderId}`);
+                    if(row) {
+                        row.classList.add('active');
+                        row.previousElementSibling.querySelector('i').classList.replace('fa-chevron-right', 'fa-chevron-down');
+                    }
+                }, 100);
+            }
+        }
+
+        let editItemsList = [];
+        let editOrderId = null;
+
+        function batchEditItems(orderId) {
+            const chks = document.querySelectorAll(`.item-chk-${orderId}:checked`);
+            if(chks.length === 0) return alert('請先勾選要編輯的商品');
+            
+            editOrderId = orderId;
+            const o = orders.find(x => x.id === orderId);
+            const idsToEdit = Array.from(chks).map(c => parseFloat(c.value));
+            editItemsList = o.items.filter(item => idsToEdit.includes(item.itemId));
+
+            const container = document.getElementById('batch-edit-container');
+            container.innerHTML = '';
+            
+            editItemsList.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'dynamic-row batch-edit-row';
+                div.dataset.id = item.itemId;
+                div.innerHTML = `
+                    <input type="text" class="r-name" value="${item.name}">
+                    <input type="text" class="r-link" value="${item.link}">
+                    <input type="number" class="r-qty" value="${item.qty}">
+                    <input type="number" class="r-price" value="${item.price}">
+                    <input type="text" class="r-tracking" value="${item.tracking}">
+                `;
+                container.appendChild(div);
+            });
+            
+            document.getElementById('batchEditModal').classList.add('active');
+        }
+
+        function closeBatchEditModal() { document.getElementById('batchEditModal').classList.remove('active'); }
+
+        async function saveBatchEdit() {
+            const rows = document.querySelectorAll('.batch-edit-row');
+            const o = orders.find(x => x.id === editOrderId);
+            
+            rows.forEach(r => {
+                const itemId = parseFloat(r.dataset.id);
+                const item = o.items.find(x => x.itemId === itemId);
+                if(item) {
+                    item.name = r.querySelector('.r-name').value;
+                    item.link = r.querySelector('.r-link').value;
+                    item.price = r.querySelector('.r-price').value;
+                    item.qty = r.querySelector('.r-qty').value;
+                    item.tracking = r.querySelector('.r-tracking').value;
+                }
+            });
+            
+            closeBatchEditModal();
+            await fetchAPI('saveOrder', o);
+            
+            setTimeout(() => {
+                const row = document.getElementById(`sub-row-${editOrderId}`);
+                if(row) {
+                    row.classList.add('active');
+                    row.previousElementSibling.querySelector('i').classList.replace('fa-chevron-right', 'fa-chevron-down');
+                }
+            }, 100);
+        }
+
+        // --- Edit Main Order ---
+        function openEditOrderMainModal(orderId) {
+            const o = orders.find(x => x.id === orderId);
+            document.getElementById('edit-main-order-id').value = o.id;
+            document.getElementById('edit-main-date').value = o.date;
+            
+            const vSelect = document.getElementById('edit-main-vendor');
+            
+            let options = '<option value="">請選擇叫貨處</option>';
+            if(vendors.length) {
+                options += '<optgroup label="叫貨處管理">';
+                vendors.forEach(v => options += `<option value="${v.id}">${v.name}</option>`);
+                options += '</optgroup>';
+            }
+            if(websites.length) {
+                options += '<optgroup label="購物網站訂購管理">';
+                websites.forEach(w => options += `<option value="${w.id}">${w.name}</option>`);
+                options += '</optgroup>';
+            }
+            vSelect.innerHTML = options;
+            vSelect.value = o.vendorId;
+
+            document.getElementById('edit-main-order-no').value = o.orderNo || '';
+            document.getElementById('edit-main-tracking-no').value = o.trackingNo || '';
+            toggleEditWebsiteMeta();
+            
+            document.getElementById('editOrderMainModal').classList.add('active');
+        }
+
+        function closeEditOrderMainModal() {
+            document.getElementById('editOrderMainModal').classList.remove('active');
+        }
+
+        async function saveEditOrderMain() {
+            const orderId = parseInt(document.getElementById('edit-main-order-id').value);
+            const date = document.getElementById('edit-main-date').value;
+            const vendorId = document.getElementById('edit-main-vendor').value;
+            
+            if(!date || !vendorId) return alert('請選擇日期與廠商');
+            
+            const o = orders.find(x => x.id === orderId);
+            if(o) {
+                o.date = date;
+                o.vendorId = parseInt(vendorId);
+                o.orderNo = document.getElementById('edit-main-order-no').value;
+                o.trackingNo = document.getElementById('edit-main-tracking-no').value;
+            }
+            
+            closeEditOrderMainModal();
+            await fetchAPI('saveOrder', o);
+        }
+
     </script>
 </body>
 </html>
