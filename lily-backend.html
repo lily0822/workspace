@@ -226,6 +226,7 @@
                                 <th style="width: 50px; text-align: center;"><i class="fa-solid fa-chevron-down"></i></th>
                                 <th style="width: 200px;">訂貨日期</th>
                                 <th>廠商</th>
+                                <th style="width: 100px;">幣種</th>
                                 <th style="width: 150px;">總項目數</th>
                                 <th style="width: 150px;">總金額</th>
                                 <th style="width: 100px; text-align: center;">操作</th>
@@ -265,7 +266,7 @@
                         <option value="TWD">台幣 (TWD)</option>
                         <option value="JPY">日幣 (JPY)</option>
                         <option value="KRW">韓元 (KRW)</option>
-                        <option value="USD">美金 (USD)</option>
+                        <option value="CNY">人民幣 (CNY)</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -349,6 +350,32 @@
             </div>
         </div>
     </div>
+
+    <!-- Edit Main Order Modal -->
+    <div class="modal-overlay" id="editOrderMainModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>編輯主訂單</h3>
+                <button class="close-btn" onclick="closeEditOrderMainModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-main-order-id">
+                <div class="form-group">
+                    <label>訂貨日期</label>
+                    <input type="date" id="edit-main-date">
+                </div>
+                <div class="form-group">
+                    <label>廠商</label>
+                    <select id="edit-main-vendor"></select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditOrderMainModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveEditOrderMain()">保存</button>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         // --- Sidebar ---
@@ -455,9 +482,11 @@
                     </td>
                     <td><span class="date-link" onclick="toggleOrderRow(${o.id}, this.parentElement.previousElementSibling)">${o.date}</span></td>
                     <td>${vendor.name}</td>
+                    <td>${vendor.currency}</td>
                     <td>${totalItems} 件</td>
-                    <td>${totalPrice.toLocaleString()} ${vendor.currency}</td>
-                    <td style="text-align: center;">
+                    <td>${totalPrice.toLocaleString()}</td>
+                    <td style="text-align: center; gap: 0.5rem; display: flex; justify-content: center;">
+                        <button class="btn btn-sm btn-action-edit" onclick="openEditOrderMainModal(${o.id})"><i class="fa-solid fa-pen"></i></button>
                         <button class="btn btn-sm btn-action-delete" onclick="deleteOrder(${o.id})"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 `;
@@ -714,6 +743,41 @@
             const row = document.getElementById(`sub-row-${editOrderId}`);
             row.classList.add('active');
             row.previousElementSibling.querySelector('i').classList.replace('fa-chevron-right', 'fa-chevron-down');
+        }
+
+        // --- Edit Main Order ---
+        function openEditOrderMainModal(orderId) {
+            const o = orders.find(x => x.id === orderId);
+            document.getElementById('edit-main-order-id').value = o.id;
+            document.getElementById('edit-main-date').value = o.date;
+            
+            const vSelect = document.getElementById('edit-main-vendor');
+            vSelect.innerHTML = '<option value="">請選擇廠商</option>';
+            vendors.forEach(v => vSelect.innerHTML += `<option value="${v.id}">${v.name}</option>`);
+            vSelect.value = o.vendorId;
+            
+            document.getElementById('editOrderMainModal').classList.add('active');
+        }
+
+        function closeEditOrderMainModal() {
+            document.getElementById('editOrderMainModal').classList.remove('active');
+        }
+
+        function saveEditOrderMain() {
+            const orderId = parseInt(document.getElementById('edit-main-order-id').value);
+            const date = document.getElementById('edit-main-date').value;
+            const vendorId = document.getElementById('edit-main-vendor').value;
+            
+            if(!date || !vendorId) return alert('請選擇日期與廠商');
+            
+            const o = orders.find(x => x.id === orderId);
+            if(o) {
+                o.date = date;
+                o.vendorId = parseInt(vendorId);
+            }
+            
+            closeEditOrderMainModal();
+            renderOrders();
         }
 
     </script>
