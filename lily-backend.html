@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
             --sidebar-bg: #1e293b;
@@ -156,7 +157,7 @@
                 </div>
                 <div class="submenu open">
                     <div class="submenu-item" onclick="showSection('vendors', this)">叫貨處管理</div>
-                    <div class="submenu-item" onclick="showSection('orders', this)">訂貨明細</div>
+                    <div class="submenu-item" onclick="showSection('orders', this)">叫貨明細</div>
                 </div>
             </div>
             <div class="menu-group">
@@ -179,7 +180,7 @@
         <header class="topbar">
             <div class="topbar-left">
                 <i class="fa-solid fa-bars menu-toggle" id="menuToggle"></i>
-                <a href="index.html" style="text-decoration: none; color: #475569; font-size: 0.9rem; margin-left: 1rem;"><i class="fa-solid fa-house"></i> 回 Portal</a>
+                <a href="index.html" style="text-decoration: none; color: #475569; font-size: 0.9rem; margin-left: 1rem;"><i class="fa-solid fa-house"></i> 回到主選單</a>
             </div>
             <div class="topbar-right">
                 <div class="topbar-icon"><i class="fa-regular fa-bell"></i></div>
@@ -245,7 +246,7 @@
             <!-- Order Details Section -->
             <div id="section-orders" class="section-container">
                 <div class="page-header">
-                    <h2 class="page-title">訂貨明細</h2>
+                    <h2 class="page-title">叫貨明細</h2>
                     <div class="toolbar">
                         <button class="btn btn-primary" onclick="openBatchAddModal()"><i class="fa-solid fa-plus"></i> 批量新增訂單</button>
                     </div>
@@ -369,8 +370,22 @@
                     </div>
                     <div class="form-group">
                         <label>叫貨處</label>
-                        <select id="batch-vendor"></select>
+                        <select id="batch-vendor" onchange="toggleBatchWebsiteMeta()"></select>
                     </div>
+                </div>
+                <div class="form-row" id="batch-website-meta" style="display: none; margin-top: 1rem;">
+                    <div class="form-group">
+                        <label>訂單編號</label>
+                        <input type="text" id="batch-order-no" placeholder="請輸入訂單編號">
+                    </div>
+                    <div class="form-group">
+                        <label>出貨單號</label>
+                        <input type="text" id="batch-tracking-no" placeholder="請輸入出貨單號">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                    <button class="btn btn-secondary" onclick="document.getElementById('excel-upload').click()"><i class="fa-solid fa-file-excel" style="color: #10b981;"></i> 匯入 EXCEL 訂單</button>
+                    <input type="file" id="excel-upload" accept=".xlsx, .xls, .csv" style="display:none;" onchange="handleExcelUpload(event)">
                 </div>
                 <hr style="border:0; border-top: 1px solid #e2e8f0; margin: 1rem 0;">
                 
@@ -439,7 +454,17 @@
                 </div>
                 <div class="form-group">
                     <label>叫貨處</label>
-                    <select id="edit-main-vendor"></select>
+                    <select id="edit-main-vendor" onchange="toggleEditWebsiteMeta()"></select>
+                </div>
+                <div class="form-row" id="edit-website-meta" style="display: none; margin-top: 1rem;">
+                    <div class="form-group">
+                        <label>訂單編號</label>
+                        <input type="text" id="edit-main-order-no" placeholder="請輸入訂單編號">
+                    </div>
+                    <div class="form-group">
+                        <label>出貨單號</label>
+                        <input type="text" id="edit-main-tracking-no" placeholder="請輸入出貨單號">
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -488,6 +513,13 @@
                         o.date = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
                     }
                 }
+                o.orderNo = '';
+                o.trackingNo = '';
+                if(o.items && o.items.length > 0 && o.items[0].isMeta) {
+                    const meta = o.items.shift();
+                    o.orderNo = meta.orderNo || '';
+                    o.trackingNo = meta.trackingNo || '';
+                }
             });
             return dataOrders;
         }
@@ -496,7 +528,16 @@
             showLoading();
             try {
                 const body = { action: action };
-                if (payload) body.payload = payload;
+                if (payload) {
+                    body.payload = JSON.parse(JSON.stringify(payload));
+                    if(action === 'saveOrder') {
+                        body.payload.items.unshift({
+                            isMeta: true,
+                            orderNo: body.payload.orderNo || '',
+                            trackingNo: body.payload.trackingNo || ''
+                        });
+                    }
+                }
                 if (id) body.id = id;
 
                 const res = await fetch(API_URL, {
@@ -699,8 +740,19 @@
                 subTr.className = 'sub-row';
                 subTr.id = `sub-row-${o.id}`;
                 
-                let subHtml = `<td colspan="6">
+                let metaHtml = '';
+                if (isWebsite && (o.orderNo || o.trackingNo)) {
+                    metaHtml = `
+                        <div style="background: #fdf2f8; color: #be185d; padding: 0.5rem 1rem; border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.9rem; font-weight: 500; display: flex; gap: 1.5rem;">
+                            ${o.orderNo ? `<span><i class="fa-solid fa-hashtag"></i> 訂單編號: ${o.orderNo}</span>` : ''}
+                            ${o.trackingNo ? `<span><i class="fa-solid fa-truck-fast"></i> 出貨單號: ${o.trackingNo}</span>` : ''}
+                        </div>
+                    `;
+                }
+
+                let subHtml = `<td colspan="7">
                     <div class="sub-table-container">
+                        ${metaHtml}
                         <div class="sub-toolbar">
                             <button class="btn btn-sm btn-primary" onclick="openBatchAddModal(${o.id})"><i class="fa-solid fa-plus"></i> 新增商品</button>
                             <button class="btn btn-sm btn-secondary" onclick="batchEditItems(${o.id})"><i class="fa-solid fa-pen"></i> 批量編輯</button>
@@ -770,6 +822,17 @@
         // --- Batch Add ---
         let currentEditingOrderId = null; // null means new order
 
+        function toggleBatchWebsiteMeta() {
+            const vendorId = document.getElementById('batch-vendor').value;
+            const isWebsite = websites.some(w => w.id == vendorId);
+            document.getElementById('batch-website-meta').style.display = isWebsite ? 'flex' : 'none';
+        }
+        function toggleEditWebsiteMeta() {
+            const vendorId = document.getElementById('edit-main-vendor').value;
+            const isWebsite = websites.some(w => w.id == vendorId);
+            document.getElementById('edit-website-meta').style.display = isWebsite ? 'flex' : 'none';
+        }
+
         function openBatchAddModal(orderId = null) {
             currentEditingOrderId = orderId;
             const vSelect = document.getElementById('batch-vendor');
@@ -798,6 +861,10 @@
                 document.getElementById('batch-date').disabled = true;
                 document.getElementById('batch-vendor').disabled = true;
                 document.getElementById('batchAddModal').querySelector('h3').innerText = '新增商品至訂單';
+                document.getElementById('batch-order-no').value = o.orderNo || '';
+                document.getElementById('batch-tracking-no').value = o.trackingNo || '';
+                document.getElementById('batch-order-no').disabled = true;
+                document.getElementById('batch-tracking-no').disabled = true;
             } else {
                 // New Order
                 document.getElementById('batch-date').value = new Date().toISOString().split('T')[0];
@@ -805,7 +872,12 @@
                 document.getElementById('batch-date').disabled = false;
                 document.getElementById('batch-vendor').disabled = false;
                 document.getElementById('batchAddModal').querySelector('h3').innerText = '批量新增訂單商品';
+                document.getElementById('batch-order-no').value = '';
+                document.getElementById('batch-tracking-no').value = '';
+                document.getElementById('batch-order-no').disabled = false;
+                document.getElementById('batch-tracking-no').disabled = false;
             }
+            toggleBatchWebsiteMeta();
             
             // Add one empty row
             addBatchRow();
@@ -827,6 +899,72 @@
                 <button class="btn-icon" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
             `;
             document.getElementById('batch-items-container').appendChild(div);
+        }
+
+        function handleExcelUpload(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ''});
+                
+                const container = document.getElementById('batch-items-container');
+                const existingRows = container.querySelectorAll('.batch-new-row');
+                let hasData = false;
+                existingRows.forEach(r => {
+                    if(r.querySelector('.r-name').value.trim() !== '') hasData = true;
+                });
+                if(!hasData) container.innerHTML = ''; // clear empty rows
+                
+                jsonData.forEach((row, index) => {
+                    if(!row || row.length === 0) return;
+                    
+                    const trackingOrderLevel = row[0] ? String(row[0]).trim() : '';
+                    const orderNoOrderLevel = row[1] ? String(row[1]).trim() : '';
+                    
+                    if(index === 1 || index === 0) {
+                        const bOrder = document.getElementById('batch-order-no');
+                        const bTracking = document.getElementById('batch-tracking-no');
+                        if(orderNoOrderLevel && !bOrder.value && !orderNoOrderLevel.includes('訂單')) bOrder.value = orderNoOrderLevel;
+                        if(trackingOrderLevel && !bTracking.value && !trackingOrderLevel.includes('出貨')) bTracking.value = trackingOrderLevel;
+                    }
+
+                    const name = row[2] ? String(row[2]).trim() : '';
+                    if(!name) return;
+                    // skip header
+                    if(index === 0 && (name.includes('商品') || name.includes('名稱'))) return;
+
+                    const link = row[3] ? String(row[3]).trim() : '';
+                    const price = row[4] ? String(row[4]).trim() : '';
+                    const qty = row[5] ? String(row[5]).trim() : '1';
+                    const shippedRaw = row[6] ? String(row[6]).trim() : '否';
+                    const shipped = (shippedRaw === '是' || shippedRaw.toUpperCase() === 'Y' || shippedRaw === 'Yes') ? '是' : '否';
+                    const tracking = '';
+
+                    const div = document.createElement('div');
+                    div.className = 'dynamic-row batch-new-row';
+                    div.innerHTML = `
+                        <input type="text" class="r-name" placeholder="商品名稱" value="${name}">
+                        <input type="text" class="r-link" placeholder="網址" value="${link}">
+                        <input type="number" class="r-price" placeholder="單價" value="${price}">
+                        <input type="number" class="r-qty" placeholder="數量" value="${qty}">
+                        <select class="r-shipped">
+                            <option value="否" ${shipped === '否' ? 'selected' : ''}>否</option>
+                            <option value="是" ${shipped === '是' ? 'selected' : ''}>是</option>
+                        </select>
+                        <input type="text" class="r-tracking" placeholder="單號" value="${tracking}">
+                        <button class="btn-icon" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
+                    `;
+                    container.appendChild(div);
+                });
+                
+                document.getElementById('excel-upload').value = '';
+            };
+            reader.readAsArrayBuffer(file);
         }
 
         async function saveBatchOrder() {
@@ -862,6 +1000,8 @@
                     id: Date.now(),
                     date: date,
                     vendorId: parseInt(vendorId),
+                    orderNo: document.getElementById('batch-order-no').value,
+                    trackingNo: document.getElementById('batch-tracking-no').value,
                     items: newItems
                 };
             }
@@ -990,6 +1130,10 @@
             }
             vSelect.innerHTML = options;
             vSelect.value = o.vendorId;
+
+            document.getElementById('edit-main-order-no').value = o.orderNo || '';
+            document.getElementById('edit-main-tracking-no').value = o.trackingNo || '';
+            toggleEditWebsiteMeta();
             
             document.getElementById('editOrderMainModal').classList.add('active');
         }
@@ -1009,6 +1153,8 @@
             if(o) {
                 o.date = date;
                 o.vendorId = parseInt(vendorId);
+                o.orderNo = document.getElementById('edit-main-order-no').value;
+                o.trackingNo = document.getElementById('edit-main-tracking-no').value;
             }
             
             closeEditOrderMainModal();
