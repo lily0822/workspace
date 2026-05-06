@@ -412,6 +412,18 @@
         function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
         function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
 
+        function processAPIData(dataOrders) {
+            dataOrders.forEach(o => {
+                if (o.date && o.date.includes('T')) {
+                    const d = new Date(o.date);
+                    if (!isNaN(d)) {
+                        o.date = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                    }
+                }
+            });
+            return dataOrders;
+        }
+
         async function fetchAPI(action, payload = null, id = null) {
             showLoading();
             try {
@@ -428,7 +440,7 @@
                 
                 if (result.status === 'success') {
                     vendors = result.data.vendors || [];
-                    orders = result.data.orders || [];
+                    orders = processAPIData(result.data.orders || []);
                     renderVendors();
                     renderOrders();
                 } else {
@@ -448,7 +460,7 @@
                 const res = await fetch(API_URL);
                 const result = await res.json();
                 vendors = result.vendors || [];
-                orders = result.orders || [];
+                orders = processAPIData(result.orders || []);
                 renderVendors();
                 renderOrders();
             } catch (err) {
