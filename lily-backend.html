@@ -127,6 +127,12 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Loading Overlay */
+        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.7); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(2px); }
+        .loading-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
+        .spinner { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: var(--primary-color); animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -376,6 +382,11 @@
         </div>
     </div>
 
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div style="margin-top: 1rem; color: white; font-weight: 500;">處理中...</div>
+    </div>
 
     <script>
         // --- Sidebar ---
@@ -393,22 +404,63 @@
             if(name === 'orders') renderOrders();
         }
 
-        // --- Data ---
-        let vendors = [
-            { id: 1, name: '韓國精選代購', contact: '@krselect', location: '首爾東大門', currency: 'KRW', notes: '' },
-            { id: 2, name: '東京批發', contact: '0912345678', location: '東京', currency: 'JPY', notes: '' }
-        ];
-        
-        // Orders nested structure
-        let orders = [
-            {
-                id: 1, date: '2026-05-06', vendorId: 1,
-                items: [
-                    { itemId: 101, name: 'A字裙', link: 'https://example.com', price: 1000, qty: 10, shipped: '否', tracking: '' },
-                    { itemId: 102, name: '牛仔褲', link: '', price: 1500, qty: 5, shipped: '是', tracking: 'TRK123456' }
-                ]
+        // --- Data & API ---
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzAozbe1o8GmurhGqgkMVNLKAswQqqVG6ZPabnunbQEyCVLnYKpNcrPsc1xeoAIQg3aig/exec';
+        let vendors = [];
+        let orders = [];
+
+        function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
+        function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
+
+        async function fetchAPI(action, payload = null, id = null) {
+            showLoading();
+            try {
+                const body = { action: action };
+                if (payload) body.payload = payload;
+                if (id) body.id = id;
+
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(body),
+                });
+                const result = await res.json();
+                
+                if (result.status === 'success') {
+                    vendors = result.data.vendors || [];
+                    orders = result.data.orders || [];
+                    renderVendors();
+                    renderOrders();
+                } else {
+                    alert('發生錯誤: ' + result.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('網路錯誤，請稍後再試。');
+            } finally {
+                hideLoading();
             }
-        ];
+        }
+
+        async function loadData() {
+            showLoading();
+            try {
+                const res = await fetch(API_URL);
+                const result = await res.json();
+                vendors = result.vendors || [];
+                orders = result.orders || [];
+                renderVendors();
+                renderOrders();
+            } catch (err) {
+                console.error(err);
+                alert('無法載入資料，請檢查網路連線。');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 頁面載入時抓取資料
+        window.addEventListener('DOMContentLoaded', loadData);
 
         // --- Vendors ---
         function renderVendors() {
@@ -446,7 +498,7 @@
             document.getElementById('vendorModal').classList.add('active');
         }
         function closeVendorModal() { document.getElementById('vendorModal').classList.remove('active'); }
-        function saveVendor() {
+        async function saveVendor() {
             const id = document.getElementById('vendorId').value;
             const data = {
                 id: id ? parseInt(id) : Date.now(),
@@ -455,12 +507,11 @@
                 notes: document.getElementById('v-notes').value
             };
             if(!data.name) return alert('請填寫廠商名稱');
-            if(id) vendors[vendors.findIndex(x => x.id === parseInt(id))] = data;
-            else vendors.unshift(data);
-            closeVendorModal(); renderVendors();
+            closeVendorModal();
+            await fetchAPI('saveVendor', data);
         }
-        function deleteVendor(id) {
-            if(confirm('確定要刪除這個廠商嗎？')) { vendors = vendors.filter(x => x.id !== id); renderVendors(); }
+        async function deleteVendor(id) {
+            if(confirm('確定要刪除這個廠商嗎？')) { await fetchAPI('deleteVendor', null, id); }
         }
 
         // --- Orders ---
@@ -556,8 +607,8 @@
             }
         }
 
-        function deleteOrder(id) {
-            if(confirm('確定要刪除整筆訂貨單嗎？')) { orders = orders.filter(x => x.id !== id); renderOrders(); }
+        async function deleteOrder(id) {
+            if(confirm('確定要刪除整筆訂貨單嗎？')) { await fetchAPI('deleteOrder', null, id); }
         }
 
         function toggleAllItems(orderId, checkbox) {
@@ -616,7 +667,7 @@
             document.getElementById('batch-items-container').appendChild(div);
         }
 
-        function saveBatchOrder() {
+        async function saveBatchOrder() {
             const date = document.getElementById('batch-date').value;
             const vendorId = document.getElementById('batch-vendor').value;
             if(!date || !vendorId) return alert('請選擇日期與廠商');
@@ -640,45 +691,52 @@
 
             if(newItems.length === 0) return alert('請至少填寫一個商品名稱');
 
+            let orderData;
             if (currentEditingOrderId) {
-                const o = orders.find(x => x.id === currentEditingOrderId);
-                o.items.push(...newItems);
+                orderData = orders.find(x => x.id === currentEditingOrderId);
+                orderData.items.push(...newItems);
             } else {
-                orders.unshift({
+                orderData = {
                     id: Date.now(),
                     date: date,
                     vendorId: parseInt(vendorId),
                     items: newItems
-                });
+                };
             }
             
             closeBatchAddModal();
-            renderOrders();
+            await fetchAPI('saveOrder', orderData);
+            
             // Automatically expand the modified order
             setTimeout(() => {
-                const orderId = currentEditingOrderId || orders[0].id;
+                const orderId = currentEditingOrderId || orderData.id;
                 const row = document.getElementById(`sub-row-${orderId}`);
                 if(row) {
                     row.classList.add('active');
                     const icon = row.previousElementSibling.querySelector('i');
                     icon.classList.remove('fa-chevron-right'); icon.classList.add('fa-chevron-down');
                 }
-            }, 50);
+            }, 100);
         }
 
         // --- Batch Edit & Delete ---
-        function batchDeleteItems(orderId) {
+        async function batchDeleteItems(orderId) {
             const chks = document.querySelectorAll(`.item-chk-${orderId}:checked`);
             if(chks.length === 0) return alert('請先勾選要刪除的商品');
             if(confirm(`確定要刪除勾選的 ${chks.length} 件商品嗎？`)) {
                 const o = orders.find(x => x.id === orderId);
                 const idsToRemove = Array.from(chks).map(c => parseFloat(c.value));
                 o.items = o.items.filter(item => !idsToRemove.includes(item.itemId));
-                renderOrders();
-                // keep expanded
-                const row = document.getElementById(`sub-row-${orderId}`);
-                row.classList.add('active');
-                row.previousElementSibling.querySelector('i').classList.replace('fa-chevron-right', 'fa-chevron-down');
+                
+                await fetchAPI('saveOrder', o);
+                
+                setTimeout(() => {
+                    const row = document.getElementById(`sub-row-${orderId}`);
+                    if(row) {
+                        row.classList.add('active');
+                        row.previousElementSibling.querySelector('i').classList.replace('fa-chevron-right', 'fa-chevron-down');
+                    }
+                }, 100);
             }
         }
 
@@ -720,7 +778,7 @@
 
         function closeBatchEditModal() { document.getElementById('batchEditModal').classList.remove('active'); }
 
-        function saveBatchEdit() {
+        async function saveBatchEdit() {
             const rows = document.querySelectorAll('.batch-edit-row');
             const o = orders.find(x => x.id === editOrderId);
             
@@ -738,11 +796,15 @@
             });
             
             closeBatchEditModal();
-            renderOrders();
-            // keep expanded
-            const row = document.getElementById(`sub-row-${editOrderId}`);
-            row.classList.add('active');
-            row.previousElementSibling.querySelector('i').classList.replace('fa-chevron-right', 'fa-chevron-down');
+            await fetchAPI('saveOrder', o);
+            
+            setTimeout(() => {
+                const row = document.getElementById(`sub-row-${editOrderId}`);
+                if(row) {
+                    row.classList.add('active');
+                    row.previousElementSibling.querySelector('i').classList.replace('fa-chevron-right', 'fa-chevron-down');
+                }
+            }, 100);
         }
 
         // --- Edit Main Order ---
@@ -763,7 +825,7 @@
             document.getElementById('editOrderMainModal').classList.remove('active');
         }
 
-        function saveEditOrderMain() {
+        async function saveEditOrderMain() {
             const orderId = parseInt(document.getElementById('edit-main-order-id').value);
             const date = document.getElementById('edit-main-date').value;
             const vendorId = document.getElementById('edit-main-vendor').value;
@@ -777,7 +839,7 @@
             }
             
             closeEditOrderMainModal();
-            renderOrders();
+            await fetchAPI('saveOrder', o);
         }
 
     </script>
