@@ -624,7 +624,7 @@
                 
                 if (o.shipped === '已出貨') {
                     btn.className = 'btn btn-sm btn-success';
-                    btn.innerHTML = `<i class="fa-solid fa-check"></i> 已出貨 ${o.shippedDate ? `(${o.shippedDate})` : ''}`;
+                    btn.innerHTML = `<i class="fa-solid fa-check"></i> 已出貨 ${o.shippedDate ? `<br>(${o.shippedDate})` : ''}`;
                 } else {
                     btn.className = 'btn btn-sm btn-danger';
                     btn.innerHTML = '<i class="fa-solid fa-xmark"></i> 未出貨';
@@ -1119,7 +1119,7 @@
                     <td>${totalPrice.toLocaleString()}</td>
                     <td style="text-align: center;">
                         <button class="btn btn-sm ${o.shipped === '已出貨' ? 'btn-success' : 'btn-danger'}" onclick="toggleOrderStatus(${o.id}, this, event)">
-                            ${o.shipped === '已出貨' ? `<i class="fa-solid fa-check"></i> 已出貨 ${o.shippedDate ? `(${o.shippedDate})` : ''}` : '<i class="fa-solid fa-xmark"></i> 未出貨'}
+                            ${o.shipped === '已出貨' ? `<i class="fa-solid fa-check"></i> 已出貨 ${o.shippedDate ? `<br>(${o.shippedDate})` : ''}` : '<i class="fa-solid fa-xmark"></i> 未出貨'}
                         </button>
                     </td>
                     <td style="display: flex; gap: 0.5rem; justify-content: center;">

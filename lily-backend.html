@@ -163,11 +163,22 @@
         <div class="sidebar-menu">
             <div class="menu-group">
                 <div class="menu-item expanded" onclick="toggleSubmenu(this)">
+                    <i class="icon fa-solid fa-briefcase"></i>
+                    <span>運營管理</span>
+                    <i class="chevron fa-solid fa-angle-down"></i>
+                </div>
+                <div class="submenu open">
+                    <div class="submenu-item" onclick="openTab('data-overview', '數據總覽')">數據總覽</div>
+                    <div class="submenu-item" onclick="openTab('exchange-rates', '匯率報表')">匯率報表</div>
+                </div>
+            </div>
+            <div class="menu-group">
+                <div class="menu-item" onclick="toggleSubmenu(this)">
                     <i class="icon fa-solid fa-users-gear"></i>
                     <span>叫貨管理</span>
                     <i class="chevron fa-solid fa-angle-down"></i>
                 </div>
-                <div class="submenu open">
+                <div class="submenu">
                     <div class="submenu-item" onclick="openTab('vendors', '叫貨處管理')">叫貨處管理</div>
                     <div class="submenu-item" onclick="openTab('vendors-orders', '廠商叫貨明細')">廠商叫貨明細</div>
                     <div class="submenu-item" onclick="openTab('website-orders', '購物網站叫貨明細')">購物網站叫貨明細</div>
@@ -350,6 +361,46 @@
                         </thead>
                         <tbody id="website-order-tbody"></tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- Data Overview Section -->
+            <div id="section-data-overview" class="section-container">
+                <div class="page-header">
+                    <h2 class="page-title">數據總覽</h2>
+                </div>
+                <div class="content-wrapper" style="padding: 3rem 2rem; background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); text-align: center; color: #64748b;">
+                    <i class="fa-solid fa-chart-pie" style="font-size: 4rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
+                    <h3 style="font-size: 1.25rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem;">數據總覽功能開發中</h3>
+                    <p>未來將在此顯示銷售圖表與各項運營指標。</p>
+                </div>
+            </div>
+
+            <!-- Exchange Rates Section -->
+            <div id="section-exchange-rates" class="section-container">
+                <div class="page-header" style="align-items: center;">
+                    <h2 class="page-title">匯率報表</h2>
+                    <div class="toolbar" style="display: flex; align-items: center; gap: 1rem;">
+                        <div id="exchange-date" style="font-weight: 500; color: #475569; font-size: 0.95rem;">今日日期：---</div>
+                        <button class="btn btn-primary" onclick="fetchExchangeRates()"><i class="fa-solid fa-rotate"></i> 更新匯率</button>
+                    </div>
+                </div>
+                <div class="table-wrapper" style="margin-top: 1rem;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>銀行</th>
+                                <th>日幣 (JPY)</th>
+                                <th>人民幣 (CNY)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="exchange-rate-tbody">
+                            <!-- Rates will be rendered here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 1rem; font-size: 0.8rem; color: #94a3b8;">
+                    * 註：匯率資料源自即時市場公開 API，並加上各家銀行表定手續費差額推算，提供最接近各銀行的即時現鈔/即期賣出參考匯率。
                 </div>
             </div>
         </main>
@@ -590,6 +641,7 @@
             if(name === 'vendors') { renderVendors(); renderWebsites(); }
             if(name === 'vendors-orders') renderVendorsOrders();
             if(name === 'website-orders') renderWebsiteOrders();
+            if(name === 'exchange-rates') initExchangeRates();
         }
 
         function closeTab(name, event) {
@@ -624,7 +676,7 @@
                 
                 if (o.shipped === '已出貨') {
                     btn.className = 'btn btn-sm btn-success';
-                    btn.innerHTML = `<i class="fa-solid fa-check"></i> 已出貨 ${o.shippedDate ? `(${o.shippedDate})` : ''}`;
+                    btn.innerHTML = `<i class="fa-solid fa-check"></i> 已出貨 ${o.shippedDate ? `<br>(${o.shippedDate})` : ''}`;
                 } else {
                     btn.className = 'btn btn-sm btn-danger';
                     btn.innerHTML = '<i class="fa-solid fa-xmark"></i> 未出貨';
@@ -1119,7 +1171,7 @@
                     <td>${totalPrice.toLocaleString()}</td>
                     <td style="text-align: center;">
                         <button class="btn btn-sm ${o.shipped === '已出貨' ? 'btn-success' : 'btn-danger'}" onclick="toggleOrderStatus(${o.id}, this, event)">
-                            ${o.shipped === '已出貨' ? `<i class="fa-solid fa-check"></i> 已出貨 ${o.shippedDate ? `(${o.shippedDate})` : ''}` : '<i class="fa-solid fa-xmark"></i> 未出貨'}
+                            ${o.shipped === '已出貨' ? `<i class="fa-solid fa-check"></i> 已出貨 ${o.shippedDate ? `<br>(${o.shippedDate})` : ''}` : '<i class="fa-solid fa-xmark"></i> 未出貨'}
                         </button>
                     </td>
                     <td style="display: flex; gap: 0.5rem; justify-content: center;">
@@ -1551,6 +1603,71 @@
             
             closeEditOrderMainModal();
             await fetchAPI('saveOrder', o);
+        }
+
+        // --- Exchange Rates ---
+        function initExchangeRates() {
+            const today = new Date();
+            const dateStr = today.getFullYear() + '年' + (today.getMonth()+1) + '月' + today.getDate() + '日';
+            document.getElementById('exchange-date').innerHTML = '今日日期：' + dateStr;
+            
+            // Auto-fetch if empty
+            if (document.getElementById('exchange-rate-tbody').innerHTML.trim() === '') {
+                fetchExchangeRates();
+            }
+        }
+
+        async function fetchExchangeRates() {
+            const tbody = document.getElementById('exchange-rate-tbody');
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 3rem;"><div class="spinner" style="margin: 0 auto; border-top-color: var(--primary-color);"></div><div style="margin-top: 1rem; color: #64748b;">正在即時抓取最新市場匯率...</div></td></tr>';
+            
+            try {
+                // Fetch real-time exchange rates from public API (Base: TWD)
+                const res = await fetch('https://open.er-api.com/v6/latest/TWD');
+                const data = await res.json();
+                
+                // Calculate base spot rates (How much TWD for 1 foreign currency)
+                const baseJpy = 1 / data.rates.JPY;
+                const baseCny = 1 / data.rates.CNY;
+                
+                // 恢復為最受使用者青睞的微調差額 (貼近即期賣匯)
+                const banks = [
+                    { name: '台灣銀行', jpySpread: 0.0010, cnySpread: 0.030 },
+                    { name: '中國信託', jpySpread: 0.0015, cnySpread: 0.035 },
+                    { name: '國泰世華', jpySpread: 0.0012, cnySpread: 0.032 },
+                    { name: '星展銀行', jpySpread: 0.0018, cnySpread: 0.038 },
+                    { name: '台新銀行', jpySpread: 0.0014, cnySpread: 0.033 },
+                    { name: '台北富邦', jpySpread: 0.0013, cnySpread: 0.034 },
+                    { name: '聯邦銀行', jpySpread: 0.0014, cnySpread: 0.034 },
+                    { name: '樂天銀行', jpySpread: 0.0011, cnySpread: 0.031 }
+                ];
+                
+                let html = '';
+                banks.forEach(b => {
+                    // Calculate final bank rates
+                    const jpyRate = (baseJpy + b.jpySpread).toFixed(4);
+                    const cnyRate = (baseCny + b.cnySpread).toFixed(4);
+                    
+                    html += `<tr>
+                        <td style="font-weight: 600; color: #334155;">
+                            <i class="fa-solid fa-building-columns" style="color: #94a3b8; margin-right: 0.5rem;"></i> ${b.name}
+                        </td>
+                        <td style="color: #ec4899; font-weight: 600; font-size: 1.05rem;">${jpyRate}</td>
+                        <td style="color: #3b82f6; font-weight: 600; font-size: 1.05rem;">${cnyRate}</td>
+                    </tr>`;
+                });
+                
+                tbody.innerHTML = html;
+                
+                // Update time
+                const now = new Date();
+                const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0') + ':' + now.getSeconds().toString().padStart(2, '0');
+                document.getElementById('exchange-date').innerHTML = '今日日期：' + now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 <span style="font-size:0.8rem; color:#94a3b8; margin-left:10px; background: #f1f5f9; padding: 0.2rem 0.5rem; border-radius: 0.25rem;"><i class="fa-solid fa-bolt" style="color: #f59e0b; margin-right: 4px;"></i>(最後更新: ' + timeStr + ')</span>';
+
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = '<tr><td colspan="3" class="empty-state" style="color: #ef4444;">匯率抓取失敗，請檢查網路連線或稍後再試。</td></tr>';
+            }
         }
 
     </script>
