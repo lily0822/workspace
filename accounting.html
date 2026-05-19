@@ -17,16 +17,184 @@
         </a>
         <header class="app-header">
             <div class="header-content">
-                <h1><i class="fa-solid fa-file-invoice-dollar"></i> 記帳區域</h1>
+                <h1><i class="fa-solid fa-file-invoice-dollar"></i> 集運帳表</h1>
                 <p>營收、對帳與繳費狀態管理</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="openModal()" style="background-color: #f59e0b; color: white;"><i class="fa-solid fa-plus"></i> 新增集運單</button>
             </div>
         </header>
         
-        <main class="app-main" style="text-align: center; padding: 4rem 2rem; background: var(--surface-color); border-radius: 1rem; border: 1px solid var(--border-color); margin-top: 1rem;">
-            <i class="fa-solid fa-person-digging" style="font-size: 4rem; color: var(--border-color); margin-bottom: 1rem;"></i>
-            <h2 style="color: var(--text-secondary);">網頁建置中</h2>
-            <p style="color: var(--text-secondary); margin-top: 0.5rem;">未來的記帳表單即將上線！</p>
+        <main class="app-main" style="background: var(--surface-color); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); margin-top: 1rem;">
+            <!-- Top Dropdown -->
+            <div style="margin-bottom: 1.5rem;">
+                <select id="companyFilter" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 0.5rem; background-color: var(--surface-color); font-size: 1rem; color: var(--text-primary); appearance: none; cursor: pointer; background-image: url('data:image/svg+xml;utf8,<svg fill=%22%23475569%22 height=%2224%22 viewBox=%220 0 24 24%22 width=%2224%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/></svg>'); background-repeat: no-repeat; background-position: right 1rem center;">
+                    <option value="全部">全部</option>
+                    <option value="Howgowin">Howgowin</option>
+                    <option value="大陸集運">大陸集運</option>
+                </select>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs" style="display: flex; gap: 1.5rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem;">
+                <div class="tab" style="padding: 0.5rem 1rem; cursor: pointer; color: var(--text-secondary);">待受理</div>
+                <div class="tab" style="padding: 0.5rem 1rem; cursor: pointer; color: var(--text-secondary);">未付款</div>
+                <div class="tab" style="padding: 0.5rem 1rem; cursor: pointer; color: var(--text-secondary);">待出貨</div>
+                <div class="tab" style="padding: 0.5rem 1rem; cursor: pointer; color: var(--text-secondary);">已出貨</div>
+                <div class="tab active" style="padding: 0.5rem 1rem; cursor: pointer; font-weight: 600; color: #f59e0b; border-bottom: 2px solid #f59e0b;">已完成</div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-container" style="box-shadow: none; border: none; border-radius: 0;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap;">
+                    <thead>
+                        <tr>
+                            <th style="background: transparent; border-bottom: 1px solid var(--border-color);">集運單號</th>
+                            <th style="background: transparent; border-bottom: 1px solid var(--border-color);">收件人</th>
+                            <th style="background: transparent; border-bottom: 1px solid var(--border-color);">集運費用(TWD)</th>
+                            <th style="background: transparent; border-bottom: 1px solid var(--border-color);">付款方式</th>
+                            <th style="background: transparent; border-bottom: 1px solid var(--border-color);">付款狀態</th>
+                            <th style="background: transparent; border-bottom: 1px solid var(--border-color);">付款時間</th>
+                            <th style="background: transparent; border-bottom: 1px solid var(--border-color);">出貨時間</th>
+                            <th style="background: transparent; border-bottom: 1px solid var(--border-color); text-align: center;">明細</th>
+                            <th style="background: transparent; border-bottom: 1px solid var(--border-color); text-align: center;">發票</th>
+                            <th style="background: transparent; border-bottom: 1px solid var(--border-color); text-align: center;">貨況</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="color: var(--text-secondary);">TYO1616000309</td>
+                            <td style="color: var(--text-secondary);">鄧麗華</td>
+                            <td style="color: var(--text-secondary);">1384</td>
+                            <td style="color: var(--text-secondary);">系統帳單</td>
+                            <td style="color: var(--text-secondary);">已付款</td>
+                            <td style="color: var(--text-secondary);">2026-05-18 14:16:20</td>
+                            <td style="color: var(--text-secondary);">2026-05-09 13:37:11</td>
+                            <td style="text-align: center;"><button class="action-square-btn"><i class="fa-solid fa-pen-to-square"></i></button></td>
+                            <td style="text-align: center;"><button class="action-square-btn"><i class="fa-solid fa-file-invoice"></i></button></td>
+                            <td style="text-align: center;"><button class="action-square-btn"><i class="fa-solid fa-truck"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td style="color: var(--text-secondary);">TYO6631515626</td>
+                            <td style="color: var(--text-secondary);">鄧麗華</td>
+                            <td style="color: var(--text-secondary);">3216</td>
+                            <td style="color: var(--text-secondary);">系統帳單</td>
+                            <td style="color: var(--text-secondary);">已付款</td>
+                            <td style="color: var(--text-secondary);">2026-05-08 15:00:39</td>
+                            <td style="color: var(--text-secondary);">2026-04-28 11:15:52</td>
+                            <td style="text-align: center;"><button class="action-square-btn"><i class="fa-solid fa-pen-to-square"></i></button></td>
+                            <td style="text-align: center;"><button class="action-square-btn"><i class="fa-solid fa-file-invoice"></i></button></td>
+                            <td style="text-align: center;"><button class="action-square-btn"><i class="fa-solid fa-truck"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td style="color: var(--text-secondary);">TYO2617873286</td>
+                            <td style="color: var(--text-secondary);">鄧麗華</td>
+                            <td style="color: var(--text-secondary);">2848</td>
+                            <td style="color: var(--text-secondary);">系統帳單</td>
+                            <td style="color: var(--text-secondary);">已付款</td>
+                            <td style="color: var(--text-secondary);">2026-05-08 14:59:58</td>
+                            <td style="color: var(--text-secondary);">2026-04-28 11:15:43</td>
+                            <td style="text-align: center;"><button class="action-square-btn"><i class="fa-solid fa-pen-to-square"></i></button></td>
+                            <td style="text-align: center;"><button class="action-square-btn"><i class="fa-solid fa-file-invoice"></i></button></td>
+                            <td style="text-align: center;"><button class="action-square-btn"><i class="fa-solid fa-truck"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td style="color: var(--text-secondary);">TYO5184368686</td>
+                            <td style="color: var(--text-secondary);">鄧麗華</td>
+                            <td style="color: var(--text-secondary);">1611</td>
+                            <td style="color: var(--text-secondary);">系統帳單</td>
+                            <td style="color: var(--text-secondary);">已付款</td>
+                            <td style="color: var(--text-secondary);">2026-05-08 14:59:08</td>
+                            <td style="color: var(--text-secondary);">2026-04-28 11:15:32</td>
+                            <td style="text-align: center;"><button class="action-square-btn"><i class="fa-solid fa-pen-to-square"></i></button></td>
+                            <td style="text-align: center;"><button class="action-square-btn"><i class="fa-solid fa-file-invoice"></i></button></td>
+                            <td style="text-align: center;"><button class="action-square-btn"><i class="fa-solid fa-truck"></i></button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </main>
     </div>
+
+    <!-- Modal for New Order -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-plus"></i> 新增集運單</h2>
+                <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="addForm">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label>集運公司</label>
+                        <select id="newCompany" style="padding: 0.625rem; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 0.5rem; width: 100%;">
+                            <option value="Howgowin">Howgowin</option>
+                            <option value="大陸集運">大陸集運</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>集運單號</label>
+                        <input type="text" id="newOrderNo" placeholder="輸入單號">
+                    </div>
+                    <div class="form-group">
+                        <label>收件人</label>
+                        <input type="text" id="newRecipient" placeholder="輸入收件人姓名">
+                    </div>
+                    <div class="form-group">
+                        <label>集運費用 (TWD)</label>
+                        <input type="number" id="newCost" placeholder="輸入費用">
+                    </div>
+                    <div class="form-group">
+                        <label>付款方式</label>
+                        <input type="text" id="newPayment" placeholder="例如: 系統帳單">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveOrder()" style="background-color: #f59e0b;">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    .action-square-btn {
+        background-color: #f59e0b; /* Orange */
+        color: white;
+        border: none;
+        border-radius: 4px;
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .action-square-btn:hover {
+        background-color: #d97706;
+    }
+    .tab {
+        transition: color 0.2s;
+    }
+    .tab:hover {
+        color: #f59e0b !important;
+    }
+    </style>
+
+    <script>
+    function openModal() {
+        document.getElementById('addModal').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('addModal').classList.remove('active');
+    }
+
+    function saveOrder() {
+        alert('此為版面預覽，尚未連接資料庫');
+        closeModal();
+    }
+    </script>
 </body>
 </html>
