@@ -1821,6 +1821,20 @@
             persistProductManagement(); renderProductTags(); await syncProductCatalog(type);
         }
 
+        function renderProductTags() {
+            const tbody = document.getElementById('product-tags-tbody');
+            if (!tbody) return;
+            if (!Array.isArray(productTags) || productTags.length === 0) {
+                productTags = defaultProductTags();
+                persistProductManagement();
+                renderProductTagOptions();
+            }
+            tbody.innerHTML = productTags.map(tag => {
+                const usage = stockProducts.filter(product => (product.tagIds || []).map(String).includes(String(tag.id))).length + preorderProducts.filter(product => (product.tagIds || []).map(String).includes(String(tag.id))).length;
+                return `<tr><td>${tagPill(tag.id)}</td><td><span style="display:inline-flex;align-items:center;gap:0.5rem;"><span style="width:1rem;height:1rem;border-radius:999px;background:${tag.color};display:inline-block;"></span>${escapeHtml(tag.color)}</span></td><td>${usage} 個商品</td><td style="text-align:center;"><button class="btn btn-sm btn-action-delete" onclick="deleteProductTag(${tag.id})"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+            }).join('');
+        }
+
         function saveProductTag(event) {
             event.preventDefault();
             const name = document.getElementById('product-tag-name').value.trim(); const color = document.getElementById('product-tag-color').value; if (!name) return;
