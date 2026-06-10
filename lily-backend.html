@@ -196,6 +196,18 @@
             </div>
             <div class="menu-group">
                 <div class="menu-item" onclick="toggleSubmenu(this)">
+                    <i class="icon fa-solid fa-boxes-stacked"></i>
+                    <span>商品管理</span>
+                    <i class="chevron fa-solid fa-angle-down"></i>
+                </div>
+                <div class="submenu">
+                    <div class="submenu-item" onclick="openTab('stock-products', '現貨商品管理')">現貨商品管理</div>
+                    <div class="submenu-item" onclick="openTab('preorder-products', '預購商品管理')">預購商品管理</div>
+                    <div class="submenu-item" onclick="openTab('product-tags', '商品標籤管理')">商品標籤管理</div>
+                </div>
+            </div>
+            <div class="menu-group">
+                <div class="menu-item" onclick="toggleSubmenu(this)">
                     <i class="icon fa-solid fa-chart-line"></i>
                     <span>帳表管理</span>
                     <i class="chevron fa-solid fa-angle-down"></i>
@@ -424,6 +436,162 @@
                 </div>
             </div>
 
+
+
+            <!-- Stock Product Management Section -->
+            <div id="section-stock-products" class="section-container">
+                <div class="page-header">
+                    <h2 class="page-title">現貨商品管理</h2>
+                    <button class="btn btn-secondary" onclick="resetProductForm('stock')"><i class="fa-solid fa-rotate-left"></i> 清空表單</button>
+                </div>
+                <div class="table-wrapper" style="padding: 1.25rem;">
+                    <form id="stock-product-form" onsubmit="saveStockProduct(event)" class="form-row" style="flex-wrap: wrap;">
+                        <input type="hidden" id="stock-product-id">
+                        <input type="hidden" id="stock-image-data">
+                        <div class="form-group" style="min-width: 220px;">
+                            <label>商品名稱</label>
+                            <input type="text" id="stock-name" placeholder="例：大耳狗吊飾" required>
+                        </div>
+                        <div class="form-group" style="max-width: 140px;">
+                            <label>售價 TWD</label>
+                            <input type="number" id="stock-price" min="0" placeholder="490" required>
+                        </div>
+                        <div class="form-group" style="max-width: 140px;">
+                            <label>庫存數量</label>
+                            <input type="number" id="stock-quantity" min="0" placeholder="12" required>
+                        </div>
+                        <div class="form-group" style="max-width: 180px;">
+                            <label>商品標籤</label>
+                            <select id="stock-tag"></select>
+                        </div>
+                        <div class="form-group" style="min-width: 220px;">
+                            <label>商品圖片</label>
+                            <input type="file" id="stock-image" accept="image/*" onchange="previewProductImage(this, 'stock-image-data', 'stock-image-preview')">
+                        </div>
+                        <div class="form-group" style="min-width: 260px;">
+                            <label>商品描述</label>
+                            <input type="text" id="stock-description" placeholder="現貨特色、尺寸或注意事項">
+                        </div>
+                        <div style="display: flex; align-items: flex-end; gap: 0.75rem;">
+                            <img id="stock-image-preview" alt="現貨圖片預覽" style="width: 56px; height: 56px; object-fit: cover; border-radius: 0.5rem; border: 1px solid #e2e8f0; display: none;">
+                            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> 儲存現貨商品</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 88px;">圖片</th>
+                                <th>商品名稱</th>
+                                <th>標籤</th>
+                                <th>庫存</th>
+                                <th>售價</th>
+                                <th>狀態</th>
+                                <th style="width: 120px; text-align: center;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stock-products-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Preorder Product Management Section -->
+            <div id="section-preorder-products" class="section-container">
+                <div class="page-header">
+                    <h2 class="page-title">預購商品管理</h2>
+                    <button class="btn btn-secondary" onclick="resetProductForm('preorder')"><i class="fa-solid fa-rotate-left"></i> 清空表單</button>
+                </div>
+                <div class="table-wrapper" style="padding: 1.25rem;">
+                    <form id="preorder-product-form" onsubmit="savePreorderProduct(event)" class="form-row" style="flex-wrap: wrap;">
+                        <input type="hidden" id="preorder-product-id">
+                        <input type="hidden" id="preorder-image-data">
+                        <div class="form-group" style="min-width: 220px;">
+                            <label>商品名稱</label>
+                            <input type="text" id="preorder-name" placeholder="例：限定睡衣派對吊飾" required>
+                        </div>
+                        <div class="form-group" style="max-width: 140px;">
+                            <label>預購售價 TWD</label>
+                            <input type="number" id="preorder-price" min="0" placeholder="760" required>
+                        </div>
+                        <div class="form-group" style="max-width: 140px;">
+                            <label>名額 / 預收量</label>
+                            <input type="number" id="preorder-quota" min="0" placeholder="20" required>
+                        </div>
+                        <div class="form-group" style="max-width: 190px;">
+                            <label>結單時間</label>
+                            <input type="datetime-local" id="preorder-deadline" required>
+                        </div>
+                        <div class="form-group" style="max-width: 180px;">
+                            <label>商品標籤</label>
+                            <select id="preorder-tag"></select>
+                        </div>
+                        <div class="form-group" style="min-width: 220px;">
+                            <label>商品圖片</label>
+                            <input type="file" id="preorder-image" accept="image/*" onchange="previewProductImage(this, 'preorder-image-data', 'preorder-image-preview')">
+                        </div>
+                        <div class="form-group" style="min-width: 260px;">
+                            <label>預購說明</label>
+                            <input type="text" id="preorder-description" placeholder="結單、到貨週期或預購注意事項">
+                        </div>
+                        <div style="display: flex; align-items: flex-end; gap: 0.75rem;">
+                            <img id="preorder-image-preview" alt="預購圖片預覽" style="width: 56px; height: 56px; object-fit: cover; border-radius: 0.5rem; border: 1px solid #e2e8f0; display: none;">
+                            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> 儲存預購商品</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 88px;">圖片</th>
+                                <th>商品名稱</th>
+                                <th>標籤</th>
+                                <th>名額</th>
+                                <th>售價</th>
+                                <th>結單倒數</th>
+                                <th style="width: 120px; text-align: center;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="preorder-products-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Product Tag Management Section -->
+            <div id="section-product-tags" class="section-container">
+                <div class="page-header">
+                    <h2 class="page-title">商品標籤管理</h2>
+                </div>
+                <div class="table-wrapper" style="padding: 1.25rem;">
+                    <form id="product-tag-form" onsubmit="saveProductTag(event)" class="form-row" style="align-items: flex-end; flex-wrap: wrap;">
+                        <div class="form-group" style="max-width: 220px;">
+                            <label>標籤名稱</label>
+                            <input type="text" id="product-tag-name" placeholder="例：日本限定" required>
+                        </div>
+                        <div class="form-group" style="max-width: 140px;">
+                            <label>標籤顏色</label>
+                            <input type="color" id="product-tag-color" value="#ec4899">
+                        </div>
+                        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-plus"></i> 新增標籤</button>
+                    </form>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>標籤</th>
+                                <th>顏色</th>
+                                <th>使用數</th>
+                                <th style="width: 120px; text-align: center;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="product-tags-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            
             <!-- Data Overview Section -->
             <div id="section-data-overview" class="section-container">
                 <div class="page-header">
@@ -838,6 +1006,9 @@
             if(name === 'vendors-orders') renderVendorsOrders();
             if(name === 'website-orders') renderWebsiteOrders();
             if(name === 'customer-orders') renderCustomerOrders();
+            if(name === 'stock-products') renderStockProducts();
+            if(name === 'preorder-products') renderPreorderProducts();
+            if(name === 'product-tags') renderProductTags();
             if(name === 'exchange-rates') initExchangeRates();
         }
 
@@ -925,9 +1096,15 @@
         // --- Data & API ---
         const API_URL = 'https://script.google.com/macros/s/AKfycbyC48NPyP1ookWXtJAiV9TAUO05rLcroNAF_Bd9GrNDHWCaTF4YrbKmKzT-mHpI-a7Fgw/exec';
         const CUSTOMER_ORDER_SOURCE_ID = 2026061002;
+        const PRODUCT_TAGS_KEY = 'pinkkkuin_product_tags';
+        const STOCK_PRODUCTS_KEY = 'pinkkkuin_stock_products';
+        const PREORDER_PRODUCTS_KEY = 'pinkkkuin_preorder_products';
         let vendors = [];
         let websites = [];
         let orders = [];
+        let productTags = [];
+        let stockProducts = [];
+        let preorderProducts = [];
 
         function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
         function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
@@ -1026,6 +1203,7 @@
 
         // 頁面載入時初始化資料
         window.addEventListener('DOMContentLoaded', loadData);
+        window.addEventListener('DOMContentLoaded', initProductManagement);
 
         function populateFilterVendors() {
             const vSelectNormal = document.getElementById('filter-v-vendor');
@@ -1176,6 +1354,331 @@
             renderWebsiteOrders();
         }
 
+
+
+        function safeParseStorage(key, fallback) {
+            try {
+                const saved = localStorage.getItem(key);
+                return saved ? JSON.parse(saved) : fallback;
+            } catch (error) {
+                console.warn(`Failed to parse ${key}`, error);
+                return fallback;
+            }
+        }
+
+        function defaultProductTags() {
+            return [
+                { id: 1, name: '日本限定', color: '#ec4899' },
+                { id: 2, name: '熱門現貨', color: '#10b981' },
+                { id: 3, name: '預購倒數', color: '#f59e0b' }
+            ];
+        }
+
+        function defaultStockProducts() {
+            return [
+                {
+                    id: 1,
+                    name: '大耳狗雲朵吊飾',
+                    price: 490,
+                    quantity: 12,
+                    tagId: 2,
+                    description: '台灣現貨，付款後 1-2 個工作天出貨。',
+                    image: ''
+                }
+            ];
+        }
+
+        function defaultPreorderProducts() {
+            const deadline = new Date();
+            deadline.setDate(deadline.getDate() + 7);
+            return [
+                {
+                    id: 1,
+                    name: 'ちいかわ 東京限定吊飾組',
+                    price: 760,
+                    quota: 20,
+                    tagId: 3,
+                    deadline: deadline.toISOString().slice(0, 16),
+                    description: '日本結單制預購，預計 4-6 週抵台。',
+                    image: ''
+                }
+            ];
+        }
+
+        function initProductManagement() {
+            productTags = safeParseStorage(PRODUCT_TAGS_KEY, defaultProductTags());
+            stockProducts = safeParseStorage(STOCK_PRODUCTS_KEY, defaultStockProducts());
+            preorderProducts = safeParseStorage(PREORDER_PRODUCTS_KEY, defaultPreorderProducts());
+            persistProductManagement();
+            renderProductTagOptions();
+            renderStockProducts();
+            renderPreorderProducts();
+            renderProductTags();
+            setInterval(renderPreorderProducts, 60000);
+        }
+
+        function persistProductManagement() {
+            localStorage.setItem(PRODUCT_TAGS_KEY, JSON.stringify(productTags));
+            localStorage.setItem(STOCK_PRODUCTS_KEY, JSON.stringify(stockProducts));
+            localStorage.setItem(PREORDER_PRODUCTS_KEY, JSON.stringify(preorderProducts));
+        }
+
+        function escapeHtml(value = '') {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getProductTag(tagId) {
+            return productTags.find(tag => String(tag.id) === String(tagId)) || { name: '未標籤', color: '#94a3b8' };
+        }
+
+        function renderProductTagOptions() {
+            const options = productTags.map(tag => `<option value="${tag.id}">${escapeHtml(tag.name)}</option>`).join('');
+            ['stock-tag', 'preorder-tag'].forEach(id => {
+                const select = document.getElementById(id);
+                if (select) select.innerHTML = options || '<option value="">尚無標籤</option>';
+            });
+        }
+
+        function productImageCell(image, name) {
+            if (!image) {
+                return '<div style="width:56px;height:56px;border-radius:0.5rem;background:#f1f5f9;display:grid;place-items:center;color:#94a3b8;"><i class="fa-regular fa-image"></i></div>';
+            }
+            return `<img src="${image}" alt="${escapeHtml(name)}" style="width:56px;height:56px;object-fit:cover;border-radius:0.5rem;border:1px solid #e2e8f0;">`;
+        }
+
+        function tagPill(tagId) {
+            const tag = getProductTag(tagId);
+            return `<span style="display:inline-flex;align-items:center;border-radius:999px;padding:0.2rem 0.55rem;background:${tag.color}20;color:${tag.color};font-weight:700;font-size:0.78rem;">${escapeHtml(tag.name)}</span>`;
+        }
+
+        function renderStockProducts() {
+            const tbody = document.getElementById('stock-products-tbody');
+            if (!tbody) return;
+            if (!stockProducts.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">尚未建立現貨商品</td></tr>';
+                return;
+            }
+            tbody.innerHTML = stockProducts.map(product => {
+                const status = Number(product.quantity) > 0 ? '<span style="color:#059669;font-weight:700;">上架中</span>' : '<span style="color:#dc2626;font-weight:700;">售完</span>';
+                return `
+                    <tr>
+                        <td>${productImageCell(product.image, product.name)}</td>
+                        <td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td>
+                        <td>${tagPill(product.tagId)}</td>
+                        <td>${product.quantity}</td>
+                        <td>NT$ ${Number(product.price || 0).toLocaleString()}</td>
+                        <td>${status}</td>
+                        <td style="text-align:center;">
+                            <button class="btn btn-sm btn-action-edit" onclick="editStockProduct(${product.id})"><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn btn-sm btn-action-delete" onclick="deleteStockProduct(${product.id})"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function getPreorderCountdown(deadlineValue) {
+            const deadline = new Date(deadlineValue);
+            const diff = deadline.getTime() - Date.now();
+            if (!deadlineValue || Number.isNaN(deadline.getTime())) return '<span style="color:#94a3b8;">未設定</span>';
+            if (diff <= 0) return '<span style="color:#dc2626;font-weight:700;">已結單</span>';
+            const days = Math.floor(diff / 86400000);
+            const hours = Math.floor((diff % 86400000) / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            return `<span style="color:#be185d;font-weight:800;">${days}天 ${hours}時 ${minutes}分</span>`;
+        }
+
+        function renderPreorderProducts() {
+            const tbody = document.getElementById('preorder-products-tbody');
+            if (!tbody) return;
+            if (!preorderProducts.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">尚未建立預購商品</td></tr>';
+                return;
+            }
+            tbody.innerHTML = preorderProducts.map(product => `
+                <tr>
+                    <td>${productImageCell(product.image, product.name)}</td>
+                    <td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td>
+                    <td>${tagPill(product.tagId)}</td>
+                    <td>${product.quota}</td>
+                    <td>NT$ ${Number(product.price || 0).toLocaleString()}</td>
+                    <td>${getPreorderCountdown(product.deadline)}<div style="color:#64748b;font-size:0.75rem;margin-top:0.2rem;">${product.deadline ? escapeHtml(product.deadline.replace('T', ' ')) : ''}</div></td>
+                    <td style="text-align:center;">
+                        <button class="btn btn-sm btn-action-edit" onclick="editPreorderProduct(${product.id})"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-sm btn-action-delete" onclick="deletePreorderProduct(${product.id})"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderProductTags() {
+            const tbody = document.getElementById('product-tags-tbody');
+            if (!tbody) return;
+            if (!productTags.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-state">尚未建立商品標籤</td></tr>';
+                return;
+            }
+            tbody.innerHTML = productTags.map(tag => {
+                const usage = stockProducts.filter(p => String(p.tagId) === String(tag.id)).length + preorderProducts.filter(p => String(p.tagId) === String(tag.id)).length;
+                return `
+                    <tr>
+                        <td>${tagPill(tag.id)}</td>
+                        <td><span style="display:inline-flex;align-items:center;gap:0.5rem;"><span style="width:1rem;height:1rem;border-radius:999px;background:${tag.color};display:inline-block;"></span>${tag.color}</span></td>
+                        <td>${usage} 個商品</td>
+                        <td style="text-align:center;"><button class="btn btn-sm btn-action-delete" onclick="deleteProductTag(${tag.id})"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function previewProductImage(input, hiddenId, previewId) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = event => {
+                document.getElementById(hiddenId).value = event.target.result;
+                const preview = document.getElementById(previewId);
+                preview.src = event.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetProductForm(type) {
+            const prefix = type === 'preorder' ? 'preorder' : 'stock';
+            document.getElementById(`${prefix}-product-form`).reset();
+            document.getElementById(`${prefix}-product-id`).value = '';
+            document.getElementById(`${prefix}-image-data`).value = '';
+            const preview = document.getElementById(`${prefix}-image-preview`);
+            preview.removeAttribute('src');
+            preview.style.display = 'none';
+        }
+
+        function saveStockProduct(event) {
+            event.preventDefault();
+            const id = document.getElementById('stock-product-id').value;
+            const data = {
+                id: id ? Number(id) : Date.now(),
+                name: document.getElementById('stock-name').value.trim(),
+                price: Number(document.getElementById('stock-price').value || 0),
+                quantity: Number(document.getElementById('stock-quantity').value || 0),
+                tagId: document.getElementById('stock-tag').value,
+                description: document.getElementById('stock-description').value.trim(),
+                image: document.getElementById('stock-image-data').value
+            };
+            if (!data.image && id) data.image = stockProducts.find(product => String(product.id) === String(id))?.image || '';
+            stockProducts = id ? stockProducts.map(product => String(product.id) === String(id) ? data : product) : [data, ...stockProducts];
+            persistProductManagement();
+            resetProductForm('stock');
+            renderStockProducts();
+            renderProductTags();
+        }
+
+        function editStockProduct(id) {
+            const product = stockProducts.find(item => item.id === id);
+            if (!product) return;
+            document.getElementById('stock-product-id').value = product.id;
+            document.getElementById('stock-name').value = product.name;
+            document.getElementById('stock-price').value = product.price;
+            document.getElementById('stock-quantity').value = product.quantity;
+            document.getElementById('stock-tag').value = product.tagId;
+            document.getElementById('stock-description').value = product.description || '';
+            document.getElementById('stock-image-data').value = product.image || '';
+            const preview = document.getElementById('stock-image-preview');
+            if (product.image) {
+                preview.src = product.image;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+
+        function deleteStockProduct(id) {
+            if (!confirm('確定刪除此現貨商品嗎？')) return;
+            stockProducts = stockProducts.filter(product => product.id !== id);
+            persistProductManagement();
+            renderStockProducts();
+            renderProductTags();
+        }
+
+        function savePreorderProduct(event) {
+            event.preventDefault();
+            const id = document.getElementById('preorder-product-id').value;
+            const data = {
+                id: id ? Number(id) : Date.now(),
+                name: document.getElementById('preorder-name').value.trim(),
+                price: Number(document.getElementById('preorder-price').value || 0),
+                quota: Number(document.getElementById('preorder-quota').value || 0),
+                tagId: document.getElementById('preorder-tag').value,
+                deadline: document.getElementById('preorder-deadline').value,
+                description: document.getElementById('preorder-description').value.trim(),
+                image: document.getElementById('preorder-image-data').value
+            };
+            if (!data.image && id) data.image = preorderProducts.find(product => String(product.id) === String(id))?.image || '';
+            preorderProducts = id ? preorderProducts.map(product => String(product.id) === String(id) ? data : product) : [data, ...preorderProducts];
+            persistProductManagement();
+            resetProductForm('preorder');
+            renderPreorderProducts();
+            renderProductTags();
+        }
+
+        function editPreorderProduct(id) {
+            const product = preorderProducts.find(item => item.id === id);
+            if (!product) return;
+            document.getElementById('preorder-product-id').value = product.id;
+            document.getElementById('preorder-name').value = product.name;
+            document.getElementById('preorder-price').value = product.price;
+            document.getElementById('preorder-quota').value = product.quota;
+            document.getElementById('preorder-tag').value = product.tagId;
+            document.getElementById('preorder-deadline').value = product.deadline || '';
+            document.getElementById('preorder-description').value = product.description || '';
+            document.getElementById('preorder-image-data').value = product.image || '';
+            const preview = document.getElementById('preorder-image-preview');
+            if (product.image) {
+                preview.src = product.image;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+
+        function deletePreorderProduct(id) {
+            if (!confirm('確定刪除此預購商品嗎？')) return;
+            preorderProducts = preorderProducts.filter(product => product.id !== id);
+            persistProductManagement();
+            renderPreorderProducts();
+            renderProductTags();
+        }
+
+        function saveProductTag(event) {
+            event.preventDefault();
+            const name = document.getElementById('product-tag-name').value.trim();
+            const color = document.getElementById('product-tag-color').value;
+            if (!name) return;
+            productTags.unshift({ id: Date.now(), name, color });
+            persistProductManagement();
+            event.target.reset();
+            document.getElementById('product-tag-color').value = '#ec4899';
+            renderProductTagOptions();
+            renderProductTags();
+        }
+
+        function deleteProductTag(id) {
+            const usage = stockProducts.some(product => String(product.tagId) === String(id)) || preorderProducts.some(product => String(product.tagId) === String(id));
+            if (usage) return alert('這個標籤目前有商品使用，請先改商品標籤再刪除。');
+            if (!confirm('確定刪除此商品標籤嗎？')) return;
+            productTags = productTags.filter(tag => tag.id !== id);
+            persistProductManagement();
+            renderProductTagOptions();
+            renderProductTags();
+        }
+
+        
         // --- Orders ---
         function renderVendorsOrders() {
             const container = document.getElementById('vendor-orders-container');
