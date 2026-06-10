@@ -186,6 +186,16 @@
             </div>
             <div class="menu-group">
                 <div class="menu-item" onclick="toggleSubmenu(this)">
+                    <i class="icon fa-solid fa-receipt"></i>
+                    <span>訂單管理</span>
+                    <i class="chevron fa-solid fa-angle-down"></i>
+                </div>
+                <div class="submenu">
+                    <div class="submenu-item" onclick="openTab('customer-orders', '客戶訂單明細')">客戶訂單明細</div>
+                </div>
+            </div>
+            <div class="menu-group">
+                <div class="menu-item" onclick="toggleSubmenu(this)">
                     <i class="icon fa-solid fa-chart-line"></i>
                     <span>帳表管理</span>
                     <i class="chevron fa-solid fa-angle-down"></i>
@@ -360,6 +370,56 @@
                             </tr>
                         </thead>
                         <tbody id="website-order-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+
+            <!-- Customer Orders Section -->
+            <div id="section-customer-orders" class="section-container">
+                <div class="page-header" style="flex-wrap: wrap; gap: 1rem; border-bottom: none; padding-bottom: 0;">
+                    <h2 class="page-title" style="flex: 1 1 100%;">客戶訂單明細</h2>
+                    <div class="filter-bar" style="display: flex; gap: 1rem; align-items: flex-end; background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; flex: 1;">
+                        <div class="form-group" style="flex: initial; width: 160px;">
+                            <label>商品 / 客戶關鍵字</label>
+                            <input type="text" id="filter-c-item-name" placeholder="商品、姓名、手機...">
+                        </div>
+                        <div class="form-group" style="flex: initial; width: 140px;">
+                            <label>開始日期</label>
+                            <input type="date" id="filter-c-date-start">
+                        </div>
+                        <div class="form-group" style="flex: initial; width: 140px;">
+                            <label>結束日期</label>
+                            <input type="date" id="filter-c-date-end">
+                        </div>
+                        <div class="form-group" style="flex: initial; width: 120px;">
+                            <label>出貨狀態</label>
+                            <select id="filter-c-shipped-status">
+                                <option value="">全部</option>
+                                <option value="未出貨">未出貨</option>
+                                <option value="已出貨">已出貨</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" style="height: 38px; margin-bottom: 2px;" onclick="renderCustomerOrders()"><i class="fa-solid fa-magnifying-glass"></i> 搜索</button>
+                        <button class="btn btn-secondary" style="height: 38px; margin-bottom: 2px;" onclick="clearCustomerOrderFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
+                    </div>
+                </div>
+                <div style="border-bottom: 2px solid var(--border-color); margin-bottom: 1rem; margin-top: 1rem;"></div>
+                <div class="table-wrapper">
+                    <table style="table-layout: fixed;">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px; text-align: center;"><i class="fa-solid fa-chevron-down"></i></th>
+                                <th style="width: 150px;">訂單日期</th>
+                                <th>訂單來源</th>
+                                <th style="width: 80px;">幣種</th>
+                                <th style="width: 100px;">總件數</th>
+                                <th style="width: 100px;">總金額</th>
+                                <th style="width: 180px; text-align: center;">出貨狀態</th>
+                                <th style="width: 100px; text-align: center;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customer-order-tbody"></tbody>
                     </table>
                 </div>
             </div>
@@ -777,6 +837,7 @@
             if(name === 'vendors') { renderVendors(); renderWebsites(); }
             if(name === 'vendors-orders') renderVendorsOrders();
             if(name === 'website-orders') renderWebsiteOrders();
+            if(name === 'customer-orders') renderCustomerOrders();
             if(name === 'exchange-rates') initExchangeRates();
         }
 
@@ -863,6 +924,7 @@
 
         // --- Data & API ---
         const API_URL = 'https://script.google.com/macros/s/AKfycbyC48NPyP1ookWXtJAiV9TAUO05rLcroNAF_Bd9GrNDHWCaTF4YrbKmKzT-mHpI-a7Fgw/exec';
+        const CUSTOMER_ORDER_SOURCE_ID = 2026061002;
         let vendors = [];
         let websites = [];
         let orders = [];
@@ -927,6 +989,7 @@
                         renderWebsites();
                         if (activeTab === 'vendors-orders') renderVendorsOrders();
                         if (activeTab === 'website-orders') renderWebsiteOrders();
+                        if (activeTab === 'customer-orders') renderCustomerOrders();
                     }
                 } else {
                     alert('發生錯誤: ' + result.message);
@@ -952,6 +1015,7 @@
                 renderWebsites();
                 if (activeTab === 'vendors-orders') renderVendorsOrders();
                 if (activeTab === 'website-orders') renderWebsiteOrders();
+                if (activeTab === 'customer-orders') renderCustomerOrders();
             } catch (err) {
                 console.error(err);
                 alert('無法載入資料，請檢查網路連線。');
@@ -1365,6 +1429,115 @@
                             <td style="text-align: center; color: #64748b; font-weight: 500;">${index + 1}</td>
                             <td>${item.name}</td>
                             <td>${item.link ? `<a href="${item.link}" target="_blank"><i class="fa-solid fa-link"></i></a>` : '-'}</td>
+                            <td>${item.qty}</td>
+                            <td>${item.price}</td>
+                            <td style="font-weight: 600;">${itemTotal}</td>
+                        </tr>`;
+                    });
+                }
+                subHtml += `</tbody></table></div></td>`;
+                subTr.innerHTML = subHtml;
+                tbody.appendChild(subTr);
+            });
+        }
+
+
+        function renderCustomerOrders() {
+            const tbody = document.getElementById('customer-order-tbody');
+            tbody.innerHTML = '';
+
+            const filterStart = document.getElementById('filter-c-date-start')?.value;
+            const filterEnd = document.getElementById('filter-c-date-end')?.value;
+            const filterKeyword = document.getElementById('filter-c-item-name')?.value.trim().toLowerCase();
+            const filterShippedStatus = document.getElementById('filter-c-shipped-status')?.value;
+
+            let customerOrders = orders.filter(o => Number(o.vendorId) === CUSTOMER_ORDER_SOURCE_ID);
+
+            if (filterStart) customerOrders = customerOrders.filter(o => o.date >= filterStart);
+            if (filterEnd) customerOrders = customerOrders.filter(o => o.date <= filterEnd);
+            if (filterKeyword) {
+                customerOrders = customerOrders.filter(o => o.items && o.items.some(item => {
+                    const haystack = `${item.name || ''} ${item.link || ''} ${item.tracking || ''}`.toLowerCase();
+                    return haystack.includes(filterKeyword);
+                }));
+            }
+            if (filterShippedStatus) {
+                customerOrders = customerOrders.filter(o => o.shipped === filterShippedStatus);
+            }
+
+            if(!customerOrders.length) return tbody.innerHTML = '<tr><td colspan="8" class="empty-state">尚無符合的客戶訂單資料</td></tr>';
+
+            customerOrders.forEach(o => {
+                const totalItems = o.items.reduce((sum, i) => sum + parseInt(i.qty || 0), 0);
+                const totalPrice = o.items.reduce((sum, i) => sum + (parseInt(i.price || 0) * parseInt(i.qty || 0)), 0);
+                const customerInfo = o.items.find(item => item.tracking)?.tracking || '';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="text-align: center; cursor: pointer;" onclick="toggleOrderRow(${o.id}, this)">
+                        <i class="fa-solid fa-chevron-right transition-transform"></i>
+                    </td>
+                    <td><span class="date-link" onclick="toggleOrderRow(${o.id}, this.parentElement.previousElementSibling)">${o.date}</span></td>
+                    <td><span style="color: #ec4899; font-weight: 700;"><i class="fa-solid fa-cart-shopping" style="margin-right:0.25rem;"></i>前台客戶訂單</span></td>
+                    <td>TWD</td>
+                    <td>${totalItems} 件</td>
+                    <td>${totalPrice.toLocaleString()}</td>
+                    <td style="text-align: center;">
+                        <button class="btn btn-sm ${o.shipped === '已出貨' ? 'btn-success' : 'btn-danger'}" onclick="toggleOrderStatus(${o.id}, this, event)">
+                            ${o.shipped === '已出貨' ? `<i class="fa-solid fa-check"></i> 已出貨 ${o.shippedDate ? `<br>(${o.shippedDate})` : ''}` : '<i class="fa-solid fa-xmark"></i> 未出貨'}
+                        </button>
+                    </td>
+                    <td style="display: flex; gap: 0.5rem; justify-content: center;">
+                        <button class="btn btn-sm btn-action-edit" onclick="openEditOrderMainModal(${o.id})"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-sm btn-action-delete" onclick="deleteOrder(${o.id})"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                const subTr = document.createElement('tr');
+                subTr.className = 'sub-row';
+                subTr.id = `sub-row-${o.id}`;
+
+                let metaHtml = `
+                    <div style="background: #fdf2f8; color: #be185d; padding: 0.5rem 1rem; border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.9rem; font-weight: 500; display: flex; flex-wrap: wrap; gap: 1rem;">
+                        ${o.orderNo ? `<span><i class="fa-solid fa-hashtag"></i> 訂單編號: ${o.orderNo}</span>` : ''}
+                        ${customerInfo ? `<span><i class="fa-solid fa-user"></i> ${customerInfo}</span>` : ''}
+                    </div>
+                `;
+
+                let subHtml = `<td colspan="8">
+                    <div class="sub-table-container">
+                        ${metaHtml}
+                        <div class="sub-toolbar" style="display: flex; justify-content: flex-end; align-items: center;">
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-sm btn-secondary" onclick="batchEditItems(${o.id})"><i class="fa-solid fa-pen"></i> 批量編輯</button>
+                                <button class="btn btn-sm btn-danger" onclick="batchDeleteItems(${o.id})"><i class="fa-solid fa-trash"></i> 批量刪除</button>
+                            </div>
+                        </div>
+                        <table class="sub-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px; text-align: center;"><input type="checkbox" onchange="toggleAllItems(${o.id}, this)"></th>
+                                    <th style="width: 50px; text-align: center;">編號</th>
+                                    <th>商品名稱</th>
+                                    <th>訂單備註</th>
+                                    <th>數量</th>
+                                    <th>單價</th>
+                                    <th>總價格</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+                if(o.items.length === 0) {
+                    subHtml += `<tr><td colspan="7" style="text-align:center; color:#94a3b8;">無商品明細</td></tr>`;
+                } else {
+                    o.items.forEach((item, index) => {
+                        const itemTotal = (parseInt(item.price||0) * parseInt(item.qty||0)).toLocaleString();
+                        subHtml += `<tr>
+                            <td style="text-align: center;"><input type="checkbox" class="item-chk-${o.id}" value="${item.itemId}"></td>
+                            <td style="text-align: center; color: #64748b; font-weight: 500;">${index + 1}</td>
+                            <td>${item.name}</td>
+                            <td>${item.tracking || item.link || '-'}</td>
                             <td>${item.qty}</td>
                             <td>${item.price}</td>
                             <td style="font-weight: 600;">${itemTotal}</td>
