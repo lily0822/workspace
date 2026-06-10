@@ -442,7 +442,13 @@
             <div id="section-stock-products" class="section-container">
                 <div class="page-header">
                     <h2 class="page-title">現貨商品管理</h2>
-                    <button class="btn btn-secondary" onclick="resetProductForm('stock')"><i class="fa-solid fa-rotate-left"></i> 清空表單</button>
+                    <div class="toolbar">
+                        <input id="stock-product-search" oninput="renderStockProducts()" placeholder="搜尋商品 / 標籤..." style="height: 36px; padding: 0 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem;">
+                        <button class="btn btn-secondary" onclick="batchAddProducts('stock')"><i class="fa-solid fa-layer-group"></i> 批量新增</button>
+                        <button class="btn btn-secondary" onclick="batchEditProducts('stock')"><i class="fa-solid fa-pen-to-square"></i> 批量編輯</button>
+                        <button class="btn btn-danger" onclick="batchDeleteProducts('stock')"><i class="fa-solid fa-trash"></i> 批量刪除</button>
+                        <button class="btn btn-secondary" onclick="resetProductForm('stock')"><i class="fa-solid fa-rotate-left"></i> 清空表單</button>
+                    </div>
                 </div>
                 <div class="table-wrapper" style="padding: 1.25rem;">
                     <form id="stock-product-form" onsubmit="saveStockProduct(event)" class="form-row" style="flex-wrap: wrap;">
@@ -453,8 +459,12 @@
                             <input type="text" id="stock-name" placeholder="例：大耳狗吊飾" required>
                         </div>
                         <div class="form-group" style="max-width: 140px;">
-                            <label>售價 TWD</label>
-                            <input type="number" id="stock-price" min="0" placeholder="490" required>
+                            <label>成本價 TWD</label>
+                            <input type="number" id="stock-cost-price" min="0" placeholder="320" required>
+                        </div>
+                        <div class="form-group" style="max-width: 140px;">
+                            <label>定價 TWD</label>
+                            <input type="number" id="stock-list-price" min="0" placeholder="490" required>
                         </div>
                         <div class="form-group" style="max-width: 140px;">
                             <label>庫存數量</label>
@@ -462,7 +472,7 @@
                         </div>
                         <div class="form-group" style="max-width: 180px;">
                             <label>商品標籤</label>
-                            <select id="stock-tag"></select>
+                            <select id="stock-tag" multiple style="min-height: 82px;"></select>
                         </div>
                         <div class="form-group" style="min-width: 220px;">
                             <label>商品圖片</label>
@@ -482,11 +492,13 @@
                     <table>
                         <thead>
                             <tr>
+                                <th style="width: 44px; text-align:center;"><input type="checkbox" onchange="toggleAllProductRows('stock', this)"></th>
                                 <th style="width: 88px;">圖片</th>
                                 <th>商品名稱</th>
                                 <th>標籤</th>
                                 <th>庫存</th>
-                                <th>售價</th>
+                                <th>成本價</th>
+                                <th>定價</th>
                                 <th>狀態</th>
                                 <th style="width: 120px; text-align: center;">操作</th>
                             </tr>
@@ -500,7 +512,13 @@
             <div id="section-preorder-products" class="section-container">
                 <div class="page-header">
                     <h2 class="page-title">預購商品管理</h2>
-                    <button class="btn btn-secondary" onclick="resetProductForm('preorder')"><i class="fa-solid fa-rotate-left"></i> 清空表單</button>
+                    <div class="toolbar">
+                        <input id="preorder-product-search" oninput="renderPreorderProducts()" placeholder="搜尋商品 / 標籤..." style="height: 36px; padding: 0 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem;">
+                        <button class="btn btn-secondary" onclick="batchAddProducts('preorder')"><i class="fa-solid fa-layer-group"></i> 批量新增</button>
+                        <button class="btn btn-secondary" onclick="batchEditProducts('preorder')"><i class="fa-solid fa-pen-to-square"></i> 批量編輯</button>
+                        <button class="btn btn-danger" onclick="batchDeleteProducts('preorder')"><i class="fa-solid fa-trash"></i> 批量刪除</button>
+                        <button class="btn btn-secondary" onclick="resetProductForm('preorder')"><i class="fa-solid fa-rotate-left"></i> 清空表單</button>
+                    </div>
                 </div>
                 <div class="table-wrapper" style="padding: 1.25rem;">
                     <form id="preorder-product-form" onsubmit="savePreorderProduct(event)" class="form-row" style="flex-wrap: wrap;">
@@ -511,8 +529,12 @@
                             <input type="text" id="preorder-name" placeholder="例：限定睡衣派對吊飾" required>
                         </div>
                         <div class="form-group" style="max-width: 140px;">
-                            <label>預購售價 TWD</label>
-                            <input type="number" id="preorder-price" min="0" placeholder="760" required>
+                            <label>成本價 TWD</label>
+                            <input type="number" id="preorder-cost-price" min="0" placeholder="520" required>
+                        </div>
+                        <div class="form-group" style="max-width: 140px;">
+                            <label>定價 TWD</label>
+                            <input type="number" id="preorder-list-price" min="0" placeholder="760" required>
                         </div>
                         <div class="form-group" style="max-width: 140px;">
                             <label>名額 / 預收量</label>
@@ -524,7 +546,7 @@
                         </div>
                         <div class="form-group" style="max-width: 180px;">
                             <label>商品標籤</label>
-                            <select id="preorder-tag"></select>
+                            <select id="preorder-tag" multiple style="min-height: 82px;"></select>
                         </div>
                         <div class="form-group" style="min-width: 220px;">
                             <label>商品圖片</label>
@@ -544,11 +566,13 @@
                     <table>
                         <thead>
                             <tr>
+                                <th style="width: 44px; text-align:center;"><input type="checkbox" onchange="toggleAllProductRows('preorder', this)"></th>
                                 <th style="width: 88px;">圖片</th>
                                 <th>商品名稱</th>
                                 <th>標籤</th>
                                 <th>名額</th>
-                                <th>售價</th>
+                                <th>成本價</th>
+                                <th>定價</th>
                                 <th>結單倒數</th>
                                 <th style="width: 120px; text-align: center;">操作</th>
                             </tr>
@@ -591,7 +615,6 @@
                 </div>
             </div>
 
-            
             <!-- Data Overview Section -->
             <div id="section-data-overview" class="section-container">
                 <div class="page-header">
@@ -1099,6 +1122,8 @@
         const PRODUCT_TAGS_KEY = 'pinkkkuin_product_tags';
         const STOCK_PRODUCTS_KEY = 'pinkkkuin_stock_products';
         const PREORDER_PRODUCTS_KEY = 'pinkkkuin_preorder_products';
+        const STOCK_PRODUCT_SOURCE_ID = 2026062001;
+        const PREORDER_PRODUCT_SOURCE_ID = 2026062002;
         let vendors = [];
         let websites = [];
         let orders = [];
@@ -1375,46 +1400,64 @@
         }
 
         function defaultStockProducts() {
-            return [
-                {
-                    id: 1,
-                    name: '大耳狗雲朵吊飾',
-                    price: 490,
-                    quantity: 12,
-                    tagId: 2,
-                    description: '台灣現貨，付款後 1-2 個工作天出貨。',
-                    image: ''
-                }
-            ];
+            return [{ id: 1, name: '大耳狗雲朵吊飾', costPrice: 320, listPrice: 490, quantity: 12, tagIds: [2], description: '台灣現貨，付款後 1-2 個工作天出貨。', image: '' }];
         }
 
         function defaultPreorderProducts() {
             const deadline = new Date();
             deadline.setDate(deadline.getDate() + 7);
-            return [
-                {
-                    id: 1,
-                    name: 'ちいかわ 東京限定吊飾組',
-                    price: 760,
-                    quota: 20,
-                    tagId: 3,
-                    deadline: deadline.toISOString().slice(0, 16),
-                    description: '日本結單制預購，預計 4-6 週抵台。',
-                    image: ''
-                }
-            ];
+            return [{ id: 1, name: 'ちいかわ 東京限定吊飾組', costPrice: 520, listPrice: 760, quota: 20, tagIds: [1, 3], deadline: deadline.toISOString().slice(0, 16), description: '日本結單制預購，預計 4-6 週抵台。', image: '' }];
+        }
+
+        function normalizeProduct(product, type) {
+            const oldPrice = Number(product.price || 0);
+            return {
+                ...product,
+                costPrice: Number(product.costPrice ?? Math.round(oldPrice * 0.7) ?? 0),
+                listPrice: Number(product.listPrice ?? oldPrice ?? 0),
+                tagIds: Array.isArray(product.tagIds) ? product.tagIds : (product.tagId ? [product.tagId] : []),
+                quantity: type === 'stock' ? Number(product.quantity || 0) : product.quantity,
+                quota: type === 'preorder' ? Number(product.quota || 0) : product.quota
+            };
         }
 
         function initProductManagement() {
             productTags = safeParseStorage(PRODUCT_TAGS_KEY, defaultProductTags());
-            stockProducts = safeParseStorage(STOCK_PRODUCTS_KEY, defaultStockProducts());
-            preorderProducts = safeParseStorage(PREORDER_PRODUCTS_KEY, defaultPreorderProducts());
+            stockProducts = safeParseStorage(STOCK_PRODUCTS_KEY, defaultStockProducts()).map(p => normalizeProduct(p, 'stock'));
+            preorderProducts = safeParseStorage(PREORDER_PRODUCTS_KEY, defaultPreorderProducts()).map(p => normalizeProduct(p, 'preorder'));
+            hydrateProductCatalogsFromOrders();
             persistProductManagement();
             renderProductTagOptions();
             renderStockProducts();
             renderPreorderProducts();
             renderProductTags();
             setInterval(renderPreorderProducts, 60000);
+        }
+
+        function hydrateProductCatalogsFromOrders() {
+            const stockCatalog = orders.find(order => Number(order.vendorId) === STOCK_PRODUCT_SOURCE_ID);
+            const preorderCatalog = orders.find(order => Number(order.vendorId) === PREORDER_PRODUCT_SOURCE_ID);
+            if (stockCatalog && stockCatalog.items?.length) stockProducts = stockCatalog.items.map(item => catalogItemToProduct(item, 'stock'));
+            if (preorderCatalog && preorderCatalog.items?.length) preorderProducts = preorderCatalog.items.map(item => catalogItemToProduct(item, 'preorder'));
+        }
+
+        function catalogItemToProduct(item, type) {
+            let meta = {};
+            try { meta = item.tracking ? JSON.parse(item.tracking) : {}; } catch { meta = {}; }
+            return normalizeProduct({ id: Number(item.itemId || Date.now()), name: item.name, costPrice: Number(meta.costPrice || 0), listPrice: Number(item.price || meta.listPrice || 0), quantity: Number(item.qty || meta.quantity || 0), quota: Number(item.qty || meta.quota || 0), tagIds: meta.tagIds || [], deadline: meta.deadline || '', description: meta.description || '', image: meta.image || '' }, type);
+        }
+
+        function productToCatalogItem(product, type) {
+            const qty = type === 'stock' ? product.quantity : product.quota;
+            const meta = { type, costPrice: product.costPrice, listPrice: product.listPrice, tagIds: product.tagIds || [], tagNames: (product.tagIds || []).map(id => getProductTag(id).name), deadline: product.deadline || '', description: product.description || '', image: product.image || '' };
+            return { itemId: product.id, name: product.name, link: '商品管理', price: product.listPrice, qty, tracking: JSON.stringify(meta) };
+        }
+
+        async function syncProductCatalog(type) {
+            const products = type === 'stock' ? stockProducts : preorderProducts;
+            const sourceId = type === 'stock' ? STOCK_PRODUCT_SOURCE_ID : PREORDER_PRODUCT_SOURCE_ID;
+            const orderData = { id: sourceId, date: new Date().toISOString().slice(0, 10), vendorId: sourceId, orderNo: type === 'stock' ? 'STOCK-PRODUCT-CATALOG' : 'PREORDER-PRODUCT-CATALOG', trackingNo: '', shipped: '未出貨', shippedDate: '', items: products.map(product => productToCatalogItem(product, type)) };
+            await fetchAPI('saveOrder', orderData, null, true);
         }
 
         function persistProductManagement() {
@@ -1424,12 +1467,16 @@
         }
 
         function escapeHtml(value = '') {
-            return String(value)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
+            return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function getSelectedTagIds(selectId) {
+            return Array.from(document.getElementById(selectId).selectedOptions).map(option => Number(option.value));
+        }
+
+        function setSelectedTagIds(selectId, tagIds = []) {
+            const values = tagIds.map(String);
+            Array.from(document.getElementById(selectId).options).forEach(option => option.selected = values.includes(option.value));
         }
 
         function getProductTag(tagId) {
@@ -1438,47 +1485,38 @@
 
         function renderProductTagOptions() {
             const options = productTags.map(tag => `<option value="${tag.id}">${escapeHtml(tag.name)}</option>`).join('');
-            ['stock-tag', 'preorder-tag'].forEach(id => {
-                const select = document.getElementById(id);
-                if (select) select.innerHTML = options || '<option value="">尚無標籤</option>';
-            });
+            ['stock-tag', 'preorder-tag'].forEach(id => { const select = document.getElementById(id); if (select) select.innerHTML = options || '<option value="">尚無標籤</option>'; });
         }
 
         function productImageCell(image, name) {
-            if (!image) {
-                return '<div style="width:56px;height:56px;border-radius:0.5rem;background:#f1f5f9;display:grid;place-items:center;color:#94a3b8;"><i class="fa-regular fa-image"></i></div>';
-            }
+            if (!image) return '<div style="width:56px;height:56px;border-radius:0.5rem;background:#f1f5f9;display:grid;place-items:center;color:#94a3b8;"><i class="fa-regular fa-image"></i></div>';
             return `<img src="${image}" alt="${escapeHtml(name)}" style="width:56px;height:56px;object-fit:cover;border-radius:0.5rem;border:1px solid #e2e8f0;">`;
         }
 
         function tagPill(tagId) {
             const tag = getProductTag(tagId);
-            return `<span style="display:inline-flex;align-items:center;border-radius:999px;padding:0.2rem 0.55rem;background:${tag.color}20;color:${tag.color};font-weight:700;font-size:0.78rem;">${escapeHtml(tag.name)}</span>`;
+            return `<span style="display:inline-flex;align-items:center;border-radius:999px;padding:0.2rem 0.55rem;background:${tag.color}20;color:${tag.color};font-weight:700;font-size:0.78rem;margin:0.1rem;">${escapeHtml(tag.name)}</span>`;
+        }
+
+        function tagsPills(tagIds = []) {
+            return tagIds.length ? tagIds.map(tagPill).join('') : '<span style="color:#94a3b8;">未標籤</span>';
+        }
+
+        function matchesProductSearch(product, type) {
+            const q = document.getElementById(`${type}-product-search`)?.value.trim().toLowerCase() || '';
+            if (!q) return true;
+            const tagText = (product.tagIds || []).map(id => getProductTag(id).name).join(' ');
+            return `${product.name} ${product.description || ''} ${tagText}`.toLowerCase().includes(q);
         }
 
         function renderStockProducts() {
             const tbody = document.getElementById('stock-products-tbody');
             if (!tbody) return;
-            if (!stockProducts.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">尚未建立現貨商品</td></tr>';
-                return;
-            }
-            tbody.innerHTML = stockProducts.map(product => {
+            const rows = stockProducts.filter(product => matchesProductSearch(product, 'stock'));
+            if (!rows.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state">尚無符合的現貨商品</td></tr>'; return; }
+            tbody.innerHTML = rows.map(product => {
                 const status = Number(product.quantity) > 0 ? '<span style="color:#059669;font-weight:700;">上架中</span>' : '<span style="color:#dc2626;font-weight:700;">售完</span>';
-                return `
-                    <tr>
-                        <td>${productImageCell(product.image, product.name)}</td>
-                        <td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td>
-                        <td>${tagPill(product.tagId)}</td>
-                        <td>${product.quantity}</td>
-                        <td>NT$ ${Number(product.price || 0).toLocaleString()}</td>
-                        <td>${status}</td>
-                        <td style="text-align:center;">
-                            <button class="btn btn-sm btn-action-edit" onclick="editStockProduct(${product.id})"><i class="fa-solid fa-pen"></i></button>
-                            <button class="btn btn-sm btn-action-delete" onclick="deleteStockProduct(${product.id})"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `;
+                return `<tr><td style="text-align:center;"><input type="checkbox" class="stock-product-check" value="${product.id}"></td><td>${productImageCell(product.image, product.name)}</td><td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td><td>${tagsPills(product.tagIds)}</td><td>${product.quantity}</td><td>NT$ ${Number(product.costPrice || 0).toLocaleString()}</td><td>NT$ ${Number(product.listPrice || 0).toLocaleString()}</td><td>${status}</td><td style="text-align:center;"><button class="btn btn-sm btn-action-edit" onclick="editStockProduct(${product.id})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deleteStockProduct(${product.id})"><i class="fa-solid fa-trash"></i></button></td></tr>`;
             }).join('');
         }
 
@@ -1487,65 +1525,29 @@
             const diff = deadline.getTime() - Date.now();
             if (!deadlineValue || Number.isNaN(deadline.getTime())) return '<span style="color:#94a3b8;">未設定</span>';
             if (diff <= 0) return '<span style="color:#dc2626;font-weight:700;">已結單</span>';
-            const days = Math.floor(diff / 86400000);
-            const hours = Math.floor((diff % 86400000) / 3600000);
-            const minutes = Math.floor((diff % 3600000) / 60000);
+            const days = Math.floor(diff / 86400000), hours = Math.floor((diff % 86400000) / 3600000), minutes = Math.floor((diff % 3600000) / 60000);
             return `<span style="color:#be185d;font-weight:800;">${days}天 ${hours}時 ${minutes}分</span>`;
         }
 
         function renderPreorderProducts() {
             const tbody = document.getElementById('preorder-products-tbody');
             if (!tbody) return;
-            if (!preorderProducts.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">尚未建立預購商品</td></tr>';
-                return;
-            }
-            tbody.innerHTML = preorderProducts.map(product => `
-                <tr>
-                    <td>${productImageCell(product.image, product.name)}</td>
-                    <td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td>
-                    <td>${tagPill(product.tagId)}</td>
-                    <td>${product.quota}</td>
-                    <td>NT$ ${Number(product.price || 0).toLocaleString()}</td>
-                    <td>${getPreorderCountdown(product.deadline)}<div style="color:#64748b;font-size:0.75rem;margin-top:0.2rem;">${product.deadline ? escapeHtml(product.deadline.replace('T', ' ')) : ''}</div></td>
-                    <td style="text-align:center;">
-                        <button class="btn btn-sm btn-action-edit" onclick="editPreorderProduct(${product.id})"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn btn-sm btn-action-delete" onclick="deletePreorderProduct(${product.id})"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                </tr>
-            `).join('');
+            const rows = preorderProducts.filter(product => matchesProductSearch(product, 'preorder'));
+            if (!rows.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state">尚無符合的預購商品</td></tr>'; return; }
+            tbody.innerHTML = rows.map(product => `<tr><td style="text-align:center;"><input type="checkbox" class="preorder-product-check" value="${product.id}"></td><td>${productImageCell(product.image, product.name)}</td><td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td><td>${tagsPills(product.tagIds)}</td><td>${product.quota}</td><td>NT$ ${Number(product.costPrice || 0).toLocaleString()}</td><td>NT$ ${Number(product.listPrice || 0).toLocaleString()}</td><td>${getPreorderCountdown(product.deadline)}<div style="color:#64748b;font-size:0.75rem;margin-top:0.2rem;">${product.deadline ? escapeHtml(product.deadline.replace('T', ' ')) : ''}</div></td><td style="text-align:center;"><button class="btn btn-sm btn-action-edit" onclick="editPreorderProduct(${product.id})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deletePreorderProduct(${product.id})"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
         }
 
         function renderProductTags() {
             const tbody = document.getElementById('product-tags-tbody');
             if (!tbody) return;
-            if (!productTags.length) {
-                tbody.innerHTML = '<tr><td colspan="4" class="empty-state">尚未建立商品標籤</td></tr>';
-                return;
-            }
-            tbody.innerHTML = productTags.map(tag => {
-                const usage = stockProducts.filter(p => String(p.tagId) === String(tag.id)).length + preorderProducts.filter(p => String(p.tagId) === String(tag.id)).length;
-                return `
-                    <tr>
-                        <td>${tagPill(tag.id)}</td>
-                        <td><span style="display:inline-flex;align-items:center;gap:0.5rem;"><span style="width:1rem;height:1rem;border-radius:999px;background:${tag.color};display:inline-block;"></span>${tag.color}</span></td>
-                        <td>${usage} 個商品</td>
-                        <td style="text-align:center;"><button class="btn btn-sm btn-action-delete" onclick="deleteProductTag(${tag.id})"><i class="fa-solid fa-trash"></i></button></td>
-                    </tr>
-                `;
-            }).join('');
+            if (!productTags.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty-state">尚未建立商品標籤</td></tr>'; return; }
+            tbody.innerHTML = productTags.map(tag => { const usage = stockProducts.filter(p => (p.tagIds || []).map(String).includes(String(tag.id))).length + preorderProducts.filter(p => (p.tagIds || []).map(String).includes(String(tag.id))).length; return `<tr><td>${tagPill(tag.id)}</td><td><span style="display:inline-flex;align-items:center;gap:0.5rem;"><span style="width:1rem;height:1rem;border-radius:999px;background:${tag.color};display:inline-block;"></span>${tag.color}</span></td><td>${usage} 個商品</td><td style="text-align:center;"><button class="btn btn-sm btn-action-delete" onclick="deleteProductTag(${tag.id})"><i class="fa-solid fa-trash"></i></button></td></tr>`; }).join('');
         }
 
         function previewProductImage(input, hiddenId, previewId) {
-            const file = input.files && input.files[0];
-            if (!file) return;
+            const file = input.files && input.files[0]; if (!file) return;
             const reader = new FileReader();
-            reader.onload = event => {
-                document.getElementById(hiddenId).value = event.target.result;
-                const preview = document.getElementById(previewId);
-                preview.src = event.target.result;
-                preview.style.display = 'block';
-            };
+            reader.onload = event => { document.getElementById(hiddenId).value = event.target.result; const preview = document.getElementById(previewId); preview.src = event.target.result; preview.style.display = 'block'; };
             reader.readAsDataURL(file);
         }
 
@@ -1554,131 +1556,97 @@
             document.getElementById(`${prefix}-product-form`).reset();
             document.getElementById(`${prefix}-product-id`).value = '';
             document.getElementById(`${prefix}-image-data`).value = '';
-            const preview = document.getElementById(`${prefix}-image-preview`);
-            preview.removeAttribute('src');
-            preview.style.display = 'none';
+            const preview = document.getElementById(`${prefix}-image-preview`); preview.removeAttribute('src'); preview.style.display = 'none';
         }
 
-        function saveStockProduct(event) {
+        async function saveStockProduct(event) {
             event.preventDefault();
             const id = document.getElementById('stock-product-id').value;
-            const data = {
-                id: id ? Number(id) : Date.now(),
-                name: document.getElementById('stock-name').value.trim(),
-                price: Number(document.getElementById('stock-price').value || 0),
-                quantity: Number(document.getElementById('stock-quantity').value || 0),
-                tagId: document.getElementById('stock-tag').value,
-                description: document.getElementById('stock-description').value.trim(),
-                image: document.getElementById('stock-image-data').value
-            };
-            if (!data.image && id) data.image = stockProducts.find(product => String(product.id) === String(id))?.image || '';
+            const existing = stockProducts.find(product => String(product.id) === String(id));
+            const data = { id: id ? Number(id) : Date.now(), name: document.getElementById('stock-name').value.trim(), costPrice: Number(document.getElementById('stock-cost-price').value || 0), listPrice: Number(document.getElementById('stock-list-price').value || 0), quantity: Number(document.getElementById('stock-quantity').value || 0), tagIds: getSelectedTagIds('stock-tag'), description: document.getElementById('stock-description').value.trim(), image: document.getElementById('stock-image-data').value || existing?.image || '' };
             stockProducts = id ? stockProducts.map(product => String(product.id) === String(id) ? data : product) : [data, ...stockProducts];
-            persistProductManagement();
-            resetProductForm('stock');
-            renderStockProducts();
-            renderProductTags();
+            persistProductManagement(); resetProductForm('stock'); renderStockProducts(); renderProductTags(); await syncProductCatalog('stock');
         }
 
         function editStockProduct(id) {
-            const product = stockProducts.find(item => item.id === id);
-            if (!product) return;
-            document.getElementById('stock-product-id').value = product.id;
-            document.getElementById('stock-name').value = product.name;
-            document.getElementById('stock-price').value = product.price;
-            document.getElementById('stock-quantity').value = product.quantity;
-            document.getElementById('stock-tag').value = product.tagId;
-            document.getElementById('stock-description').value = product.description || '';
-            document.getElementById('stock-image-data').value = product.image || '';
-            const preview = document.getElementById('stock-image-preview');
-            if (product.image) {
-                preview.src = product.image;
-                preview.style.display = 'block';
-            } else {
-                preview.style.display = 'none';
-            }
+            const product = stockProducts.find(item => item.id === id); if (!product) return;
+            document.getElementById('stock-product-id').value = product.id; document.getElementById('stock-name').value = product.name; document.getElementById('stock-cost-price').value = product.costPrice; document.getElementById('stock-list-price').value = product.listPrice; document.getElementById('stock-quantity').value = product.quantity; setSelectedTagIds('stock-tag', product.tagIds); document.getElementById('stock-description').value = product.description || ''; document.getElementById('stock-image-data').value = product.image || '';
+            const preview = document.getElementById('stock-image-preview'); if (product.image) { preview.src = product.image; preview.style.display = 'block'; } else { preview.style.display = 'none'; }
         }
 
-        function deleteStockProduct(id) {
-            if (!confirm('確定刪除此現貨商品嗎？')) return;
-            stockProducts = stockProducts.filter(product => product.id !== id);
-            persistProductManagement();
-            renderStockProducts();
-            renderProductTags();
-        }
+        async function deleteStockProduct(id) { if (!confirm('確定刪除此現貨商品嗎？')) return; stockProducts = stockProducts.filter(product => product.id !== id); persistProductManagement(); renderStockProducts(); renderProductTags(); await syncProductCatalog('stock'); }
 
-        function savePreorderProduct(event) {
+        async function savePreorderProduct(event) {
             event.preventDefault();
             const id = document.getElementById('preorder-product-id').value;
-            const data = {
-                id: id ? Number(id) : Date.now(),
-                name: document.getElementById('preorder-name').value.trim(),
-                price: Number(document.getElementById('preorder-price').value || 0),
-                quota: Number(document.getElementById('preorder-quota').value || 0),
-                tagId: document.getElementById('preorder-tag').value,
-                deadline: document.getElementById('preorder-deadline').value,
-                description: document.getElementById('preorder-description').value.trim(),
-                image: document.getElementById('preorder-image-data').value
-            };
-            if (!data.image && id) data.image = preorderProducts.find(product => String(product.id) === String(id))?.image || '';
+            const existing = preorderProducts.find(product => String(product.id) === String(id));
+            const data = { id: id ? Number(id) : Date.now(), name: document.getElementById('preorder-name').value.trim(), costPrice: Number(document.getElementById('preorder-cost-price').value || 0), listPrice: Number(document.getElementById('preorder-list-price').value || 0), quota: Number(document.getElementById('preorder-quota').value || 0), tagIds: getSelectedTagIds('preorder-tag'), deadline: document.getElementById('preorder-deadline').value, description: document.getElementById('preorder-description').value.trim(), image: document.getElementById('preorder-image-data').value || existing?.image || '' };
             preorderProducts = id ? preorderProducts.map(product => String(product.id) === String(id) ? data : product) : [data, ...preorderProducts];
-            persistProductManagement();
-            resetProductForm('preorder');
-            renderPreorderProducts();
-            renderProductTags();
+            persistProductManagement(); resetProductForm('preorder'); renderPreorderProducts(); renderProductTags(); await syncProductCatalog('preorder');
         }
 
         function editPreorderProduct(id) {
-            const product = preorderProducts.find(item => item.id === id);
-            if (!product) return;
-            document.getElementById('preorder-product-id').value = product.id;
-            document.getElementById('preorder-name').value = product.name;
-            document.getElementById('preorder-price').value = product.price;
-            document.getElementById('preorder-quota').value = product.quota;
-            document.getElementById('preorder-tag').value = product.tagId;
-            document.getElementById('preorder-deadline').value = product.deadline || '';
-            document.getElementById('preorder-description').value = product.description || '';
-            document.getElementById('preorder-image-data').value = product.image || '';
-            const preview = document.getElementById('preorder-image-preview');
-            if (product.image) {
-                preview.src = product.image;
-                preview.style.display = 'block';
-            } else {
-                preview.style.display = 'none';
-            }
+            const product = preorderProducts.find(item => item.id === id); if (!product) return;
+            document.getElementById('preorder-product-id').value = product.id; document.getElementById('preorder-name').value = product.name; document.getElementById('preorder-cost-price').value = product.costPrice; document.getElementById('preorder-list-price').value = product.listPrice; document.getElementById('preorder-quota').value = product.quota; setSelectedTagIds('preorder-tag', product.tagIds); document.getElementById('preorder-deadline').value = product.deadline || ''; document.getElementById('preorder-description').value = product.description || ''; document.getElementById('preorder-image-data').value = product.image || '';
+            const preview = document.getElementById('preorder-image-preview'); if (product.image) { preview.src = product.image; preview.style.display = 'block'; } else { preview.style.display = 'none'; }
         }
 
-        function deletePreorderProduct(id) {
-            if (!confirm('確定刪除此預購商品嗎？')) return;
-            preorderProducts = preorderProducts.filter(product => product.id !== id);
-            persistProductManagement();
-            renderPreorderProducts();
-            renderProductTags();
+        async function deletePreorderProduct(id) { if (!confirm('確定刪除此預購商品嗎？')) return; preorderProducts = preorderProducts.filter(product => product.id !== id); persistProductManagement(); renderPreorderProducts(); renderProductTags(); await syncProductCatalog('preorder'); }
+
+        function selectedProductIds(type) { return Array.from(document.querySelectorAll(`.${type}-product-check:checked`)).map(input => Number(input.value)); }
+        function toggleAllProductRows(type, checkbox) { document.querySelectorAll(`.${type}-product-check`).forEach(input => input.checked = checkbox.checked); }
+
+        async function batchDeleteProducts(type) {
+            const ids = selectedProductIds(type); if (!ids.length) return alert('請先勾選商品'); if (!confirm(`確定刪除 ${ids.length} 個商品嗎？`)) return;
+            if (type === 'stock') { stockProducts = stockProducts.filter(p => !ids.includes(p.id)); renderStockProducts(); } else { preorderProducts = preorderProducts.filter(p => !ids.includes(p.id)); renderPreorderProducts(); }
+            persistProductManagement(); renderProductTags(); await syncProductCatalog(type);
+        }
+
+        async function batchEditProducts(type) {
+            const ids = selectedProductIds(type); if (!ids.length) return alert('請先勾選商品');
+            const listPrice = prompt('批量更新定價，留空代表不變');
+            const costPrice = prompt('批量更新成本價，留空代表不變');
+            const tagNames = prompt('批量更新標籤名稱，多個用逗號分隔，留空代表不變');
+            const tagIds = tagNames ? ensureTagsByNames(tagNames.split(',').map(s => s.trim()).filter(Boolean)) : null;
+            const updater = product => ids.includes(product.id) ? { ...product, listPrice: listPrice ? Number(listPrice) : product.listPrice, costPrice: costPrice ? Number(costPrice) : product.costPrice, tagIds: tagIds || product.tagIds } : product;
+            if (type === 'stock') { stockProducts = stockProducts.map(updater); renderStockProducts(); } else { preorderProducts = preorderProducts.map(updater); renderPreorderProducts(); }
+            persistProductManagement(); renderProductTagOptions(); renderProductTags(); await syncProductCatalog(type);
+        }
+
+        function ensureTagsByNames(names) {
+            return names.map(name => {
+                let tag = productTags.find(t => t.name === name);
+                if (!tag) { tag = { id: Date.now() + Math.random(), name, color: '#ec4899' }; productTags.push(tag); }
+                return tag.id;
+            });
+        }
+
+        async function batchAddProducts(type) {
+            const hint = type === 'stock' ? '格式：商品名稱,成本價,定價,庫存,標籤1|標籤2,描述' : '格式：商品名稱,成本價,定價,名額,標籤1|標籤2,結單時間YYYY-MM-DDTHH:mm,描述';
+            const raw = prompt(`${hint}\n每行一個商品`); if (!raw) return;
+            const rows = raw.split('\n').map(line => line.trim()).filter(Boolean);
+            const newProducts = rows.map(line => {
+                const parts = line.split(',').map(part => part.trim());
+                const tagIds = ensureTagsByNames((parts[4] || '').split('|').map(s => s.trim()).filter(Boolean));
+                if (type === 'stock') return { id: Date.now() + Math.random(), name: parts[0] || '未命名商品', costPrice: Number(parts[1] || 0), listPrice: Number(parts[2] || 0), quantity: Number(parts[3] || 0), tagIds, description: parts[5] || '', image: '' };
+                return { id: Date.now() + Math.random(), name: parts[0] || '未命名商品', costPrice: Number(parts[1] || 0), listPrice: Number(parts[2] || 0), quota: Number(parts[3] || 0), tagIds, deadline: parts[5] || '', description: parts[6] || '', image: '' };
+            });
+            if (type === 'stock') { stockProducts = [...newProducts, ...stockProducts]; renderStockProducts(); } else { preorderProducts = [...newProducts, ...preorderProducts]; renderPreorderProducts(); }
+            persistProductManagement(); renderProductTagOptions(); renderProductTags(); await syncProductCatalog(type);
         }
 
         function saveProductTag(event) {
             event.preventDefault();
-            const name = document.getElementById('product-tag-name').value.trim();
-            const color = document.getElementById('product-tag-color').value;
-            if (!name) return;
-            productTags.unshift({ id: Date.now(), name, color });
-            persistProductManagement();
-            event.target.reset();
-            document.getElementById('product-tag-color').value = '#ec4899';
-            renderProductTagOptions();
-            renderProductTags();
+            const name = document.getElementById('product-tag-name').value.trim(); const color = document.getElementById('product-tag-color').value; if (!name) return;
+            if (!productTags.some(tag => tag.name === name)) productTags.unshift({ id: Date.now(), name, color });
+            persistProductManagement(); event.target.reset(); document.getElementById('product-tag-color').value = '#ec4899'; renderProductTagOptions(); renderProductTags();
         }
 
         function deleteProductTag(id) {
-            const usage = stockProducts.some(product => String(product.tagId) === String(id)) || preorderProducts.some(product => String(product.tagId) === String(id));
-            if (usage) return alert('這個標籤目前有商品使用，請先改商品標籤再刪除。');
-            if (!confirm('確定刪除此商品標籤嗎？')) return;
-            productTags = productTags.filter(tag => tag.id !== id);
-            persistProductManagement();
-            renderProductTagOptions();
-            renderProductTags();
+            const usage = stockProducts.some(product => (product.tagIds || []).map(String).includes(String(id))) || preorderProducts.some(product => (product.tagIds || []).map(String).includes(String(id)));
+            if (usage) return alert('這個標籤目前有商品使用，請先改商品標籤再刪除。'); if (!confirm('確定刪除此商品標籤嗎？')) return;
+            productTags = productTags.filter(tag => tag.id !== id); persistProductManagement(); renderProductTagOptions(); renderProductTags();
         }
-
-        
         // --- Orders ---
         function renderVendorsOrders() {
             const container = document.getElementById('vendor-orders-container');
@@ -2485,3 +2453,4 @@
     </script>
 </body>
 </html>
+
