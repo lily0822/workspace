@@ -572,6 +572,7 @@
                 </div>
                 <div class="table-wrapper" style="padding: 1.25rem;">
                     <form id="product-tag-form" onsubmit="saveProductTag(event)" class="form-row" style="align-items: flex-end; flex-wrap: wrap;">
+                        <input type="hidden" id="product-tag-id">
                         <div class="form-group" style="max-width: 220px;">
                             <label>標籤名稱</label>
                             <input type="text" id="product-tag-name" placeholder="例：日本限定" required>
@@ -580,7 +581,8 @@
                             <label>標籤顏色</label>
                             <input type="color" id="product-tag-color" value="#ec4899">
                         </div>
-                        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-plus"></i> 新增標籤</button>
+                        <button class="btn btn-primary" id="product-tag-submit" type="submit"><i class="fa-solid fa-plus"></i> 新增標籤</button>
+                        <button class="btn btn-secondary" type="button" onclick="resetProductTagForm()">取消編輯</button>
                     </form>
                 </div>
                 <div class="table-wrapper">
@@ -1831,15 +1833,37 @@
             }
             tbody.innerHTML = productTags.map(tag => {
                 const usage = stockProducts.filter(product => (product.tagIds || []).map(String).includes(String(tag.id))).length + preorderProducts.filter(product => (product.tagIds || []).map(String).includes(String(tag.id))).length;
-                return `<tr><td>${tagPill(tag.id)}</td><td><span style="display:inline-flex;align-items:center;gap:0.5rem;"><span style="width:1rem;height:1rem;border-radius:999px;background:${tag.color};display:inline-block;"></span>${escapeHtml(tag.color)}</span></td><td>${usage} 個商品</td><td style="text-align:center;"><button class="btn btn-sm btn-action-delete" onclick="deleteProductTag(${tag.id})"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                return `<tr><td>${tagPill(tag.id)}</td><td><span style="display:inline-flex;align-items:center;gap:0.5rem;"><span style="width:1rem;height:1rem;border-radius:999px;background:${tag.color};display:inline-block;"></span>${escapeHtml(tag.color)}</span></td><td>${usage} 個商品</td><td><div class="product-row-actions"><button class="btn btn-sm btn-action-edit" onclick="editProductTag(${tag.id})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deleteProductTag(${tag.id})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             }).join('');
         }
 
         function saveProductTag(event) {
             event.preventDefault();
+            const id = document.getElementById('product-tag-id').value;
             const name = document.getElementById('product-tag-name').value.trim(); const color = document.getElementById('product-tag-color').value; if (!name) return;
-            if (!productTags.some(tag => tag.name === name)) productTags.unshift({ id: Date.now(), name, color });
-            persistProductManagement(); event.target.reset(); document.getElementById('product-tag-color').value = '#ec4899'; renderProductTagOptions(); renderProductTags();
+            if (id) {
+                productTags = productTags.map(tag => String(tag.id) === String(id) ? { ...tag, name, color } : tag);
+            } else if (!productTags.some(tag => tag.name === name)) {
+                productTags.unshift({ id: Date.now(), name, color });
+            }
+            persistProductManagement(); resetProductTagForm(); renderProductTagOptions(); renderProductTags(); renderStockProducts(); renderPreorderProducts();
+        }
+
+        function editProductTag(id) {
+            const tag = productTags.find(item => String(item.id) === String(id));
+            if (!tag) return;
+            document.getElementById('product-tag-id').value = tag.id;
+            document.getElementById('product-tag-name').value = tag.name;
+            document.getElementById('product-tag-color').value = tag.color || '#ec4899';
+            document.getElementById('product-tag-submit').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> 保存標籤';
+        }
+
+        function resetProductTagForm() {
+            const form = document.getElementById('product-tag-form');
+            if (form) form.reset();
+            document.getElementById('product-tag-id').value = '';
+            document.getElementById('product-tag-color').value = '#ec4899';
+            document.getElementById('product-tag-submit').innerHTML = '<i class="fa-solid fa-plus"></i> 新增標籤';
         }
 
         function deleteProductTag(id) {
