@@ -137,6 +137,8 @@
         .dynamic-row input, .dynamic-row select { min-width: 0; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.25rem; font-size: 0.8rem; }
         .dynamic-header { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr 1fr 40px; gap: 0.5rem; font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; text-align: left; }
         .dynamic-header span { padding-left: 0.5rem; }
+        #product-batch-header, .product-batch-row { grid-template-columns: 1.5fr 0.8fr 0.8fr 0.8fr 1.4fr 1.2fr 1.5fr 40px; }
+        .product-batch-row > div { min-width: 0; }
         
         .hide-tracking.dynamic-header, .hide-tracking .dynamic-row { grid-template-columns: 2fr 2fr 1fr 1fr 40px; }
         .hide-tracking .col-tracking, .hide-tracking.col-tracking { display: none !important; }
@@ -443,50 +445,30 @@
                 <div class="page-header">
                     <h2 class="page-title">現貨商品管理</h2>
                     <div class="toolbar">
-                        <input id="stock-product-search" oninput="renderStockProducts()" placeholder="搜尋商品 / 標籤..." style="height: 36px; padding: 0 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem;">
-                        <button class="btn btn-secondary" onclick="batchAddProducts('stock')"><i class="fa-solid fa-layer-group"></i> 批量新增</button>
+                        <button class="btn btn-secondary" onclick="openProductBatchModal('stock')"><i class="fa-solid fa-layer-group"></i> 批量新增</button>
                         <button class="btn btn-secondary" onclick="batchEditProducts('stock')"><i class="fa-solid fa-pen-to-square"></i> 批量編輯</button>
                         <button class="btn btn-danger" onclick="batchDeleteProducts('stock')"><i class="fa-solid fa-trash"></i> 批量刪除</button>
-                        <button class="btn btn-secondary" onclick="resetProductForm('stock')"><i class="fa-solid fa-rotate-left"></i> 清空表單</button>
                     </div>
                 </div>
                 <div class="table-wrapper" style="padding: 1.25rem;">
-                    <form id="stock-product-form" onsubmit="saveStockProduct(event)" class="form-row" style="flex-wrap: wrap;">
-                        <input type="hidden" id="stock-product-id">
-                        <input type="hidden" id="stock-image-data">
-                        <div class="form-group" style="min-width: 220px;">
+                    <div class="form-row" style="flex-wrap: wrap; align-items: flex-end;">
+                        <div class="form-group" style="max-width: 260px;">
                             <label>商品名稱</label>
-                            <input type="text" id="stock-name" placeholder="例：大耳狗吊飾" required>
+                            <input type="text" id="stock-product-search" oninput="renderStockProducts()" placeholder="搜尋商品名稱">
                         </div>
-                        <div class="form-group" style="max-width: 140px;">
-                            <label>成本價 TWD</label>
-                            <input type="number" id="stock-cost-price" min="0" placeholder="320" required>
-                        </div>
-                        <div class="form-group" style="max-width: 140px;">
-                            <label>定價 TWD</label>
-                            <input type="number" id="stock-list-price" min="0" placeholder="490" required>
-                        </div>
-                        <div class="form-group" style="max-width: 140px;">
-                            <label>庫存數量</label>
-                            <input type="number" id="stock-quantity" min="0" placeholder="12" required>
+                        <div class="form-group" style="max-width: 240px;">
+                            <label>標籤</label>
+                            <select id="stock-product-tag-filter" multiple onchange="renderStockProducts()" style="min-height: 82px;"></select>
                         </div>
                         <div class="form-group" style="max-width: 180px;">
-                            <label>商品標籤</label>
-                            <select id="stock-tag" multiple style="min-height: 82px;"></select>
+                            <label>狀態</label>
+                            <select id="stock-product-status-filter" onchange="renderStockProducts()">
+                                <option value="">全部狀態</option>
+                                <option value="active">上架中</option>
+                                <option value="inactive">售完</option>
+                            </select>
                         </div>
-                        <div class="form-group" style="min-width: 220px;">
-                            <label>商品圖片</label>
-                            <input type="file" id="stock-image" accept="image/*" onchange="previewProductImage(this, 'stock-image-data', 'stock-image-preview')">
-                        </div>
-                        <div class="form-group" style="min-width: 260px;">
-                            <label>商品描述</label>
-                            <input type="text" id="stock-description" placeholder="現貨特色、尺寸或注意事項">
-                        </div>
-                        <div style="display: flex; align-items: flex-end; gap: 0.75rem;">
-                            <img id="stock-image-preview" alt="現貨圖片預覽" style="width: 56px; height: 56px; object-fit: cover; border-radius: 0.5rem; border: 1px solid #e2e8f0; display: none;">
-                            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> 儲存現貨商品</button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
                 <div class="table-wrapper">
                     <table>
@@ -513,54 +495,30 @@
                 <div class="page-header">
                     <h2 class="page-title">預購商品管理</h2>
                     <div class="toolbar">
-                        <input id="preorder-product-search" oninput="renderPreorderProducts()" placeholder="搜尋商品 / 標籤..." style="height: 36px; padding: 0 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem;">
-                        <button class="btn btn-secondary" onclick="batchAddProducts('preorder')"><i class="fa-solid fa-layer-group"></i> 批量新增</button>
+                        <button class="btn btn-secondary" onclick="openProductBatchModal('preorder')"><i class="fa-solid fa-layer-group"></i> 批量新增</button>
                         <button class="btn btn-secondary" onclick="batchEditProducts('preorder')"><i class="fa-solid fa-pen-to-square"></i> 批量編輯</button>
                         <button class="btn btn-danger" onclick="batchDeleteProducts('preorder')"><i class="fa-solid fa-trash"></i> 批量刪除</button>
-                        <button class="btn btn-secondary" onclick="resetProductForm('preorder')"><i class="fa-solid fa-rotate-left"></i> 清空表單</button>
                     </div>
                 </div>
                 <div class="table-wrapper" style="padding: 1.25rem;">
-                    <form id="preorder-product-form" onsubmit="savePreorderProduct(event)" class="form-row" style="flex-wrap: wrap;">
-                        <input type="hidden" id="preorder-product-id">
-                        <input type="hidden" id="preorder-image-data">
-                        <div class="form-group" style="min-width: 220px;">
+                    <div class="form-row" style="flex-wrap: wrap; align-items: flex-end;">
+                        <div class="form-group" style="max-width: 260px;">
                             <label>商品名稱</label>
-                            <input type="text" id="preorder-name" placeholder="例：限定睡衣派對吊飾" required>
+                            <input type="text" id="preorder-product-search" oninput="renderPreorderProducts()" placeholder="搜尋商品名稱">
                         </div>
-                        <div class="form-group" style="max-width: 140px;">
-                            <label>成本價 TWD</label>
-                            <input type="number" id="preorder-cost-price" min="0" placeholder="520" required>
-                        </div>
-                        <div class="form-group" style="max-width: 140px;">
-                            <label>定價 TWD</label>
-                            <input type="number" id="preorder-list-price" min="0" placeholder="760" required>
-                        </div>
-                        <div class="form-group" style="max-width: 140px;">
-                            <label>名額 / 預收量</label>
-                            <input type="number" id="preorder-quota" min="0" placeholder="20" required>
-                        </div>
-                        <div class="form-group" style="max-width: 190px;">
-                            <label>結單時間</label>
-                            <input type="datetime-local" id="preorder-deadline" required>
+                        <div class="form-group" style="max-width: 240px;">
+                            <label>標籤</label>
+                            <select id="preorder-product-tag-filter" multiple onchange="renderPreorderProducts()" style="min-height: 82px;"></select>
                         </div>
                         <div class="form-group" style="max-width: 180px;">
-                            <label>商品標籤</label>
-                            <select id="preorder-tag" multiple style="min-height: 82px;"></select>
+                            <label>狀態</label>
+                            <select id="preorder-product-status-filter" onchange="renderPreorderProducts()">
+                                <option value="">全部狀態</option>
+                                <option value="active">開放中</option>
+                                <option value="inactive">已結單</option>
+                            </select>
                         </div>
-                        <div class="form-group" style="min-width: 220px;">
-                            <label>商品圖片</label>
-                            <input type="file" id="preorder-image" accept="image/*" onchange="previewProductImage(this, 'preorder-image-data', 'preorder-image-preview')">
-                        </div>
-                        <div class="form-group" style="min-width: 260px;">
-                            <label>預購說明</label>
-                            <input type="text" id="preorder-description" placeholder="結單、到貨週期或預購注意事項">
-                        </div>
-                        <div style="display: flex; align-items: flex-end; gap: 0.75rem;">
-                            <img id="preorder-image-preview" alt="預購圖片預覽" style="width: 56px; height: 56px; object-fit: cover; border-radius: 0.5rem; border: 1px solid #e2e8f0; display: none;">
-                            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> 儲存預購商品</button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
                 <div class="table-wrapper">
                     <table>
@@ -933,6 +891,37 @@
         </div>
     </div>
 
+    <!-- Batch Add Products Modal -->
+    <div class="modal-overlay" id="productBatchModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3 id="productBatchTitle">批量新增商品</h3>
+                <button class="close-btn" onclick="closeProductBatchModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="product-batch-type">
+                <div class="dynamic-header" id="product-batch-header">
+                    <span>商品名稱</span>
+                    <span>成本價</span>
+                    <span>定價</span>
+                    <span>數量</span>
+                    <span>標籤</span>
+                    <span>結單時間</span>
+                    <span>描述</span>
+                    <span></span>
+                </div>
+                <div id="product-batch-container"></div>
+                <button class="btn btn-secondary" style="align-self: flex-start; margin-top: 0.5rem;" onclick="addProductBatchRow()">
+                    <i class="fa-solid fa-plus"></i> 增加行數
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeProductBatchModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveProductBatchRows()">保存商品</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Batch Edit Items Modal -->
     <div class="modal-overlay" id="batchEditModal">
         <div class="modal-content large">
@@ -1130,6 +1119,8 @@
         let productTags = [];
         let stockProducts = [];
         let preorderProducts = [];
+        let editingProductRows = { stock: null, preorder: null };
+        let productBatchImageStore = {};
 
         function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
         function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
@@ -1485,7 +1476,7 @@
 
         function renderProductTagOptions() {
             const options = productTags.map(tag => `<option value="${tag.id}">${escapeHtml(tag.name)}</option>`).join('');
-            ['stock-tag', 'preorder-tag'].forEach(id => { const select = document.getElementById(id); if (select) select.innerHTML = options || '<option value="">尚無標籤</option>'; });
+            ['stock-product-tag-filter', 'preorder-product-tag-filter'].forEach(id => { const select = document.getElementById(id); if (select) select.innerHTML = options; });
         }
 
         function productImageCell(image, name) {
@@ -1502,23 +1493,60 @@
             return tagIds.length ? tagIds.map(tagPill).join('') : '<span style="color:#94a3b8;">未標籤</span>';
         }
 
-        function matchesProductSearch(product, type) {
-            const q = document.getElementById(`${type}-product-search`)?.value.trim().toLowerCase() || '';
-            if (!q) return true;
-            const tagText = (product.tagIds || []).map(id => getProductTag(id).name).join(' ');
-            return `${product.name} ${product.description || ''} ${tagText}`.toLowerCase().includes(q);
+        function selectedFilterValues(selectId) {
+            const select = document.getElementById(selectId);
+            return select ? Array.from(select.selectedOptions).map(option => String(option.value)) : [];
         }
 
-        function renderStockProducts() {
-            const tbody = document.getElementById('stock-products-tbody');
-            if (!tbody) return;
-            const rows = stockProducts.filter(product => matchesProductSearch(product, 'stock'));
-            if (!rows.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state">尚無符合的現貨商品</td></tr>'; return; }
-            tbody.innerHTML = rows.map(product => {
-                const status = Number(product.quantity) > 0 ? '<span style="color:#059669;font-weight:700;">上架中</span>' : '<span style="color:#dc2626;font-weight:700;">售完</span>';
-                return `<tr><td style="text-align:center;"><input type="checkbox" class="stock-product-check" value="${product.id}"></td><td>${productImageCell(product.image, product.name)}</td><td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td><td>${tagsPills(product.tagIds)}</td><td>${product.quantity}</td><td>NT$ ${Number(product.costPrice || 0).toLocaleString()}</td><td>NT$ ${Number(product.listPrice || 0).toLocaleString()}</td><td>${status}</td><td style="text-align:center;"><button class="btn btn-sm btn-action-edit" onclick="editStockProduct(${product.id})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deleteStockProduct(${product.id})"><i class="fa-solid fa-trash"></i></button></td></tr>`;
-            }).join('');
+        function isProductActive(product, type) {
+            if (type === 'stock') return Number(product.quantity || 0) > 0;
+            const deadline = new Date(product.deadline);
+            return product.deadline && !Number.isNaN(deadline.getTime()) && deadline.getTime() > Date.now();
         }
+
+        function matchesProductSearch(product, type) {
+            const q = document.getElementById(`${type}-product-search`)?.value.trim().toLowerCase() || '';
+            const selectedTags = selectedFilterValues(`${type}-product-tag-filter`);
+            const status = document.getElementById(`${type}-product-status-filter`)?.value || '';
+            const matchesName = !q || String(product.name || '').toLowerCase().includes(q);
+            const matchesTags = !selectedTags.length || selectedTags.some(id => (product.tagIds || []).map(String).includes(id));
+            const active = isProductActive(product, type);
+            const matchesStatus = !status || (status === 'active' ? active : !active);
+            return matchesName && matchesTags && matchesStatus;
+        }
+
+        function tagCheckboxesHtml(type, id, selectedIds = []) {
+            const selected = selectedIds.map(String);
+            return `<div style="display:flex;flex-wrap:wrap;gap:0.4rem;max-width:240px;">${productTags.map(tag => `<label style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.78rem;"><input type="checkbox" class="${type}-edit-tag-${id}" value="${tag.id}" ${selected.includes(String(tag.id)) ? 'checked' : ''}> ${escapeHtml(tag.name)}</label>`).join('')}</div>`;
+        }
+
+        function editImageInputHtml(type, id) {
+            return `<input type="file" accept="image/*" onchange="readProductRowImage(this, '${type}', ${id})" style="max-width:150px;font-size:0.75rem;">`;
+        }
+
+        function productEditRow(product, type) {
+            const qtyKey = type === 'stock' ? 'quantity' : 'quota';
+            const deadlineCell = type === 'preorder' ? `<input type="datetime-local" id="${type}-edit-deadline-${product.id}" value="${escapeHtml(product.deadline || '')}" style="min-width:160px;">` : (Number(product.quantity || 0) > 0 ? '<span style="color:#059669;font-weight:700;">上架中</span>' : '<span style="color:#dc2626;font-weight:700;">售完</span>');
+            return `<tr><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${product.id}"></td><td>${productImageCell(productBatchImageStore[`${type}-${product.id}`] || product.image, product.name)}${editImageInputHtml(type, product.id)}</td><td><input type="text" id="${type}-edit-name-${product.id}" value="${escapeHtml(product.name)}" placeholder="商品名稱"><input type="text" id="${type}-edit-description-${product.id}" value="${escapeHtml(product.description || '')}" placeholder="商品描述" style="margin-top:0.35rem;"></td><td>${tagCheckboxesHtml(type, product.id, product.tagIds)}</td><td><input type="number" id="${type}-edit-qty-${product.id}" value="${Number(product[qtyKey] || 0)}" min="0" style="width:88px;"></td><td><input type="number" id="${type}-edit-cost-${product.id}" value="${Number(product.costPrice || 0)}" min="0" style="width:96px;"></td><td><input type="number" id="${type}-edit-list-${product.id}" value="${Number(product.listPrice || 0)}" min="0" style="width:96px;"></td><td>${deadlineCell}</td><td style="text-align:center;display:flex;gap:0.35rem;justify-content:center;"><button class="btn btn-sm btn-primary" onclick="saveProductRow('${type}', ${product.id})"><i class="fa-solid fa-floppy-disk"></i></button><button class="btn btn-sm btn-secondary" onclick="cancelProductRowEdit('${type}')"><i class="fa-solid fa-xmark"></i></button></td></tr>`;
+        }
+
+        function productDisplayRow(product, type) {
+            const active = isProductActive(product, type);
+            const status = type === 'stock' ? (active ? '<span style="color:#059669;font-weight:700;">上架中</span>' : '<span style="color:#dc2626;font-weight:700;">售完</span>') : `${getPreorderCountdown(product.deadline)}<div style="color:#64748b;font-size:0.75rem;margin-top:0.2rem;">${product.deadline ? escapeHtml(product.deadline.replace('T', ' ')) : ''}</div>`;
+            const qty = type === 'stock' ? product.quantity : product.quota;
+            return `<tr><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${product.id}"></td><td>${productImageCell(product.image, product.name)}</td><td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td><td>${tagsPills(product.tagIds)}</td><td>${qty}</td><td>NT$ ${Number(product.costPrice || 0).toLocaleString()}</td><td>NT$ ${Number(product.listPrice || 0).toLocaleString()}</td><td>${status}</td><td style="text-align:center;"><button class="btn btn-sm btn-action-edit" onclick="editProductRow('${type}', ${product.id})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deleteProduct('${type}', ${product.id})"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+        }
+
+        function renderProductRows(type) {
+            const tbody = document.getElementById(`${type}-products-tbody`);
+            if (!tbody) return;
+            const products = type === 'stock' ? stockProducts : preorderProducts;
+            const rows = products.filter(product => matchesProductSearch(product, type));
+            if (!rows.length) { tbody.innerHTML = `<tr><td colspan="9" class="empty-state">尚無符合的${type === 'stock' ? '現貨' : '預購'}商品</td></tr>`; return; }
+            tbody.innerHTML = rows.map(product => editingProductRows[type] === product.id ? productEditRow(product, type) : productDisplayRow(product, type)).join('');
+        }
+
+        function renderStockProducts() { renderProductRows('stock'); }
 
         function getPreorderCountdown(deadlineValue) {
             const deadline = new Date(deadlineValue);
@@ -1529,19 +1557,43 @@
             return `<span style="color:#be185d;font-weight:800;">${days}天 ${hours}時 ${minutes}分</span>`;
         }
 
-        function renderPreorderProducts() {
-            const tbody = document.getElementById('preorder-products-tbody');
-            if (!tbody) return;
-            const rows = preorderProducts.filter(product => matchesProductSearch(product, 'preorder'));
-            if (!rows.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state">尚無符合的預購商品</td></tr>'; return; }
-            tbody.innerHTML = rows.map(product => `<tr><td style="text-align:center;"><input type="checkbox" class="preorder-product-check" value="${product.id}"></td><td>${productImageCell(product.image, product.name)}</td><td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td><td>${tagsPills(product.tagIds)}</td><td>${product.quota}</td><td>NT$ ${Number(product.costPrice || 0).toLocaleString()}</td><td>NT$ ${Number(product.listPrice || 0).toLocaleString()}</td><td>${getPreorderCountdown(product.deadline)}<div style="color:#64748b;font-size:0.75rem;margin-top:0.2rem;">${product.deadline ? escapeHtml(product.deadline.replace('T', ' ')) : ''}</div></td><td style="text-align:center;"><button class="btn btn-sm btn-action-edit" onclick="editPreorderProduct(${product.id})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deletePreorderProduct(${product.id})"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+        function renderPreorderProducts() { renderProductRows('preorder'); }
+
+        function readProductRowImage(input, type, id) {
+            const file = input.files && input.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = event => { productBatchImageStore[`${type}-${id}`] = event.target.result; renderProductRows(type); };
+            reader.readAsDataURL(file);
         }
 
-        function renderProductTags() {
-            const tbody = document.getElementById('product-tags-tbody');
-            if (!tbody) return;
-            if (!productTags.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty-state">尚未建立商品標籤</td></tr>'; return; }
-            tbody.innerHTML = productTags.map(tag => { const usage = stockProducts.filter(p => (p.tagIds || []).map(String).includes(String(tag.id))).length + preorderProducts.filter(p => (p.tagIds || []).map(String).includes(String(tag.id))).length; return `<tr><td>${tagPill(tag.id)}</td><td><span style="display:inline-flex;align-items:center;gap:0.5rem;"><span style="width:1rem;height:1rem;border-radius:999px;background:${tag.color};display:inline-block;"></span>${tag.color}</span></td><td>${usage} 個商品</td><td style="text-align:center;"><button class="btn btn-sm btn-action-delete" onclick="deleteProductTag(${tag.id})"><i class="fa-solid fa-trash"></i></button></td></tr>`; }).join('');
+        function editProductRow(type, id) { editingProductRows[type] = id; renderProductRows(type); }
+        function cancelProductRowEdit(type) { editingProductRows[type] = null; renderProductRows(type); }
+
+        function getCheckedRowTagIds(type, id) {
+            return Array.from(document.querySelectorAll(`.${type}-edit-tag-${id}:checked`)).map(input => Number(input.value));
+        }
+
+        async function saveProductRow(type, id) {
+            const products = type === 'stock' ? stockProducts : preorderProducts;
+            const existing = products.find(product => product.id === id);
+            if (!existing) return;
+            const updated = { ...existing, name: document.getElementById(`${type}-edit-name-${id}`).value.trim(), description: document.getElementById(`${type}-edit-description-${id}`).value.trim(), costPrice: Number(document.getElementById(`${type}-edit-cost-${id}`).value || 0), listPrice: Number(document.getElementById(`${type}-edit-list-${id}`).value || 0), tagIds: getCheckedRowTagIds(type, id), image: productBatchImageStore[`${type}-${id}`] || existing.image || '' };
+            if (type === 'stock') updated.quantity = Number(document.getElementById(`${type}-edit-qty-${id}`).value || 0);
+            else { updated.quota = Number(document.getElementById(`${type}-edit-qty-${id}`).value || 0); updated.deadline = document.getElementById(`${type}-edit-deadline-${id}`).value; }
+            if (!updated.name) return alert('請填寫商品名稱');
+            if (type === 'stock') stockProducts = stockProducts.map(product => product.id === id ? updated : product);
+            else preorderProducts = preorderProducts.map(product => product.id === id ? updated : product);
+            delete productBatchImageStore[`${type}-${id}`];
+            editingProductRows[type] = null;
+            persistProductManagement(); renderProductRows(type); renderProductTags(); await syncProductCatalog(type);
+        }
+
+        async function deleteProduct(type, id) {
+            const label = type === 'stock' ? '現貨商品' : '預購商品';
+            if (!confirm(`確定刪除此${label}嗎？`)) return;
+            if (type === 'stock') stockProducts = stockProducts.filter(product => product.id !== id);
+            else preorderProducts = preorderProducts.filter(product => product.id !== id);
+            persistProductManagement(); renderProductRows(type); renderProductTags(); await syncProductCatalog(type);
         }
 
         function previewProductImage(input, hiddenId, previewId) {
@@ -1551,48 +1603,8 @@
             reader.readAsDataURL(file);
         }
 
-        function resetProductForm(type) {
-            const prefix = type === 'preorder' ? 'preorder' : 'stock';
-            document.getElementById(`${prefix}-product-form`).reset();
-            document.getElementById(`${prefix}-product-id`).value = '';
-            document.getElementById(`${prefix}-image-data`).value = '';
-            const preview = document.getElementById(`${prefix}-image-preview`); preview.removeAttribute('src'); preview.style.display = 'none';
-        }
-
-        async function saveStockProduct(event) {
-            event.preventDefault();
-            const id = document.getElementById('stock-product-id').value;
-            const existing = stockProducts.find(product => String(product.id) === String(id));
-            const data = { id: id ? Number(id) : Date.now(), name: document.getElementById('stock-name').value.trim(), costPrice: Number(document.getElementById('stock-cost-price').value || 0), listPrice: Number(document.getElementById('stock-list-price').value || 0), quantity: Number(document.getElementById('stock-quantity').value || 0), tagIds: getSelectedTagIds('stock-tag'), description: document.getElementById('stock-description').value.trim(), image: document.getElementById('stock-image-data').value || existing?.image || '' };
-            stockProducts = id ? stockProducts.map(product => String(product.id) === String(id) ? data : product) : [data, ...stockProducts];
-            persistProductManagement(); resetProductForm('stock'); renderStockProducts(); renderProductTags(); await syncProductCatalog('stock');
-        }
-
-        function editStockProduct(id) {
-            const product = stockProducts.find(item => item.id === id); if (!product) return;
-            document.getElementById('stock-product-id').value = product.id; document.getElementById('stock-name').value = product.name; document.getElementById('stock-cost-price').value = product.costPrice; document.getElementById('stock-list-price').value = product.listPrice; document.getElementById('stock-quantity').value = product.quantity; setSelectedTagIds('stock-tag', product.tagIds); document.getElementById('stock-description').value = product.description || ''; document.getElementById('stock-image-data').value = product.image || '';
-            const preview = document.getElementById('stock-image-preview'); if (product.image) { preview.src = product.image; preview.style.display = 'block'; } else { preview.style.display = 'none'; }
-        }
-
-        async function deleteStockProduct(id) { if (!confirm('確定刪除此現貨商品嗎？')) return; stockProducts = stockProducts.filter(product => product.id !== id); persistProductManagement(); renderStockProducts(); renderProductTags(); await syncProductCatalog('stock'); }
-
-        async function savePreorderProduct(event) {
-            event.preventDefault();
-            const id = document.getElementById('preorder-product-id').value;
-            const existing = preorderProducts.find(product => String(product.id) === String(id));
-            const data = { id: id ? Number(id) : Date.now(), name: document.getElementById('preorder-name').value.trim(), costPrice: Number(document.getElementById('preorder-cost-price').value || 0), listPrice: Number(document.getElementById('preorder-list-price').value || 0), quota: Number(document.getElementById('preorder-quota').value || 0), tagIds: getSelectedTagIds('preorder-tag'), deadline: document.getElementById('preorder-deadline').value, description: document.getElementById('preorder-description').value.trim(), image: document.getElementById('preorder-image-data').value || existing?.image || '' };
-            preorderProducts = id ? preorderProducts.map(product => String(product.id) === String(id) ? data : product) : [data, ...preorderProducts];
-            persistProductManagement(); resetProductForm('preorder'); renderPreorderProducts(); renderProductTags(); await syncProductCatalog('preorder');
-        }
-
-        function editPreorderProduct(id) {
-            const product = preorderProducts.find(item => item.id === id); if (!product) return;
-            document.getElementById('preorder-product-id').value = product.id; document.getElementById('preorder-name').value = product.name; document.getElementById('preorder-cost-price').value = product.costPrice; document.getElementById('preorder-list-price').value = product.listPrice; document.getElementById('preorder-quota').value = product.quota; setSelectedTagIds('preorder-tag', product.tagIds); document.getElementById('preorder-deadline').value = product.deadline || ''; document.getElementById('preorder-description').value = product.description || ''; document.getElementById('preorder-image-data').value = product.image || '';
-            const preview = document.getElementById('preorder-image-preview'); if (product.image) { preview.src = product.image; preview.style.display = 'block'; } else { preview.style.display = 'none'; }
-        }
-
-        async function deletePreorderProduct(id) { if (!confirm('確定刪除此預購商品嗎？')) return; preorderProducts = preorderProducts.filter(product => product.id !== id); persistProductManagement(); renderPreorderProducts(); renderProductTags(); await syncProductCatalog('preorder'); }
-
+        async function deleteStockProduct(id) { await deleteProduct('stock', id); }
+        async function deletePreorderProduct(id) { await deleteProduct('preorder', id); }
         function selectedProductIds(type) { return Array.from(document.querySelectorAll(`.${type}-product-check:checked`)).map(input => Number(input.value)); }
         function toggleAllProductRows(type, checkbox) { document.querySelectorAll(`.${type}-product-check`).forEach(input => input.checked = checkbox.checked); }
 
@@ -1621,18 +1633,75 @@
             });
         }
 
-        async function batchAddProducts(type) {
-            const hint = type === 'stock' ? '格式：商品名稱,成本價,定價,庫存,標籤1|標籤2,描述' : '格式：商品名稱,成本價,定價,名額,標籤1|標籤2,結單時間YYYY-MM-DDTHH:mm,描述';
-            const raw = prompt(`${hint}\n每行一個商品`); if (!raw) return;
-            const rows = raw.split('\n').map(line => line.trim()).filter(Boolean);
-            const newProducts = rows.map(line => {
-                const parts = line.split(',').map(part => part.trim());
-                const tagIds = ensureTagsByNames((parts[4] || '').split('|').map(s => s.trim()).filter(Boolean));
-                if (type === 'stock') return { id: Date.now() + Math.random(), name: parts[0] || '未命名商品', costPrice: Number(parts[1] || 0), listPrice: Number(parts[2] || 0), quantity: Number(parts[3] || 0), tagIds, description: parts[5] || '', image: '' };
-                return { id: Date.now() + Math.random(), name: parts[0] || '未命名商品', costPrice: Number(parts[1] || 0), listPrice: Number(parts[2] || 0), quota: Number(parts[3] || 0), tagIds, deadline: parts[5] || '', description: parts[6] || '', image: '' };
-            });
-            if (type === 'stock') { stockProducts = [...newProducts, ...stockProducts]; renderStockProducts(); } else { preorderProducts = [...newProducts, ...preorderProducts]; renderPreorderProducts(); }
-            persistProductManagement(); renderProductTagOptions(); renderProductTags(); await syncProductCatalog(type);
+        function batchAddProducts(type) { openProductBatchModal(type); }
+
+        function productBatchTagCheckboxes(rowId) {
+            return `<div style="display:flex;flex-direction:column;gap:0.25rem;max-height:92px;overflow:auto;">${productTags.map(tag => `<label style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.76rem;"><input type="checkbox" class="product-batch-tag-${rowId}" value="${tag.id}"> ${escapeHtml(tag.name)}</label>`).join('')}</div>`;
+        }
+
+        function openProductBatchModal(type) {
+            document.getElementById('product-batch-type').value = type;
+            document.getElementById('productBatchTitle').innerText = type === 'stock' ? '批量新增現貨商品' : '批量新增預購商品';
+            document.getElementById('product-batch-container').innerHTML = '';
+            productBatchImageStore = {};
+            addProductBatchRow();
+            document.getElementById('productBatchModal').classList.add('active');
+        }
+
+        function closeProductBatchModal() {
+            document.getElementById('productBatchModal').classList.remove('active');
+        }
+
+        function addProductBatchRow() {
+            const type = document.getElementById('product-batch-type').value || 'stock';
+            const rowId = `p${Date.now()}${Math.floor(Math.random() * 10000)}`;
+            const row = document.createElement('div');
+            row.className = 'dynamic-row product-batch-row';
+            row.dataset.rowId = rowId;
+            row.innerHTML = `
+                <input type="text" class="pb-name" placeholder="商品名稱">
+                <input type="number" class="pb-cost" min="0" placeholder="成本價">
+                <input type="number" class="pb-list" min="0" placeholder="定價">
+                <input type="number" class="pb-qty" min="0" placeholder="${type === 'stock' ? '庫存' : '名額'}">
+                <div>${productBatchTagCheckboxes(rowId)}</div>
+                <input type="datetime-local" class="pb-deadline" ${type === 'stock' ? 'disabled' : ''}>
+                <input type="text" class="pb-description" placeholder="商品描述">
+                <button class="btn btn-sm btn-danger" onclick="this.closest('.product-batch-row').remove()"><i class="fa-solid fa-trash"></i></button>
+                <input type="file" class="pb-image" accept="image/*" onchange="readProductBatchImage(this, '${rowId}')" style="grid-column: 1 / 4; font-size:0.8rem;">
+            `;
+            document.getElementById('product-batch-container').appendChild(row);
+        }
+
+        function readProductBatchImage(input, rowId) {
+            const file = input.files && input.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = event => { productBatchImageStore[rowId] = event.target.result; };
+            reader.readAsDataURL(file);
+        }
+
+        async function saveProductBatchRows() {
+            const type = document.getElementById('product-batch-type').value || 'stock';
+            const rows = Array.from(document.querySelectorAll('.product-batch-row'));
+            const newProducts = rows.map(row => {
+                const rowId = row.dataset.rowId;
+                const tagIds = Array.from(row.querySelectorAll(`.product-batch-tag-${rowId}:checked`)).map(input => Number(input.value));
+                const base = {
+                    id: Date.now() + Math.random(),
+                    name: row.querySelector('.pb-name').value.trim(),
+                    costPrice: Number(row.querySelector('.pb-cost').value || 0),
+                    listPrice: Number(row.querySelector('.pb-list').value || 0),
+                    tagIds,
+                    description: row.querySelector('.pb-description').value.trim(),
+                    image: productBatchImageStore[rowId] || ''
+                };
+                if (type === 'stock') return { ...base, quantity: Number(row.querySelector('.pb-qty').value || 0) };
+                return { ...base, quota: Number(row.querySelector('.pb-qty').value || 0), deadline: row.querySelector('.pb-deadline').value };
+            }).filter(product => product.name);
+            if (!newProducts.length) return alert('請至少填寫一個商品名稱');
+            if (type === 'stock') { stockProducts = [...newProducts, ...stockProducts]; renderStockProducts(); }
+            else { preorderProducts = [...newProducts, ...preorderProducts]; renderPreorderProducts(); }
+            closeProductBatchModal();
+            persistProductManagement(); renderProductTags(); await syncProductCatalog(type);
         }
 
         function saveProductTag(event) {
