@@ -1468,13 +1468,13 @@
         function catalogItemToProduct(item, type) {
             let meta = {};
             try { meta = item.tracking ? JSON.parse(item.tracking) : {}; } catch { meta = {}; }
-            return normalizeProduct({ id: Number(item.itemId || Date.now()), name: item.name, costPrice: Number(meta.costPrice || 0), listPrice: Number(item.price || meta.listPrice || 0), active: meta.active !== false, quantity: Number(item.qty || meta.quantity || 0), quota: Number(item.qty || meta.quota || 0), tagIds: meta.tagIds || [], deadline: meta.deadline || '', description: meta.description || '', image: meta.image || '' }, type);
+            return normalizeProduct({ id: Number(item.itemId || Date.now()), name: item.name, costPrice: Number(meta.costPrice || 0), listPrice: Number(item.price || meta.listPrice || 0), active: meta.active !== false, quantity: Number(item.qty || meta.quantity || 0), quota: Number(item.qty || meta.quota || 0), tagIds: meta.tagIds || [], deadline: meta.deadline || '', description: meta.description || '', image: normalizeProductImageUrl(meta.imageUrl || meta.image || '') }, type);
         }
 
         function productToCatalogItem(product, type) {
             const qty = type === 'stock' ? product.quantity : product.quota;
-            const safeImage = product.image && product.image.length <= 45000 ? product.image : '';
-            const meta = { type, costPrice: product.costPrice, listPrice: product.listPrice, active: product.active !== false, tagIds: product.tagIds || [], tagNames: (product.tagIds || []).map(id => getProductTag(id).name), deadline: product.deadline || '', description: product.description || '', image: safeImage };
+            const safeImage = normalizeProductImageUrl(product.image);
+            const meta = { type, costPrice: product.costPrice, listPrice: product.listPrice, active: product.active !== false, tagIds: product.tagIds || [], tagNames: (product.tagIds || []).map(id => getProductTag(id).name), deadline: product.deadline || '', description: product.description || '', image: safeImage, imageUrl: safeImage };
             return { itemId: product.id, name: product.name, link: '商品管理', price: product.listPrice, qty, tracking: JSON.stringify(meta) };
         }
 
@@ -1493,6 +1493,13 @@
 
         function escapeHtml(value = '') {
             return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function normalizeProductImageUrl(value = '') {
+            const url = String(value || '').trim();
+            if (!url) return '';
+            if (/^https?:\/\//i.test(url)) return url;
+            return '';
         }
 
         function getSelectedTagIds(selectId) {
@@ -1594,8 +1601,8 @@
             return `<div style="display:flex;flex-wrap:wrap;gap:0.4rem;max-width:240px;">${productTags.map(tag => `<label style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.78rem;"><input type="checkbox" class="${type}-edit-tag-${id}" value="${tag.id}" ${selected.includes(String(tag.id)) ? 'checked' : ''}> ${escapeHtml(tag.name)}</label>`).join('')}</div>`;
         }
 
-        function editImageInputHtml(type, id) {
-            return `<input class="product-edit-field" type="file" accept="image/*" onchange="readProductRowImage(this, '${type}', ${id})" style="max-width:150px;font-size:0.75rem;margin-top:0.35rem;">`;
+        function editImageInputHtml(type, product) {
+            return `<input class="product-edit-field" type="url" id="${type}-edit-image-${product.id}" value="${escapeHtml(product.image || '')}" placeholder="貼上 Cloudinary 圖片網址" style="min-width:180px;font-size:0.75rem;margin-top:0.35rem;">`;
         }
 
         function productStatusSelectHtml(type, product, mode = 'display') {
@@ -1610,9 +1617,9 @@
             const statusCell = productStatusSelectHtml(type, product, 'edit');
             const deadlineCell = type === 'preorder' ? `<input class="product-edit-field" type="datetime-local" id="${type}-edit-deadline-${product.id}" value="${escapeHtml(product.deadline || '')}" style="min-width:160px;">` : statusCell;
             if (type === 'preorder') {
-                return `<tr><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${product.id}"></td><td>${productImageCell(productBatchImageStore[`${type}-${product.id}`] || product.image, product.name)}${editImageInputHtml(type, product.id)}</td><td><input class="product-edit-field" type="text" id="${type}-edit-name-${product.id}" value="${escapeHtml(product.name)}" placeholder="商品名稱"><input class="product-edit-field" type="text" id="${type}-edit-description-${product.id}" value="${escapeHtml(product.description || '')}" placeholder="商品描述" style="margin-top:0.45rem;"></td><td>${tagCheckboxesHtml(type, product.id, product.tagIds)}</td><td><input class="product-edit-field" type="number" id="${type}-edit-qty-${product.id}" value="${Number(product[qtyKey] || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-cost-${product.id}" value="${Number(product.costPrice || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-list-${product.id}" value="${Number(product.listPrice || 0)}" min="0"></td><td>${statusCell}</td><td>${deadlineCell}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-primary" onclick="saveProductRow('${type}', ${product.id})"><i class="fa-solid fa-floppy-disk"></i></button><button class="btn btn-sm btn-secondary" onclick="cancelProductRowEdit('${type}')"><i class="fa-solid fa-xmark"></i></button></div></td></tr>`;
+                return `<tr><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${product.id}"></td><td>${productImageCell(product.image, product.name)}${editImageInputHtml(type, product)}</td><td><input class="product-edit-field" type="text" id="${type}-edit-name-${product.id}" value="${escapeHtml(product.name)}" placeholder="商品名稱"><input class="product-edit-field" type="text" id="${type}-edit-description-${product.id}" value="${escapeHtml(product.description || '')}" placeholder="商品描述" style="margin-top:0.45rem;"></td><td>${tagCheckboxesHtml(type, product.id, product.tagIds)}</td><td><input class="product-edit-field" type="number" id="${type}-edit-qty-${product.id}" value="${Number(product[qtyKey] || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-cost-${product.id}" value="${Number(product.costPrice || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-list-${product.id}" value="${Number(product.listPrice || 0)}" min="0"></td><td>${statusCell}</td><td>${deadlineCell}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-primary" onclick="saveProductRow('${type}', ${product.id})"><i class="fa-solid fa-floppy-disk"></i></button><button class="btn btn-sm btn-secondary" onclick="cancelProductRowEdit('${type}')"><i class="fa-solid fa-xmark"></i></button></div></td></tr>`;
             }
-            return `<tr><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${product.id}"></td><td>${productImageCell(productBatchImageStore[`${type}-${product.id}`] || product.image, product.name)}${editImageInputHtml(type, product.id)}</td><td><input class="product-edit-field" type="text" id="${type}-edit-name-${product.id}" value="${escapeHtml(product.name)}" placeholder="商品名稱"><input class="product-edit-field" type="text" id="${type}-edit-description-${product.id}" value="${escapeHtml(product.description || '')}" placeholder="商品描述" style="margin-top:0.45rem;"></td><td>${tagCheckboxesHtml(type, product.id, product.tagIds)}</td><td><input class="product-edit-field" type="number" id="${type}-edit-qty-${product.id}" value="${Number(product[qtyKey] || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-cost-${product.id}" value="${Number(product.costPrice || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-list-${product.id}" value="${Number(product.listPrice || 0)}" min="0"></td><td>${deadlineCell}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-primary" onclick="saveProductRow('${type}', ${product.id})"><i class="fa-solid fa-floppy-disk"></i></button><button class="btn btn-sm btn-secondary" onclick="cancelProductRowEdit('${type}')"><i class="fa-solid fa-xmark"></i></button></div></td></tr>`;
+            return `<tr><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${product.id}"></td><td>${productImageCell(product.image, product.name)}${editImageInputHtml(type, product)}</td><td><input class="product-edit-field" type="text" id="${type}-edit-name-${product.id}" value="${escapeHtml(product.name)}" placeholder="商品名稱"><input class="product-edit-field" type="text" id="${type}-edit-description-${product.id}" value="${escapeHtml(product.description || '')}" placeholder="商品描述" style="margin-top:0.45rem;"></td><td>${tagCheckboxesHtml(type, product.id, product.tagIds)}</td><td><input class="product-edit-field" type="number" id="${type}-edit-qty-${product.id}" value="${Number(product[qtyKey] || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-cost-${product.id}" value="${Number(product.costPrice || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-list-${product.id}" value="${Number(product.listPrice || 0)}" min="0"></td><td>${deadlineCell}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-primary" onclick="saveProductRow('${type}', ${product.id})"><i class="fa-solid fa-floppy-disk"></i></button><button class="btn btn-sm btn-secondary" onclick="cancelProductRowEdit('${type}')"><i class="fa-solid fa-xmark"></i></button></div></td></tr>`;
         }
 
         function productDisplayRow(product, type) {
@@ -1647,13 +1654,6 @@
 
         function renderPreorderProducts() { renderProductRows('preorder'); }
 
-        function readProductRowImage(input, type, id) {
-            const file = input.files && input.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = event => { productBatchImageStore[`${type}-${id}`] = event.target.result; renderProductRows(type); };
-            reader.readAsDataURL(file);
-        }
-
         function editProductRow(type, id) { editingProductRows[type] = id; renderProductRows(type); }
         function cancelProductRowEdit(type) { editingProductRows[type] = null; renderProductRows(type); }
 
@@ -1675,7 +1675,7 @@
             const products = type === 'stock' ? stockProducts : preorderProducts;
             const existing = products.find(product => product.id === id);
             if (!existing) return;
-            const updated = { ...existing, name: document.getElementById(`${type}-edit-name-${id}`).value.trim(), description: document.getElementById(`${type}-edit-description-${id}`).value.trim(), costPrice: Number(document.getElementById(`${type}-edit-cost-${id}`).value || 0), listPrice: Number(document.getElementById(`${type}-edit-list-${id}`).value || 0), active: document.getElementById(`${type}-edit-active-${id}`).dataset.active === 'true', tagIds: getCheckedRowTagIds(type, id), image: productBatchImageStore[`${type}-${id}`] || existing.image || '' };
+            const updated = { ...existing, name: document.getElementById(`${type}-edit-name-${id}`).value.trim(), description: document.getElementById(`${type}-edit-description-${id}`).value.trim(), costPrice: Number(document.getElementById(`${type}-edit-cost-${id}`).value || 0), listPrice: Number(document.getElementById(`${type}-edit-list-${id}`).value || 0), active: document.getElementById(`${type}-edit-active-${id}`).dataset.active === 'true', tagIds: getCheckedRowTagIds(type, id), image: normalizeProductImageUrl(document.getElementById(`${type}-edit-image-${id}`)?.value || '') };
             if (type === 'stock') updated.quantity = Number(document.getElementById(`${type}-edit-qty-${id}`).value || 0);
             else { updated.quota = Number(document.getElementById(`${type}-edit-qty-${id}`).value || 0); updated.deadline = document.getElementById(`${type}-edit-deadline-${id}`).value; }
             if (!updated.name) return alert('請填寫商品名稱');
@@ -1785,16 +1785,9 @@
                 <input type="datetime-local" class="pb-deadline" ${type === 'stock' ? 'disabled' : ''}>
                 <input type="text" class="pb-description" placeholder="商品描述">
                 <button class="btn btn-sm btn-danger" onclick="this.closest('.product-batch-row').remove()"><i class="fa-solid fa-trash"></i></button>
-                <input type="file" class="pb-image" accept="image/*" onchange="readProductBatchImage(this, '${rowId}')" style="grid-column: 1 / 4; font-size:0.8rem;">
+                <input type="url" class="pb-image-url" placeholder="圖片網址，例如 Cloudinary https://res.cloudinary.com/..." style="grid-column: 1 / 8; font-size:0.8rem;">
             `;
             document.getElementById('product-batch-container').appendChild(row);
-        }
-
-        function readProductBatchImage(input, rowId) {
-            const file = input.files && input.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = event => { productBatchImageStore[rowId] = event.target.result; };
-            reader.readAsDataURL(file);
         }
 
         async function saveProductBatchRows() {
@@ -1811,7 +1804,7 @@
                     active: true,
                     tagIds,
                     description: row.querySelector('.pb-description').value.trim(),
-                    image: productBatchImageStore[rowId] || ''
+                    image: normalizeProductImageUrl(row.querySelector('.pb-image-url')?.value || '')
                 };
                 if (type === 'stock') return { ...base, quantity: Number(row.querySelector('.pb-qty').value || 0) };
                 return { ...base, quota: Number(row.querySelector('.pb-qty').value || 0), deadline: row.querySelector('.pb-deadline').value };
