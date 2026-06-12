@@ -2193,8 +2193,8 @@
             row.className = 'stall-day-row';
             row.innerHTML = `
                 <input type="date" class="stall-day-date" value="${escapeHtml(day.date || '')}" aria-label="日期">
-                <input type="time" class="stall-day-start" value="${escapeHtml(day.startTime || '')}" aria-label="開始時間">
-                <input type="time" class="stall-day-end" value="${escapeHtml(day.endTime || '')}" aria-label="結束時間">
+                <input type="text" class="stall-day-start" value="${escapeHtml(day.startTime || '')}" placeholder="13:00" inputmode="numeric" pattern="[0-2][0-9]:[0-5][0-9]" aria-label="開始時間">
+                <input type="text" class="stall-day-end" value="${escapeHtml(day.endTime || '')}" placeholder="18:00" inputmode="numeric" pattern="[0-2][0-9]:[0-5][0-9]" aria-label="結束時間">
                 <button class="btn btn-sm btn-danger" type="button" onclick="removeStallDayRow(this)"><i class="fa-solid fa-trash"></i></button>
             `;
             container.appendChild(row);
