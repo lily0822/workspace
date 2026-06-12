@@ -163,6 +163,9 @@
         .status-pill.inactive { background: #ef4444; }
         .product-row-actions { display: flex; gap: 0.5rem; justify-content: center; align-items: center; }
         .product-row-actions .btn { border-radius: 0.45rem; min-width: 34px; height: 30px; display: inline-flex; align-items: center; justify-content: center; }
+        .product-variant-row { display: grid; grid-template-columns: 0.7fr 1.4fr 1fr 1fr 2fr 40px; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+        .product-variant-row input { min-width: 0; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.8rem; }
+        .product-variant-header { display: grid; grid-template-columns: 0.7fr 1.4fr 1fr 1fr 2fr 40px; gap: 0.5rem; font-size: 0.78rem; font-weight: 700; color: #64748b; margin-bottom: 0.5rem; }
         #product-batch-header, .product-batch-row { grid-template-columns: 1.5fr 0.8fr 0.8fr 0.8fr 1.4fr 1.2fr 1.5fr 40px; }
         .product-batch-row > div { min-width: 0; }
         
@@ -514,6 +517,7 @@
                     <table>
                         <thead>
                             <tr>
+                                <th style="width: 46px; text-align:center;"><i class="fa-solid fa-chevron-down"></i></th>
                                 <th style="width: 44px; text-align:center;"><input type="checkbox" onchange="toggleAllProductRows('stock', this)"></th>
                                 <th style="width: 88px;">圖片</th>
                                 <th>商品名稱</th>
@@ -567,6 +571,7 @@
                     <table>
                         <thead>
                             <tr>
+                                <th style="width: 46px; text-align:center;"><i class="fa-solid fa-chevron-down"></i></th>
                                 <th style="width: 44px; text-align:center;"><input type="checkbox" onchange="toggleAllProductRows('preorder', this)"></th>
                                 <th style="width: 88px;">圖片</th>
                                 <th>商品名稱</th>
@@ -1634,7 +1639,7 @@
 
         function normalizeProduct(product, type) {
             const oldPrice = Number(product.price || 0);
-            return {
+            const normalized = {
                 ...product,
                 costPrice: Number(product.costPrice ?? Math.round(oldPrice * 0.7) ?? 0),
                 listPrice: Number(product.listPrice ?? oldPrice ?? 0),
@@ -1643,6 +1648,38 @@
                 quantity: type === 'stock' ? Number(product.quantity || 0) : product.quantity,
                 quota: type === 'preorder' ? Number(product.quota || 0) : product.quota
             };
+            normalized.variants = normalizeProductVariants(normalized, type);
+            return normalized;
+        }
+
+        function normalizeProductVariants(product, type) {
+            const qty = type === 'stock' ? Number(product.quantity || 0) : Number(product.quota || 0);
+            const raw = Array.isArray(product.variants) ? product.variants : [];
+            const variants = raw.map((variant, index) => ({
+                id: variant.id || `${product.id || Date.now()}-${index + 1}`,
+                spec: String(variant.spec || variant.name || '').trim(),
+                price: Number(variant.price ?? product.listPrice ?? product.price ?? 0),
+                quantity: Number(variant.quantity ?? variant.qty ?? qty ?? 0),
+                link: String(variant.link || '').trim()
+            })).filter(variant => variant.spec);
+            if (variants.length) return variants;
+            const specText = String(product.spec || '').trim();
+            const fallbackSpecs = specText ? specText.split('/').map(spec => spec.trim()).filter(Boolean) : ['預設款'];
+            return fallbackSpecs.map((spec, index) => ({
+                id: `${product.id || Date.now()}-${index + 1}`,
+                spec,
+                price: Number(product.listPrice ?? product.price ?? 0),
+                quantity: qty,
+                link: ''
+            }));
+        }
+
+        function productPriceRange(product) {
+            const prices = normalizeProductVariants(product, 'stock').map(variant => Number(variant.price || 0)).filter(price => price > 0);
+            if (!prices.length) return `NT$ ${Number(product.listPrice || 0).toLocaleString()}`;
+            const min = Math.min(...prices);
+            const max = Math.max(...prices);
+            return min === max ? `NT$ ${min.toLocaleString()}` : `NT$ ${min.toLocaleString()} ~ ${max.toLocaleString()}`;
         }
 
         function initProductManagement() {
@@ -1669,13 +1706,14 @@
         function catalogItemToProduct(item, type) {
             let meta = {};
             try { meta = item.tracking ? JSON.parse(item.tracking) : {}; } catch { meta = {}; }
-            return normalizeProduct({ id: Number(item.itemId || Date.now()), name: item.name, costPrice: Number(meta.costPrice || 0), listPrice: Number(item.price || meta.listPrice || 0), active: meta.active !== false, quantity: Number(item.qty || meta.quantity || 0), quota: Number(item.qty || meta.quota || 0), tagIds: meta.tagIds || [], deadline: meta.deadline || '', description: meta.description || '', image: normalizeProductImageUrl(meta.imageUrl || meta.image || '') }, type);
+            return normalizeProduct({ id: Number(item.itemId || Date.now()), name: item.name, costPrice: Number(meta.costPrice || 0), listPrice: Number(item.price || meta.listPrice || 0), active: meta.active !== false, quantity: Number(item.qty || meta.quantity || 0), quota: Number(item.qty || meta.quota || 0), tagIds: meta.tagIds || [], deadline: meta.deadline || '', description: meta.description || '', image: normalizeProductImageUrl(meta.imageUrl || meta.image || ''), variants: meta.variants || [] }, type);
         }
 
         function productToCatalogItem(product, type) {
             const qty = type === 'stock' ? product.quantity : product.quota;
             const safeImage = normalizeProductImageUrl(product.image);
-            const meta = { type, costPrice: product.costPrice, listPrice: product.listPrice, active: product.active !== false, tagIds: product.tagIds || [], tagNames: (product.tagIds || []).map(id => getProductTag(id).name), deadline: product.deadline || '', description: product.description || '', image: safeImage, imageUrl: safeImage };
+            const variants = normalizeProductVariants(product, type);
+            const meta = { type, costPrice: product.costPrice, listPrice: product.listPrice, active: product.active !== false, tagIds: product.tagIds || [], tagNames: (product.tagIds || []).map(id => getProductTag(id).name), deadline: product.deadline || '', description: product.description || '', image: safeImage, imageUrl: safeImage, variants };
             return { itemId: product.id, name: product.name, link: '商品管理', price: product.listPrice, qty, tracking: JSON.stringify(meta) };
         }
 
@@ -1835,24 +1873,119 @@
             return `<button type="button" id="${id}" class="status-pill ${active ? 'active' : 'inactive'}" data-active="${active}" onclick="event.preventDefault(); event.stopPropagation(); closeTagFilterMenus(); ${toggle}">${active ? '上架' : '下架'}</button>`;
         }
 
+        function toggleProductVariantRow(type, id, iconCell) {
+            const row = document.getElementById(`${type}-variant-row-${id}`);
+            const icon = iconCell.querySelector('i');
+            if (!row || !icon) return;
+            const active = row.classList.toggle('active');
+            icon.classList.toggle('fa-chevron-down', active);
+            icon.classList.toggle('fa-chevron-right', !active);
+        }
+
+        function productVariantRowsHtml(product, type) {
+            const variants = normalizeProductVariants(product, type);
+            return variants.map((variant, index) => `
+                <div class="product-variant-row" data-variant-id="${escapeHtml(variant.id)}">
+                    <input type="text" class="variant-no" value="${index + 1}" disabled>
+                    <input type="text" class="variant-spec" value="${escapeHtml(variant.spec)}" placeholder="規格">
+                    <input type="number" class="variant-price" value="${Number(variant.price || 0)}" min="0" placeholder="價格">
+                    <input type="number" class="variant-quantity" value="${Number(variant.quantity || 0)}" min="0" placeholder="數量">
+                    <input type="url" class="variant-link" value="${escapeHtml(variant.link || '')}" placeholder="商品連結">
+                    <button class="btn btn-sm btn-danger" onclick="this.closest('.product-variant-row').remove()"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function productVariantSubRow(product, type) {
+            const colspan = type === 'preorder' ? 11 : 10;
+            return `<tr class="sub-row" id="${type}-variant-row-${product.id}">
+                <td colspan="${colspan}">
+                    <div class="sub-table-container">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+                            <strong style="color:#334155;"><i class="fa-solid fa-list-ul" style="color:var(--primary-color);margin-right:0.4rem;"></i>商品規格明細</strong>
+                            <div style="display:flex;gap:0.5rem;">
+                                <button class="btn btn-sm btn-secondary" onclick="addProductVariantRow('${type}', ${product.id})"><i class="fa-solid fa-plus"></i> 新增規格</button>
+                                <button class="btn btn-sm btn-primary" onclick="saveProductVariants('${type}', ${product.id})"><i class="fa-solid fa-floppy-disk"></i> 保存規格</button>
+                            </div>
+                        </div>
+                        <div class="product-variant-header">
+                            <span>編號</span><span>規格</span><span>價格</span><span>數量</span><span>商品連結</span><span></span>
+                        </div>
+                        <div id="${type}-variant-container-${product.id}">
+                            ${productVariantRowsHtml(product, type)}
+                        </div>
+                    </div>
+                </td>
+            </tr>`;
+        }
+
+        function addProductVariantRow(type, id) {
+            const container = document.getElementById(`${type}-variant-container-${id}`);
+            if (!container) return;
+            const index = container.querySelectorAll('.product-variant-row').length + 1;
+            const row = document.createElement('div');
+            row.className = 'product-variant-row';
+            row.dataset.variantId = `${id}-${Date.now()}`;
+            row.innerHTML = `
+                <input type="text" class="variant-no" value="${index}" disabled>
+                <input type="text" class="variant-spec" placeholder="規格">
+                <input type="number" class="variant-price" min="0" placeholder="價格">
+                <input type="number" class="variant-quantity" min="0" placeholder="數量">
+                <input type="url" class="variant-link" placeholder="商品連結">
+                <button class="btn btn-sm btn-danger" onclick="this.closest('.product-variant-row').remove()"><i class="fa-solid fa-trash"></i></button>
+            `;
+            container.appendChild(row);
+        }
+
+        function collectProductVariants(type, id) {
+            return Array.from(document.querySelectorAll(`#${type}-variant-container-${id} .product-variant-row`)).map((row, index) => ({
+                id: row.dataset.variantId || `${id}-${index + 1}`,
+                spec: row.querySelector('.variant-spec')?.value.trim() || '',
+                price: Number(row.querySelector('.variant-price')?.value || 0),
+                quantity: Number(row.querySelector('.variant-quantity')?.value || 0),
+                link: row.querySelector('.variant-link')?.value.trim() || ''
+            })).filter(variant => variant.spec);
+        }
+
+        async function saveProductVariants(type, id) {
+            const products = type === 'stock' ? stockProducts : preorderProducts;
+            const existing = products.find(product => product.id === id);
+            if (!existing) return;
+            const variants = collectProductVariants(type, id);
+            if (!variants.length) return alert('請至少填寫一個規格');
+            const firstVariant = variants[0];
+            const totalQty = variants.reduce((sum, variant) => sum + Number(variant.quantity || 0), 0);
+            const updated = { ...existing, variants, listPrice: Number(firstVariant.price || existing.listPrice || 0) };
+            if (type === 'stock') updated.quantity = totalQty;
+            else updated.quota = totalQty;
+            if (type === 'stock') stockProducts = stockProducts.map(product => product.id === id ? updated : product);
+            else preorderProducts = preorderProducts.map(product => product.id === id ? updated : product);
+            persistProductManagement();
+            renderProductRows(type);
+            renderProductTags();
+            await saveProductToBackend(type, updated);
+            await syncProductCatalog(type);
+        }
+
         function productEditRow(product, type) {
             const qtyKey = type === 'stock' ? 'quantity' : 'quota';
             const statusCell = productStatusSelectHtml(type, product, 'edit');
             const deadlineCell = type === 'preorder' ? `<input class="product-edit-field" type="datetime-local" id="${type}-edit-deadline-${product.id}" value="${escapeHtml(product.deadline || '')}" style="min-width:160px;">` : statusCell;
             if (type === 'preorder') {
-                return `<tr><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${product.id}"></td><td>${productImageCell(product.image, product.name)}${editImageInputHtml(type, product)}</td><td><input class="product-edit-field" type="text" id="${type}-edit-name-${product.id}" value="${escapeHtml(product.name)}" placeholder="商品名稱"><input class="product-edit-field" type="text" id="${type}-edit-description-${product.id}" value="${escapeHtml(product.description || '')}" placeholder="商品描述" style="margin-top:0.45rem;"></td><td>${tagCheckboxesHtml(type, product.id, product.tagIds)}</td><td><input class="product-edit-field" type="number" id="${type}-edit-qty-${product.id}" value="${Number(product[qtyKey] || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-cost-${product.id}" value="${Number(product.costPrice || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-list-${product.id}" value="${Number(product.listPrice || 0)}" min="0"></td><td>${statusCell}</td><td>${deadlineCell}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-primary" onclick="saveProductRow('${type}', ${product.id})"><i class="fa-solid fa-floppy-disk"></i></button><button class="btn btn-sm btn-secondary" onclick="cancelProductRowEdit('${type}')"><i class="fa-solid fa-xmark"></i></button></div></td></tr>`;
+                return `<tr><td style="text-align:center;cursor:pointer;" onclick="toggleProductVariantRow('${type}', ${product.id}, this)"><i class="fa-solid fa-chevron-right"></i></td><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${product.id}"></td><td>${productImageCell(product.image, product.name)}${editImageInputHtml(type, product)}</td><td><input class="product-edit-field" type="text" id="${type}-edit-name-${product.id}" value="${escapeHtml(product.name)}" placeholder="商品名稱"><input class="product-edit-field" type="text" id="${type}-edit-description-${product.id}" value="${escapeHtml(product.description || '')}" placeholder="商品描述" style="margin-top:0.45rem;"></td><td>${tagCheckboxesHtml(type, product.id, product.tagIds)}</td><td><input class="product-edit-field" type="number" id="${type}-edit-qty-${product.id}" value="${Number(product[qtyKey] || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-cost-${product.id}" value="${Number(product.costPrice || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-list-${product.id}" value="${Number(product.listPrice || 0)}" min="0"></td><td>${statusCell}</td><td>${deadlineCell}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-primary" onclick="saveProductRow('${type}', ${product.id})"><i class="fa-solid fa-floppy-disk"></i></button><button class="btn btn-sm btn-secondary" onclick="cancelProductRowEdit('${type}')"><i class="fa-solid fa-xmark"></i></button></div></td></tr>`;
             }
-            return `<tr><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${product.id}"></td><td>${productImageCell(product.image, product.name)}${editImageInputHtml(type, product)}</td><td><input class="product-edit-field" type="text" id="${type}-edit-name-${product.id}" value="${escapeHtml(product.name)}" placeholder="商品名稱"><input class="product-edit-field" type="text" id="${type}-edit-description-${product.id}" value="${escapeHtml(product.description || '')}" placeholder="商品描述" style="margin-top:0.45rem;"></td><td>${tagCheckboxesHtml(type, product.id, product.tagIds)}</td><td><input class="product-edit-field" type="number" id="${type}-edit-qty-${product.id}" value="${Number(product[qtyKey] || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-cost-${product.id}" value="${Number(product.costPrice || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-list-${product.id}" value="${Number(product.listPrice || 0)}" min="0"></td><td>${deadlineCell}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-primary" onclick="saveProductRow('${type}', ${product.id})"><i class="fa-solid fa-floppy-disk"></i></button><button class="btn btn-sm btn-secondary" onclick="cancelProductRowEdit('${type}')"><i class="fa-solid fa-xmark"></i></button></div></td></tr>`;
+            return `<tr><td style="text-align:center;cursor:pointer;" onclick="toggleProductVariantRow('${type}', ${product.id}, this)"><i class="fa-solid fa-chevron-right"></i></td><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${product.id}"></td><td>${productImageCell(product.image, product.name)}${editImageInputHtml(type, product)}</td><td><input class="product-edit-field" type="text" id="${type}-edit-name-${product.id}" value="${escapeHtml(product.name)}" placeholder="商品名稱"><input class="product-edit-field" type="text" id="${type}-edit-description-${product.id}" value="${escapeHtml(product.description || '')}" placeholder="商品描述" style="margin-top:0.45rem;"></td><td>${tagCheckboxesHtml(type, product.id, product.tagIds)}</td><td><input class="product-edit-field" type="number" id="${type}-edit-qty-${product.id}" value="${Number(product[qtyKey] || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-cost-${product.id}" value="${Number(product.costPrice || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-list-${product.id}" value="${Number(product.listPrice || 0)}" min="0"></td><td>${deadlineCell}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-primary" onclick="saveProductRow('${type}', ${product.id})"><i class="fa-solid fa-floppy-disk"></i></button><button class="btn btn-sm btn-secondary" onclick="cancelProductRowEdit('${type}')"><i class="fa-solid fa-xmark"></i></button></div></td></tr>`;
         }
 
         function productDisplayRow(product, type) {
             const status = type === 'stock' ? productStatusSelectHtml(type, product, 'display') : productStatusSelectHtml(type, product, 'display');
             const qty = type === 'stock' ? product.quantity : product.quota;
+            const priceText = productPriceRange(product);
             if (type === 'preorder') {
                 const countdown = `${getPreorderCountdown(product.deadline)}<div style="color:#64748b;font-size:0.75rem;margin-top:0.2rem;">${product.deadline ? escapeHtml(product.deadline.replace('T', ' ')) : ''}</div>`;
-                return `<tr><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${product.id}"></td><td>${productImageCell(product.image, product.name)}</td><td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td><td>${tagsPills(product.tagIds)}</td><td>${qty}</td><td>NT$ ${Number(product.costPrice || 0).toLocaleString()}</td><td>NT$ ${Number(product.listPrice || 0).toLocaleString()}</td><td>${status}</td><td>${countdown}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-action-edit" onclick="editProductRow('${type}', ${product.id})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deleteProduct('${type}', ${product.id})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+                return `<tr><td style="text-align:center;cursor:pointer;" onclick="toggleProductVariantRow('${type}', ${product.id}, this)"><i class="fa-solid fa-chevron-right"></i></td><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${product.id}"></td><td>${productImageCell(product.image, product.name)}</td><td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td><td>${tagsPills(product.tagIds)}</td><td>${qty}</td><td>NT$ ${Number(product.costPrice || 0).toLocaleString()}</td><td>${priceText}</td><td>${status}</td><td>${countdown}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-action-edit" onclick="editProductRow('${type}', ${product.id})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deleteProduct('${type}', ${product.id})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             }
-            return `<tr><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${product.id}"></td><td>${productImageCell(product.image, product.name)}</td><td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td><td>${tagsPills(product.tagIds)}</td><td>${qty}</td><td>NT$ ${Number(product.costPrice || 0).toLocaleString()}</td><td>NT$ ${Number(product.listPrice || 0).toLocaleString()}</td><td>${status}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-action-edit" onclick="editProductRow('${type}', ${product.id})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deleteProduct('${type}', ${product.id})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+            return `<tr><td style="text-align:center;cursor:pointer;" onclick="toggleProductVariantRow('${type}', ${product.id}, this)"><i class="fa-solid fa-chevron-right"></i></td><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${product.id}"></td><td>${productImageCell(product.image, product.name)}</td><td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td><td>${tagsPills(product.tagIds)}</td><td>${qty}</td><td>NT$ ${Number(product.costPrice || 0).toLocaleString()}</td><td>${priceText}</td><td>${status}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-action-edit" onclick="editProductRow('${type}', ${product.id})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deleteProduct('${type}', ${product.id})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
         }
 
         function renderProductRows(type) {
@@ -1860,8 +1993,8 @@
             if (!tbody) return;
             const products = type === 'stock' ? stockProducts : preorderProducts;
             const rows = products.filter(product => matchesProductSearch(product, type));
-            if (!rows.length) { tbody.innerHTML = `<tr><td colspan="${type === 'preorder' ? 10 : 9}" class="empty-state">尚無符合的${type === 'stock' ? '現貨' : '預購'}商品</td></tr>`; return; }
-            tbody.innerHTML = rows.map(product => editingProductRows[type] === product.id ? productEditRow(product, type) : productDisplayRow(product, type)).join('');
+            if (!rows.length) { tbody.innerHTML = `<tr><td colspan="${type === 'preorder' ? 11 : 10}" class="empty-state">尚無符合的${type === 'stock' ? '現貨' : '預購'}商品</td></tr>`; return; }
+            tbody.innerHTML = rows.map(product => `${editingProductRows[type] === product.id ? productEditRow(product, type) : productDisplayRow(product, type)}${productVariantSubRow(product, type)}`).join('');
         }
 
         function renderStockProducts() { renderProductRows('stock'); }
@@ -1901,6 +2034,7 @@
             const updated = { ...existing, name: document.getElementById(`${type}-edit-name-${id}`).value.trim(), description: document.getElementById(`${type}-edit-description-${id}`).value.trim(), costPrice: Number(document.getElementById(`${type}-edit-cost-${id}`).value || 0), listPrice: Number(document.getElementById(`${type}-edit-list-${id}`).value || 0), active: document.getElementById(`${type}-edit-active-${id}`).dataset.active === 'true', tagIds: getCheckedRowTagIds(type, id), image: normalizeProductImageUrl(document.getElementById(`${type}-edit-image-${id}`)?.value || '') };
             if (type === 'stock') updated.quantity = Number(document.getElementById(`${type}-edit-qty-${id}`).value || 0);
             else { updated.quota = Number(document.getElementById(`${type}-edit-qty-${id}`).value || 0); updated.deadline = document.getElementById(`${type}-edit-deadline-${id}`).value; }
+            updated.variants = normalizeProductVariants({ ...updated, variants: existing.variants }, type).map((variant, index) => index === 0 ? { ...variant, price: updated.listPrice, quantity: type === 'stock' ? updated.quantity : updated.quota } : variant);
             if (!updated.name) return alert('請填寫商品名稱');
             if (type === 'stock') stockProducts = stockProducts.map(product => product.id === id ? updated : product);
             else preorderProducts = preorderProducts.map(product => product.id === id ? updated : product);
@@ -2036,8 +2170,14 @@
                     description: row.querySelector('.pb-description').value.trim(),
                     image: normalizeProductImageUrl(row.querySelector('.pb-image-url')?.value || '')
                 };
-                if (type === 'stock') return { ...base, quantity: Number(row.querySelector('.pb-qty').value || 0) };
-                return { ...base, quota: Number(row.querySelector('.pb-qty').value || 0), deadline: row.querySelector('.pb-deadline').value };
+                if (type === 'stock') {
+                    const product = { ...base, quantity: Number(row.querySelector('.pb-qty').value || 0) };
+                    product.variants = normalizeProductVariants(product, type);
+                    return product;
+                }
+                const product = { ...base, quota: Number(row.querySelector('.pb-qty').value || 0), deadline: row.querySelector('.pb-deadline').value };
+                product.variants = normalizeProductVariants(product, type);
+                return product;
             }).filter(product => product.name);
             if (!newProducts.length) return alert('請至少填寫一個商品名稱');
             if (type === 'stock') { stockProducts = [...newProducts, ...stockProducts]; renderStockProducts(); }
