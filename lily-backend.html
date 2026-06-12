@@ -1343,6 +1343,33 @@
             return dataOrders;
         }
 
+        function applyBackendData(data = {}) {
+            vendors = data.vendors || [];
+            websites = data.websites || [];
+            orders = processAPIData(data.orders || []);
+
+            if (Array.isArray(data.productTags) && data.productTags.length) {
+                productTags = data.productTags;
+                localStorage.setItem(PRODUCT_TAGS_KEY, JSON.stringify(productTags));
+            }
+            if (Array.isArray(data.stockProducts) && data.stockProducts.length) {
+                stockProducts = data.stockProducts.map(p => normalizeProduct(p, 'stock'));
+                localStorage.setItem(STOCK_PRODUCTS_KEY, JSON.stringify(stockProducts));
+            }
+            if (Array.isArray(data.preorderProducts) && data.preorderProducts.length) {
+                preorderProducts = data.preorderProducts.map(p => normalizeProduct(p, 'preorder'));
+                localStorage.setItem(PREORDER_PRODUCTS_KEY, JSON.stringify(preorderProducts));
+            }
+            if (Array.isArray(data.stallSchedules)) {
+                stallSchedules = data.stallSchedules;
+                localStorage.setItem(STALL_SCHEDULES_KEY, JSON.stringify(stallSchedules));
+            }
+            if (Array.isArray(data.connectionSchedules)) {
+                connectionSchedules = data.connectionSchedules;
+                localStorage.setItem(CONNECTION_SCHEDULES_KEY, JSON.stringify(connectionSchedules));
+            }
+        }
+
         async function fetchAPI(action, payload = null, id = null, skipRender = false) {
             showLoading();
             try {
@@ -1369,9 +1396,7 @@
                 const result = await res.json();
                 
                 if (result.status === 'success') {
-                    vendors = result.data.vendors || [];
-                    websites = result.data.websites || [];
-                    orders = processAPIData(result.data.orders || []);
+                    applyBackendData(result.data || {});
                     if (!skipRender) {
                         populateFilterVendors();
                         renderVendors();
@@ -1379,6 +1404,12 @@
                         if (activeTab === 'vendors-orders') renderVendorsOrders();
                         if (activeTab === 'website-orders') renderWebsiteOrders();
                         if (activeTab === 'customer-orders') renderCustomerOrders();
+                        renderProductTagOptions();
+                        renderStockProducts();
+                        renderPreorderProducts();
+                        renderProductTags();
+                        renderSchedules('stall');
+                        renderSchedules('connection');
                     }
                 } else {
                     alert('發生錯誤: ' + result.message);
@@ -1396,15 +1427,19 @@
             try {
                 const res = await fetch(API_URL);
                 const result = await res.json();
-                vendors = result.vendors || [];
-                websites = result.websites || [];
-                orders = processAPIData(result.orders || []);
+                applyBackendData(result || {});
                 populateFilterVendors();
                 renderVendors();
                 renderWebsites();
                 if (activeTab === 'vendors-orders') renderVendorsOrders();
                 if (activeTab === 'website-orders') renderWebsiteOrders();
                 if (activeTab === 'customer-orders') renderCustomerOrders();
+                renderProductTagOptions();
+                renderStockProducts();
+                renderPreorderProducts();
+                renderProductTags();
+                renderSchedules('stall');
+                renderSchedules('connection');
             } catch (err) {
                 console.error(err);
                 alert('無法載入資料，請檢查網路連線。');
@@ -1651,6 +1686,28 @@
             await fetchAPI('saveOrder', orderData, null, true);
         }
 
+        function productSaveAction(type) {
+            return type === 'stock' ? 'saveStockProduct' : 'savePreorderProduct';
+        }
+
+        function productDeleteAction(type) {
+            return type === 'stock' ? 'deleteStockProduct' : 'deletePreorderProduct';
+        }
+
+        async function saveProductToBackend(type, product) {
+            await fetchAPI(productSaveAction(type), product, null, true);
+        }
+
+        async function deleteProductFromBackend(type, id) {
+            await fetchAPI(productDeleteAction(type), null, id, true);
+        }
+
+        async function syncProductsToBackend(type, products) {
+            for (const product of products) {
+                await saveProductToBackend(type, product);
+            }
+        }
+
         function persistProductManagement() {
             localStorage.setItem(PRODUCT_TAGS_KEY, JSON.stringify(productTags));
             localStorage.setItem(STOCK_PRODUCTS_KEY, JSON.stringify(stockProducts));
@@ -1849,7 +1906,7 @@
             else preorderProducts = preorderProducts.map(product => product.id === id ? updated : product);
             delete productBatchImageStore[`${type}-${id}`];
             editingProductRows[type] = null;
-            persistProductManagement(); renderProductRows(type); renderProductTags(); await syncProductCatalog(type);
+            persistProductManagement(); renderProductRows(type); renderProductTags(); await saveProductToBackend(type, updated); await syncProductCatalog(type);
         }
 
         async function setProductActive(type, id, active) {
@@ -1857,6 +1914,8 @@
             else preorderProducts = preorderProducts.map(product => product.id === id ? { ...product, active } : product);
             persistProductManagement();
             renderProductRows(type);
+            const updated = (type === 'stock' ? stockProducts : preorderProducts).find(product => product.id === id);
+            if (updated) await saveProductToBackend(type, updated);
             await syncProductCatalog(type);
         }
 
@@ -1865,7 +1924,7 @@
             if (!confirm(`確定刪除此${label}嗎？`)) return;
             if (type === 'stock') stockProducts = stockProducts.filter(product => product.id !== id);
             else preorderProducts = preorderProducts.filter(product => product.id !== id);
-            persistProductManagement(); renderProductRows(type); renderProductTags(); await syncProductCatalog(type);
+            persistProductManagement(); renderProductRows(type); renderProductTags(); await deleteProductFromBackend(type, id); await syncProductCatalog(type);
         }
 
         function previewProductImage(input, hiddenId, previewId) {
@@ -1883,7 +1942,7 @@
         async function batchDeleteProducts(type) {
             const ids = selectedProductIds(type); if (!ids.length) return alert('請先勾選商品'); if (!confirm(`確定刪除 ${ids.length} 個商品嗎？`)) return;
             if (type === 'stock') { stockProducts = stockProducts.filter(p => !ids.includes(p.id)); renderStockProducts(); } else { preorderProducts = preorderProducts.filter(p => !ids.includes(p.id)); renderPreorderProducts(); }
-            persistProductManagement(); renderProductTags(); await syncProductCatalog(type);
+            persistProductManagement(); renderProductTags(); for (const id of ids) await deleteProductFromBackend(type, id); await syncProductCatalog(type);
         }
 
         async function batchSetProductActive(type, active) {
@@ -1895,6 +1954,8 @@
             if (type === 'stock') { stockProducts = stockProducts.map(updater); renderStockProducts(); }
             else { preorderProducts = preorderProducts.map(updater); renderPreorderProducts(); }
             persistProductManagement();
+            const updatedProducts = (type === 'stock' ? stockProducts : preorderProducts).filter(product => ids.includes(product.id));
+            await syncProductsToBackend(type, updatedProducts);
             await syncProductCatalog(type);
         }
 
@@ -1906,7 +1967,10 @@
             const tagIds = tagNames ? ensureTagsByNames(tagNames.split(',').map(s => s.trim()).filter(Boolean)) : null;
             const updater = product => ids.includes(product.id) ? { ...product, listPrice: listPrice ? Number(listPrice) : product.listPrice, costPrice: costPrice ? Number(costPrice) : product.costPrice, tagIds: tagIds || product.tagIds } : product;
             if (type === 'stock') { stockProducts = stockProducts.map(updater); renderStockProducts(); } else { preorderProducts = preorderProducts.map(updater); renderPreorderProducts(); }
-            persistProductManagement(); renderProductTagOptions(); renderProductTags(); await syncProductCatalog(type);
+            persistProductManagement(); renderProductTagOptions(); renderProductTags();
+            const updatedProducts = (type === 'stock' ? stockProducts : preorderProducts).filter(product => ids.includes(product.id));
+            await syncProductsToBackend(type, updatedProducts);
+            await syncProductCatalog(type);
         }
 
         function ensureTagsByNames(names) {
@@ -1979,7 +2043,7 @@
             if (type === 'stock') { stockProducts = [...newProducts, ...stockProducts]; renderStockProducts(); }
             else { preorderProducts = [...newProducts, ...preorderProducts]; renderPreorderProducts(); }
             closeProductBatchModal();
-            persistProductManagement(); renderProductTags(); await syncProductCatalog(type);
+            persistProductManagement(); renderProductTags(); await syncProductsToBackend(type, newProducts); await syncProductCatalog(type);
         }
 
         function renderProductTags() {
@@ -1996,16 +2060,23 @@
             }).join('');
         }
 
-        function saveProductTag(event) {
+        async function saveProductTag(event) {
             event.preventDefault();
             const id = document.getElementById('product-tag-id').value;
             const name = document.getElementById('product-tag-name').value.trim(); const color = document.getElementById('product-tag-color').value; if (!name) return;
+            let savedTag = null;
             if (id) {
-                productTags = productTags.map(tag => String(tag.id) === String(id) ? { ...tag, name, color } : tag);
+                productTags = productTags.map(tag => {
+                    if (String(tag.id) !== String(id)) return tag;
+                    savedTag = { ...tag, name, color };
+                    return savedTag;
+                });
             } else if (!productTags.some(tag => tag.name === name)) {
-                productTags.unshift({ id: Date.now(), name, color });
+                savedTag = { id: Date.now(), name, color };
+                productTags.unshift(savedTag);
             }
             persistProductManagement(); resetProductTagForm(); renderProductTagOptions(); renderProductTags(); renderStockProducts(); renderPreorderProducts();
+            if (savedTag) await fetchAPI('saveProductTag', savedTag, null, true);
         }
 
         function editProductTag(id) {
@@ -2025,10 +2096,11 @@
             document.getElementById('product-tag-submit').innerHTML = '<i class="fa-solid fa-plus"></i> 新增標籤';
         }
 
-        function deleteProductTag(id) {
+        async function deleteProductTag(id) {
             const usage = stockProducts.some(product => (product.tagIds || []).map(String).includes(String(id))) || preorderProducts.some(product => (product.tagIds || []).map(String).includes(String(id)));
             if (usage) return alert('這個標籤目前有商品使用，請先改商品標籤再刪除。'); if (!confirm('確定刪除此商品標籤嗎？')) return;
             productTags = productTags.filter(tag => tag.id !== id); persistProductManagement(); renderProductTagOptions(); renderProductTags();
+            await fetchAPI('deleteProductTag', null, id, true);
         }
 
         function initScheduleManagement() {
@@ -2214,7 +2286,7 @@
             })).filter(day => day.date || day.startTime || day.endTime);
         }
 
-        function saveSchedule() {
+        async function saveSchedule() {
             const type = document.getElementById('schedule-type').value;
             const id = document.getElementById('schedule-id').value;
             const data = {
@@ -2238,13 +2310,15 @@
             persistScheduleManagement();
             closeScheduleModal();
             renderSchedules(type);
+            await fetchAPI(type === 'stall' ? 'saveStallSchedule' : 'saveConnectionSchedule', data, null, true);
         }
 
-        function deleteSchedule(type, id) {
+        async function deleteSchedule(type, id) {
             if (!confirm(`確定刪除此${scheduleTypeLabel(type)}嗎？`)) return;
             setScheduleList(type, scheduleList(type).filter(item => String(item.id) !== String(id)));
             persistScheduleManagement();
             renderSchedules(type);
+            await fetchAPI(type === 'stall' ? 'deleteStallSchedule' : 'deleteConnectionSchedule', null, id, true);
         }
         // --- Orders ---
         function renderVendorsOrders() {
