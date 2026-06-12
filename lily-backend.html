@@ -132,6 +132,10 @@
         .form-group label { font-size: 0.875rem; font-weight: 500; color: #475569; }
         .form-group input, .form-group select { padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: inherit; font-size: 0.875rem; color: #334155; transition: border-color 0.2s; width: 100%; }
         .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1); }
+        .form-group textarea { padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: inherit; font-size: 0.875rem; color: #334155; transition: border-color 0.2s; width: 100%; min-height: 80px; resize: vertical; }
+        .form-group textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1); }
+        .schedule-preview { width: 72px; height: 72px; border-radius: 0.5rem; object-fit: cover; border: 1px solid #e2e8f0; background: #f8fafc; display: block; }
+        .schedule-preview.empty { display: inline-flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 1.25rem; }
         
         .dynamic-row { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr 1fr 40px; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
         .dynamic-row input, .dynamic-row select { min-width: 0; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.25rem; font-size: 0.8rem; }
@@ -224,6 +228,17 @@
                     <div class="submenu-item" onclick="openTab('stock-products', '現貨商品管理')">現貨商品管理</div>
                     <div class="submenu-item" onclick="openTab('preorder-products', '預購商品管理')">預購商品管理</div>
                     <div class="submenu-item" onclick="openTab('product-tags', '商品標籤管理')">商品標籤管理</div>
+                </div>
+            </div>
+            <div class="menu-group">
+                <div class="menu-item" onclick="toggleSubmenu(this)">
+                    <i class="icon fa-solid fa-calendar-days"></i>
+                    <span>擺攤連線管理</span>
+                    <i class="chevron fa-solid fa-angle-down"></i>
+                </div>
+                <div class="submenu">
+                    <div class="submenu-item" onclick="openTab('stall-schedules', '擺攤時程')">擺攤時程</div>
+                    <div class="submenu-item" onclick="openTab('connection-schedules', '連線時程')">連線時程</div>
                 </div>
             </div>
             <div class="menu-group">
@@ -596,6 +611,81 @@
                             </tr>
                         </thead>
                         <tbody id="product-tags-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Stall Schedule Management Section -->
+            <div id="section-stall-schedules" class="section-container">
+                <div class="page-header">
+                    <h2 class="page-title">擺攤時程</h2>
+                    <button class="btn btn-primary" onclick="openScheduleModal('stall')"><i class="fa-solid fa-plus"></i> 新增擺攤時程</button>
+                </div>
+                <div class="table-wrapper" style="padding: 1.25rem;">
+                    <div class="form-row" style="flex-wrap: wrap; align-items: flex-end;">
+                        <div class="form-group" style="max-width: 260px;">
+                            <label>地點</label>
+                            <input type="text" id="stall-schedule-location-search" placeholder="搜尋地點">
+                        </div>
+                        <div class="form-group" style="max-width: 260px;">
+                            <label>時間</label>
+                            <input type="text" id="stall-schedule-time-search" placeholder="搜尋時間或日期">
+                        </div>
+                        <button class="btn btn-primary" onclick="renderSchedules('stall')"><i class="fa-solid fa-magnifying-glass"></i> 搜索</button>
+                        <button class="btn btn-secondary" onclick="clearScheduleSearch('stall')"><i class="fa-solid fa-eraser"></i> 清除</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 100px;">預告圖</th>
+                                <th>檔期</th>
+                                <th>地點</th>
+                                <th>時間</th>
+                                <th>攤位費</th>
+                                <th style="width: 120px; text-align: center;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stall-schedules-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Connection Schedule Management Section -->
+            <div id="section-connection-schedules" class="section-container">
+                <div class="page-header">
+                    <h2 class="page-title">連線時程</h2>
+                    <button class="btn btn-primary" onclick="openScheduleModal('connection')"><i class="fa-solid fa-plus"></i> 新增連線時程</button>
+                </div>
+                <div class="table-wrapper" style="padding: 1.25rem;">
+                    <div class="form-row" style="flex-wrap: wrap; align-items: flex-end;">
+                        <div class="form-group" style="max-width: 260px;">
+                            <label>地點</label>
+                            <input type="text" id="connection-schedule-location-search" placeholder="搜尋地點">
+                        </div>
+                        <div class="form-group" style="max-width: 260px;">
+                            <label>時間</label>
+                            <input type="text" id="connection-schedule-time-search" placeholder="搜尋時間或日期">
+                        </div>
+                        <button class="btn btn-primary" onclick="renderSchedules('connection')"><i class="fa-solid fa-magnifying-glass"></i> 搜索</button>
+                        <button class="btn btn-secondary" onclick="clearScheduleSearch('connection')"><i class="fa-solid fa-eraser"></i> 清除</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 100px;">預告圖</th>
+                                <th>檔期</th>
+                                <th>地點</th>
+                                <th>時間</th>
+                                <th>機票費</th>
+                                <th>住宿費</th>
+                                <th style="width: 120px; text-align: center;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="connection-schedules-tbody"></tbody>
                     </table>
                 </div>
             </div>
@@ -1011,6 +1101,56 @@
         </div>
     </div>
 
+    <!-- Stall / Connection Schedule Modal -->
+    <div class="modal-overlay" id="scheduleModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="scheduleModalTitle">新增時程</h3>
+                <button class="close-btn" onclick="closeScheduleModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="schedule-type">
+                <input type="hidden" id="schedule-id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>檔期</label>
+                        <input type="text" id="schedule-period" placeholder="例：2026 春季場" required>
+                    </div>
+                    <div class="form-group">
+                        <label>地點</label>
+                        <input type="text" id="schedule-location" placeholder="例：東京 / 台北信義 / 大阪" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>時間</label>
+                    <input type="text" id="schedule-time" placeholder="例：2026/06/20 13:00-18:00" required>
+                </div>
+                <div class="form-group">
+                    <label>預告圖連結</label>
+                    <input type="url" id="schedule-image" placeholder="貼上 Cloudinary 或圖片網址">
+                </div>
+                <div class="form-row">
+                    <div class="form-group" id="stall-fee-group">
+                        <label>攤位費</label>
+                        <input type="number" id="schedule-stall-fee" min="0" value="0">
+                    </div>
+                    <div class="form-group" id="flight-fee-group">
+                        <label>機票費</label>
+                        <input type="number" id="schedule-flight-fee" min="0" value="0">
+                    </div>
+                    <div class="form-group" id="hotel-fee-group">
+                        <label>住宿費</label>
+                        <input type="number" id="schedule-hotel-fee" min="0" value="0">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeScheduleModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveSchedule()">保存</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
@@ -1048,6 +1188,8 @@
             if(name === 'stock-products') renderStockProducts();
             if(name === 'preorder-products') renderPreorderProducts();
             if(name === 'product-tags') renderProductTags();
+            if(name === 'stall-schedules') renderSchedules('stall');
+            if(name === 'connection-schedules') renderSchedules('connection');
             if(name === 'exchange-rates') initExchangeRates();
         }
 
@@ -1138,6 +1280,8 @@
         const PRODUCT_TAGS_KEY = 'pinkkkuin_product_tags';
         const STOCK_PRODUCTS_KEY = 'pinkkkuin_stock_products';
         const PREORDER_PRODUCTS_KEY = 'pinkkkuin_preorder_products';
+        const STALL_SCHEDULES_KEY = 'pinkkkuin_stall_schedules';
+        const CONNECTION_SCHEDULES_KEY = 'pinkkkuin_connection_schedules';
         const STOCK_PRODUCT_SOURCE_ID = 2026062001;
         const PREORDER_PRODUCT_SOURCE_ID = 2026062002;
         let vendors = [];
@@ -1146,6 +1290,8 @@
         let productTags = [];
         let stockProducts = [];
         let preorderProducts = [];
+        let stallSchedules = [];
+        let connectionSchedules = [];
         let editingProductRows = { stock: null, preorder: null };
         let productBatchImageStore = {};
         let appliedProductFilters = {
@@ -1251,6 +1397,7 @@
         // 頁面載入時初始化資料
         window.addEventListener('DOMContentLoaded', loadData);
         window.addEventListener('DOMContentLoaded', initProductManagement);
+        window.addEventListener('DOMContentLoaded', initScheduleManagement);
 
         function populateFilterVendors() {
             const vSelectNormal = document.getElementById('filter-v-vendor');
@@ -1863,6 +2010,137 @@
             const usage = stockProducts.some(product => (product.tagIds || []).map(String).includes(String(id))) || preorderProducts.some(product => (product.tagIds || []).map(String).includes(String(id)));
             if (usage) return alert('這個標籤目前有商品使用，請先改商品標籤再刪除。'); if (!confirm('確定刪除此商品標籤嗎？')) return;
             productTags = productTags.filter(tag => tag.id !== id); persistProductManagement(); renderProductTagOptions(); renderProductTags();
+        }
+
+        function initScheduleManagement() {
+            stallSchedules = safeParseStorage(STALL_SCHEDULES_KEY, []);
+            connectionSchedules = safeParseStorage(CONNECTION_SCHEDULES_KEY, []);
+            if (!Array.isArray(stallSchedules)) stallSchedules = [];
+            if (!Array.isArray(connectionSchedules)) connectionSchedules = [];
+            persistScheduleManagement();
+            renderSchedules('stall');
+            renderSchedules('connection');
+        }
+
+        function persistScheduleManagement() {
+            localStorage.setItem(STALL_SCHEDULES_KEY, JSON.stringify(stallSchedules));
+            localStorage.setItem(CONNECTION_SCHEDULES_KEY, JSON.stringify(connectionSchedules));
+        }
+
+        function scheduleList(type) {
+            return type === 'stall' ? stallSchedules : connectionSchedules;
+        }
+
+        function setScheduleList(type, list) {
+            if (type === 'stall') stallSchedules = list;
+            else connectionSchedules = list;
+        }
+
+        function scheduleTypeLabel(type) {
+            return type === 'stall' ? '擺攤時程' : '連線時程';
+        }
+
+        function scheduleImageCell(image, period) {
+            const safeImage = normalizeProductImageUrl(image);
+            if (!safeImage) return '<span class="schedule-preview empty"><i class="fa-solid fa-image"></i></span>';
+            return `<img class="schedule-preview" src="${escapeHtml(safeImage)}" alt="${escapeHtml(period || '預告圖')}" loading="lazy">`;
+        }
+
+        function filteredSchedules(type) {
+            const locationKeyword = document.getElementById(`${type}-schedule-location-search`)?.value.trim().toLowerCase() || '';
+            const timeKeyword = document.getElementById(`${type}-schedule-time-search`)?.value.trim().toLowerCase() || '';
+            return scheduleList(type).filter(item => {
+                const locationMatched = !locationKeyword || String(item.location || '').toLowerCase().includes(locationKeyword);
+                const timeMatched = !timeKeyword || String(item.time || '').toLowerCase().includes(timeKeyword) || String(item.period || '').toLowerCase().includes(timeKeyword);
+                return locationMatched && timeMatched;
+            });
+        }
+
+        function renderSchedules(type) {
+            const tbody = document.getElementById(`${type}-schedules-tbody`);
+            if (!tbody) return;
+            const rows = filteredSchedules(type);
+            if (!rows.length) {
+                const colspan = type === 'stall' ? 6 : 7;
+                tbody.innerHTML = `<tr><td colspan="${colspan}" class="empty-state">尚無符合的${scheduleTypeLabel(type)}</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = rows.map(item => {
+                const feeCells = type === 'stall'
+                    ? `<td>NT$ ${Number(item.stallFee || 0).toLocaleString()}</td>`
+                    : `<td>NT$ ${Number(item.flightFee || 0).toLocaleString()}</td><td>NT$ ${Number(item.hotelFee || 0).toLocaleString()}</td>`;
+                return `<tr>
+                    <td>${scheduleImageCell(item.image, item.period)}</td>
+                    <td><strong>${escapeHtml(item.period || '')}</strong></td>
+                    <td>${escapeHtml(item.location || '')}</td>
+                    <td>${escapeHtml(item.time || '')}</td>
+                    ${feeCells}
+                    <td><div class="product-row-actions">
+                        <button class="btn btn-sm btn-action-edit" onclick="openScheduleModal('${type}', ${item.id})"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-sm btn-action-delete" onclick="deleteSchedule('${type}', ${item.id})"><i class="fa-solid fa-trash"></i></button>
+                    </div></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function clearScheduleSearch(type) {
+            const locationInput = document.getElementById(`${type}-schedule-location-search`);
+            const timeInput = document.getElementById(`${type}-schedule-time-search`);
+            if (locationInput) locationInput.value = '';
+            if (timeInput) timeInput.value = '';
+            renderSchedules(type);
+        }
+
+        function openScheduleModal(type, id = null) {
+            const modal = document.getElementById('scheduleModal');
+            const item = id ? scheduleList(type).find(row => String(row.id) === String(id)) : null;
+            document.getElementById('scheduleModalTitle').innerText = `${id ? '編輯' : '新增'}${scheduleTypeLabel(type)}`;
+            document.getElementById('schedule-type').value = type;
+            document.getElementById('schedule-id').value = item?.id || '';
+            document.getElementById('schedule-period').value = item?.period || '';
+            document.getElementById('schedule-location').value = item?.location || '';
+            document.getElementById('schedule-time').value = item?.time || '';
+            document.getElementById('schedule-image').value = item?.image || '';
+            document.getElementById('schedule-stall-fee').value = Number(item?.stallFee || 0);
+            document.getElementById('schedule-flight-fee').value = Number(item?.flightFee || 0);
+            document.getElementById('schedule-hotel-fee').value = Number(item?.hotelFee || 0);
+            document.getElementById('stall-fee-group').style.display = type === 'stall' ? 'flex' : 'none';
+            document.getElementById('flight-fee-group').style.display = type === 'connection' ? 'flex' : 'none';
+            document.getElementById('hotel-fee-group').style.display = type === 'connection' ? 'flex' : 'none';
+            modal.classList.add('active');
+        }
+
+        function closeScheduleModal() {
+            document.getElementById('scheduleModal').classList.remove('active');
+        }
+
+        function saveSchedule() {
+            const type = document.getElementById('schedule-type').value;
+            const id = document.getElementById('schedule-id').value;
+            const data = {
+                id: id ? Number(id) : Date.now(),
+                period: document.getElementById('schedule-period').value.trim(),
+                location: document.getElementById('schedule-location').value.trim(),
+                time: document.getElementById('schedule-time').value.trim(),
+                image: normalizeProductImageUrl(document.getElementById('schedule-image').value),
+                stallFee: Number(document.getElementById('schedule-stall-fee').value || 0),
+                flightFee: Number(document.getElementById('schedule-flight-fee').value || 0),
+                hotelFee: Number(document.getElementById('schedule-hotel-fee').value || 0)
+            };
+            if (!data.period || !data.location || !data.time) return alert('請填寫檔期、地點與時間');
+            const current = scheduleList(type);
+            const next = id ? current.map(item => String(item.id) === String(id) ? data : item) : [data, ...current];
+            setScheduleList(type, next);
+            persistScheduleManagement();
+            closeScheduleModal();
+            renderSchedules(type);
+        }
+
+        function deleteSchedule(type, id) {
+            if (!confirm(`確定刪除此${scheduleTypeLabel(type)}嗎？`)) return;
+            setScheduleList(type, scheduleList(type).filter(item => String(item.id) !== String(id)));
+            persistScheduleManagement();
+            renderSchedules(type);
         }
         // --- Orders ---
         function renderVendorsOrders() {
