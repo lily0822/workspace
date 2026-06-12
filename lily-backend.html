@@ -136,6 +136,10 @@
         .form-group textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1); }
         .schedule-preview { width: 72px; height: 72px; border-radius: 0.5rem; object-fit: cover; border: 1px solid #e2e8f0; background: #f8fafc; display: block; }
         .schedule-preview.empty { display: inline-flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 1.25rem; }
+        .stall-day-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr 40px; gap: 0.5rem; align-items: center; }
+        .stall-day-row input { min-width: 0; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: inherit; font-size: 0.875rem; color: #334155; }
+        .schedule-time-lines { display: flex; flex-direction: column; gap: 0.25rem; color: #334155; }
+        .schedule-time-lines small { color: #64748b; font-size: 0.78rem; }
         
         .dynamic-row { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr 1fr 40px; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
         .dynamic-row input, .dynamic-row select { min-width: 0; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.25rem; font-size: 0.8rem; }
@@ -642,7 +646,7 @@
                                 <th style="width: 100px;">預告圖</th>
                                 <th>檔期</th>
                                 <th>地點</th>
-                                <th>時間</th>
+                                <th>每日日期 / 時間</th>
                                 <th>攤位費</th>
                                 <th style="width: 120px; text-align: center;">操作</th>
                             </tr>
@@ -679,7 +683,8 @@
                                 <th style="width: 100px;">預告圖</th>
                                 <th>檔期</th>
                                 <th>地點</th>
-                                <th>時間</th>
+                                <th>開始日期</th>
+                                <th>結束日期</th>
                                 <th>機票費</th>
                                 <th>住宿費</th>
                                 <th style="width: 120px; text-align: center;">操作</th>
@@ -1121,9 +1126,23 @@
                         <input type="text" id="schedule-location" placeholder="例：東京 / 台北信義 / 大阪" required>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>時間</label>
-                    <input type="text" id="schedule-time" placeholder="例：2026/06/20 13:00-18:00" required>
+                <div class="form-group" id="connection-date-range-group">
+                    <label>連線日期</label>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>開始日期</label>
+                            <input type="date" id="schedule-start-date">
+                        </div>
+                        <div class="form-group">
+                            <label>結束日期</label>
+                            <input type="date" id="schedule-end-date">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group" id="stall-days-group">
+                    <label>擺攤每日時間</label>
+                    <div id="stall-days-container" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+                    <button class="btn btn-secondary" type="button" style="align-self: flex-start;" onclick="addStallDayRow()"><i class="fa-solid fa-plus"></i> 新增一天</button>
                 </div>
                 <div class="form-group">
                     <label>預告圖連結</label>
@@ -2046,12 +2065,50 @@
             return `<img class="schedule-preview" src="${escapeHtml(safeImage)}" alt="${escapeHtml(period || '預告圖')}" loading="lazy">`;
         }
 
+        function normalizeStallDays(item = {}) {
+            if (Array.isArray(item.days) && item.days.length) {
+                return item.days.map(day => ({
+                    date: day.date || '',
+                    startTime: day.startTime || '',
+                    endTime: day.endTime || ''
+                }));
+            }
+            if (item.time) return [{ date: item.time, startTime: '', endTime: '' }];
+            return [{ date: '', startTime: '', endTime: '' }];
+        }
+
+        function scheduleTimeText(item, type) {
+            if (type === 'connection') {
+                const start = item.startDate || '';
+                const end = item.endDate || '';
+                if (start && end) return `${start} ~ ${end}`;
+                return start || end || item.time || '';
+            }
+            const days = normalizeStallDays(item).filter(day => day.date || day.startTime || day.endTime);
+            if (!days.length) return item.time || '';
+            return days.map(day => {
+                const range = [day.startTime, day.endTime].filter(Boolean).join(' - ');
+                return [day.date, range].filter(Boolean).join(' ');
+            }).join(' / ');
+        }
+
+        function scheduleTimeHtml(item, type) {
+            if (type === 'connection') return escapeHtml(scheduleTimeText(item, type));
+            const days = normalizeStallDays(item).filter(day => day.date || day.startTime || day.endTime);
+            if (!days.length) return escapeHtml(item.time || '');
+            return `<div class="schedule-time-lines">${days.map(day => {
+                const range = [day.startTime, day.endTime].filter(Boolean).join(' - ');
+                return `<span>${escapeHtml(day.date || '')}${range ? ` <small>${escapeHtml(range)}</small>` : ''}</span>`;
+            }).join('')}</div>`;
+        }
+
         function filteredSchedules(type) {
             const locationKeyword = document.getElementById(`${type}-schedule-location-search`)?.value.trim().toLowerCase() || '';
             const timeKeyword = document.getElementById(`${type}-schedule-time-search`)?.value.trim().toLowerCase() || '';
             return scheduleList(type).filter(item => {
                 const locationMatched = !locationKeyword || String(item.location || '').toLowerCase().includes(locationKeyword);
-                const timeMatched = !timeKeyword || String(item.time || '').toLowerCase().includes(timeKeyword) || String(item.period || '').toLowerCase().includes(timeKeyword);
+                const timeHaystack = `${item.period || ''} ${scheduleTimeText(item, type)}`.toLowerCase();
+                const timeMatched = !timeKeyword || timeHaystack.includes(timeKeyword);
                 return locationMatched && timeMatched;
             });
         }
@@ -2061,7 +2118,7 @@
             if (!tbody) return;
             const rows = filteredSchedules(type);
             if (!rows.length) {
-                const colspan = type === 'stall' ? 6 : 7;
+                const colspan = type === 'stall' ? 6 : 8;
                 tbody.innerHTML = `<tr><td colspan="${colspan}" class="empty-state">尚無符合的${scheduleTypeLabel(type)}</td></tr>`;
                 return;
             }
@@ -2069,11 +2126,14 @@
                 const feeCells = type === 'stall'
                     ? `<td>NT$ ${Number(item.stallFee || 0).toLocaleString()}</td>`
                     : `<td>NT$ ${Number(item.flightFee || 0).toLocaleString()}</td><td>NT$ ${Number(item.hotelFee || 0).toLocaleString()}</td>`;
+                const timeCells = type === 'connection'
+                    ? `<td>${escapeHtml(item.startDate || item.time || '')}</td><td>${escapeHtml(item.endDate || '')}</td>`
+                    : `<td>${scheduleTimeHtml(item, type)}</td>`;
                 return `<tr>
                     <td>${scheduleImageCell(item.image, item.period)}</td>
                     <td><strong>${escapeHtml(item.period || '')}</strong></td>
                     <td>${escapeHtml(item.location || '')}</td>
-                    <td>${escapeHtml(item.time || '')}</td>
+                    ${timeCells}
                     ${feeCells}
                     <td><div class="product-row-actions">
                         <button class="btn btn-sm btn-action-edit" onclick="openScheduleModal('${type}', ${item.id})"><i class="fa-solid fa-pen"></i></button>
@@ -2099,11 +2159,15 @@
             document.getElementById('schedule-id').value = item?.id || '';
             document.getElementById('schedule-period').value = item?.period || '';
             document.getElementById('schedule-location').value = item?.location || '';
-            document.getElementById('schedule-time').value = item?.time || '';
+            document.getElementById('schedule-start-date').value = item?.startDate || '';
+            document.getElementById('schedule-end-date').value = item?.endDate || '';
+            renderStallDayRows(normalizeStallDays(item || {}));
             document.getElementById('schedule-image').value = item?.image || '';
             document.getElementById('schedule-stall-fee').value = Number(item?.stallFee || 0);
             document.getElementById('schedule-flight-fee').value = Number(item?.flightFee || 0);
             document.getElementById('schedule-hotel-fee').value = Number(item?.hotelFee || 0);
+            document.getElementById('connection-date-range-group').style.display = type === 'connection' ? 'flex' : 'none';
+            document.getElementById('stall-days-group').style.display = type === 'stall' ? 'flex' : 'none';
             document.getElementById('stall-fee-group').style.display = type === 'stall' ? 'flex' : 'none';
             document.getElementById('flight-fee-group').style.display = type === 'connection' ? 'flex' : 'none';
             document.getElementById('hotel-fee-group').style.display = type === 'connection' ? 'flex' : 'none';
@@ -2114,6 +2178,42 @@
             document.getElementById('scheduleModal').classList.remove('active');
         }
 
+        function renderStallDayRows(days = []) {
+            const container = document.getElementById('stall-days-container');
+            if (!container) return;
+            const safeDays = days.length ? days : [{ date: '', startTime: '', endTime: '' }];
+            container.innerHTML = '';
+            safeDays.forEach(day => addStallDayRow(day));
+        }
+
+        function addStallDayRow(day = {}) {
+            const container = document.getElementById('stall-days-container');
+            if (!container) return;
+            const row = document.createElement('div');
+            row.className = 'stall-day-row';
+            row.innerHTML = `
+                <input type="date" class="stall-day-date" value="${escapeHtml(day.date || '')}" aria-label="日期">
+                <input type="time" class="stall-day-start" value="${escapeHtml(day.startTime || '')}" aria-label="開始時間">
+                <input type="time" class="stall-day-end" value="${escapeHtml(day.endTime || '')}" aria-label="結束時間">
+                <button class="btn btn-sm btn-danger" type="button" onclick="removeStallDayRow(this)"><i class="fa-solid fa-trash"></i></button>
+            `;
+            container.appendChild(row);
+        }
+
+        function removeStallDayRow(button) {
+            const container = document.getElementById('stall-days-container');
+            button.closest('.stall-day-row')?.remove();
+            if (container && !container.querySelector('.stall-day-row')) addStallDayRow();
+        }
+
+        function collectStallDays() {
+            return Array.from(document.querySelectorAll('#stall-days-container .stall-day-row')).map(row => ({
+                date: row.querySelector('.stall-day-date')?.value || '',
+                startTime: row.querySelector('.stall-day-start')?.value || '',
+                endTime: row.querySelector('.stall-day-end')?.value || ''
+            })).filter(day => day.date || day.startTime || day.endTime);
+        }
+
         function saveSchedule() {
             const type = document.getElementById('schedule-type').value;
             const id = document.getElementById('schedule-id').value;
@@ -2121,13 +2221,17 @@
                 id: id ? Number(id) : Date.now(),
                 period: document.getElementById('schedule-period').value.trim(),
                 location: document.getElementById('schedule-location').value.trim(),
-                time: document.getElementById('schedule-time').value.trim(),
+                time: '',
+                startDate: document.getElementById('schedule-start-date').value,
+                endDate: document.getElementById('schedule-end-date').value,
+                days: type === 'stall' ? collectStallDays() : [],
                 image: normalizeProductImageUrl(document.getElementById('schedule-image').value),
                 stallFee: Number(document.getElementById('schedule-stall-fee').value || 0),
                 flightFee: Number(document.getElementById('schedule-flight-fee').value || 0),
                 hotelFee: Number(document.getElementById('schedule-hotel-fee').value || 0)
             };
-            if (!data.period || !data.location || !data.time) return alert('請填寫檔期、地點與時間');
+            const hasTime = type === 'connection' ? (data.startDate && data.endDate) : data.days.length;
+            if (!data.period || !data.location || !hasTime) return alert(type === 'connection' ? '請填寫檔期、地點、開始日期與結束日期' : '請填寫檔期、地點與至少一天擺攤時間');
             const current = scheduleList(type);
             const next = id ? current.map(item => String(item.id) === String(id) ? data : item) : [data, ...current];
             setScheduleList(type, next);
