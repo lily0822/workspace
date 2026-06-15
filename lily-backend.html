@@ -1401,21 +1401,20 @@
                 const result = await res.json();
                 
                 if (result.status === 'success') {
+                    if (skipRender) return result;
                     applyBackendData(result.data || {});
-                    if (!skipRender) {
-                        populateFilterVendors();
-                        renderVendors();
-                        renderWebsites();
-                        if (activeTab === 'vendors-orders') renderVendorsOrders();
-                        if (activeTab === 'website-orders') renderWebsiteOrders();
-                        if (activeTab === 'customer-orders') renderCustomerOrders();
-                        renderProductTagOptions();
-                        renderStockProducts();
-                        renderPreorderProducts();
-                        renderProductTags();
-                        renderSchedules('stall');
-                        renderSchedules('connection');
-                    }
+                    populateFilterVendors();
+                    renderVendors();
+                    renderWebsites();
+                    if (activeTab === 'vendors-orders') renderVendorsOrders();
+                    if (activeTab === 'website-orders') renderWebsiteOrders();
+                    if (activeTab === 'customer-orders') renderCustomerOrders();
+                    renderProductTagOptions();
+                    renderStockProducts();
+                    renderPreorderProducts();
+                    renderProductTags();
+                    renderSchedules('stall');
+                    renderSchedules('connection');
                 } else {
                     alert('發生錯誤: ' + result.message);
                 }
@@ -1751,7 +1750,7 @@
         }
 
         async function saveProductToBackend(type, product) {
-            await fetchAPI(productSaveAction(type), productSheetPayload(product, type), null, true);
+            return await fetchAPI(productSaveAction(type), productSheetPayload(product, type), null, true);
         }
 
         async function deleteProductFromBackend(type, id) {
@@ -1914,27 +1913,76 @@
             `).join('');
         }
 
+        function productVariantViewRowsHtml(product, type) {
+            const variants = normalizeProductVariants(product, type);
+            return variants.map((variant, index) => `
+                <div class="product-variant-row" data-variant-id="${escapeHtml(variant.id)}">
+                    <span>${index + 1}</span>
+                    <strong>${escapeHtml(variant.spec)}</strong>
+                    <span>NT$ ${Number(variant.price || 0).toLocaleString()}</span>
+                    <span>${Number(variant.quantity || 0)}</span>
+                    <span>${variant.link ? `<a href="${escapeHtml(variant.link)}" target="_blank" rel="noopener">查看連結</a>` : '-'}</span>
+                    <span></span>
+                </div>
+            `).join('');
+        }
+
         function productVariantSubRow(product, type) {
             const colspan = type === 'preorder' ? 11 : 10;
             return `<tr class="sub-row" id="${type}-variant-row-${product.id}">
                 <td colspan="${colspan}">
-                    <div class="sub-table-container">
+                    <div class="sub-table-container" id="${type}-variant-detail-${product.id}">
                         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
                             <strong style="color:#334155;"><i class="fa-solid fa-list-ul" style="color:var(--primary-color);margin-right:0.4rem;"></i>商品規格明細</strong>
                             <div style="display:flex;gap:0.5rem;">
-                                <button class="btn btn-sm btn-secondary" onclick="addProductVariantRow('${type}', ${product.id})"><i class="fa-solid fa-plus"></i> 新增規格</button>
-                                <button class="btn btn-sm btn-primary" onclick="saveProductVariants('${type}', ${product.id})"><i class="fa-solid fa-floppy-disk"></i> 保存規格</button>
+                                <button class="btn btn-sm btn-secondary" onclick="setProductVariantEditMode('${type}', ${product.id}, true)"><i class="fa-solid fa-pen"></i> 編輯規格</button>
                             </div>
                         </div>
                         <div class="product-variant-header">
                             <span>編號</span><span>規格</span><span>價格</span><span>數量</span><span>商品連結</span><span></span>
                         </div>
                         <div id="${type}-variant-container-${product.id}">
-                            ${productVariantRowsHtml(product, type)}
+                            ${productVariantViewRowsHtml(product, type)}
                         </div>
                     </div>
                 </td>
             </tr>`;
+        }
+
+        function setProductVariantEditMode(type, id, editing) {
+            const products = type === 'stock' ? stockProducts : preorderProducts;
+            const product = products.find(item => item.id === id);
+            const detail = document.getElementById(`${type}-variant-detail-${id}`);
+            if (!product || !detail) return;
+            detail.innerHTML = editing ? `
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+                    <strong style="color:#334155;"><i class="fa-solid fa-list-ul" style="color:var(--primary-color);margin-right:0.4rem;"></i>商品規格明細</strong>
+                    <div style="display:flex;gap:0.5rem;">
+                        <button class="btn btn-sm btn-secondary" onclick="addProductVariantRow('${type}', ${id})"><i class="fa-solid fa-plus"></i> 新增規格</button>
+                        <button class="btn btn-sm btn-primary" onclick="saveProductVariants('${type}', ${id})"><i class="fa-solid fa-floppy-disk"></i> 保存規格</button>
+                        <button class="btn btn-sm btn-secondary" onclick="setProductVariantEditMode('${type}', ${id}, false)"><i class="fa-solid fa-xmark"></i> 取消</button>
+                    </div>
+                </div>
+                <div class="product-variant-header">
+                    <span>編號</span><span>規格</span><span>價格</span><span>數量</span><span>商品連結</span><span></span>
+                </div>
+                <div id="${type}-variant-container-${id}">
+                    ${productVariantRowsHtml(product, type)}
+                </div>
+            ` : `
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+                    <strong style="color:#334155;"><i class="fa-solid fa-list-ul" style="color:var(--primary-color);margin-right:0.4rem;"></i>商品規格明細</strong>
+                    <div style="display:flex;gap:0.5rem;">
+                        <button class="btn btn-sm btn-secondary" onclick="setProductVariantEditMode('${type}', ${id}, true)"><i class="fa-solid fa-pen"></i> 編輯規格</button>
+                    </div>
+                </div>
+                <div class="product-variant-header">
+                    <span>編號</span><span>規格</span><span>價格</span><span>數量</span><span>商品連結</span><span></span>
+                </div>
+                <div id="${type}-variant-container-${id}">
+                    ${productVariantViewRowsHtml(product, type)}
+                </div>
+            `;
         }
 
         function addProductVariantRow(type, id) {
