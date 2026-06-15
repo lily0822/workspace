@@ -1654,7 +1654,7 @@
 
         function normalizeProductVariants(product, type) {
             const qty = type === 'stock' ? Number(product.quantity || 0) : Number(product.quota || 0);
-            const raw = Array.isArray(product.variants) ? product.variants : [];
+            const raw = Array.isArray(product.variants) ? product.variants : parseProductVariantsJson(product.variantsJson);
             const variants = raw.map((variant, index) => ({
                 id: variant.id || `${product.id || Date.now()}-${index + 1}`,
                 spec: String(variant.spec || variant.name || '').trim(),
@@ -1680,6 +1680,17 @@
             const min = Math.min(...prices);
             const max = Math.max(...prices);
             return min === max ? `NT$ ${min.toLocaleString()}` : `NT$ ${min.toLocaleString()} ~ ${max.toLocaleString()}`;
+        }
+
+        function parseProductVariantsJson(value) {
+            if (!value) return [];
+            if (Array.isArray(value)) return value;
+            try {
+                const parsed = JSON.parse(value);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch {
+                return [];
+            }
         }
 
         function initProductManagement() {
@@ -1732,8 +1743,15 @@
             return type === 'stock' ? 'deleteStockProduct' : 'deletePreorderProduct';
         }
 
+        function productSheetPayload(product, type) {
+            const variants = normalizeProductVariants(product, type);
+            const payload = { ...product, variantsJson: JSON.stringify(variants) };
+            delete payload.variants;
+            return payload;
+        }
+
         async function saveProductToBackend(type, product) {
-            await fetchAPI(productSaveAction(type), product, null, true);
+            await fetchAPI(productSaveAction(type), productSheetPayload(product, type), null, true);
         }
 
         async function deleteProductFromBackend(type, id) {

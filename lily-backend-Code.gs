@@ -11,8 +11,8 @@ const SHEET_HEADERS = {
   [SHEET_VENDORS]: ['id', 'name', 'contact', 'location', 'currency', 'notes'],
   [SHEET_ORDERS]: ['id', 'date', 'vendorId', 'orderNo', 'trackingNo', 'shipped', 'shippedDate', 'items'],
   [SHEET_WEBSITES]: ['id', 'name', 'contact', 'location', 'currency', 'link', 'notes'],
-  [SHEET_STOCK_PRODUCTS]: ['id', 'name', 'costPrice', 'listPrice', 'quantity', 'tagIds', 'description', 'image', 'active', 'variants', 'createdAt', 'updatedAt'],
-  [SHEET_PREORDER_PRODUCTS]: ['id', 'name', 'costPrice', 'listPrice', 'quota', 'deadline', 'tagIds', 'description', 'image', 'active', 'variants', 'createdAt', 'updatedAt'],
+  [SHEET_STOCK_PRODUCTS]: ['id', 'name', 'costPrice', 'listPrice', 'quantity', 'tagIds', 'description', 'image', 'active', 'variantsJson', 'variants', 'createdAt', 'updatedAt'],
+  [SHEET_PREORDER_PRODUCTS]: ['id', 'name', 'costPrice', 'listPrice', 'quota', 'deadline', 'tagIds', 'description', 'image', 'active', 'variantsJson', 'variants', 'createdAt', 'updatedAt'],
   [SHEET_PRODUCT_TAGS]: ['id', 'name', 'color', 'createdAt', 'updatedAt'],
   [SHEET_STALL_SCHEDULES]: ['id', 'period', 'location', 'image', 'stallFee', 'days', 'createdAt', 'updatedAt'],
   [SHEET_CONNECTION_SCHEDULES]: ['id', 'period', 'location', 'image', 'startDate', 'endDate', 'flightFee', 'hotelFee', 'createdAt', 'updatedAt']
