@@ -649,7 +649,7 @@
                         <thead>
                             <tr>
                                 <th style="width: 100px;">預告圖</th>
-                                <th>檔期</th>
+                                <th>市集名稱</th>
                                 <th>地點</th>
                                 <th>每日日期 / 時間</th>
                                 <th>攤位費</th>
@@ -686,7 +686,7 @@
                         <thead>
                             <tr>
                                 <th style="width: 100px;">預告圖</th>
-                                <th>檔期</th>
+                                <th>連線名稱</th>
                                 <th>地點</th>
                                 <th>開始日期</th>
                                 <th>結束日期</th>
@@ -1123,7 +1123,7 @@
                 <input type="hidden" id="schedule-id">
                 <div class="form-row">
                     <div class="form-group">
-                        <label>檔期</label>
+                        <label id="schedule-period-label">檔期</label>
                         <input type="text" id="schedule-period" placeholder="例：2026 春季場" required>
                     </div>
                     <div class="form-group">
@@ -2423,6 +2423,18 @@
             return type === 'stall' ? '擺攤時程' : '連線時程';
         }
 
+        function scheduleNameLabel(type) {
+            return type === 'stall' ? '市集名稱' : '連線名稱';
+        }
+
+        function scheduleDateWithWeekday(value = '') {
+            if (!value) return '';
+            const date = new Date(`${value}T00:00:00`);
+            if (Number.isNaN(date.getTime())) return value;
+            const weekNames = ['日', '一', '二', '三', '四', '五', '六'];
+            return `${value} (${weekNames[date.getDay()]})`;
+        }
+
         function scheduleImageCell(image, period) {
             const safeImage = normalizeProductImageUrl(image);
             if (!safeImage) return '<span class="schedule-preview empty"><i class="fa-solid fa-image"></i></span>';
@@ -2445,14 +2457,14 @@
             if (type === 'connection') {
                 const start = item.startDate || '';
                 const end = item.endDate || '';
-                if (start && end) return `${start} ~ ${end}`;
-                return start || end || item.time || '';
+                if (start && end) return `${scheduleDateWithWeekday(start)} ~ ${scheduleDateWithWeekday(end)}`;
+                return scheduleDateWithWeekday(start || end || item.time || '');
             }
             const days = normalizeStallDays(item).filter(day => day.date || day.startTime || day.endTime);
             if (!days.length) return item.time || '';
             return days.map(day => {
                 const range = [day.startTime, day.endTime].filter(Boolean).join(' - ');
-                return [day.date, range].filter(Boolean).join(' ');
+                return [scheduleDateWithWeekday(day.date), range].filter(Boolean).join(' ');
             }).join(' / ');
         }
 
@@ -2462,7 +2474,7 @@
             if (!days.length) return escapeHtml(item.time || '');
             return `<div class="schedule-time-lines">${days.map(day => {
                 const range = [day.startTime, day.endTime].filter(Boolean).join(' - ');
-                return `<span>${escapeHtml(day.date || '')}${range ? ` <small>${escapeHtml(range)}</small>` : ''}</span>`;
+                return `<span>${escapeHtml(scheduleDateWithWeekday(day.date))}${range ? ` <small>${escapeHtml(range)}</small>` : ''}</span>`;
             }).join('')}</div>`;
         }
 
@@ -2491,7 +2503,7 @@
                     ? `<td>NT$ ${Number(item.stallFee || 0).toLocaleString()}</td>`
                     : `<td>NT$ ${Number(item.flightFee || 0).toLocaleString()}</td><td>NT$ ${Number(item.hotelFee || 0).toLocaleString()}</td>`;
                 const timeCells = type === 'connection'
-                    ? `<td>${escapeHtml(item.startDate || item.time || '')}</td><td>${escapeHtml(item.endDate || '')}</td>`
+                    ? `<td>${escapeHtml(scheduleDateWithWeekday(item.startDate || item.time || ''))}</td><td>${escapeHtml(scheduleDateWithWeekday(item.endDate || ''))}</td>`
                     : `<td>${scheduleTimeHtml(item, type)}</td>`;
                 return `<tr>
                     <td>${scheduleImageCell(item.image, item.period)}</td>
@@ -2519,9 +2531,12 @@
             const modal = document.getElementById('scheduleModal');
             const item = id ? scheduleList(type).find(row => String(row.id) === String(id)) : null;
             document.getElementById('scheduleModalTitle').innerText = `${id ? '編輯' : '新增'}${scheduleTypeLabel(type)}`;
+            document.getElementById('schedule-period-label').innerText = scheduleNameLabel(type);
             document.getElementById('schedule-type').value = type;
             document.getElementById('schedule-id').value = item?.id || '';
-            document.getElementById('schedule-period').value = item?.period || '';
+            const periodInput = document.getElementById('schedule-period');
+            periodInput.value = item?.period || '';
+            periodInput.placeholder = type === 'stall' ? '例：台北華山文創園區．櫻花桃粉手作市集' : '例：東京池袋・原宿夏季可愛雜貨現場連線';
             document.getElementById('schedule-location').value = item?.location || '';
             document.getElementById('schedule-start-date').value = item?.startDate || '';
             document.getElementById('schedule-end-date').value = item?.endDate || '';
@@ -2595,7 +2610,7 @@
                 hotelFee: Number(document.getElementById('schedule-hotel-fee').value || 0)
             };
             const hasTime = type === 'connection' ? (data.startDate && data.endDate) : data.days.length;
-            if (!data.period || !data.location || !hasTime) return alert(type === 'connection' ? '請填寫檔期、地點、開始日期與結束日期' : '請填寫檔期、地點與至少一天擺攤時間');
+            if (!data.period || !data.location || !hasTime) return alert(type === 'connection' ? '請填寫連線名稱、地點、開始日期與結束日期' : '請填寫市集名稱、地點與至少一天擺攤時間');
             const current = scheduleList(type);
             const next = id ? current.map(item => String(item.id) === String(id) ? data : item) : [data, ...current];
             setScheduleList(type, next);
