@@ -1839,8 +1839,9 @@
         }
 
         function productImageCell(image, name) {
-            if (!image) return '<div style="width:56px;height:56px;border-radius:0.5rem;background:#f1f5f9;display:grid;place-items:center;color:#94a3b8;"><i class="fa-regular fa-image"></i></div>';
-            return `<img src="${image}" alt="${escapeHtml(name)}" style="width:56px;height:56px;object-fit:cover;border-radius:0.5rem;border:1px solid #e2e8f0;">`;
+            const safeImage = normalizeProductImageUrl(image);
+            if (!safeImage) return '<div style="width:56px;height:56px;border-radius:0.5rem;background:#f1f5f9;display:grid;place-items:center;color:#94a3b8;"><i class="fa-regular fa-image"></i></div>';
+            return `<img src="${escapeHtml(safeImage)}" alt="${escapeHtml(name)}" style="width:56px;height:56px;object-fit:cover;border-radius:0.5rem;border:1px solid #e2e8f0;">`;
         }
 
         function tagPill(tagId) {
@@ -2027,23 +2028,30 @@
         }
 
         async function saveProductVariants(type, id) {
-            const products = type === 'stock' ? stockProducts : preorderProducts;
-            const existing = products.find(product => sameId(product.id, id));
-            if (!existing) return;
-            const variants = collectProductVariants(type, id);
-            if (!variants.length) return alert('請至少填寫一個規格');
-            const firstVariant = variants[0];
-            const totalQty = variants.reduce((sum, variant) => sum + Number(variant.quantity || 0), 0);
-            const updated = { ...existing, variants, listPrice: Number(firstVariant.price || existing.listPrice || 0) };
-            if (type === 'stock') updated.quantity = totalQty;
-            else updated.quota = totalQty;
-            if (type === 'stock') stockProducts = stockProducts.map(product => sameId(product.id, id) ? updated : product);
-            else preorderProducts = preorderProducts.map(product => sameId(product.id, id) ? updated : product);
-            persistProductManagement();
-            renderProductRows(type);
-            renderProductTags();
-            await saveProductToBackend(type, updated);
-            await syncProductCatalog(type);
+            try {
+                const products = type === 'stock' ? stockProducts : preorderProducts;
+                const existing = products.find(product => sameId(product.id, id));
+                if (!existing) return alert('找不到這個商品，請重新整理後再試。');
+                const variants = collectProductVariants(type, id);
+                if (!variants.length) return alert('請至少填寫一個規格');
+                const firstVariant = variants[0];
+                const totalQty = variants.reduce((sum, variant) => sum + Number(variant.quantity || 0), 0);
+                const updated = { ...existing, variants, listPrice: Number(firstVariant.price || existing.listPrice || 0) };
+                if (type === 'stock') updated.quantity = totalQty;
+                else updated.quota = totalQty;
+                if (type === 'stock') stockProducts = stockProducts.map(product => sameId(product.id, id) ? updated : product);
+                else preorderProducts = preorderProducts.map(product => sameId(product.id, id) ? updated : product);
+                persistProductManagement();
+                renderProductRows(type);
+                renderProductTags();
+                const result = await saveProductToBackend(type, updated);
+                if (!result || result.status !== 'success') throw new Error('後端商品資料沒有回傳成功');
+                await syncProductCatalog(type);
+                alert('規格明細已保存');
+            } catch (error) {
+                console.error(error);
+                alert(`規格明細保存失敗：${error.message || error}`);
+            }
         }
 
         function productEditRow(product, type) {
@@ -2111,19 +2119,49 @@
         }
 
         async function saveProductRow(type, id) {
-            const products = type === 'stock' ? stockProducts : preorderProducts;
-            const existing = products.find(product => sameId(product.id, id));
-            if (!existing) return;
-            const updated = { ...existing, name: document.getElementById(`${type}-edit-name-${id}`).value.trim(), description: document.getElementById(`${type}-edit-description-${id}`).value.trim(), costPrice: Number(document.getElementById(`${type}-edit-cost-${id}`).value || 0), listPrice: Number(document.getElementById(`${type}-edit-list-${id}`).value || 0), active: document.getElementById(`${type}-edit-active-${id}`).dataset.active === 'true', tagIds: getCheckedRowTagIds(type, id), image: normalizeProductImageUrl(document.getElementById(`${type}-edit-image-${id}`)?.value || '') };
-            if (type === 'stock') updated.quantity = Number(document.getElementById(`${type}-edit-qty-${id}`).value || 0);
-            else { updated.quota = Number(document.getElementById(`${type}-edit-qty-${id}`).value || 0); updated.deadline = document.getElementById(`${type}-edit-deadline-${id}`).value; }
-            updated.variants = normalizeProductVariants({ ...updated, variants: existing.variants }, type).map((variant, index) => index === 0 ? { ...variant, price: updated.listPrice, quantity: type === 'stock' ? updated.quantity : updated.quota } : variant);
-            if (!updated.name) return alert('請填寫商品名稱');
-            if (type === 'stock') stockProducts = stockProducts.map(product => sameId(product.id, id) ? updated : product);
-            else preorderProducts = preorderProducts.map(product => sameId(product.id, id) ? updated : product);
-            delete productBatchImageStore[`${type}-${id}`];
-            editingProductRows[type] = null;
-            persistProductManagement(); renderProductRows(type); renderProductTags(); await saveProductToBackend(type, updated); await syncProductCatalog(type);
+            try {
+                const products = type === 'stock' ? stockProducts : preorderProducts;
+                const existing = products.find(product => sameId(product.id, id));
+                if (!existing) return alert('找不到這個商品，請重新整理後再試。');
+                const nameEl = document.getElementById(`${type}-edit-name-${id}`);
+                const descEl = document.getElementById(`${type}-edit-description-${id}`);
+                const costEl = document.getElementById(`${type}-edit-cost-${id}`);
+                const listEl = document.getElementById(`${type}-edit-list-${id}`);
+                const qtyEl = document.getElementById(`${type}-edit-qty-${id}`);
+                const activeEl = document.getElementById(`${type}-edit-active-${id}`);
+                if (!nameEl || !descEl || !costEl || !listEl || !qtyEl || !activeEl) return alert('編輯欄位載入不完整，請重新整理後再試。');
+                const updated = {
+                    ...existing,
+                    name: nameEl.value.trim(),
+                    description: descEl.value.trim(),
+                    costPrice: Number(costEl.value || 0),
+                    listPrice: Number(listEl.value || 0),
+                    active: activeEl.dataset.active === 'true',
+                    tagIds: getCheckedRowTagIds(type, id),
+                    image: normalizeProductImageUrl(document.getElementById(`${type}-edit-image-${id}`)?.value || '')
+                };
+                if (type === 'stock') updated.quantity = Number(qtyEl.value || 0);
+                else {
+                    updated.quota = Number(qtyEl.value || 0);
+                    updated.deadline = document.getElementById(`${type}-edit-deadline-${id}`)?.value || '';
+                }
+                updated.variants = normalizeProductVariants({ ...updated, variants: existing.variants }, type).map((variant, index) => index === 0 ? { ...variant, price: updated.listPrice, quantity: type === 'stock' ? updated.quantity : updated.quota } : variant);
+                if (!updated.name) return alert('請填寫商品名稱');
+                if (type === 'stock') stockProducts = stockProducts.map(product => sameId(product.id, id) ? updated : product);
+                else preorderProducts = preorderProducts.map(product => sameId(product.id, id) ? updated : product);
+                delete productBatchImageStore[`${type}-${id}`];
+                editingProductRows[type] = null;
+                persistProductManagement();
+                renderProductRows(type);
+                renderProductTags();
+                const result = await saveProductToBackend(type, updated);
+                if (!result || result.status !== 'success') throw new Error('後端商品資料沒有回傳成功');
+                await syncProductCatalog(type);
+                alert('商品已保存');
+            } catch (error) {
+                console.error(error);
+                alert(`商品保存失敗：${error.message || error}`);
+            }
         }
 
         async function setProductActive(type, id, active) {
@@ -2137,11 +2175,22 @@
         }
 
         async function deleteProduct(type, id) {
-            const label = type === 'stock' ? '現貨商品' : '預購商品';
-            if (!confirm(`確定刪除此${label}嗎？`)) return;
-            if (type === 'stock') stockProducts = stockProducts.filter(product => !sameId(product.id, id));
-            else preorderProducts = preorderProducts.filter(product => !sameId(product.id, id));
-            persistProductManagement(); renderProductRows(type); renderProductTags(); await deleteProductFromBackend(type, id); await syncProductCatalog(type);
+            try {
+                const label = type === 'stock' ? '現貨商品' : '預購商品';
+                if (!confirm(`確定刪除此${label}嗎？`)) return;
+                if (type === 'stock') stockProducts = stockProducts.filter(product => !sameId(product.id, id));
+                else preorderProducts = preorderProducts.filter(product => !sameId(product.id, id));
+                persistProductManagement();
+                renderProductRows(type);
+                renderProductTags();
+                const result = await deleteProductFromBackend(type, id);
+                if (!result || result.status !== 'success') throw new Error('後端商品資料沒有回傳成功');
+                await syncProductCatalog(type);
+                alert('商品已刪除');
+            } catch (error) {
+                console.error(error);
+                alert(`商品刪除失敗：${error.message || error}`);
+            }
         }
 
         function previewProductImage(input, hiddenId, previewId) {
