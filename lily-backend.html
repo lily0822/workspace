@@ -2427,12 +2427,26 @@
             return type === 'stall' ? '市集名稱' : '連線名稱';
         }
 
+        function scheduleDateValue(value = '') {
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+            if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+            const date = new Date(raw);
+            if (Number.isNaN(date.getTime())) return raw;
+            return [
+                date.getFullYear(),
+                String(date.getMonth() + 1).padStart(2, '0'),
+                String(date.getDate()).padStart(2, '0')
+            ].join('-');
+        }
+
         function scheduleDateWithWeekday(value = '') {
-            if (!value) return '';
-            const date = new Date(`${value}T00:00:00`);
-            if (Number.isNaN(date.getTime())) return value;
+            const dateValue = scheduleDateValue(value);
+            if (!dateValue) return '';
+            const date = new Date(`${dateValue}T00:00:00`);
+            if (Number.isNaN(date.getTime())) return dateValue;
             const weekNames = ['日', '一', '二', '三', '四', '五', '六'];
-            return `${value} (${weekNames[date.getDay()]})`;
+            return `${dateValue} (${weekNames[date.getDay()]})`;
         }
 
         function scheduleImageCell(image, period) {
@@ -2444,12 +2458,12 @@
         function normalizeStallDays(item = {}) {
             if (Array.isArray(item.days) && item.days.length) {
                 return item.days.map(day => ({
-                    date: day.date || '',
+                    date: scheduleDateValue(day.date || ''),
                     startTime: day.startTime || '',
                     endTime: day.endTime || ''
                 }));
             }
-            if (item.time) return [{ date: item.time, startTime: '', endTime: '' }];
+            if (item.time) return [{ date: scheduleDateValue(item.time), startTime: '', endTime: '' }];
             return [{ date: '', startTime: '', endTime: '' }];
         }
 
@@ -2538,8 +2552,8 @@
             periodInput.value = item?.period || '';
             periodInput.placeholder = type === 'stall' ? '例：台北華山文創園區．櫻花桃粉手作市集' : '例：東京池袋・原宿夏季可愛雜貨現場連線';
             document.getElementById('schedule-location').value = item?.location || '';
-            document.getElementById('schedule-start-date').value = item?.startDate || '';
-            document.getElementById('schedule-end-date').value = item?.endDate || '';
+            document.getElementById('schedule-start-date').value = scheduleDateValue(item?.startDate || '');
+            document.getElementById('schedule-end-date').value = scheduleDateValue(item?.endDate || '');
             renderStallDayRows(normalizeStallDays(item || {}));
             document.getElementById('schedule-image').value = item?.image || '';
             document.getElementById('schedule-stall-fee').value = Number(item?.stallFee || 0);
