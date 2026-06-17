@@ -642,6 +642,14 @@
                         </div>
                         <button class="btn btn-primary" onclick="renderSchedules('stall')"><i class="fa-solid fa-magnifying-glass"></i> 搜索</button>
                         <button class="btn btn-secondary" onclick="clearScheduleSearch('stall')"><i class="fa-solid fa-eraser"></i> 清除</button>
+                        <div class="form-group" style="min-width: 280px; flex: 1; margin-left: auto;">
+                            <label>擺攤預設圖片 URL</label>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <input type="url" id="stall-default-schedule-image" placeholder="沒有圖片時顯示這張圖" oninput="previewScheduleDefaultImage('stall')">
+                                <button class="btn btn-secondary" type="button" onclick="saveScheduleDefaultImage('stall')"><i class="fa-solid fa-floppy-disk"></i> 保存</button>
+                            </div>
+                            <img id="stall-default-schedule-preview" alt="擺攤預設圖片預覽" style="display:none;width:72px;height:72px;object-fit:cover;border-radius:0.5rem;border:1px solid #e2e8f0;margin-top:0.5rem;">
+                        </div>
                     </div>
                 </div>
                 <div class="table-wrapper">
@@ -679,6 +687,14 @@
                         </div>
                         <button class="btn btn-primary" onclick="renderSchedules('connection')"><i class="fa-solid fa-magnifying-glass"></i> 搜索</button>
                         <button class="btn btn-secondary" onclick="clearScheduleSearch('connection')"><i class="fa-solid fa-eraser"></i> 清除</button>
+                        <div class="form-group" style="min-width: 280px; flex: 1; margin-left: auto;">
+                            <label>連線預設圖片 URL</label>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <input type="url" id="connection-default-schedule-image" placeholder="沒有圖片時顯示這張圖" oninput="previewScheduleDefaultImage('connection')">
+                                <button class="btn btn-secondary" type="button" onclick="saveScheduleDefaultImage('connection')"><i class="fa-solid fa-floppy-disk"></i> 保存</button>
+                            </div>
+                            <img id="connection-default-schedule-preview" alt="連線預設圖片預覽" style="display:none;width:72px;height:72px;object-fit:cover;border-radius:0.5rem;border:1px solid #e2e8f0;margin-top:0.5rem;">
+                        </div>
                     </div>
                 </div>
                 <div class="table-wrapper">
@@ -1306,6 +1322,7 @@
         const PREORDER_PRODUCTS_KEY = 'pinkkkuin_preorder_products';
         const STALL_SCHEDULES_KEY = 'pinkkkuin_stall_schedules';
         const CONNECTION_SCHEDULES_KEY = 'pinkkkuin_connection_schedules';
+        const SCHEDULE_DEFAULT_IMAGES_KEY = 'pinkkkuin_schedule_default_images';
         const BACKEND_CACHE_KEY = 'pinkkkuin_backend_cache';
         const STOCK_PRODUCT_SOURCE_ID = 2026062001;
         const PREORDER_PRODUCT_SOURCE_ID = 2026062002;
@@ -1317,6 +1334,7 @@
         let preorderProducts = [];
         let stallSchedules = [];
         let connectionSchedules = [];
+        let scheduleDefaultImages = { stall: '', connection: '' };
         let editingProductRows = { stock: null, preorder: null };
         let productBatchImageStore = {};
         let appliedProductFilters = {
@@ -1400,6 +1418,16 @@
             if (Array.isArray(data.connectionSchedules)) {
                 connectionSchedules = data.connectionSchedules;
                 localStorage.setItem(CONNECTION_SCHEDULES_KEY, JSON.stringify(connectionSchedules));
+            }
+            if (Array.isArray(data.scheduleSettings)) {
+                scheduleDefaultImages = { stall: '', connection: '', ...scheduleDefaultImages };
+                data.scheduleSettings.forEach(setting => {
+                    if (setting?.type === 'stall' || setting?.type === 'connection') {
+                        scheduleDefaultImages[setting.type] = normalizeProductImageUrl(setting.image || '');
+                    }
+                });
+                localStorage.setItem(SCHEDULE_DEFAULT_IMAGES_KEY, JSON.stringify(scheduleDefaultImages));
+                renderScheduleDefaultImages();
             }
         }
 
@@ -2398,9 +2426,11 @@
         function initScheduleManagement() {
             stallSchedules = safeParseStorage(STALL_SCHEDULES_KEY, []);
             connectionSchedules = safeParseStorage(CONNECTION_SCHEDULES_KEY, []);
+            scheduleDefaultImages = { stall: '', connection: '', ...safeParseStorage(SCHEDULE_DEFAULT_IMAGES_KEY, {}) };
             if (!Array.isArray(stallSchedules)) stallSchedules = [];
             if (!Array.isArray(connectionSchedules)) connectionSchedules = [];
             persistScheduleManagement();
+            renderScheduleDefaultImages();
             renderSchedules('stall');
             renderSchedules('connection');
         }
@@ -2408,6 +2438,41 @@
         function persistScheduleManagement() {
             localStorage.setItem(STALL_SCHEDULES_KEY, JSON.stringify(stallSchedules));
             localStorage.setItem(CONNECTION_SCHEDULES_KEY, JSON.stringify(connectionSchedules));
+            localStorage.setItem(SCHEDULE_DEFAULT_IMAGES_KEY, JSON.stringify(scheduleDefaultImages));
+        }
+
+        function renderScheduleDefaultImages() {
+            ['stall', 'connection'].forEach(type => {
+                const input = document.getElementById(`${type}-default-schedule-image`);
+                if (input) input.value = scheduleDefaultImages[type] || '';
+                previewScheduleDefaultImage(type);
+            });
+        }
+
+        function previewScheduleDefaultImage(type) {
+            const input = document.getElementById(`${type}-default-schedule-image`);
+            const preview = document.getElementById(`${type}-default-schedule-preview`);
+            if (!input || !preview) return;
+            const safeImage = normalizeProductImageUrl(input.value);
+            if (!safeImage) {
+                preview.style.display = 'none';
+                preview.removeAttribute('src');
+                return;
+            }
+            preview.src = safeImage;
+            preview.style.display = 'block';
+        }
+
+        async function saveScheduleDefaultImage(type) {
+            const input = document.getElementById(`${type}-default-schedule-image`);
+            if (!input) return;
+            const image = normalizeProductImageUrl(input.value);
+            if (input.value.trim() && !image) return alert('請貼上有效的圖片 URL');
+            scheduleDefaultImages[type] = image;
+            persistScheduleManagement();
+            previewScheduleDefaultImage(type);
+            await fetchAPI('saveScheduleSetting', { id: type, type, image }, null, true);
+            alert(`${type === 'stall' ? '擺攤' : '連線'}預設圖片已保存`);
         }
 
         function scheduleList(type) {

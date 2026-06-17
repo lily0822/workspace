@@ -6,6 +6,7 @@ const SHEET_PREORDER_PRODUCTS = 'PreorderProducts';
 const SHEET_PRODUCT_TAGS = 'ProductTags';
 const SHEET_STALL_SCHEDULES = 'StallSchedules';
 const SHEET_CONNECTION_SCHEDULES = 'ConnectionSchedules';
+const SHEET_SCHEDULE_SETTINGS = 'ScheduleSettings';
 
 const SHEET_HEADERS = {
   [SHEET_VENDORS]: ['id', 'name', 'contact', 'location', 'currency', 'notes'],
@@ -15,7 +16,8 @@ const SHEET_HEADERS = {
   [SHEET_PREORDER_PRODUCTS]: ['id', 'name', 'costPrice', 'listPrice', 'quota', 'deadline', 'tagIds', 'description', 'image', 'active', 'variantsJson', 'variants', 'createdAt', 'updatedAt'],
   [SHEET_PRODUCT_TAGS]: ['id', 'name', 'color', 'createdAt', 'updatedAt'],
   [SHEET_STALL_SCHEDULES]: ['id', 'period', 'location', 'image', 'stallFee', 'days', 'createdAt', 'updatedAt'],
-  [SHEET_CONNECTION_SCHEDULES]: ['id', 'period', 'location', 'image', 'startDate', 'endDate', 'flightFee', 'hotelFee', 'createdAt', 'updatedAt']
+  [SHEET_CONNECTION_SCHEDULES]: ['id', 'period', 'location', 'image', 'startDate', 'endDate', 'flightFee', 'hotelFee', 'createdAt', 'updatedAt'],
+  [SHEET_SCHEDULE_SETTINGS]: ['id', 'type', 'image', 'createdAt', 'updatedAt']
 };
 
 const JSON_FIELDS = {
@@ -50,6 +52,7 @@ function doPost(e) {
     if (data.action === 'deleteStallSchedule') deleteRow(SHEET_STALL_SCHEDULES, data.id);
     if (data.action === 'saveConnectionSchedule') saveRow(SHEET_CONNECTION_SCHEDULES, data.payload);
     if (data.action === 'deleteConnectionSchedule') deleteRow(SHEET_CONNECTION_SCHEDULES, data.id);
+    if (data.action === 'saveScheduleSetting') saveRow(SHEET_SCHEDULE_SETTINGS, data.payload);
 
     if (data.action === 'getExchangeRates') {
       var rates = scrapeBankRates();
@@ -73,7 +76,8 @@ function readData() {
     preorderProducts: getSheetData(SHEET_PREORDER_PRODUCTS),
     productTags: getSheetData(SHEET_PRODUCT_TAGS),
     stallSchedules: getSheetData(SHEET_STALL_SCHEDULES),
-    connectionSchedules: getSheetData(SHEET_CONNECTION_SCHEDULES)
+    connectionSchedules: getSheetData(SHEET_CONNECTION_SCHEDULES),
+    scheduleSettings: getSheetData(SHEET_SCHEDULE_SETTINGS)
   };
 }
 
