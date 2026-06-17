@@ -1774,7 +1774,12 @@
         }
 
         function quoteJs(value = '') {
-            return JSON.stringify(String(value ?? '')).replace(/</g, '\\u003c');
+            return `'${String(value ?? '')
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/\r/g, '\\r')
+                .replace(/\n/g, '\\n')
+                .replace(/</g, '\\u003c')}'`;
         }
 
         function sameId(a, b) {
