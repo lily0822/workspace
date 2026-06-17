@@ -1306,6 +1306,7 @@
         const PREORDER_PRODUCTS_KEY = 'pinkkkuin_preorder_products';
         const STALL_SCHEDULES_KEY = 'pinkkkuin_stall_schedules';
         const CONNECTION_SCHEDULES_KEY = 'pinkkkuin_connection_schedules';
+        const BACKEND_CACHE_KEY = 'pinkkkuin_backend_cache';
         const STOCK_PRODUCT_SOURCE_ID = 2026062001;
         const PREORDER_PRODUCT_SOURCE_ID = 2026062002;
         let vendors = [];
@@ -1325,6 +1326,33 @@
 
         function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
         function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
+
+        function renderBackendData() {
+            populateFilterVendors();
+            renderVendors();
+            renderWebsites();
+            if (activeTab === 'vendors-orders') renderVendorsOrders();
+            if (activeTab === 'website-orders') renderWebsiteOrders();
+            if (activeTab === 'customer-orders') renderCustomerOrders();
+            renderProductTagOptions();
+            renderStockProducts();
+            renderPreorderProducts();
+            renderProductTags();
+            renderSchedules('stall');
+            renderSchedules('connection');
+        }
+
+        function cacheBackendData(data = {}) {
+            try {
+                localStorage.setItem(BACKEND_CACHE_KEY, JSON.stringify({ ...data, cachedAt: new Date().toISOString() }));
+            } catch (error) {
+                console.warn('Failed to cache backend data', error);
+            }
+        }
+
+        function getCachedBackendData() {
+            return safeParseStorage(BACKEND_CACHE_KEY, null);
+        }
 
         function processAPIData(dataOrders) {
             dataOrders.forEach(o => {
@@ -1402,19 +1430,9 @@
                 
                 if (result.status === 'success') {
                     if (skipRender) return result;
+                    cacheBackendData(result.data || {});
                     applyBackendData(result.data || {});
-                    populateFilterVendors();
-                    renderVendors();
-                    renderWebsites();
-                    if (activeTab === 'vendors-orders') renderVendorsOrders();
-                    if (activeTab === 'website-orders') renderWebsiteOrders();
-                    if (activeTab === 'customer-orders') renderCustomerOrders();
-                    renderProductTagOptions();
-                    renderStockProducts();
-                    renderPreorderProducts();
-                    renderProductTags();
-                    renderSchedules('stall');
-                    renderSchedules('connection');
+                    renderBackendData();
                 } else {
                     alert('發生錯誤: ' + result.message);
                 }
@@ -1427,28 +1445,25 @@
         }
 
         async function loadData() {
-            showLoading();
+            const cached = getCachedBackendData();
+            if (cached) {
+                applyBackendData(cached);
+                renderBackendData();
+            } else {
+                showLoading();
+            }
+
             try {
                 const res = await fetch(API_URL);
                 const result = await res.json();
+                cacheBackendData(result || {});
                 applyBackendData(result || {});
-                populateFilterVendors();
-                renderVendors();
-                renderWebsites();
-                if (activeTab === 'vendors-orders') renderVendorsOrders();
-                if (activeTab === 'website-orders') renderWebsiteOrders();
-                if (activeTab === 'customer-orders') renderCustomerOrders();
-                renderProductTagOptions();
-                renderStockProducts();
-                renderPreorderProducts();
-                renderProductTags();
-                renderSchedules('stall');
-                renderSchedules('connection');
+                renderBackendData();
             } catch (err) {
                 console.error(err);
-                alert('無法載入資料，請檢查網路連線。');
+                if (!cached) alert('無法載入資料，請檢查網路連線。');
             } finally {
-                hideLoading();
+                if (!cached) hideLoading();
             }
         }
 
