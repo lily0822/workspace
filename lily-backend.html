@@ -1797,7 +1797,7 @@
         }
 
         async function deleteProductFromBackend(type, id) {
-            await fetchAPI(productDeleteAction(type), null, id, true);
+            return await fetchAPI(productDeleteAction(type), null, id, true);
         }
 
         async function syncProductsToBackend(type, products) {

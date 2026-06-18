@@ -31,28 +31,93 @@ function doGet(e) {
   return handleResponse(readData());
 }
 
+function authorizeExternalRequests() {
+  UrlFetchApp.fetch('https://www.google.com', { muteHttpExceptions: true });
+  return 'UrlFetchApp authorization is ready.';
+}
+
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
 
-    if (data.action === 'saveVendor') saveRow(SHEET_VENDORS, data.payload);
-    if (data.action === 'deleteVendor') deleteRow(SHEET_VENDORS, data.id);
-    if (data.action === 'saveOrder') saveRow(SHEET_ORDERS, data.payload);
-    if (data.action === 'deleteOrder') deleteRow(SHEET_ORDERS, data.id);
-    if (data.action === 'saveWebsite') saveRow(SHEET_WEBSITES, data.payload);
-    if (data.action === 'deleteWebsite') deleteRow(SHEET_WEBSITES, data.id);
+    if (data.action === 'saveVendor') {
+      if (!data.payload.id) data.payload.id = Date.now();
+      saveRow(SHEET_VENDORS, data.payload);
+      syncSupabaseVendor(data.payload);
+    }
+    if (data.action === 'deleteVendor') {
+      deleteRow(SHEET_VENDORS, data.id);
+      deleteSupabaseMirrorRow('vendors', data.id);
+    }
+    if (data.action === 'saveOrder') {
+      if (!data.payload.id) data.payload.id = Date.now();
+      saveRow(SHEET_ORDERS, data.payload);
+      syncSupabaseBackendOrder(data.payload);
+    }
+    if (data.action === 'deleteOrder') {
+      deleteRow(SHEET_ORDERS, data.id);
+      deleteSupabaseMirrorRow('backend_orders', data.id);
+    }
+    if (data.action === 'saveWebsite') {
+      if (!data.payload.id) data.payload.id = Date.now();
+      saveRow(SHEET_WEBSITES, data.payload);
+      syncSupabaseWebsite(data.payload);
+    }
+    if (data.action === 'deleteWebsite') {
+      deleteRow(SHEET_WEBSITES, data.id);
+      deleteSupabaseMirrorRow('websites', data.id);
+    }
 
-    if (data.action === 'saveStockProduct') saveRow(SHEET_STOCK_PRODUCTS, data.payload);
-    if (data.action === 'deleteStockProduct') deleteRow(SHEET_STOCK_PRODUCTS, data.id);
-    if (data.action === 'savePreorderProduct') saveRow(SHEET_PREORDER_PRODUCTS, data.payload);
-    if (data.action === 'deletePreorderProduct') deleteRow(SHEET_PREORDER_PRODUCTS, data.id);
-    if (data.action === 'saveProductTag') saveRow(SHEET_PRODUCT_TAGS, data.payload);
-    if (data.action === 'deleteProductTag') deleteRow(SHEET_PRODUCT_TAGS, data.id);
-    if (data.action === 'saveStallSchedule') saveRow(SHEET_STALL_SCHEDULES, data.payload);
-    if (data.action === 'deleteStallSchedule') deleteRow(SHEET_STALL_SCHEDULES, data.id);
-    if (data.action === 'saveConnectionSchedule') saveRow(SHEET_CONNECTION_SCHEDULES, data.payload);
-    if (data.action === 'deleteConnectionSchedule') deleteRow(SHEET_CONNECTION_SCHEDULES, data.id);
-    if (data.action === 'saveScheduleSetting') saveRow(SHEET_SCHEDULE_SETTINGS, data.payload);
+    if (data.action === 'saveStockProduct') {
+      if (!data.payload.id) data.payload.id = Date.now();
+      saveRow(SHEET_STOCK_PRODUCTS, data.payload);
+      syncSupabaseProduct('stock', data.payload);
+    }
+    if (data.action === 'deleteStockProduct') {
+      deleteRow(SHEET_STOCK_PRODUCTS, data.id);
+      deleteSupabaseProduct(data.id);
+    }
+    if (data.action === 'savePreorderProduct') {
+      if (!data.payload.id) data.payload.id = Date.now();
+      saveRow(SHEET_PREORDER_PRODUCTS, data.payload);
+      syncSupabaseProduct('preorder', data.payload);
+    }
+    if (data.action === 'deletePreorderProduct') {
+      deleteRow(SHEET_PREORDER_PRODUCTS, data.id);
+      deleteSupabaseProduct(data.id);
+    }
+    if (data.action === 'saveProductTag') {
+      if (!data.payload.id) data.payload.id = Date.now();
+      saveRow(SHEET_PRODUCT_TAGS, data.payload);
+      syncSupabaseCategory(data.payload);
+    }
+    if (data.action === 'deleteProductTag') {
+      deleteRow(SHEET_PRODUCT_TAGS, data.id);
+      deleteSupabaseCategory(data.id);
+    }
+    if (data.action === 'saveStallSchedule') {
+      if (!data.payload.id) data.payload.id = Date.now();
+      saveRow(SHEET_STALL_SCHEDULES, data.payload);
+      syncSupabaseStallSchedule(data.payload);
+    }
+    if (data.action === 'deleteStallSchedule') {
+      deleteRow(SHEET_STALL_SCHEDULES, data.id);
+      deleteSupabaseMirrorRow('stall_schedules', data.id);
+    }
+    if (data.action === 'saveConnectionSchedule') {
+      if (!data.payload.id) data.payload.id = Date.now();
+      saveRow(SHEET_CONNECTION_SCHEDULES, data.payload);
+      syncSupabaseConnectionSchedule(data.payload);
+    }
+    if (data.action === 'deleteConnectionSchedule') {
+      deleteRow(SHEET_CONNECTION_SCHEDULES, data.id);
+      deleteSupabaseMirrorRow('connection_schedules', data.id);
+    }
+    if (data.action === 'saveScheduleSetting') {
+      if (!data.payload.id) data.payload.id = data.payload.type || Date.now();
+      saveRow(SHEET_SCHEDULE_SETTINGS, data.payload);
+      syncSupabaseScheduleSetting(data.payload);
+    }
 
     if (data.action === 'getExchangeRates') {
       var rates = scrapeBankRates();
@@ -68,6 +133,11 @@ function doPost(e) {
 }
 
 function readData() {
+  try {
+    if (isSupabaseConfigured()) return readSupabaseData();
+  } catch (error) {
+    console.warn('Supabase read failed, fallback to Google Sheets: ' + error.toString());
+  }
   return {
     vendors: getSheetData(SHEET_VENDORS),
     orders: getSheetData(SHEET_ORDERS),
@@ -202,6 +272,455 @@ function handleResponse(response) {
   return ContentService
     .createTextOutput(JSON.stringify(response))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function getSupabaseConfig(required) {
+  var props = PropertiesService.getScriptProperties();
+  var url = (props.getProperty('SUPABASE_URL') || '').replace(/\/+$/, '');
+  var key = props.getProperty('SUPABASE_SERVICE_ROLE_KEY') || '';
+  if (!url || !key) {
+    if (required === false) return null;
+    throw new Error('Supabase Script Properties are missing. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
+  }
+  return { url: url, key: key };
+}
+
+function isSupabaseConfigured() {
+  return !!getSupabaseConfig(false);
+}
+
+function supabaseRequest(path, method, payload, prefer) {
+  var config = getSupabaseConfig();
+  var options = {
+    method: method || 'get',
+    muteHttpExceptions: true,
+    headers: {
+      apikey: config.key,
+      Authorization: 'Bearer ' + config.key,
+      'Content-Type': 'application/json',
+      Prefer: prefer || 'return=representation'
+    }
+  };
+  if (payload !== undefined && payload !== null) options.payload = JSON.stringify(payload);
+
+  var response = UrlFetchApp.fetch(config.url + '/rest/v1/' + path, options);
+  var code = response.getResponseCode();
+  var text = response.getContentText();
+  if (code < 200 || code >= 300) {
+    throw new Error('Supabase request failed (' + code + '): ' + text);
+  }
+  return text ? JSON.parse(text) : null;
+}
+
+function readSupabaseData() {
+  return {
+    vendors: readSupabaseVendors(),
+    orders: readSupabaseBackendOrders(),
+    websites: readSupabaseWebsites(),
+    stockProducts: readSupabaseProducts('stock'),
+    preorderProducts: readSupabaseProducts('preorder'),
+    productTags: readSupabaseCategories(),
+    stallSchedules: readSupabaseStallSchedules(),
+    connectionSchedules: readSupabaseConnectionSchedules(),
+    scheduleSettings: readSupabaseScheduleSettings()
+  };
+}
+
+function readSupabaseVendors() {
+  return (supabaseRequest('vendors?select=*&order=created_at.asc', 'get') || []).map(function(row) {
+    return {
+      id: row.legacy_id || row.id,
+      name: row.name || '',
+      contact: row.contact || '',
+      location: row.location || '',
+      currency: row.currency || '',
+      notes: row.notes || ''
+    };
+  });
+}
+
+function readSupabaseWebsites() {
+  return (supabaseRequest('websites?select=*&order=created_at.asc', 'get') || []).map(function(row) {
+    return {
+      id: row.legacy_id || row.id,
+      name: row.name || '',
+      contact: row.contact || '',
+      location: row.location || '',
+      currency: row.currency || '',
+      link: row.link || '',
+      notes: row.notes || ''
+    };
+  });
+}
+
+function readSupabaseBackendOrders() {
+  return (supabaseRequest('backend_orders?select=*&order=created_at.desc', 'get') || []).map(function(row) {
+    return {
+      id: row.legacy_id || row.id,
+      date: row.date || '',
+      vendorId: row.vendor_id || '',
+      orderNo: row.order_no || '',
+      trackingNo: row.tracking_no || '',
+      shipped: row.shipped || '',
+      shippedDate: row.shipped_date || '',
+      items: Array.isArray(row.items) ? row.items : []
+    };
+  });
+}
+
+function readSupabaseCategories() {
+  return (supabaseRequest('categories?select=*&order=created_at.asc', 'get') || []).map(function(row) {
+    return {
+      id: row.legacy_id || row.id,
+      name: row.name || '',
+      color: row.color || '#ec4899',
+      createdAt: row.created_at || '',
+      updatedAt: row.updated_at || ''
+    };
+  });
+}
+
+function readSupabaseProducts(productType) {
+  var select = [
+    'id',
+    'legacy_id',
+    'product_type',
+    'name',
+    'description',
+    'image_url',
+    'cost_price',
+    'base_price',
+    'stock_quantity',
+    'preorder_quota',
+    'deadline',
+    'status',
+    'created_at',
+    'updated_at',
+    'product_variants(id,legacy_id,sku,spec,price,stock_quantity,product_url,status,sort_order)',
+    'product_categories(categories(id,legacy_id,name,color))'
+  ].join(',');
+  var rows = supabaseRequest('products?select=' + encodeURIComponent(select) + '&product_type=eq.' + productType + '&order=created_at.desc', 'get') || [];
+  return rows.map(function(row) {
+    var variants = (row.product_variants || []).map(function(variant) {
+      return {
+        id: variant.legacy_id || variant.id,
+        spec: variant.spec || '預設款',
+        price: Number(variant.price || 0),
+        quantity: Number(variant.stock_quantity || 0),
+        link: variant.product_url || ''
+      };
+    });
+    var tagIds = (row.product_categories || [])
+      .map(function(link) { return link.categories; })
+      .filter(Boolean)
+      .map(function(category) { return category.legacy_id || category.id; });
+    var quantity = productType === 'stock' ? Number(row.stock_quantity || 0) : Number(row.preorder_quota || 0);
+    return {
+      id: row.legacy_id || row.id,
+      name: row.name || '',
+      costPrice: Number(row.cost_price || 0),
+      listPrice: Number(row.base_price || 0),
+      quantity: productType === 'stock' ? quantity : undefined,
+      quota: productType === 'preorder' ? quantity : undefined,
+      deadline: row.deadline || '',
+      tagIds: tagIds,
+      description: row.description || '',
+      image: row.image_url || '',
+      active: row.status === 'active',
+      variantsJson: JSON.stringify(variants),
+      variants: variants,
+      createdAt: row.created_at || '',
+      updatedAt: row.updated_at || ''
+    };
+  });
+}
+
+function readSupabaseStallSchedules() {
+  return (supabaseRequest('stall_schedules?select=*&order=created_at.desc', 'get') || []).map(function(row) {
+    return {
+      id: row.legacy_id || row.id,
+      period: row.period || '',
+      location: row.location || '',
+      image: row.image || '',
+      stallFee: Number(row.stall_fee || 0),
+      days: Array.isArray(row.days) ? row.days : [],
+      createdAt: row.created_at || '',
+      updatedAt: row.updated_at || ''
+    };
+  });
+}
+
+function readSupabaseConnectionSchedules() {
+  return (supabaseRequest('connection_schedules?select=*&order=created_at.desc', 'get') || []).map(function(row) {
+    return {
+      id: row.legacy_id || row.id,
+      period: row.period || '',
+      location: row.location || '',
+      image: row.image || '',
+      startDate: row.start_date || '',
+      endDate: row.end_date || '',
+      flightFee: Number(row.flight_fee || 0),
+      hotelFee: Number(row.hotel_fee || 0),
+      createdAt: row.created_at || '',
+      updatedAt: row.updated_at || ''
+    };
+  });
+}
+
+function readSupabaseScheduleSettings() {
+  return (supabaseRequest('schedule_settings?select=*&order=created_at.asc', 'get') || []).map(function(row) {
+    return {
+      id: row.legacy_id || row.type || row.id,
+      type: row.type || '',
+      image: row.image || '',
+      createdAt: row.created_at || '',
+      updatedAt: row.updated_at || ''
+    };
+  });
+}
+
+function slugify(value) {
+  var slug = String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/['"]/g, '')
+    .replace(/[^a-z0-9\u4e00-\u9fa5]+/gi, '-')
+    .replace(/^-+|-+$/g, '');
+  return slug || ('category-' + Date.now());
+}
+
+function supabaseStatus(active, quantity) {
+  if (active === false || active === 'false' || active === 'FALSE' || active === '0' || active === '下架') return 'draft';
+  if (Number(quantity || 0) <= 0) return 'sold_out';
+  return 'active';
+}
+
+function parseJsonArray(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  try {
+    var parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function getProductVariantsForSupabase(product, productType) {
+  var qty = productType === 'stock' ? Number(product.quantity || 0) : Number(product.quota || 0);
+  var raw = Array.isArray(product.variants) ? product.variants : parseJsonArray(product.variantsJson);
+  if (!raw.length) {
+    raw = [{
+      id: String(product.id || product.name || Date.now()) + '-1',
+      spec: '預設款',
+      price: Number(product.listPrice || 0),
+      quantity: qty,
+      link: ''
+    }];
+  }
+  return raw.map(function(variant, index) {
+    var stockQuantity = Number(variant.quantity || variant.qty || 0);
+    return {
+      legacy_id: String(variant.id || (product.id + '-' + (index + 1))),
+      sku: String(variant.sku || ''),
+      spec: String(variant.spec || variant.name || '預設款').trim() || '預設款',
+      price: Number(variant.price || product.listPrice || 0),
+      stock_quantity: stockQuantity,
+      product_url: String(variant.link || variant.product_url || ''),
+      status: supabaseStatus(product.active, stockQuantity),
+      sort_order: index
+    };
+  });
+}
+
+function getSupabaseProductByLegacyId(legacyId) {
+  var rows = supabaseRequest('products?select=id&legacy_id=eq.' + encodeURIComponent(String(legacyId)) + '&limit=1', 'get');
+  return rows && rows.length ? rows[0] : null;
+}
+
+function syncSupabaseCategory(tag) {
+  if (!tag || !tag.name) return null;
+  var slug = slugify(tag.name);
+  var legacyId = String(tag.id);
+  var payload = {
+    legacy_id: legacyId,
+    name: String(tag.name),
+    slug: slug,
+    color: tag.color || ''
+  };
+
+  var existing = supabaseRequest(
+    'categories?select=id,legacy_id&or=(' +
+      'legacy_id.eq.' + encodeURIComponent(legacyId) + ',' +
+      'slug.eq.' + encodeURIComponent(slug) +
+    ')&limit=1',
+    'get'
+  );
+  if (existing && existing.length && existing[0].id) {
+    var updated = supabaseRequest(
+      'categories?id=eq.' + encodeURIComponent(existing[0].id),
+      'patch',
+      payload,
+      'return=representation'
+    );
+    return updated && updated.length ? updated[0] : existing[0];
+  }
+
+  var rows = supabaseRequest('categories?on_conflict=legacy_id', 'post', payload, 'resolution=merge-duplicates,return=representation');
+  return rows && rows.length ? rows[0] : null;
+}
+
+function getOrCreateSupabaseCategoryByTagId(tagId) {
+  var rows = supabaseRequest('categories?select=id&legacy_id=eq.' + encodeURIComponent(String(tagId)) + '&limit=1', 'get');
+  if (rows && rows.length) return rows[0];
+
+  var tagRows = getSheetData(SHEET_PRODUCT_TAGS);
+  var tag = tagRows.find(function(item) { return String(item.id) === String(tagId); });
+  if (!tag) return null;
+  return syncSupabaseCategory(tag);
+}
+
+function syncSupabaseProductCategories(productId, tagIds) {
+  supabaseRequest('product_categories?product_id=eq.' + encodeURIComponent(productId), 'delete', null, 'return=minimal');
+  var links = [];
+  (tagIds || []).forEach(function(tagId) {
+    var category = getOrCreateSupabaseCategoryByTagId(tagId);
+    if (category && category.id) links.push({ product_id: productId, category_id: category.id });
+  });
+  if (links.length) supabaseRequest('product_categories', 'post', links, 'return=minimal');
+}
+
+function syncSupabaseProductVariants(productId, product, productType) {
+  supabaseRequest('product_variants?product_id=eq.' + encodeURIComponent(productId), 'delete', null, 'return=minimal');
+  var variants = getProductVariantsForSupabase(product, productType).map(function(variant) {
+    variant.product_id = productId;
+    return variant;
+  });
+  if (variants.length) supabaseRequest('product_variants', 'post', variants, 'return=minimal');
+}
+
+function syncSupabaseProduct(productType, product) {
+  if (!product || !product.name) return;
+  var qty = productType === 'stock' ? Number(product.quantity || 0) : Number(product.quota || 0);
+  var productPayload = {
+    legacy_id: String(product.id),
+    product_type: productType,
+    name: String(product.name),
+    description: product.description || '',
+    image_url: product.image || '',
+    cost_price: Number(product.costPrice || 0),
+    base_price: Number(product.listPrice || 0),
+    stock_quantity: productType === 'stock' ? qty : 0,
+    preorder_quota: productType === 'preorder' ? qty : null,
+    deadline: productType === 'preorder' && product.deadline ? product.deadline : null,
+    status: supabaseStatus(product.active, qty),
+    source: 'apps_script_backend'
+  };
+  var rows = supabaseRequest('products?on_conflict=legacy_id', 'post', productPayload, 'resolution=merge-duplicates,return=representation');
+  var saved = rows && rows.length ? rows[0] : getSupabaseProductByLegacyId(product.id);
+  if (!saved || !saved.id) throw new Error('Supabase product upsert did not return an id.');
+  var tagIds = Array.isArray(product.tagIds) ? product.tagIds : parseJsonArray(product.tagIds);
+  syncSupabaseProductCategories(saved.id, tagIds);
+  syncSupabaseProductVariants(saved.id, product, productType);
+}
+
+function deleteSupabaseProduct(id) {
+  if (!id) return;
+  supabaseRequest('products?legacy_id=eq.' + encodeURIComponent(String(id)), 'delete', null, 'return=minimal');
+}
+
+function deleteSupabaseCategory(id) {
+  if (!id) return;
+  supabaseRequest('categories?legacy_id=eq.' + encodeURIComponent(String(id)), 'delete', null, 'return=minimal');
+}
+
+function upsertSupabaseMirrorRow(tableName, payload) {
+  var rows = supabaseRequest(tableName + '?on_conflict=legacy_id', 'post', payload, 'resolution=merge-duplicates,return=representation');
+  return rows && rows.length ? rows[0] : null;
+}
+
+function deleteSupabaseMirrorRow(tableName, id) {
+  if (!id) return;
+  supabaseRequest(tableName + '?legacy_id=eq.' + encodeURIComponent(String(id)), 'delete', null, 'return=minimal');
+}
+
+function syncSupabaseVendor(vendor) {
+  if (!vendor) return;
+  upsertSupabaseMirrorRow('vendors', {
+    legacy_id: String(vendor.id),
+    name: vendor.name || '',
+    contact: vendor.contact || '',
+    location: vendor.location || '',
+    currency: vendor.currency || '',
+    notes: vendor.notes || ''
+  });
+}
+
+function syncSupabaseWebsite(website) {
+  if (!website) return;
+  upsertSupabaseMirrorRow('websites', {
+    legacy_id: String(website.id),
+    name: website.name || '',
+    contact: website.contact || '',
+    location: website.location || '',
+    currency: website.currency || '',
+    link: website.link || '',
+    notes: website.notes || ''
+  });
+}
+
+function syncSupabaseBackendOrder(order) {
+  if (!order) return;
+  upsertSupabaseMirrorRow('backend_orders', {
+    legacy_id: String(order.id),
+    date: order.date || '',
+    vendor_id: order.vendorId !== undefined && order.vendorId !== null ? String(order.vendorId) : '',
+    order_no: order.orderNo || '',
+    tracking_no: order.trackingNo || '',
+    shipped: order.shipped || '',
+    shipped_date: order.shippedDate || '',
+    items: Array.isArray(order.items) ? order.items : parseJsonArray(order.items)
+  });
+}
+
+function syncSupabaseStallSchedule(schedule) {
+  if (!schedule) return;
+  upsertSupabaseMirrorRow('stall_schedules', {
+    legacy_id: String(schedule.id),
+    period: schedule.period || '',
+    location: schedule.location || '',
+    image: schedule.image || '',
+    stall_fee: Number(schedule.stallFee || 0),
+    days: Array.isArray(schedule.days) ? schedule.days : parseJsonArray(schedule.days)
+  });
+}
+
+function syncSupabaseConnectionSchedule(schedule) {
+  if (!schedule) return;
+  upsertSupabaseMirrorRow('connection_schedules', {
+    legacy_id: String(schedule.id),
+    period: schedule.period || '',
+    location: schedule.location || '',
+    image: schedule.image || '',
+    start_date: schedule.startDate || null,
+    end_date: schedule.endDate || null,
+    flight_fee: Number(schedule.flightFee || 0),
+    hotel_fee: Number(schedule.hotelFee || 0)
+  });
+}
+
+function syncSupabaseScheduleSetting(setting) {
+  if (!setting) return;
+  var type = setting.type || setting.id || 'default';
+  var payload = {
+    legacy_id: String(setting.id || type),
+    type: String(type),
+    image: setting.image || ''
+  };
+  var rows = supabaseRequest('schedule_settings?type=eq.' + encodeURIComponent(String(type)), 'patch', payload, 'return=representation');
+  if (!rows || !rows.length) {
+    upsertSupabaseMirrorRow('schedule_settings', payload);
+  }
 }
 
 function scrapeBankRates() {
