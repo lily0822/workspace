@@ -126,7 +126,7 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
-    return handleResponse({ status: 'success', data: readData() });
+    return handleResponse({ status: 'success' });
   } catch (error) {
     return handleResponse({ status: 'error', message: error.toString() });
   }

@@ -1431,6 +1431,53 @@
             }
         }
 
+        function currentBackendDataSnapshot() {
+            return {
+                vendors,
+                websites,
+                orders,
+                productTags,
+                stockProducts,
+                preorderProducts,
+                stallSchedules,
+                connectionSchedules,
+                scheduleSettings: [
+                    { id: 'stall', type: 'stall', image: scheduleDefaultImages.stall || '' },
+                    { id: 'connection', type: 'connection', image: scheduleDefaultImages.connection || '' }
+                ]
+            };
+        }
+
+        function upsertById(list, item) {
+            if (!item || item.id === undefined || item.id === null) return list;
+            const index = list.findIndex(row => sameId(row.id, item.id));
+            if (index > -1) {
+                list[index] = item;
+            } else {
+                list.push(item);
+            }
+            return list;
+        }
+
+        function removeById(list, id) {
+            return list.filter(row => !sameId(row.id, id));
+        }
+
+        function applyLocalBackendMutation(action, payload, id) {
+            const localOrder = payload ? processAPIData([JSON.parse(JSON.stringify(payload))])[0] : null;
+            const mutations = {
+                saveVendor: () => { vendors = upsertById(vendors, payload); },
+                deleteVendor: () => { vendors = removeById(vendors, id); },
+                saveWebsite: () => { websites = upsertById(websites, payload); },
+                deleteWebsite: () => { websites = removeById(websites, id); },
+                saveOrder: () => { orders = upsertById(orders, localOrder); },
+                deleteOrder: () => { orders = removeById(orders, id); }
+            };
+
+            if (mutations[action]) mutations[action]();
+            cacheBackendData(currentBackendDataSnapshot());
+        }
+
         async function fetchAPI(action, payload = null, id = null, skipRender = false) {
             showLoading();
             try {
@@ -1458,9 +1505,14 @@
                 
                 if (result.status === 'success') {
                     if (skipRender) return result;
-                    cacheBackendData(result.data || {});
-                    applyBackendData(result.data || {});
+                    if (result.data) {
+                        cacheBackendData(result.data || {});
+                        applyBackendData(result.data || {});
+                    } else {
+                        applyLocalBackendMutation(action, body.payload || payload, id);
+                    }
                     renderBackendData();
+                    return result;
                 } else {
                     alert('發生錯誤: ' + result.message);
                 }
