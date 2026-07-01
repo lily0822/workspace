@@ -153,6 +153,14 @@
         .product-default-image-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .product-default-modal-preview { width: 160px; height: 160px; border-radius: 0.9rem; border: 1px solid #e2e8f0; background: #f8fafc; display: grid; place-items: center; color: #94a3b8; overflow: hidden; }
         .product-default-modal-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .brand-settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+        .brand-setting-card { background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; border: 1px solid #fce7f3; }
+        .brand-setting-card h3 { font-size: 1rem; font-weight: 700; color: #334155; display: flex; align-items: center; gap: 0.5rem; }
+        .brand-setting-card p { font-size: 0.85rem; color: #64748b; line-height: 1.6; }
+        .brand-setting-preview { width: 132px; height: 132px; border-radius: 0.9rem; border: 1px solid #e2e8f0; background: #f8fafc; display: grid; place-items: center; overflow: hidden; color: #94a3b8; }
+        .brand-setting-preview.logo-preview { border-radius: 999px; width: 96px; height: 96px; }
+        .brand-setting-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .brand-setting-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
         .tag-select-menu { position: relative; }
         .tag-select-button { width: 100%; min-height: 40px; padding: 0.625rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; background: #fff; color: #334155; text-align: left; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .tag-select-panel { display: none; position: absolute; top: calc(100% + 0.25rem); left: 0; right: 0; max-height: 220px; overflow-y: auto; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; background: #fff; box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12); z-index: 2000; }
@@ -206,6 +214,7 @@
                 <div class="submenu open">
                     <div class="submenu-item" onclick="openTab('data-overview', '數據總覽')">數據總覽</div>
                     <div class="submenu-item" onclick="openTab('exchange-rates', '匯率報表')">匯率報表</div>
+                    <div class="submenu-item" onclick="openTab('brand-management', '品牌管理')">品牌管理</div>
                 </div>
             </div>
             <div class="menu-group">
@@ -726,6 +735,55 @@
                         </thead>
                         <tbody id="connection-schedules-tbody"></tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- Brand Management Section -->
+            <div id="section-brand-management" class="section-container">
+                <div class="page-header">
+                    <h2 class="page-title">品牌管理</h2>
+                </div>
+                <div class="brand-settings-grid">
+                    <div class="brand-setting-card">
+                        <h3><i class="fa-solid fa-circle-nodes" style="color: var(--primary-color);"></i> 品牌LOGO設定</h3>
+                        <p>設定後會套用到前端網站首頁左上方的品牌圖案。</p>
+                        <div class="form-group">
+                            <label>圖片 URL</label>
+                            <input type="url" id="brand-logo-image" placeholder="貼上品牌 LOGO 圖片連結" oninput="previewBrandSetting('logo')">
+                        </div>
+                        <div class="brand-setting-actions">
+                            <div id="brand-logo-preview" class="brand-setting-preview logo-preview"><i class="fa-regular fa-image"></i></div>
+                            <button class="btn btn-primary" type="button" onclick="saveBrandSetting('logo')"><i class="fa-solid fa-floppy-disk"></i> 保存LOGO</button>
+                        </div>
+                    </div>
+                    <div class="brand-setting-card">
+                        <h3><i class="fa-solid fa-stamp" style="color: var(--primary-color);"></i> 品牌水印設定</h3>
+                        <p>先保存水印圖片，之後可用在商品圖或網站裝飾區塊。</p>
+                        <div class="form-group">
+                            <label>圖片 URL</label>
+                            <input type="url" id="brand-watermark-image" placeholder="貼上品牌水印圖片連結" oninput="previewBrandSetting('watermark')">
+                        </div>
+                        <div class="brand-setting-actions">
+                            <div id="brand-watermark-preview" class="brand-setting-preview"><i class="fa-regular fa-image"></i></div>
+                            <button class="btn btn-primary" type="button" onclick="saveBrandSetting('watermark')"><i class="fa-solid fa-floppy-disk"></i> 保存水印</button>
+                        </div>
+                    </div>
+                    <div class="brand-setting-card">
+                        <h3><i class="fa-solid fa-signature" style="color: var(--primary-color);"></i> 品牌文字設定</h3>
+                        <p>可放品牌文字圖、標語圖或透明底字樣。</p>
+                        <div class="form-group">
+                            <label>圖片 URL</label>
+                            <input type="url" id="brand-text-image" placeholder="貼上品牌文字圖片連結" oninput="previewBrandSetting('textImage')">
+                        </div>
+                        <div class="brand-setting-actions">
+                            <div id="brand-text-preview" class="brand-setting-preview"><i class="fa-regular fa-image"></i></div>
+                            <button class="btn btn-primary" type="button" onclick="saveBrandSetting('textImage')"><i class="fa-solid fa-floppy-disk"></i> 保存文字圖</button>
+                        </div>
+                    </div>
+                    <div class="brand-setting-card">
+                        <h3><i class="fa-solid fa-house" style="color: var(--primary-color);"></i> 首頁設定</h3>
+                        <p>這個區塊先預留，之後可以放首頁主視覺、公告文字、首頁商品排序或版面開關。</p>
+                    </div>
                 </div>
             </div>
 
@@ -1270,6 +1328,7 @@
             if(name === 'stall-schedules') renderSchedules('stall');
             if(name === 'connection-schedules') renderSchedules('connection');
             if(name === 'exchange-rates') initExchangeRates();
+            if(name === 'brand-management') renderBrandManagement();
         }
 
         function closeTab(name, event) {
@@ -1362,6 +1421,7 @@
         const STALL_SCHEDULES_KEY = 'pinkkkuin_stall_schedules';
         const CONNECTION_SCHEDULES_KEY = 'pinkkkuin_connection_schedules';
         const SCHEDULE_DEFAULT_IMAGES_KEY = 'pinkkkuin_schedule_default_images';
+        const BRAND_SETTINGS_KEY = 'pinkkkuin_brand_settings';
         const BACKEND_CACHE_KEY = 'pinkkkuin_backend_cache';
         const STOCK_PRODUCT_SOURCE_ID = 2026062001;
         const PREORDER_PRODUCT_SOURCE_ID = 2026062002;
@@ -1374,6 +1434,7 @@
         let stallSchedules = [];
         let connectionSchedules = [];
         let scheduleDefaultImages = { stall: '', connection: '', product: '' };
+        let brandSettings = { logo: '', watermark: '', textImage: '' };
         let editingProductRows = { stock: null, preorder: null };
         let productBatchImageStore = {};
         let appliedProductFilters = {
@@ -1398,6 +1459,7 @@
             renderSchedules('stall');
             renderSchedules('connection');
             renderProductDefaultImagePreviews();
+            renderBrandManagement();
         }
 
         function cacheBackendData(data = {}) {
@@ -1461,16 +1523,25 @@
             }
             if (Array.isArray(data.scheduleSettings)) {
                 scheduleDefaultImages = { stall: '', connection: '', product: '', ...scheduleDefaultImages };
+                brandSettings = { logo: '', watermark: '', textImage: '', ...brandSettings };
                 data.scheduleSettings.forEach(setting => {
                     if (setting?.type === 'stall' || setting?.type === 'connection') {
                         scheduleDefaultImages[setting.type] = normalizeProductImageUrl(setting.image || '');
                     } else if (setting?.type === 'product-default') {
                         scheduleDefaultImages.product = normalizeProductImageUrl(setting.image || '');
+                    } else if (setting?.type === 'brand-logo') {
+                        brandSettings.logo = normalizeProductImageUrl(setting.image || '');
+                    } else if (setting?.type === 'brand-watermark') {
+                        brandSettings.watermark = normalizeProductImageUrl(setting.image || '');
+                    } else if (setting?.type === 'brand-text-image') {
+                        brandSettings.textImage = normalizeProductImageUrl(setting.image || '');
                     }
                 });
                 localStorage.setItem(SCHEDULE_DEFAULT_IMAGES_KEY, JSON.stringify(scheduleDefaultImages));
+                localStorage.setItem(BRAND_SETTINGS_KEY, JSON.stringify(brandSettings));
                 renderScheduleDefaultImages();
                 renderProductDefaultImagePreviews();
+                renderBrandManagement();
             }
         }
 
@@ -1487,7 +1558,10 @@
                 scheduleSettings: [
                     { id: 'stall', type: 'stall', image: scheduleDefaultImages.stall || '' },
                     { id: 'connection', type: 'connection', image: scheduleDefaultImages.connection || '' },
-                    { id: 'product-default', type: 'product-default', image: scheduleDefaultImages.product || '' }
+                    { id: 'product-default', type: 'product-default', image: scheduleDefaultImages.product || '' },
+                    { id: 'brand-logo', type: 'brand-logo', image: brandSettings.logo || '' },
+                    { id: 'brand-watermark', type: 'brand-watermark', image: brandSettings.watermark || '' },
+                    { id: 'brand-text-image', type: 'brand-text-image', image: brandSettings.textImage || '' }
                 ]
             };
         }
@@ -2616,6 +2690,52 @@
             await fetchAPI('saveScheduleSetting', { id: 'product-default', type: 'product-default', image }, null, true);
             closeProductDefaultImageModal();
             alert('商品預設圖已保存');
+        }
+
+        function brandSettingMeta(key) {
+            const map = {
+                logo: { type: 'brand-logo', inputId: 'brand-logo-image', previewId: 'brand-logo-preview', label: '品牌LOGO' },
+                watermark: { type: 'brand-watermark', inputId: 'brand-watermark-image', previewId: 'brand-watermark-preview', label: '品牌水印' },
+                textImage: { type: 'brand-text-image', inputId: 'brand-text-image', previewId: 'brand-text-preview', label: '品牌文字圖' }
+            };
+            return map[key];
+        }
+
+        function renderBrandManagement() {
+            brandSettings = { logo: '', watermark: '', textImage: '', ...safeParseStorage(BRAND_SETTINGS_KEY, {}), ...brandSettings };
+            ['logo', 'watermark', 'textImage'].forEach(key => {
+                const meta = brandSettingMeta(key);
+                if (!meta) return;
+                const input = document.getElementById(meta.inputId);
+                if (input) input.value = normalizeProductImageUrl(brandSettings[key] || '');
+                previewBrandSetting(key);
+            });
+        }
+
+        function previewBrandSetting(key) {
+            const meta = brandSettingMeta(key);
+            if (!meta) return;
+            const input = document.getElementById(meta.inputId);
+            const preview = document.getElementById(meta.previewId);
+            if (!input || !preview) return;
+            const image = normalizeProductImageUrl(input.value);
+            preview.innerHTML = image
+                ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(meta.label)}預覽">`
+                : '<i class="fa-regular fa-image"></i>';
+        }
+
+        async function saveBrandSetting(key) {
+            const meta = brandSettingMeta(key);
+            if (!meta) return;
+            const input = document.getElementById(meta.inputId);
+            if (!input) return;
+            const image = normalizeProductImageUrl(input.value);
+            if (input.value.trim() && !image) return alert('請輸入有效的圖片 URL');
+            brandSettings[key] = image;
+            localStorage.setItem(BRAND_SETTINGS_KEY, JSON.stringify(brandSettings));
+            previewBrandSetting(key);
+            await fetchAPI('saveScheduleSetting', { id: meta.type, type: meta.type, image }, null, true);
+            alert(`${meta.label}已保存`);
         }
 
         function scheduleList(type) {
