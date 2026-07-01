@@ -756,11 +756,6 @@
                             <input type="url" id="brand-logo-image" placeholder="貼上品牌 LOGO 圖片連結" oninput="previewBrandSetting('logo')">
                         </div>
                         <div class="form-group">
-                            <label>或直接上傳圖片</label>
-                            <input type="file" id="brand-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" onchange="uploadBrandLogoFile(this)">
-                            <small style="color:#64748b;font-size:0.75rem;">支援 PNG、JPG、WebP、GIF，建議正方形且小於 2MB。</small>
-                        </div>
-                        <div class="form-group">
                             <label>圖片大小</label>
                             <div class="brand-logo-scale-control">
                                 <input type="range" id="brand-logo-scale" min="50" max="200" step="5" value="100" oninput="previewBrandLogoScale()">
@@ -2803,53 +2798,6 @@
                 }, null, true);
             }
             alert(`${meta.label}已保存`);
-        }
-
-        function readFileAsDataUrl(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = () => reject(new Error('圖片讀取失敗'));
-                reader.readAsDataURL(file);
-            });
-        }
-
-        async function uploadBrandLogoFile(fileInput) {
-            const file = fileInput?.files?.[0];
-            if (!file) return;
-            if (!/^image\/(png|jpeg|webp|gif)$/i.test(file.type)) {
-                fileInput.value = '';
-                return alert('請選擇 PNG、JPG、WebP 或 GIF 圖片');
-            }
-            if (file.size > 2 * 1024 * 1024) {
-                fileInput.value = '';
-                return alert('圖片不可超過 2MB');
-            }
-
-            try {
-                const dataUrl = await readFileAsDataUrl(file);
-                const preview = document.getElementById('brand-logo-preview');
-                if (preview) {
-                    preview.innerHTML = `<img src="${dataUrl}" alt="品牌LOGO預覽">`;
-                    previewBrandLogoScale();
-                }
-
-                const result = await fetchAPI('uploadBrandImage', {
-                    dataUrl,
-                    fileName: file.name
-                }, null, true);
-                const imageUrl = normalizeProductImageUrl(result?.data?.url || '');
-                if (!imageUrl) throw new Error('後台沒有回傳圖片網址');
-
-                const urlInput = document.getElementById('brand-logo-image');
-                if (urlInput) urlInput.value = imageUrl;
-                await saveBrandSetting('logo');
-            } catch (error) {
-                console.error(error);
-                alert(`LOGO 上傳失敗：${error.message || error}`);
-            } finally {
-                fileInput.value = '';
-            }
         }
 
         function scheduleList(type) {

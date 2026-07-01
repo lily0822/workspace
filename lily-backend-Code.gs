@@ -118,12 +118,6 @@ function doPost(e) {
       saveRow(SHEET_SCHEDULE_SETTINGS, data.payload);
       syncSupabaseScheduleSetting(data.payload);
     }
-    if (data.action === 'uploadBrandImage') {
-      return handleResponse({
-        status: 'success',
-        data: uploadBrandImageToSupabase(data.payload || {})
-      });
-    }
 
     if (data.action === 'getExchangeRates') {
       var rates = scrapeBankRates();
@@ -316,87 +310,6 @@ function supabaseRequest(path, method, payload, prefer) {
     throw new Error('Supabase request failed (' + code + '): ' + text);
   }
   return text ? JSON.parse(text) : null;
-}
-
-function supabaseStorageRequest(path, method, payload, contentType, extraHeaders) {
-  var config = getSupabaseConfig();
-  var headers = {
-    apikey: config.key,
-    Authorization: 'Bearer ' + config.key
-  };
-  Object.keys(extraHeaders || {}).forEach(function(key) {
-    headers[key] = extraHeaders[key];
-  });
-  var options = {
-    method: method || 'get',
-    muteHttpExceptions: true,
-    headers: headers
-  };
-  if (contentType) options.contentType = contentType;
-  if (payload !== undefined && payload !== null) options.payload = payload;
-
-  var response = UrlFetchApp.fetch(config.url + '/storage/v1/' + path, options);
-  var code = response.getResponseCode();
-  var text = response.getContentText();
-  if (code < 200 || code >= 300) {
-    var error = new Error('Supabase Storage request failed (' + code + '): ' + text);
-    error.statusCode = code;
-    throw error;
-  }
-  return text ? JSON.parse(text) : null;
-}
-
-function ensureBrandAssetsBucket() {
-  try {
-    supabaseStorageRequest('bucket/brand-assets', 'get');
-  } catch (error) {
-    if (error.statusCode !== 404) throw error;
-    supabaseStorageRequest(
-      'bucket',
-      'post',
-      JSON.stringify({
-        id: 'brand-assets',
-        name: 'brand-assets',
-        public: true,
-        file_size_limit: 2097152,
-        allowed_mime_types: ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
-      }),
-      'application/json'
-    );
-  }
-}
-
-function uploadBrandImageToSupabase(payload) {
-  var match = String(payload.dataUrl || '').match(/^data:(image\/(?:png|jpeg|webp|gif));base64,([A-Za-z0-9+/=\s]+)$/i);
-  if (!match) throw new Error('Invalid brand image data.');
-
-  var mimeType = match[1].toLowerCase();
-  var bytes = Utilities.base64Decode(match[2].replace(/\s/g, ''));
-  if (bytes.length > 2 * 1024 * 1024) throw new Error('Brand image must be 2MB or smaller.');
-
-  ensureBrandAssetsBucket();
-  var extensions = {
-    'image/png': 'png',
-    'image/jpeg': 'jpg',
-    'image/webp': 'webp',
-    'image/gif': 'gif'
-  };
-  var objectPath = 'logos/brand-logo-' + Date.now() + '.' + extensions[mimeType];
-  supabaseStorageRequest(
-    'object/brand-assets/' + objectPath,
-    'post',
-    bytes,
-    mimeType,
-    {
-      'cache-control': 'public, max-age=31536000, immutable',
-      'x-upsert': 'false'
-    }
-  );
-
-  var config = getSupabaseConfig();
-  return {
-    url: config.url + '/storage/v1/object/public/brand-assets/' + objectPath
-  };
 }
 
 function readSupabaseData() {
