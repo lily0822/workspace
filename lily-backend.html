@@ -152,7 +152,7 @@
         .product-default-image-preview { width: 58px; height: 58px; border-radius: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; display: grid; place-items: center; overflow: hidden; color: #94a3b8; flex: 0 0 auto; }
         .product-default-image-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .product-default-modal-preview { width: 160px; height: 160px; border-radius: 0.9rem; border: 1px solid #e2e8f0; background: #f8fafc; display: grid; place-items: center; color: #94a3b8; overflow: hidden; }
-        .product-default-modal-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .product-default-modal-preview img { width: 100%; height: 100%; object-fit: contain; display: block; transform-origin: center; }
         .brand-settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
         .brand-setting-card { background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; border: 1px solid #fce7f3; }
         .brand-setting-card h3 { font-size: 1rem; font-weight: 700; color: #334155; display: flex; align-items: center; gap: 0.5rem; }
@@ -530,7 +530,7 @@
                         </div>
                         <button class="btn btn-primary" onclick="applyProductSearch('stock')"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
                         <div class="product-default-image-control">
-                            <button class="btn btn-secondary" type="button" onclick="openProductDefaultImageModal()"><i class="fa-regular fa-image"></i> 商品預設圖</button>
+                            <button class="btn btn-secondary" type="button" onclick="openProductDefaultImageModal()"><i class="fa-regular fa-image"></i> 預設圖編輯</button>
                             <div class="product-default-image-preview" id="stock-product-default-preview"><i class="fa-regular fa-image"></i></div>
                         </div>
                     </div>
@@ -588,7 +588,7 @@
                         </div>
                         <button class="btn btn-primary" onclick="applyProductSearch('preorder')"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
                         <div class="product-default-image-control">
-                            <button class="btn btn-secondary" type="button" onclick="openProductDefaultImageModal()"><i class="fa-regular fa-image"></i> 商品預設圖</button>
+                            <button class="btn btn-secondary" type="button" onclick="openProductDefaultImageModal()"><i class="fa-regular fa-image"></i> 預設圖編輯</button>
                             <div class="product-default-image-preview" id="preorder-product-default-preview"><i class="fa-regular fa-image"></i></div>
                         </div>
                     </div>
@@ -1290,6 +1290,13 @@
                     <label>圖片 URL</label>
                     <input type="url" id="product-default-image-input" placeholder="商品沒有圖片時顯示這張圖" oninput="previewProductDefaultImage()">
                 </div>
+                <div class="form-group">
+                    <label>圖片大小</label>
+                    <div class="brand-logo-scale-control">
+                        <input type="range" id="product-default-image-scale" min="50" max="200" step="5" value="100" oninput="previewProductDefaultImage()">
+                        <span id="product-default-image-scale-value" class="brand-logo-scale-value">100%</span>
+                    </div>
+                </div>
                 <div class="product-default-modal-preview" id="product-default-image-modal-preview">
                     <i class="fa-regular fa-image"></i>
                 </div>
@@ -1449,7 +1456,7 @@
         let preorderProducts = [];
         let stallSchedules = [];
         let connectionSchedules = [];
-        let scheduleDefaultImages = { stall: '', connection: '', product: '' };
+        let scheduleDefaultImages = { stall: '', connection: '', product: '', productScale: 100 };
         let brandSettings = { logo: '', logoScale: 100, watermark: '', textImage: '' };
         let editingProductRows = { stock: null, preorder: null };
         let productBatchImageStore = {};
@@ -1538,13 +1545,15 @@
                 localStorage.setItem(CONNECTION_SCHEDULES_KEY, JSON.stringify(connectionSchedules));
             }
             if (Array.isArray(data.scheduleSettings)) {
-                scheduleDefaultImages = { stall: '', connection: '', product: '', ...scheduleDefaultImages };
+                scheduleDefaultImages = { stall: '', connection: '', product: '', productScale: 100, ...scheduleDefaultImages };
                 brandSettings = { logo: '', logoScale: 100, watermark: '', textImage: '', ...brandSettings };
                 data.scheduleSettings.forEach(setting => {
                     if (setting?.type === 'stall' || setting?.type === 'connection') {
                         scheduleDefaultImages[setting.type] = normalizeProductImageUrl(setting.image || '');
                     } else if (setting?.type === 'product-default') {
                         scheduleDefaultImages.product = normalizeProductImageUrl(setting.image || '');
+                    } else if (setting?.type === 'product-default-scale') {
+                        scheduleDefaultImages.productScale = Math.min(200, Math.max(50, Number(setting.image) || 100));
                     } else if (setting?.type === 'brand-logo') {
                         brandSettings.logo = normalizeProductImageUrl(setting.image || '');
                     } else if (setting?.type === 'brand-logo-scale') {
@@ -1577,6 +1586,7 @@
                     { id: 'stall', type: 'stall', image: scheduleDefaultImages.stall || '' },
                     { id: 'connection', type: 'connection', image: scheduleDefaultImages.connection || '' },
                     { id: 'product-default', type: 'product-default', image: scheduleDefaultImages.product || '' },
+                    { id: 'product-default-scale', type: 'product-default-scale', image: String(scheduleDefaultImages.productScale || 100) },
                     { id: 'brand-logo', type: 'brand-logo', image: brandSettings.logo || '' },
                     { id: 'brand-logo-scale', type: 'brand-logo-scale', image: String(brandSettings.logoScale || 100) },
                     { id: 'brand-watermark', type: 'brand-watermark', image: brandSettings.watermark || '' },
@@ -2615,7 +2625,7 @@
         function initScheduleManagement() {
             stallSchedules = safeParseStorage(STALL_SCHEDULES_KEY, []);
             connectionSchedules = safeParseStorage(CONNECTION_SCHEDULES_KEY, []);
-            scheduleDefaultImages = { stall: '', connection: '', product: '', ...safeParseStorage(SCHEDULE_DEFAULT_IMAGES_KEY, {}) };
+            scheduleDefaultImages = { stall: '', connection: '', product: '', productScale: 100, ...safeParseStorage(SCHEDULE_DEFAULT_IMAGES_KEY, {}) };
             if (!Array.isArray(stallSchedules)) stallSchedules = [];
             if (!Array.isArray(connectionSchedules)) connectionSchedules = [];
             persistScheduleManagement();
@@ -2667,15 +2677,18 @@
 
         function renderProductDefaultImagePreviews() {
             const image = normalizeProductImageUrl(scheduleDefaultImages.product || '');
+            const scale = Math.min(200, Math.max(50, Number(scheduleDefaultImages.productScale) || 100));
             ['stock', 'preorder'].forEach(type => {
                 const preview = document.getElementById(`${type}-product-default-preview`);
                 if (!preview) return;
                 preview.innerHTML = image
-                    ? `<img src="${escapeHtml(image)}" alt="商品預設圖">`
+                    ? `<img src="${escapeHtml(image)}" alt="商品預設圖" style="object-fit:contain;transform:scale(${scale / 100});transform-origin:center;">`
                     : '<i class="fa-regular fa-image"></i>';
             });
             const input = document.getElementById('product-default-image-input');
             if (input) input.value = image;
+            const scaleInput = document.getElementById('product-default-image-scale');
+            if (scaleInput) scaleInput.value = scale;
             previewProductDefaultImage();
         }
 
@@ -2693,8 +2706,12 @@
             const preview = document.getElementById('product-default-image-modal-preview');
             if (!input || !preview) return;
             const image = normalizeProductImageUrl(input.value);
+            const scaleInput = document.getElementById('product-default-image-scale');
+            const scaleValue = document.getElementById('product-default-image-scale-value');
+            const scale = Math.min(200, Math.max(50, Number(scaleInput?.value) || 100));
+            if (scaleValue) scaleValue.textContent = `${scale}%`;
             preview.innerHTML = image
-                ? `<img src="${escapeHtml(image)}" alt="商品預設圖預覽">`
+                ? `<img src="${escapeHtml(image)}" alt="商品預設圖預覽" style="transform:scale(${scale / 100});">`
                 : '<i class="fa-regular fa-image"></i>';
         }
 
@@ -2704,9 +2721,16 @@
             const image = normalizeProductImageUrl(input.value);
             if (input.value.trim() && !image) return alert('請輸入有效的圖片 URL');
             scheduleDefaultImages.product = image;
+            const scaleInput = document.getElementById('product-default-image-scale');
+            scheduleDefaultImages.productScale = Math.min(200, Math.max(50, Number(scaleInput?.value) || 100));
             persistScheduleManagement();
             renderProductDefaultImagePreviews();
             await fetchAPI('saveScheduleSetting', { id: 'product-default', type: 'product-default', image }, null, true);
+            await fetchAPI('saveScheduleSetting', {
+                id: 'product-default-scale',
+                type: 'product-default-scale',
+                image: String(scheduleDefaultImages.productScale)
+            }, null, true);
             closeProductDefaultImageModal();
             alert('商品預設圖已保存');
         }
