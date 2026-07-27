@@ -841,7 +841,12 @@
             <!-- General Ledger Section -->
             <div id="section-general-ledger" class="section-container">
                 <style>
-                .ledger-filter-card { background: white; border: 1px solid #fce7f3; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 1rem; display: grid; grid-template-columns: 150px 150px minmax(220px, 1fr) 150px auto auto; gap: 0.75rem; align-items: end; }
+                .ledger-search-panel { background: white; border: 1px solid #fce7f3; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 1rem; }
+                .ledger-summary { display: flex; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.9rem; }
+                .ledger-summary-item { min-width: 120px; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.55rem 0.75rem; background: #f8fafc; }
+                .ledger-summary-item span { display: block; color: #64748b; font-size: 0.72rem; font-weight: 800; }
+                .ledger-summary-item strong { display: block; margin-top: 0.2rem; color: #1e293b; font-size: 0.95rem; }
+                .ledger-filter-card { display: grid; grid-template-columns: 150px 150px 150px minmax(220px, 1fr) 150px auto auto; gap: 0.75rem; align-items: end; }
                 .ledger-filter-card label { display: block; margin-bottom: 0.4rem; color: #64748b; font-size: 0.78rem; font-weight: 700; }
                 .ledger-filter-card input, .ledger-filter-card select { width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 0.375rem; padding: 0 0.75rem; color: #334155; background: white; }
                 .ledger-check-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
@@ -853,36 +858,59 @@
                 .ledger-type-expense { background: #fee2e2; color: #b91c1c; }
                 .ledger-amount-income { color: #15803d; font-weight: 800; }
                 .ledger-amount-expense { color: #b91c1c; font-weight: 800; }
-                @media (max-width: 1100px) { .ledger-filter-card { grid-template-columns: repeat(2, minmax(150px, 1fr)); } }
+                .ledger-pagination { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 1rem; border-top: 1px solid #f1f5f9; background: #fff; color: #64748b; font-size: 0.85rem; font-weight: 700; }
+                .ledger-pagination-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+                .ledger-pagination select { height: 36px; border: 1px solid #cbd5e1; border-radius: 0.375rem; padding: 0 0.5rem; background: #fff; color: #334155; }
+                @media (max-width: 1200px) { .ledger-filter-card { grid-template-columns: repeat(2, minmax(150px, 1fr)); } }
                 @media (max-width: 700px) { .ledger-filter-card { grid-template-columns: 1fr; } }
                 </style>
                 <div class="page-header">
                     <h2 class="page-title">總帳表</h2>
                     <button class="btn btn-primary" onclick="openLedgerModal()"><i class="fa-solid fa-plus"></i> 新增總帳</button>
                 </div>
-                <div class="ledger-filter-card">
-                    <div>
-                        <label for="ledger-date-start">開始日期</label>
-                        <input type="date" id="ledger-date-start" onchange="renderGeneralLedger()">
+                <div class="ledger-search-panel">
+                    <div class="ledger-summary" aria-label="總帳統計">
+                        <div class="ledger-summary-item"><span>總支出</span><strong id="ledger-total-expense">NT$ 0</strong></div>
+                        <div class="ledger-summary-item"><span>總收入</span><strong id="ledger-total-income">NT$ 0</strong></div>
+                        <div class="ledger-summary-item"><span>總營利</span><strong id="ledger-total-profit">NT$ 0</strong></div>
                     </div>
-                    <div>
-                        <label for="ledger-date-end">結束日期</label>
-                        <input type="date" id="ledger-date-end" onchange="renderGeneralLedger()">
+                    <div class="ledger-filter-card">
+                        <div>
+                            <label for="ledger-date-start">開始日期</label>
+                            <input type="date" id="ledger-date-start">
+                        </div>
+                        <div>
+                            <label for="ledger-date-end">結束日期</label>
+                            <input type="date" id="ledger-date-end">
+                        </div>
+                        <div>
+                            <label for="ledger-category-filter">內容分類</label>
+                            <select id="ledger-category-filter">
+                                <option value="">全部</option>
+                                <option value="集運">集運</option>
+                                <option value="訂貨">訂貨</option>
+                                <option value="連線">連線</option>
+                                <option value="LINEPAY">LINEPAY</option>
+                                <option value="賣場">賣場</option>
+                                <option value="擺攤">擺攤</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="ledger-content-search">內容搜索</label>
+                            <input type="search" id="ledger-content-search" placeholder="輸入關鍵字模糊搜索">
+                        </div>
+                        <div>
+                            <label for="ledger-type-filter">支出/收入</label>
+                            <select id="ledger-type-filter">
+                                <option value="">全部</option>
+                                <option value="expense">支出</option>
+                                <option value="income">收入</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-secondary" onclick="clearLedgerFilters()"><i class="fa-solid fa-rotate-left"></i> 清除</button>
+                        <button class="btn btn-primary" onclick="applyLedgerFilters()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
                     </div>
-                    <div>
-                        <label for="ledger-content-search">內容搜索</label>
-                        <input type="search" id="ledger-content-search" placeholder="分類、內容說明或備註" oninput="renderGeneralLedger()">
-                    </div>
-                    <div>
-                        <label for="ledger-type-filter">支出/收入</label>
-                        <select id="ledger-type-filter" onchange="renderGeneralLedger()">
-                            <option value="">全部</option>
-                            <option value="expense">支出</option>
-                            <option value="income">收入</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-secondary" onclick="clearLedgerFilters()"><i class="fa-solid fa-rotate-left"></i> 清除</button>
-                    <button class="btn btn-primary" onclick="renderGeneralLedger()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
                 </div>
                 <div class="table-wrapper">
                     <table>
@@ -899,6 +927,19 @@
                         </thead>
                         <tbody id="general-ledger-tbody"></tbody>
                     </table>
+                    <div class="ledger-pagination">
+                        <div id="ledger-page-info">第 1 頁，共 0 筆數據</div>
+                        <div class="ledger-pagination-controls">
+                            <label for="ledger-page-size">顯示</label>
+                            <select id="ledger-page-size" onchange="changeLedgerPageSize()">
+                                <option value="10">10 筆數據</option>
+                                <option value="20">20 筆數據</option>
+                                <option value="50">50 筆數據</option>
+                            </select>
+                            <button class="btn btn-secondary btn-sm" onclick="changeLedgerPage(-1)">上一頁</button>
+                            <button class="btn btn-secondary btn-sm" onclick="changeLedgerPage(1)">下一頁</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1573,6 +1614,9 @@
         let stallSchedules = [];
         let connectionSchedules = [];
         let generalLedger = [];
+        let ledgerAppliedFilters = { start: '', end: '', category: '', query: '', type: '' };
+        let ledgerCurrentPage = 1;
+        let ledgerPageSize = 10;
         let scheduleDefaultImages = { stall: '', connection: '', product: '', productScale: 100 };
         let brandSettings = { logo: '', logoScale: 100, watermark: '', textImage: '' };
         let editingProductRows = { stock: null, preorder: null };
@@ -1989,13 +2033,20 @@
             localStorage.setItem(GENERAL_LEDGER_KEY, JSON.stringify(generalLedger));
         }
 
-        function getLedgerFilters() {
+        function getLedgerDraftFilters() {
             return {
                 start: document.getElementById('ledger-date-start')?.value || '',
                 end: document.getElementById('ledger-date-end')?.value || '',
+                category: document.getElementById('ledger-category-filter')?.value || '',
                 query: (document.getElementById('ledger-content-search')?.value || '').trim().toLowerCase(),
                 type: document.getElementById('ledger-type-filter')?.value || ''
             };
+        }
+
+        function applyLedgerFilters() {
+            ledgerAppliedFilters = getLedgerDraftFilters();
+            ledgerCurrentPage = 1;
+            renderGeneralLedger();
         }
 
         function formatLedgerAmount(entry) {
@@ -2003,26 +2054,65 @@
             return entry.type === 'income' ? `+NT$ ${amount}` : `-NT$ ${amount}`;
         }
 
+        function formatLedgerSummaryAmount(value) {
+            return `NT$ ${Number(value || 0).toLocaleString()}`;
+        }
+
+        function ledgerMatchesAppliedFilters(entry) {
+            const { start, end, category, query, type } = ledgerAppliedFilters;
+            const searchable = `${entry.category || ''} ${entry.content || ''} ${entry.note || ''}`.toLowerCase();
+            return (!start || entry.date >= start)
+                && (!end || entry.date <= end)
+                && (!category || entry.category === category)
+                && (!type || entry.type === type)
+                && (!query || searchable.includes(query));
+        }
+
+        function updateLedgerSummary(entries) {
+            const income = entries
+                .filter(entry => entry.type === 'income')
+                .reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
+            const expense = entries
+                .filter(entry => entry.type !== 'income')
+                .reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
+            const profit = income - expense;
+            const expenseEl = document.getElementById('ledger-total-expense');
+            const incomeEl = document.getElementById('ledger-total-income');
+            const profitEl = document.getElementById('ledger-total-profit');
+            if (expenseEl) expenseEl.textContent = formatLedgerSummaryAmount(expense);
+            if (incomeEl) incomeEl.textContent = formatLedgerSummaryAmount(income);
+            if (profitEl) {
+                profitEl.textContent = `${profit < 0 ? '-' : ''}${formatLedgerSummaryAmount(Math.abs(profit))}`;
+                profitEl.style.color = profit >= 0 ? '#15803d' : '#b91c1c';
+            }
+        }
+
+        function updateLedgerPagination(totalItems, totalPages) {
+            const info = document.getElementById('ledger-page-info');
+            if (info) info.textContent = `第 ${totalItems ? ledgerCurrentPage : 1} 頁 / 共 ${totalPages} 頁，共 ${totalItems} 筆數據`;
+        }
+
         function renderGeneralLedger() {
             const tbody = document.getElementById('general-ledger-tbody');
             if (!tbody) return;
-            const { start, end, query, type } = getLedgerFilters();
             const filtered = generalLedger
-                .filter(entry => {
-                    const searchable = `${entry.category || ''} ${entry.content || ''} ${entry.note || ''}`.toLowerCase();
-                    return (!start || entry.date >= start)
-                        && (!end || entry.date <= end)
-                        && (!type || entry.type === type)
-                        && (!query || searchable.includes(query));
-                })
+                .filter(ledgerMatchesAppliedFilters)
                 .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+            updateLedgerSummary(filtered);
 
-            if (!filtered.length) {
+            const totalItems = filtered.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / ledgerPageSize));
+            ledgerCurrentPage = Math.min(Math.max(1, ledgerCurrentPage), totalPages);
+            const startIndex = (ledgerCurrentPage - 1) * ledgerPageSize;
+            const pageItems = filtered.slice(startIndex, startIndex + ledgerPageSize);
+            updateLedgerPagination(totalItems, totalPages);
+
+            if (!pageItems.length) {
                 tbody.innerHTML = '<tr><td colspan="7" class="empty-state">目前沒有符合條件的總帳資料</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = filtered.map(entry => {
+            tbody.innerHTML = pageItems.map(entry => {
                 const typeLabel = entry.type === 'income' ? '收入' : '支出';
                 const typeClass = entry.type === 'income' ? 'ledger-type-income' : 'ledger-type-expense';
                 const amountClass = entry.type === 'income' ? 'ledger-amount-income' : 'ledger-amount-expense';
@@ -2046,12 +2136,27 @@
         function clearLedgerFilters() {
             const startInput = document.getElementById('ledger-date-start');
             const endInput = document.getElementById('ledger-date-end');
+            const categorySelect = document.getElementById('ledger-category-filter');
             const searchInput = document.getElementById('ledger-content-search');
             const typeSelect = document.getElementById('ledger-type-filter');
             if (startInput) startInput.value = '';
             if (endInput) endInput.value = '';
+            if (categorySelect) categorySelect.value = '';
             if (searchInput) searchInput.value = '';
             if (typeSelect) typeSelect.value = '';
+            ledgerAppliedFilters = { start: '', end: '', category: '', query: '', type: '' };
+            ledgerCurrentPage = 1;
+            renderGeneralLedger();
+        }
+
+        function changeLedgerPage(delta) {
+            ledgerCurrentPage += delta;
+            renderGeneralLedger();
+        }
+
+        function changeLedgerPageSize() {
+            ledgerPageSize = Number(document.getElementById('ledger-page-size')?.value || 10);
+            ledgerCurrentPage = 1;
             renderGeneralLedger();
         }
 
