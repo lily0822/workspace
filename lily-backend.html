@@ -861,6 +861,9 @@
                 .ledger-pagination { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 1rem; border-top: 1px solid #f1f5f9; background: #fff; color: #64748b; font-size: 0.85rem; font-weight: 700; }
                 .ledger-pagination-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
                 .ledger-pagination select { height: 36px; border: 1px solid #cbd5e1; border-radius: 0.375rem; padding: 0 0.5rem; background: #fff; color: #334155; }
+                .ledger-table-actions { display: flex; justify-content: flex-end; padding: 0.85rem 1rem; background: #fff; border-bottom: 1px solid #f1f5f9; }
+                .ledger-select-cell { width: 44px; text-align: center; }
+                .ledger-select-cell input { width: 16px; height: 16px; accent-color: var(--primary-color); cursor: pointer; }
                 @media (max-width: 1200px) { .ledger-filter-card { grid-template-columns: repeat(2, minmax(150px, 1fr)); } }
                 @media (max-width: 700px) { .ledger-filter-card { grid-template-columns: 1fr; } }
                 </style>
@@ -913,9 +916,13 @@
                     </div>
                 </div>
                 <div class="table-wrapper">
+                    <div class="ledger-table-actions">
+                        <button class="btn btn-danger" onclick="deleteSelectedLedgerEntries()"><i class="fa-solid fa-trash-can"></i> 批量刪除</button>
+                    </div>
                     <table>
                         <thead>
                             <tr>
+                                <th class="ledger-select-cell"><input type="checkbox" id="ledger-select-all" onchange="toggleAllLedgerRows(this)" aria-label="全選總帳資料"></th>
                                 <th>日期</th>
                                 <th>內容分類</th>
                                 <th>內容說明</th>
@@ -2108,7 +2115,8 @@
             updateLedgerPagination(totalItems, totalPages);
 
             if (!pageItems.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">目前沒有符合條件的總帳資料</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">目前沒有符合條件的總帳資料</td></tr>';
+                updateLedgerSelectAllState();
                 return;
             }
 
@@ -2118,6 +2126,7 @@
                 const amountClass = entry.type === 'income' ? 'ledger-amount-income' : 'ledger-amount-expense';
                 return `
                     <tr>
+                        <td class="ledger-select-cell"><input type="checkbox" class="ledger-row-check" value="${entry.id}" onchange="updateLedgerSelectAllState()" aria-label="選取總帳資料"></td>
                         <td>${entry.date || '-'}</td>
                         <td>${escapeHtml(entry.category || '-')}</td>
                         <td>${escapeHtml(entry.content || '')}</td>
@@ -2131,6 +2140,7 @@
                     </tr>
                 `;
             }).join('');
+            updateLedgerSelectAllState();
         }
 
         function clearLedgerFilters() {
@@ -2157,6 +2167,34 @@
         function changeLedgerPageSize() {
             ledgerPageSize = Number(document.getElementById('ledger-page-size')?.value || 10);
             ledgerCurrentPage = 1;
+            renderGeneralLedger();
+        }
+
+        function toggleAllLedgerRows(source) {
+            document.querySelectorAll('.ledger-row-check').forEach(input => {
+                input.checked = source.checked;
+            });
+        }
+
+        function updateLedgerSelectAllState() {
+            const selectAll = document.getElementById('ledger-select-all');
+            if (!selectAll) return;
+            const checks = Array.from(document.querySelectorAll('.ledger-row-check'));
+            const checkedCount = checks.filter(input => input.checked).length;
+            selectAll.checked = checks.length > 0 && checkedCount === checks.length;
+            selectAll.indeterminate = checkedCount > 0 && checkedCount < checks.length;
+        }
+
+        function selectedLedgerEntryIds() {
+            return Array.from(document.querySelectorAll('.ledger-row-check:checked')).map(input => Number(input.value));
+        }
+
+        function deleteSelectedLedgerEntries() {
+            const ids = selectedLedgerEntryIds();
+            if (!ids.length) return alert('請先勾選要刪除的總帳資料');
+            if (!confirm(`確定要刪除選取的 ${ids.length} 筆總帳資料嗎？`)) return;
+            generalLedger = generalLedger.filter(entry => !ids.includes(Number(entry.id)));
+            persistGeneralLedger();
             renderGeneralLedger();
         }
 
