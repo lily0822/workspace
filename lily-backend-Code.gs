@@ -47,7 +47,7 @@ function normalizeProductImageEntry(entry, index) {
   if (!url) return null;
   return {
     url: url,
-    key: String(source.key || source.objectKey || source.object_key || ''),
+    publicId: String(source.publicId || source.public_id || source.key || source.objectKey || source.object_key || ''),
     isPrimary: source.isPrimary === true || source.is_primary === true || index === 0,
     sortOrder: Number(source.sortOrder || source.sort_order || index)
   };
@@ -57,7 +57,7 @@ function normalizePrimaryProductImages(images) {
   var normalized = (images || []).filter(Boolean).map(function(image, index) {
     return {
       url: normalizeProductImageUrl(image.url || ''),
-      key: String(image.key || ''),
+      publicId: String(image.publicId || image.public_id || image.key || ''),
       isPrimary: image.isPrimary === true,
       sortOrder: index
     };
@@ -473,7 +473,7 @@ function readSupabaseProducts(productType) {
     'created_at',
     'updated_at',
     'product_variants(id,legacy_id,sku,spec,price,stock_quantity,product_url,status,sort_order)',
-    'product_images(id,object_key,image_url,alt_text,sort_order,is_primary)',
+    'product_images(id,public_id,secure_url,alt_text,sort_order,is_primary)',
     'product_categories(categories(id,legacy_id,name,color))'
   ].join(',');
   var rows = supabaseRequest('products?select=' + encodeURIComponent(select) + '&product_type=eq.' + productType + '&order=created_at.desc', 'get') || [];
@@ -494,8 +494,8 @@ function readSupabaseProducts(productType) {
     var quantity = productType === 'stock' ? Number(row.stock_quantity || 0) : Number(row.preorder_quota || 0);
     var images = (row.product_images || []).map(function(image, index) {
       return {
-        url: image.image_url || '',
-        key: image.object_key || '',
+        url: image.secure_url || '',
+        publicId: image.public_id || '',
         isPrimary: image.is_primary === true,
         sortOrder: Number(image.sort_order || index)
       };
@@ -689,11 +689,13 @@ function syncSupabaseProductVariants(productId, product, productType) {
 
 function syncSupabaseProductImages(productId, product) {
   supabaseRequest('product_images?product_id=eq.' + encodeURIComponent(productId), 'delete', null, 'return=minimal');
-  var images = normalizeProductImages(product).map(function(image, index) {
+  var images = normalizeProductImages(product).filter(function(image) {
+    return !!image.publicId;
+  }).map(function(image, index) {
     return {
       product_id: productId,
-      object_key: image.key || null,
-      image_url: image.url,
+      public_id: image.publicId,
+      secure_url: image.url,
       alt_text: product.name || '',
       sort_order: index,
       is_primary: image.isPrimary === true

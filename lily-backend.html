@@ -2481,7 +2481,7 @@
             if (!url) return null;
             return {
                 url,
-                key: String(source.key || source.objectKey || source.object_key || '').trim(),
+                publicId: String(source.publicId || source.public_id || source.key || source.objectKey || source.object_key || '').trim(),
                 isPrimary: source.isPrimary === true || source.is_primary === true || index === 0,
                 sortOrder: Number(source.sortOrder ?? source.sort_order ?? index)
             };
@@ -2501,7 +2501,7 @@
         function normalizePrimaryProductImages(images = []) {
             const normalized = images.filter(Boolean).map((image, index) => ({
                 url: normalizeStoredProductImageUrl(image.url || ''),
-                key: String(image.key || '').trim(),
+                publicId: String(image.publicId || image.public_id || image.key || '').trim(),
                 isPrimary: image.isPrimary === true,
                 sortOrder: index
             })).filter(image => image.url);
@@ -2595,7 +2595,7 @@
                 productImageEditStores[key] = {
                     images: normalizeProductImages(product),
                     pendingFiles: [],
-                    deletedKeys: []
+                    deletedPublicIds: []
                 };
             }
             return key;
@@ -2684,7 +2684,7 @@
                 if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
             } else {
                 const [removed] = store.images.splice(index, 1);
-                if (removed?.key) store.deletedKeys.push(removed.key);
+                if (removed?.publicId) store.deletedPublicIds.push(removed.publicId);
                 store.images = normalizePrimaryProductImages(store.images);
             }
             renderProductImageEditor(type, id);
@@ -2692,15 +2692,15 @@
 
         async function deleteRemovedProductImages(type, editorId) {
             const store = productImageEditStores[productImageStoreKey(type, editorId)];
-            if (!store || !store.deletedKeys.length) return;
+            if (!store || !store.deletedPublicIds.length) return;
             const response = await fetch(PRODUCT_UPLOAD_API_URL, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ keys: store.deletedKeys })
+                body: JSON.stringify({ publicIds: store.deletedPublicIds })
             });
             const result = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(result.error || '圖片刪除失敗');
-            store.deletedKeys = [];
+            store.deletedPublicIds = [];
         }
 
         async function uploadPendingProductImages(type, editorId, productId) {
@@ -2716,8 +2716,8 @@
             const result = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(result.error || '圖片上傳失敗');
             const uploaded = (result.images || []).map((image, index) => ({
-                url: image.url,
-                key: image.key,
+                url: image.secure_url || image.url,
+                publicId: image.public_id || image.publicId,
                 isPrimary: store.pendingFiles[index]?.isPrimary === true || (store.images.length === 0 && index === 0),
                 sortOrder: store.images.length + index
             }));
