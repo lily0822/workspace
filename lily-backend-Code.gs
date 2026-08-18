@@ -27,6 +27,17 @@ const JSON_FIELDS = {
   variants: true
 };
 
+function normalizeLocalProductImage(image) {
+  var raw = String(image || '').trim();
+  if (!raw) return '';
+  if (/^(?:[a-z][a-z0-9+.-]*:)?\/\//i.test(raw)) return '';
+  var clean = raw.replace(/[?#].*$/, '').replace(/\\/g, '/');
+  var relative = clean.replace(/^\/?images\//i, '').replace(/^\/+/, '');
+  if (!relative || relative.split('/').indexOf('..') !== -1) return '';
+  if (!/\.(?:avif|gif|jpe?g|png|svg|webp)$/i.test(relative)) return '';
+  return '/images/' + relative;
+}
+
 function doGet(e) {
   return handleResponse(readData());
 }
@@ -70,6 +81,7 @@ function doPost(e) {
 
     if (data.action === 'saveStockProduct') {
       if (!data.payload.id) data.payload.id = Date.now();
+      data.payload.image = normalizeLocalProductImage(data.payload.image);
       saveRow(SHEET_STOCK_PRODUCTS, data.payload);
       syncSupabaseProduct('stock', data.payload);
     }
@@ -79,6 +91,7 @@ function doPost(e) {
     }
     if (data.action === 'savePreorderProduct') {
       if (!data.payload.id) data.payload.id = Date.now();
+      data.payload.image = normalizeLocalProductImage(data.payload.image);
       saveRow(SHEET_PREORDER_PRODUCTS, data.payload);
       syncSupabaseProduct('preorder', data.payload);
     }
@@ -115,6 +128,9 @@ function doPost(e) {
     }
     if (data.action === 'saveScheduleSetting') {
       if (!data.payload.id) data.payload.id = data.payload.type || Date.now();
+      if (String(data.payload.type || '') === 'product-default') {
+        data.payload.image = normalizeLocalProductImage(data.payload.image);
+      }
       saveRow(SHEET_SCHEDULE_SETTINGS, data.payload);
       syncSupabaseScheduleSetting(data.payload);
     }
@@ -607,7 +623,7 @@ function syncSupabaseProduct(productType, product) {
     product_type: productType,
     name: String(product.name),
     description: product.description || '',
-    image_url: product.image || '',
+    image_url: normalizeLocalProductImage(product.image),
     cost_price: Number(product.costPrice || 0),
     base_price: Number(product.listPrice || 0),
     stock_quantity: productType === 'stock' ? qty : 0,

@@ -1449,8 +1449,8 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>圖片 URL</label>
-                    <input type="url" id="product-default-image-input" placeholder="商品沒有圖片時顯示這張圖" oninput="previewProductDefaultImage()">
+                    <label>本地圖片</label>
+                    <input type="text" id="product-default-image-input" placeholder="例如 /images/chii001.png" oninput="previewProductDefaultImage()">
                 </div>
                 <div class="form-group">
                     <label>圖片大小</label>
@@ -1463,7 +1463,7 @@
                     <i class="fa-regular fa-image"></i>
                 </div>
                 <p style="font-size:0.82rem;color:#64748b;line-height:1.6;">
-                    這張圖會用在前端網站的現貨、預購與首頁商品卡。商品本身有圖片 URL 時，仍會優先顯示商品自己的圖片。
+                    這張圖會用在前端網站的現貨、預購與首頁商品卡。商品本身有本地圖片時，仍會優先顯示商品自己的圖片。
                 </p>
             </div>
             <div class="modal-footer">
@@ -2291,6 +2291,7 @@
                 listPrice: Number(product.listPrice ?? oldPrice ?? 0),
                 active: product.active !== false,
                 tagIds: Array.isArray(product.tagIds) ? product.tagIds : (product.tagId ? [product.tagId] : []),
+                image: normalizeLocalProductImageUrl(product.image || product.imageUrl || ''),
                 quantity: type === 'stock' ? Number(product.quantity || 0) : product.quantity,
                 quota: type === 'preorder' ? Number(product.quota || 0) : product.quota
             };
@@ -2368,7 +2369,7 @@
 
         function productToCatalogItem(product, type) {
             const qty = type === 'stock' ? product.quantity : product.quota;
-            const safeImage = normalizeProductImageUrl(product.image);
+            const safeImage = validateLocalProductImage(product.image);
             const variants = normalizeProductVariants(product, type);
             const meta = { type, costPrice: product.costPrice, listPrice: product.listPrice, active: product.active !== false, tagIds: product.tagIds || [], tagNames: (product.tagIds || []).map(id => getProductTag(id).name), deadline: product.deadline || '', description: product.description || '', image: safeImage, imageUrl: safeImage, variants };
             return { itemId: product.id, name: product.name, link: '商品管理', price: product.listPrice, qty, tracking: JSON.stringify(meta) };
@@ -2434,10 +2435,32 @@
         }
 
         function normalizeProductImageUrl(value = '') {
-            const url = String(value || '').trim();
-            if (!url) return '';
-            if (/^https?:\/\//i.test(url)) return url;
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+            if (/^data:image\//i.test(raw)) return raw;
+            if (/^(?:\/|\.\/|\.\.\/|images\/|assets\/)/i.test(raw)) return raw;
+            if (/^https?:\/\//i.test(raw)) return raw;
             return '';
+        }
+
+        function normalizeLocalProductImageUrl(value = '') {
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+            if (/^(?:[a-z][a-z0-9+.-]*:)?\/\//i.test(raw)) return '';
+            const clean = raw.replace(/[?#].*$/, '').replace(/\\/g, '/');
+            const relative = clean.replace(/^\/?images\//i, '').replace(/^\/+/, '');
+            if (!relative || relative.split('/').includes('..')) return '';
+            if (!/\.(?:avif|gif|jpe?g|png|svg|webp)$/i.test(relative)) return '';
+            return `/images/${relative}`;
+        }
+
+        function validateLocalProductImage(value = '') {
+            const raw = String(value || '').trim();
+            const image = normalizeLocalProductImageUrl(raw);
+            if (raw && !image) {
+                throw new Error('只能使用 images 資料夾裡的本地圖片，例如 /images/chii001.png');
+            }
+            return image;
         }
 
         function getSelectedTagIds(selectId) {
@@ -2491,7 +2514,7 @@
         }
 
         function productImageCell(image, name) {
-            const safeImage = normalizeProductImageUrl(image);
+            const safeImage = normalizeLocalProductImageUrl(image);
             if (!safeImage) return '<div style="width:56px;height:56px;border-radius:0.5rem;background:#f1f5f9;display:grid;place-items:center;color:#94a3b8;"><i class="fa-regular fa-image"></i></div>';
             return `<img src="${escapeHtml(safeImage)}" alt="${escapeHtml(name)}" style="width:56px;height:56px;object-fit:cover;border-radius:0.5rem;border:1px solid #e2e8f0;">`;
         }
@@ -2541,7 +2564,7 @@
         }
 
         function editImageInputHtml(type, product) {
-            return `<input class="product-edit-field" type="url" id="${type}-edit-image-${product.id}" value="${escapeHtml(product.image || '')}" placeholder="貼上 Cloudinary 圖片網址" style="min-width:180px;font-size:0.75rem;margin-top:0.35rem;">`;
+            return `<input class="product-edit-field" type="text" id="${type}-edit-image-${product.id}" value="${escapeHtml(product.image || '')}" placeholder="只能填 /images/xxx.jpg" style="min-width:180px;font-size:0.75rem;margin-top:0.35rem;">`;
         }
 
         function productStatusSelectHtml(type, product, mode = 'display') {
@@ -2782,6 +2805,7 @@
                 const qtyEl = document.getElementById(`${type}-edit-qty-${id}`);
                 const activeEl = document.getElementById(`${type}-edit-active-${id}`);
                 if (!nameEl || !descEl || !costEl || !listEl || !qtyEl || !activeEl) return alert('編輯欄位載入不完整，請重新整理後再試。');
+                const imageInput = document.getElementById(`${type}-edit-image-${id}`)?.value || '';
                 const updated = {
                     ...existing,
                     name: nameEl.value.trim(),
@@ -2790,7 +2814,7 @@
                     listPrice: Number(listEl.value || 0),
                     active: activeEl.dataset.active === 'true',
                     tagIds: getCheckedRowTagIds(type, id),
-                    image: normalizeProductImageUrl(document.getElementById(`${type}-edit-image-${id}`)?.value || '')
+                    image: validateLocalProductImage(imageInput)
                 };
                 if (type === 'stock') updated.quantity = Number(qtyEl.value || 0);
                 else {
@@ -2933,7 +2957,7 @@
                 <input type="datetime-local" class="pb-deadline" ${type === 'stock' ? 'disabled' : ''}>
                 <input type="text" class="pb-description" placeholder="商品描述">
                 <button class="btn btn-sm btn-danger" onclick="this.closest('.product-batch-row').remove()"><i class="fa-solid fa-trash"></i></button>
-                <input type="url" class="pb-image-url" placeholder="圖片網址，例如 Cloudinary https://res.cloudinary.com/..." style="grid-column: 1 / 8; font-size:0.8rem;">
+                <input type="text" class="pb-image-url" placeholder="只能填 /images/xxx.jpg" style="grid-column: 1 / 8; font-size:0.8rem;">
             `;
             document.getElementById('product-batch-container').appendChild(row);
         }
@@ -2941,8 +2965,13 @@
         async function saveProductBatchRows() {
             const type = document.getElementById('product-batch-type').value || 'stock';
             const rows = Array.from(document.querySelectorAll('.product-batch-row'));
-            const newProducts = rows.map(row => {
+            const newProducts = [];
+
+            for (let index = 0; index < rows.length; index += 1) {
+                const row = rows[index];
                 const rowId = row.dataset.rowId;
+                const imageValue = row.querySelector('.pb-image-url')?.value || '';
+                const image = validateLocalProductImage(imageValue);
                 const tagIds = Array.from(row.querySelectorAll(`.product-batch-tag-${rowId}:checked`)).map(input => Number(input.value));
                 const base = {
                     id: Date.now() + Math.random(),
@@ -2952,17 +2981,23 @@
                     active: true,
                     tagIds,
                     description: row.querySelector('.pb-description').value.trim(),
-                    image: normalizeProductImageUrl(row.querySelector('.pb-image-url')?.value || '')
+                    image
                 };
+
+                if (!base.name) continue;
+
                 if (type === 'stock') {
                     const product = { ...base, quantity: Number(row.querySelector('.pb-qty').value || 0) };
                     product.variants = normalizeProductVariants(product, type);
-                    return product;
+                    newProducts.push(product);
+                    continue;
                 }
+
                 const product = { ...base, quota: Number(row.querySelector('.pb-qty').value || 0), deadline: row.querySelector('.pb-deadline').value };
                 product.variants = normalizeProductVariants(product, type);
-                return product;
-            }).filter(product => product.name);
+                newProducts.push(product);
+            }
+
             if (!newProducts.length) return alert('請至少填寫一個商品名稱');
             if (type === 'stock') { stockProducts = [...newProducts, ...stockProducts]; renderStockProducts(); }
             else { preorderProducts = [...newProducts, ...preorderProducts]; renderPreorderProducts(); }
@@ -3081,7 +3116,7 @@
         }
 
         function renderProductDefaultImagePreviews() {
-            const image = normalizeProductImageUrl(scheduleDefaultImages.product || '');
+            const image = normalizeLocalProductImageUrl(scheduleDefaultImages.product || '');
             const scale = Math.min(200, Math.max(50, Number(scheduleDefaultImages.productScale) || 100));
             ['stock', 'preorder'].forEach(type => {
                 const preview = document.getElementById(`${type}-product-default-preview`);
@@ -3110,7 +3145,7 @@
             const input = document.getElementById('product-default-image-input');
             const preview = document.getElementById('product-default-image-modal-preview');
             if (!input || !preview) return;
-            const image = normalizeProductImageUrl(input.value);
+            const image = normalizeLocalProductImageUrl(input.value);
             const scaleInput = document.getElementById('product-default-image-scale');
             const scaleValue = document.getElementById('product-default-image-scale-value');
             const scale = Math.min(200, Math.max(50, Number(scaleInput?.value) || 100));
@@ -3123,8 +3158,8 @@
         async function saveProductDefaultImage() {
             const input = document.getElementById('product-default-image-input');
             if (!input) return;
-            const image = normalizeProductImageUrl(input.value);
-            if (input.value.trim() && !image) return alert('請輸入有效的圖片 URL');
+            const image = normalizeLocalProductImageUrl(input.value);
+            if (input.value.trim() && !image) return alert('只能使用 images 資料夾裡的本地圖片，例如 /images/chii001.png');
             scheduleDefaultImages.product = image;
             const scaleInput = document.getElementById('product-default-image-scale');
             scheduleDefaultImages.productScale = Math.min(200, Math.max(50, Number(scaleInput?.value) || 100));
@@ -4247,4 +4282,3 @@
     </script>
 </body>
 </html>
-
