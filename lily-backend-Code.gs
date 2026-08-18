@@ -38,6 +38,14 @@ function normalizeLocalProductImage(image) {
   return '/images/' + relative;
 }
 
+function safeSupabaseMirror(label, callback) {
+  try {
+    callback();
+  } catch (error) {
+    console.warn('Supabase mirror failed for ' + label + ': ' + error.toString());
+  }
+}
+
 function doGet(e) {
   return handleResponse(readData());
 }
@@ -54,77 +62,77 @@ function doPost(e) {
     if (data.action === 'saveVendor') {
       if (!data.payload.id) data.payload.id = Date.now();
       saveRow(SHEET_VENDORS, data.payload);
-      syncSupabaseVendor(data.payload);
+      safeSupabaseMirror('saveVendor', function() { syncSupabaseVendor(data.payload); });
     }
     if (data.action === 'deleteVendor') {
       deleteRow(SHEET_VENDORS, data.id);
-      deleteSupabaseMirrorRow('vendors', data.id);
+      safeSupabaseMirror('deleteVendor', function() { deleteSupabaseMirrorRow('vendors', data.id); });
     }
     if (data.action === 'saveOrder') {
       if (!data.payload.id) data.payload.id = Date.now();
       saveRow(SHEET_ORDERS, data.payload);
-      syncSupabaseBackendOrder(data.payload);
+      safeSupabaseMirror('saveOrder', function() { syncSupabaseBackendOrder(data.payload); });
     }
     if (data.action === 'deleteOrder') {
       deleteRow(SHEET_ORDERS, data.id);
-      deleteSupabaseMirrorRow('backend_orders', data.id);
+      safeSupabaseMirror('deleteOrder', function() { deleteSupabaseMirrorRow('backend_orders', data.id); });
     }
     if (data.action === 'saveWebsite') {
       if (!data.payload.id) data.payload.id = Date.now();
       saveRow(SHEET_WEBSITES, data.payload);
-      syncSupabaseWebsite(data.payload);
+      safeSupabaseMirror('saveWebsite', function() { syncSupabaseWebsite(data.payload); });
     }
     if (data.action === 'deleteWebsite') {
       deleteRow(SHEET_WEBSITES, data.id);
-      deleteSupabaseMirrorRow('websites', data.id);
+      safeSupabaseMirror('deleteWebsite', function() { deleteSupabaseMirrorRow('websites', data.id); });
     }
 
     if (data.action === 'saveStockProduct') {
       if (!data.payload.id) data.payload.id = Date.now();
       data.payload.image = normalizeLocalProductImage(data.payload.image);
       saveRow(SHEET_STOCK_PRODUCTS, data.payload);
-      syncSupabaseProduct('stock', data.payload);
+      safeSupabaseMirror('saveStockProduct', function() { syncSupabaseProduct('stock', data.payload); });
     }
     if (data.action === 'deleteStockProduct') {
       deleteRow(SHEET_STOCK_PRODUCTS, data.id);
-      deleteSupabaseProduct(data.id);
+      safeSupabaseMirror('deleteStockProduct', function() { deleteSupabaseProduct(data.id); });
     }
     if (data.action === 'savePreorderProduct') {
       if (!data.payload.id) data.payload.id = Date.now();
       data.payload.image = normalizeLocalProductImage(data.payload.image);
       saveRow(SHEET_PREORDER_PRODUCTS, data.payload);
-      syncSupabaseProduct('preorder', data.payload);
+      safeSupabaseMirror('savePreorderProduct', function() { syncSupabaseProduct('preorder', data.payload); });
     }
     if (data.action === 'deletePreorderProduct') {
       deleteRow(SHEET_PREORDER_PRODUCTS, data.id);
-      deleteSupabaseProduct(data.id);
+      safeSupabaseMirror('deletePreorderProduct', function() { deleteSupabaseProduct(data.id); });
     }
     if (data.action === 'saveProductTag') {
       if (!data.payload.id) data.payload.id = Date.now();
       saveRow(SHEET_PRODUCT_TAGS, data.payload);
-      syncSupabaseCategory(data.payload);
+      safeSupabaseMirror('saveProductTag', function() { syncSupabaseCategory(data.payload); });
     }
     if (data.action === 'deleteProductTag') {
       deleteRow(SHEET_PRODUCT_TAGS, data.id);
-      deleteSupabaseCategory(data.id);
+      safeSupabaseMirror('deleteProductTag', function() { deleteSupabaseCategory(data.id); });
     }
     if (data.action === 'saveStallSchedule') {
       if (!data.payload.id) data.payload.id = Date.now();
       saveRow(SHEET_STALL_SCHEDULES, data.payload);
-      syncSupabaseStallSchedule(data.payload);
+      safeSupabaseMirror('saveStallSchedule', function() { syncSupabaseStallSchedule(data.payload); });
     }
     if (data.action === 'deleteStallSchedule') {
       deleteRow(SHEET_STALL_SCHEDULES, data.id);
-      deleteSupabaseMirrorRow('stall_schedules', data.id);
+      safeSupabaseMirror('deleteStallSchedule', function() { deleteSupabaseMirrorRow('stall_schedules', data.id); });
     }
     if (data.action === 'saveConnectionSchedule') {
       if (!data.payload.id) data.payload.id = Date.now();
       saveRow(SHEET_CONNECTION_SCHEDULES, data.payload);
-      syncSupabaseConnectionSchedule(data.payload);
+      safeSupabaseMirror('saveConnectionSchedule', function() { syncSupabaseConnectionSchedule(data.payload); });
     }
     if (data.action === 'deleteConnectionSchedule') {
       deleteRow(SHEET_CONNECTION_SCHEDULES, data.id);
-      deleteSupabaseMirrorRow('connection_schedules', data.id);
+      safeSupabaseMirror('deleteConnectionSchedule', function() { deleteSupabaseMirrorRow('connection_schedules', data.id); });
     }
     if (data.action === 'saveScheduleSetting') {
       if (!data.payload.id) data.payload.id = data.payload.type || Date.now();
@@ -132,7 +140,7 @@ function doPost(e) {
         data.payload.image = normalizeLocalProductImage(data.payload.image);
       }
       saveRow(SHEET_SCHEDULE_SETTINGS, data.payload);
-      syncSupabaseScheduleSetting(data.payload);
+      safeSupabaseMirror('saveScheduleSetting', function() { syncSupabaseScheduleSetting(data.payload); });
     }
 
     if (data.action === 'getExchangeRates') {
