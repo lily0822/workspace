@@ -1319,7 +1319,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeProductBatchModal()">取消</button>
-                <button class="btn btn-primary" onclick="saveProductBatchRows()">保存商品</button>
+                <button id="product-batch-save-btn" class="btn btn-primary" onclick="saveProductBatchRows(this)">保存商品</button>
             </div>
         </div>
     </div>
@@ -1620,7 +1620,7 @@
         const BRAND_SETTINGS_KEY = 'pinkkkuin_brand_settings';
         const GENERAL_LEDGER_KEY = 'pinkkkuin_general_ledger';
         const BACKEND_CACHE_KEY = 'pinkkkuin_backend_cache';
-        const PRODUCT_UPLOAD_API_URL = window.PINKKKUIN_UPLOAD_API_URL || '/api/upload';
+        const PRODUCT_UPLOAD_API_URL = window.PINKKKUIN_UPLOAD_API_URL || 'https://pinkkkuin-shop.vercel.app/api/upload';
         const STOCK_PRODUCT_SOURCE_ID = 2026062001;
         const PREORDER_PRODUCT_SOURCE_ID = 2026062002;
         let vendors = [];
@@ -1640,6 +1640,7 @@
         let editingProductRows = { stock: null, preorder: null };
         let productBatchImageStore = {};
         let productImageEditStores = {};
+        let productSaveInProgress = {};
         let appliedProductFilters = {
             stock: { name: '', tagIds: [], status: '' },
             preorder: { name: '', tagIds: [], status: '' }
@@ -2589,13 +2590,56 @@
             return `${type}-${id}`;
         }
 
+        function setSavingButton(button, saving, label = '儲存中...') {
+            if (!button) return;
+            if (saving) {
+                if (!button.dataset.originalHtml) button.dataset.originalHtml = button.innerHTML;
+                button.disabled = true;
+                button.innerHTML = label;
+                return;
+            }
+            button.disabled = false;
+            if (button.dataset.originalHtml) {
+                button.innerHTML = button.dataset.originalHtml;
+                delete button.dataset.originalHtml;
+            }
+        }
+
+        function cloudinaryPublicIdsFromProduct(product = {}) {
+            return normalizeProductImages(product)
+                .map(image => image.publicId)
+                .filter(Boolean);
+        }
+
+        async function deleteCloudinaryImages(publicIds = []) {
+            const ids = [...new Set(publicIds.filter(Boolean))];
+            if (!ids.length) return;
+            const response = await fetch(PRODUCT_UPLOAD_API_URL, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ publicIds: ids })
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.error || 'Cloudinary 圖片刪除失敗');
+        }
+
+        async function cleanupUploadedProductImages(publicIds = []) {
+            try {
+                await deleteCloudinaryImages(publicIds);
+            } catch (cleanupError) {
+                console.error('Cloudinary cleanup failed after product save error:', cleanupError);
+                alert(`商品儲存失敗，且清理已上傳圖片也失敗：${cleanupError.message || cleanupError}`);
+            }
+        }
+
         function prepareProductImageEditor(type, id, product = {}) {
             const key = productImageStoreKey(type, id);
             if (!productImageEditStores[key]) {
                 productImageEditStores[key] = {
                     images: normalizeProductImages(product),
                     pendingFiles: [],
-                    deletedPublicIds: []
+                    deletedPublicIds: [],
+                    lastUploadedPublicIds: []
                 };
             }
             return key;
@@ -2690,19 +2734,6 @@
             renderProductImageEditor(type, id);
         }
 
-        async function deleteRemovedProductImages(type, editorId) {
-            const store = productImageEditStores[productImageStoreKey(type, editorId)];
-            if (!store || !store.deletedPublicIds.length) return;
-            const response = await fetch(PRODUCT_UPLOAD_API_URL, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ publicIds: store.deletedPublicIds })
-            });
-            const result = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(result.error || '圖片刪除失敗');
-            store.deletedPublicIds = [];
-        }
-
         async function uploadPendingProductImages(type, editorId, productId) {
             const key = productImageStoreKey(type, editorId);
             const store = productImageEditStores[key];
@@ -2721,6 +2752,7 @@
                 isPrimary: store.pendingFiles[index]?.isPrimary === true || (store.images.length === 0 && index === 0),
                 sortOrder: store.images.length + index
             }));
+            store.lastUploadedPublicIds = uploaded.map(image => image.publicId).filter(Boolean);
             store.pendingFiles.forEach(item => item.previewUrl && URL.revokeObjectURL(item.previewUrl));
             store.pendingFiles = [];
             store.images = normalizePrimaryProductImages([...store.images, ...uploaded]);
@@ -3008,6 +3040,14 @@
         }
 
         async function saveProductRow(type, id) {
+            const saveKey = `edit-${type}-${id}`;
+            if (productSaveInProgress[saveKey]) return;
+            productSaveInProgress[saveKey] = true;
+            const saveButton = document.querySelector(`#${type}-products-tbody .btn-primary[onclick^="saveProductRow"]`);
+            setSavingButton(saveButton, true);
+            const uploadedPublicIds = [];
+            const previousProducts = type === 'stock' ? [...stockProducts] : [...preorderProducts];
+            const previousEditingRow = editingProductRows[type];
             try {
                 const products = type === 'stock' ? stockProducts : preorderProducts;
                 const existing = products.find(product => sameId(product.id, id));
@@ -3020,7 +3060,9 @@
                 const activeEl = document.getElementById(`${type}-edit-active-${id}`);
                 if (!nameEl || !descEl || !costEl || !listEl || !qtyEl || !activeEl) return alert('編輯欄位載入不完整，請重新整理後再試。');
                 const uploadedImages = await uploadPendingProductImages(type, id, String(existing.id));
-                await deleteRemovedProductImages(type, id);
+                const store = productImageEditStores[productImageStoreKey(type, id)];
+                uploadedPublicIds.push(...(store?.lastUploadedPublicIds || []));
+                const deletedPublicIds = [...(store?.deletedPublicIds || [])];
                 const updated = applyProductImages({
                     ...existing,
                     name: nameEl.value.trim(),
@@ -3047,10 +3089,27 @@
                 const result = await saveProductToBackend(type, updated);
                 if (!result || result.status !== 'success') throw new Error('後端商品資料沒有回傳成功');
                 await syncProductCatalog(type);
+                try {
+                    await deleteCloudinaryImages(deletedPublicIds);
+                } catch (cleanupError) {
+                    console.error('Cloudinary delete failed after product save:', cleanupError);
+                    alert(`商品已儲存，但 Cloudinary 舊圖片刪除失敗：${cleanupError.message || cleanupError}`);
+                }
                 alert('商品已保存');
             } catch (error) {
                 console.error(error);
+                if (type === 'stock') stockProducts = previousProducts;
+                else preorderProducts = previousProducts;
+                editingProductRows[type] = previousEditingRow;
+                renderProductRows(type);
+                renderProductTags();
+                if (uploadedPublicIds.length) {
+                    await cleanupUploadedProductImages(uploadedPublicIds);
+                }
                 alert(`商品保存失敗：${error.message || error}`);
+            } finally {
+                productSaveInProgress[saveKey] = false;
+                setSavingButton(saveButton, false);
             }
         }
 
@@ -3068,6 +3127,9 @@
             try {
                 const label = type === 'stock' ? '現貨商品' : '預購商品';
                 if (!confirm(`確定刪除此${label}嗎？`)) return;
+                const products = type === 'stock' ? stockProducts : preorderProducts;
+                const product = products.find(item => sameId(item.id, id));
+                await deleteCloudinaryImages(cloudinaryPublicIdsFromProduct(product));
                 if (type === 'stock') stockProducts = stockProducts.filter(product => !sameId(product.id, id));
                 else preorderProducts = preorderProducts.filter(product => !sameId(product.id, id));
                 persistProductManagement();
@@ -3089,9 +3151,25 @@
         function toggleAllProductRows(type, checkbox) { document.querySelectorAll(`.${type}-product-check`).forEach(input => input.checked = checkbox.checked); }
 
         async function batchDeleteProducts(type) {
-            const ids = selectedProductIds(type); if (!ids.length) return alert('請先勾選商品'); if (!confirm(`確定刪除 ${ids.length} 個商品嗎？`)) return;
-            if (type === 'stock') { stockProducts = stockProducts.filter(p => !ids.some(id => sameId(id, p.id))); renderStockProducts(); } else { preorderProducts = preorderProducts.filter(p => !ids.some(id => sameId(id, p.id))); renderPreorderProducts(); }
-            persistProductManagement(); renderProductTags(); for (const id of ids) await deleteProductFromBackend(type, id); await syncProductCatalog(type);
+            try {
+                const ids = selectedProductIds(type);
+                if (!ids.length) return alert('請先勾選商品');
+                if (!confirm(`確定刪除 ${ids.length} 個商品嗎？`)) return;
+                const products = type === 'stock' ? stockProducts : preorderProducts;
+                const publicIds = products
+                    .filter(product => ids.some(id => sameId(id, product.id)))
+                    .flatMap(cloudinaryPublicIdsFromProduct);
+                await deleteCloudinaryImages(publicIds);
+                if (type === 'stock') { stockProducts = stockProducts.filter(p => !ids.some(id => sameId(id, p.id))); renderStockProducts(); }
+                else { preorderProducts = preorderProducts.filter(p => !ids.some(id => sameId(id, p.id))); renderPreorderProducts(); }
+                persistProductManagement();
+                renderProductTags();
+                for (const id of ids) await deleteProductFromBackend(type, id);
+                await syncProductCatalog(type);
+} catch (error) {
+                console.error(error);
+                alert(`商品刪除失敗：${error.message || error}`);
+            }
         }
 
         async function batchSetProductActive(type, active) {
@@ -3172,7 +3250,15 @@
             setTimeout(() => renderProductImageEditor(type, rowId), 0);
         }
 
-        async function saveProductBatchRows() {
+        async function saveProductBatchRows(button) {
+            const saveKey = 'batch-products';
+            if (productSaveInProgress[saveKey]) return;
+            productSaveInProgress[saveKey] = true;
+            const saveButton = button || document.getElementById('product-batch-save-btn');
+            setSavingButton(saveButton, true);
+            const uploadedPublicIds = [];
+            const previousStockProducts = [...stockProducts];
+            const previousPreorderProducts = [...preorderProducts];
             try {
             const type = document.getElementById('product-batch-type').value || 'stock';
             const rows = Array.from(document.querySelectorAll('.product-batch-row'));
@@ -3195,6 +3281,8 @@
 
                 if (!base.name) continue;
                 const uploadedImages = await uploadPendingProductImages(type, rowId, String(productId));
+                const store = productImageEditStores[productImageStoreKey(type, rowId)];
+                uploadedPublicIds.push(...(store?.lastUploadedPublicIds || []));
                 const baseWithImages = applyProductImages(base, uploadedImages);
 
                 if (type === 'stock') {
@@ -3216,7 +3304,19 @@
             persistProductManagement(); renderProductTags(); await syncProductsToBackend(type, newProducts); await syncProductCatalog(type);
             } catch (error) {
                 console.error(error);
+                stockProducts = previousStockProducts;
+                preorderProducts = previousPreorderProducts;
+                persistProductManagement();
+                renderProductRows('stock');
+                renderProductRows('preorder');
+                renderProductTags();
+                if (uploadedPublicIds.length) {
+                    await cleanupUploadedProductImages(uploadedPublicIds);
+                }
                 alert(`商品圖片上傳或保存失敗：${error.message || error}`);
+            } finally {
+                productSaveInProgress[saveKey] = false;
+                setSavingButton(saveButton, false);
             }
         }
 
