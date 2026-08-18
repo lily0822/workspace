@@ -12,8 +12,8 @@ const SHEET_HEADERS = {
   [SHEET_VENDORS]: ['id', 'name', 'contact', 'location', 'currency', 'notes'],
   [SHEET_ORDERS]: ['id', 'date', 'vendorId', 'orderNo', 'trackingNo', 'shipped', 'shippedDate', 'items'],
   [SHEET_WEBSITES]: ['id', 'name', 'contact', 'location', 'currency', 'link', 'notes'],
-  [SHEET_STOCK_PRODUCTS]: ['id', 'name', 'costPrice', 'listPrice', 'quantity', 'tagIds', 'description', 'image', 'active', 'variantsJson', 'variants', 'createdAt', 'updatedAt'],
-  [SHEET_PREORDER_PRODUCTS]: ['id', 'name', 'costPrice', 'listPrice', 'quota', 'deadline', 'tagIds', 'description', 'image', 'active', 'variantsJson', 'variants', 'createdAt', 'updatedAt'],
+  [SHEET_STOCK_PRODUCTS]: ['id', 'name', 'costPrice', 'listPrice', 'quantity', 'tagIds', 'description', 'image', 'images', 'active', 'variantsJson', 'variants', 'createdAt', 'updatedAt'],
+  [SHEET_PREORDER_PRODUCTS]: ['id', 'name', 'costPrice', 'listPrice', 'quota', 'deadline', 'tagIds', 'description', 'image', 'images', 'active', 'variantsJson', 'variants', 'createdAt', 'updatedAt'],
   [SHEET_PRODUCT_TAGS]: ['id', 'name', 'color', 'createdAt', 'updatedAt'],
   [SHEET_STALL_SCHEDULES]: ['id', 'period', 'location', 'image', 'stallFee', 'days', 'createdAt', 'updatedAt'],
   [SHEET_CONNECTION_SCHEDULES]: ['id', 'period', 'location', 'image', 'startDate', 'endDate', 'flightFee', 'hotelFee', 'createdAt', 'updatedAt'],
@@ -23,19 +23,71 @@ const SHEET_HEADERS = {
 const JSON_FIELDS = {
   items: true,
   tagIds: true,
+  images: true,
   days: true,
   variants: true
 };
 
-function normalizeLocalProductImage(image) {
+function normalizeProductImageUrl(image) {
   var raw = String(image || '').trim();
   if (!raw) return '';
+  if (/^data:image\//i.test(raw)) return '';
+  if (/^https?:\/\//i.test(raw)) return raw;
   if (/^(?:[a-z][a-z0-9+.-]*:)?\/\//i.test(raw)) return '';
   var clean = raw.replace(/[?#].*$/, '').replace(/\\/g, '/');
   var relative = clean.replace(/^\/?images\//i, '').replace(/^\/+/, '');
   if (!relative || relative.split('/').indexOf('..') !== -1) return '';
   if (!/\.(?:avif|gif|jpe?g|png|svg|webp)$/i.test(relative)) return '';
   return '/images/' + relative;
+}
+
+function normalizeProductImageEntry(entry, index) {
+  var source = typeof entry === 'string' ? { url: entry } : (entry || {});
+  var url = normalizeProductImageUrl(source.url || source.imageUrl || source.image || '');
+  if (!url) return null;
+  return {
+    url: url,
+    key: String(source.key || source.objectKey || source.object_key || ''),
+    isPrimary: source.isPrimary === true || source.is_primary === true || index === 0,
+    sortOrder: Number(source.sortOrder || source.sort_order || index)
+  };
+}
+
+function normalizePrimaryProductImages(images) {
+  var normalized = (images || []).filter(Boolean).map(function(image, index) {
+    return {
+      url: normalizeProductImageUrl(image.url || ''),
+      key: String(image.key || ''),
+      isPrimary: image.isPrimary === true,
+      sortOrder: index
+    };
+  }).filter(function(image) { return !!image.url; });
+  if (!normalized.length) return [];
+  var primaryIndex = normalized.findIndex(function(image) { return image.isPrimary; });
+  if (primaryIndex < 0) primaryIndex = 0;
+  return normalized.map(function(image, index) {
+    image.isPrimary = index === primaryIndex;
+    image.sortOrder = index;
+    return image;
+  });
+}
+
+function normalizeProductImages(product) {
+  product = product || {};
+  var rawImages = Array.isArray(product.images) ? product.images : parseJsonArray(product.images);
+  var images = rawImages.map(normalizeProductImageEntry).filter(Boolean).sort(function(a, b) {
+    return Number(a.sortOrder || 0) - Number(b.sortOrder || 0);
+  });
+  var fallback = normalizeProductImageEntry(product.image || product.imageUrl || '', images.length);
+  if (fallback && !images.some(function(image) { return image.url === fallback.url; })) images.unshift(fallback);
+  return normalizePrimaryProductImages(images);
+}
+
+function applyProductImages(product) {
+  var images = normalizeProductImages(product);
+  product.images = images;
+  product.image = (images.find(function(image) { return image.isPrimary; }) || images[0] || {}).url || '';
+  return product;
 }
 
 function safeSupabaseMirror(label, callback) {
@@ -89,7 +141,7 @@ function doPost(e) {
 
     if (data.action === 'saveStockProduct') {
       if (!data.payload.id) data.payload.id = Date.now();
-      data.payload.image = normalizeLocalProductImage(data.payload.image);
+      data.payload = applyProductImages(data.payload);
       saveRow(SHEET_STOCK_PRODUCTS, data.payload);
       safeSupabaseMirror('saveStockProduct', function() { syncSupabaseProduct('stock', data.payload); });
     }
@@ -99,7 +151,7 @@ function doPost(e) {
     }
     if (data.action === 'savePreorderProduct') {
       if (!data.payload.id) data.payload.id = Date.now();
-      data.payload.image = normalizeLocalProductImage(data.payload.image);
+      data.payload = applyProductImages(data.payload);
       saveRow(SHEET_PREORDER_PRODUCTS, data.payload);
       safeSupabaseMirror('savePreorderProduct', function() { syncSupabaseProduct('preorder', data.payload); });
     }
@@ -137,7 +189,7 @@ function doPost(e) {
     if (data.action === 'saveScheduleSetting') {
       if (!data.payload.id) data.payload.id = data.payload.type || Date.now();
       if (String(data.payload.type || '') === 'product-default') {
-        data.payload.image = normalizeLocalProductImage(data.payload.image);
+        data.payload.image = normalizeProductImageUrl(data.payload.image);
       }
       saveRow(SHEET_SCHEDULE_SETTINGS, data.payload);
       safeSupabaseMirror('saveScheduleSetting', function() { syncSupabaseScheduleSetting(data.payload); });
@@ -216,7 +268,7 @@ function getSheetData(sheetName) {
           try {
             obj[header] = JSON.parse(value);
           } catch (e) {
-            obj[header] = header === 'tagIds' || header === 'days' || header === 'items' ? [] : value;
+            obj[header] = header === 'tagIds' || header === 'days' || header === 'items' || header === 'images' ? [] : value;
           }
         } else {
           obj[header] = value;
@@ -421,6 +473,7 @@ function readSupabaseProducts(productType) {
     'created_at',
     'updated_at',
     'product_variants(id,legacy_id,sku,spec,price,stock_quantity,product_url,status,sort_order)',
+    'product_images(id,object_key,image_url,alt_text,sort_order,is_primary)',
     'product_categories(categories(id,legacy_id,name,color))'
   ].join(',');
   var rows = supabaseRequest('products?select=' + encodeURIComponent(select) + '&product_type=eq.' + productType + '&order=created_at.desc', 'get') || [];
@@ -439,7 +492,17 @@ function readSupabaseProducts(productType) {
       .filter(Boolean)
       .map(function(category) { return category.legacy_id || category.id; });
     var quantity = productType === 'stock' ? Number(row.stock_quantity || 0) : Number(row.preorder_quota || 0);
-    return {
+    var images = (row.product_images || []).map(function(image, index) {
+      return {
+        url: image.image_url || '',
+        key: image.object_key || '',
+        isPrimary: image.is_primary === true,
+        sortOrder: Number(image.sort_order || index)
+      };
+    }).sort(function(a, b) {
+      return Number(a.sortOrder || 0) - Number(b.sortOrder || 0);
+    });
+    return applyProductImages({
       id: row.legacy_id || row.id,
       name: row.name || '',
       costPrice: Number(row.cost_price || 0),
@@ -450,12 +513,13 @@ function readSupabaseProducts(productType) {
       tagIds: tagIds,
       description: row.description || '',
       image: row.image_url || '',
+      images: images,
       active: row.status === 'active',
       variantsJson: JSON.stringify(variants),
       variants: variants,
       createdAt: row.created_at || '',
       updatedAt: row.updated_at || ''
-    };
+    });
   });
 }
 
@@ -623,15 +687,31 @@ function syncSupabaseProductVariants(productId, product, productType) {
   if (variants.length) supabaseRequest('product_variants', 'post', variants, 'return=minimal');
 }
 
+function syncSupabaseProductImages(productId, product) {
+  supabaseRequest('product_images?product_id=eq.' + encodeURIComponent(productId), 'delete', null, 'return=minimal');
+  var images = normalizeProductImages(product).map(function(image, index) {
+    return {
+      product_id: productId,
+      object_key: image.key || null,
+      image_url: image.url,
+      alt_text: product.name || '',
+      sort_order: index,
+      is_primary: image.isPrimary === true
+    };
+  });
+  if (images.length) supabaseRequest('product_images', 'post', images, 'return=minimal');
+}
+
 function syncSupabaseProduct(productType, product) {
   if (!product || !product.name) return;
   var qty = productType === 'stock' ? Number(product.quantity || 0) : Number(product.quota || 0);
+  product = applyProductImages(product);
   var productPayload = {
     legacy_id: String(product.id),
     product_type: productType,
     name: String(product.name),
     description: product.description || '',
-    image_url: normalizeLocalProductImage(product.image),
+    image_url: product.image || '',
     cost_price: Number(product.costPrice || 0),
     base_price: Number(product.listPrice || 0),
     stock_quantity: productType === 'stock' ? qty : 0,
@@ -646,6 +726,7 @@ function syncSupabaseProduct(productType, product) {
   var tagIds = Array.isArray(product.tagIds) ? product.tagIds : parseJsonArray(product.tagIds);
   syncSupabaseProductCategories(saved.id, tagIds);
   syncSupabaseProductVariants(saved.id, product, productType);
+  syncSupabaseProductImages(saved.id, product);
 }
 
 function deleteSupabaseProduct(id) {

@@ -153,6 +153,16 @@
         .product-default-image-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .product-default-modal-preview { width: 160px; height: 160px; border-radius: 0.9rem; border: 1px solid #e2e8f0; background: #f8fafc; display: grid; place-items: center; color: #94a3b8; overflow: hidden; }
         .product-default-modal-preview img { width: 100%; height: 100%; object-fit: contain; display: block; transform-origin: center; }
+        .product-image-editor { border: 1px dashed #cbd5e1; border-radius: 0.7rem; padding: 0.45rem; min-width: 220px; background: #f8fafc; transition: border-color 0.15s ease; }
+        .product-image-list { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.45rem; }
+        .product-image-thumb { width: 74px; border: 1px solid #e2e8f0; border-radius: 0.55rem; overflow: hidden; background: white; }
+        .product-image-thumb.primary { border-color: #ec4899; box-shadow: 0 0 0 2px rgba(236,72,153,0.16); }
+        .product-image-thumb img { width: 100%; height: 58px; object-fit: cover; display: block; }
+        .product-image-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.15rem; padding: 0.2rem; }
+        .product-image-actions button, .product-image-actions span { border: 0; border-radius: 0.3rem; background: #f1f5f9; color: #475569; font-size: 0.62rem; font-weight: 700; padding: 0.12rem; text-align: center; cursor: pointer; }
+        .product-image-actions button:hover { background: #fce7f3; color: #be185d; }
+        .product-image-dropzone { display: flex; align-items: center; justify-content: center; gap: 0.35rem; min-height: 42px; border-radius: 0.5rem; background: white; color: #64748b; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+        .product-image-dropzone input { display: none; }
         .brand-settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
         .brand-setting-card { background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; border: 1px solid #fce7f3; }
         .brand-setting-card h3 { font-size: 1rem; font-weight: 700; color: #334155; display: flex; align-items: center; gap: 0.5rem; }
@@ -1610,6 +1620,7 @@
         const BRAND_SETTINGS_KEY = 'pinkkkuin_brand_settings';
         const GENERAL_LEDGER_KEY = 'pinkkkuin_general_ledger';
         const BACKEND_CACHE_KEY = 'pinkkkuin_backend_cache';
+        const PRODUCT_UPLOAD_API_URL = window.PINKKKUIN_UPLOAD_API_URL || '/api/upload';
         const STOCK_PRODUCT_SOURCE_ID = 2026062001;
         const PREORDER_PRODUCT_SOURCE_ID = 2026062002;
         let vendors = [];
@@ -1628,6 +1639,7 @@
         let brandSettings = { logo: '', logoScale: 100, watermark: '', textImage: '' };
         let editingProductRows = { stock: null, preorder: null };
         let productBatchImageStore = {};
+        let productImageEditStores = {};
         let appliedProductFilters = {
             stock: { name: '', tagIds: [], status: '' },
             preorder: { name: '', tagIds: [], status: '' }
@@ -2285,16 +2297,16 @@
 
         function normalizeProduct(product, type) {
             const oldPrice = Number(product.price || 0);
-            const normalized = {
+            let normalized = {
                 ...product,
                 costPrice: Number(product.costPrice ?? Math.round(oldPrice * 0.7) ?? 0),
                 listPrice: Number(product.listPrice ?? oldPrice ?? 0),
                 active: product.active !== false,
                 tagIds: Array.isArray(product.tagIds) ? product.tagIds : (product.tagId ? [product.tagId] : []),
-                image: normalizeLocalProductImageUrl(product.image || product.imageUrl || ''),
                 quantity: type === 'stock' ? Number(product.quantity || 0) : product.quantity,
                 quota: type === 'preorder' ? Number(product.quota || 0) : product.quota
             };
+            normalized = applyProductImages(normalized, normalizeProductImages(normalized));
             normalized.variants = normalizeProductVariants(normalized, type);
             return normalized;
         }
@@ -2364,14 +2376,15 @@
         function catalogItemToProduct(item, type) {
             let meta = {};
             try { meta = item.tracking ? JSON.parse(item.tracking) : {}; } catch { meta = {}; }
-            return normalizeProduct({ id: Number(item.itemId || Date.now()), name: item.name, costPrice: Number(meta.costPrice || 0), listPrice: Number(item.price || meta.listPrice || 0), active: meta.active !== false, quantity: Number(item.qty || meta.quantity || 0), quota: Number(item.qty || meta.quota || 0), tagIds: meta.tagIds || [], deadline: meta.deadline || '', description: meta.description || '', image: normalizeProductImageUrl(meta.imageUrl || meta.image || ''), variants: meta.variants || [] }, type);
+            return normalizeProduct({ id: Number(item.itemId || Date.now()), name: item.name, costPrice: Number(meta.costPrice || 0), listPrice: Number(item.price || meta.listPrice || 0), active: meta.active !== false, quantity: Number(item.qty || meta.quantity || 0), quota: Number(item.qty || meta.quota || 0), tagIds: meta.tagIds || [], deadline: meta.deadline || '', description: meta.description || '', image: normalizeStoredProductImageUrl(meta.imageUrl || meta.image || ''), images: meta.images || [], variants: meta.variants || [] }, type);
         }
 
         function productToCatalogItem(product, type) {
             const qty = type === 'stock' ? product.quantity : product.quota;
-            const safeImage = validateLocalProductImage(product.image);
+            const images = normalizeProductImages(product);
+            const safeImage = images.find(image => image.isPrimary)?.url || images[0]?.url || '';
             const variants = normalizeProductVariants(product, type);
-            const meta = { type, costPrice: product.costPrice, listPrice: product.listPrice, active: product.active !== false, tagIds: product.tagIds || [], tagNames: (product.tagIds || []).map(id => getProductTag(id).name), deadline: product.deadline || '', description: product.description || '', image: safeImage, imageUrl: safeImage, variants };
+            const meta = { type, costPrice: product.costPrice, listPrice: product.listPrice, active: product.active !== false, tagIds: product.tagIds || [], tagNames: (product.tagIds || []).map(id => getProductTag(id).name), deadline: product.deadline || '', description: product.description || '', image: safeImage, imageUrl: safeImage, images, variants };
             return { itemId: product.id, name: product.name, link: '商品管理', price: product.listPrice, qty, tracking: JSON.stringify(meta) };
         }
 
@@ -2392,7 +2405,8 @@
 
         function productSheetPayload(product, type) {
             const variants = normalizeProductVariants(product, type);
-            const payload = { ...product, variantsJson: JSON.stringify(variants) };
+            const images = normalizeProductImages(product);
+            const payload = { ...applyProductImages(product, images), variantsJson: JSON.stringify(variants) };
             delete payload.variants;
             return payload;
         }
@@ -2454,13 +2468,65 @@
             return `/images/${relative}`;
         }
 
-        function validateLocalProductImage(value = '') {
+        function normalizeStoredProductImageUrl(value = '') {
             const raw = String(value || '').trim();
-            const image = normalizeLocalProductImageUrl(raw);
-            if (raw && !image) {
-                throw new Error('只能使用 images 資料夾裡的本地圖片，例如 /images/chii001.png');
-            }
-            return image;
+            if (!raw || /^data:image\//i.test(raw)) return '';
+            if (/^https?:\/\//i.test(raw)) return raw;
+            return normalizeLocalProductImageUrl(raw);
+        }
+
+        function normalizeProductImageEntry(entry, index = 0) {
+            const source = typeof entry === 'string' ? { url: entry } : (entry || {});
+            const url = normalizeStoredProductImageUrl(source.url || source.imageUrl || source.image || '');
+            if (!url) return null;
+            return {
+                url,
+                key: String(source.key || source.objectKey || source.object_key || '').trim(),
+                isPrimary: source.isPrimary === true || source.is_primary === true || index === 0,
+                sortOrder: Number(source.sortOrder ?? source.sort_order ?? index)
+            };
+        }
+
+        function normalizeProductImages(product = {}) {
+            const rawImages = Array.isArray(product.images) ? product.images : [];
+            const images = rawImages
+                .map(normalizeProductImageEntry)
+                .filter(Boolean)
+                .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0));
+            const fallback = normalizeProductImageEntry(product.image || product.imageUrl || '', images.length);
+            if (fallback && !images.some(image => image.url === fallback.url)) images.unshift(fallback);
+            return normalizePrimaryProductImages(images);
+        }
+
+        function normalizePrimaryProductImages(images = []) {
+            const normalized = images.filter(Boolean).map((image, index) => ({
+                url: normalizeStoredProductImageUrl(image.url || ''),
+                key: String(image.key || '').trim(),
+                isPrimary: image.isPrimary === true,
+                sortOrder: index
+            })).filter(image => image.url);
+            if (!normalized.length) return [];
+            let primaryIndex = normalized.findIndex(image => image.isPrimary);
+            if (primaryIndex < 0) primaryIndex = 0;
+            return normalized.map((image, index) => ({
+                ...image,
+                isPrimary: index === primaryIndex,
+                sortOrder: index
+            }));
+        }
+
+        function productMainImage(product = {}) {
+            const images = normalizeProductImages(product);
+            return images.find(image => image.isPrimary)?.url || images[0]?.url || '';
+        }
+
+        function applyProductImages(product, images) {
+            const normalized = normalizePrimaryProductImages(images);
+            return {
+                ...product,
+                images: normalized,
+                image: normalized.find(image => image.isPrimary)?.url || normalized[0]?.url || ''
+            };
         }
 
         function getSelectedTagIds(selectId) {
@@ -2514,9 +2580,152 @@
         }
 
         function productImageCell(image, name) {
-            const safeImage = normalizeLocalProductImageUrl(image);
+            const safeImage = normalizeStoredProductImageUrl(image);
             if (!safeImage) return '<div style="width:56px;height:56px;border-radius:0.5rem;background:#f1f5f9;display:grid;place-items:center;color:#94a3b8;"><i class="fa-regular fa-image"></i></div>';
             return `<img src="${escapeHtml(safeImage)}" alt="${escapeHtml(name)}" style="width:56px;height:56px;object-fit:cover;border-radius:0.5rem;border:1px solid #e2e8f0;">`;
+        }
+
+        function productImageStoreKey(type, id) {
+            return `${type}-${id}`;
+        }
+
+        function prepareProductImageEditor(type, id, product = {}) {
+            const key = productImageStoreKey(type, id);
+            if (!productImageEditStores[key]) {
+                productImageEditStores[key] = {
+                    images: normalizeProductImages(product),
+                    pendingFiles: [],
+                    deletedKeys: []
+                };
+            }
+            return key;
+        }
+
+        function productImagesEditorHtml(type, product) {
+            const key = prepareProductImageEditor(type, product.id, product);
+            return `
+                <div class="product-image-editor" id="image-editor-${escapeHtml(key)}" ondragover="event.preventDefault(); this.style.borderColor='#ec4899';" ondragleave="this.style.borderColor='#cbd5e1';" ondrop="handleProductImageDrop(event, '${type}', ${quoteJs(product.id)})">
+                    <div class="product-image-list" id="image-list-${escapeHtml(key)}"></div>
+                    <label class="product-image-dropzone">
+                        <input type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="handleProductImageFiles('${type}', ${quoteJs(product.id)}, this.files); this.value='';">
+                        <i class="fa-regular fa-images"></i>
+                        <span>選擇或拖曳圖片</span>
+                    </label>
+                </div>
+            `;
+        }
+
+        function renderProductImageEditor(type, id) {
+            const key = productImageStoreKey(type, id);
+            const store = productImageEditStores[key];
+            const list = document.getElementById(`image-list-${key}`);
+            if (!store || !list) return;
+            const saved = store.images.map((image, index) => productImageThumbHtml(type, id, image.url, index, image.isPrimary, false)).join('');
+            const pending = store.pendingFiles.map((item, index) => productImageThumbHtml(type, id, item.previewUrl, index, item.isPrimary, true)).join('');
+            list.innerHTML = saved + pending || '<span style="font-size:0.75rem;color:#94a3b8;">尚未選擇圖片</span>';
+        }
+
+        function productImageThumbHtml(type, id, url, index, isPrimary, isPending) {
+            const target = isPending ? 'pending' : 'saved';
+            return `
+                <div class="product-image-thumb ${isPrimary ? 'primary' : ''}">
+                    <img src="${escapeHtml(url)}" alt="商品圖片">
+                    <div class="product-image-actions">
+                        <button type="button" onclick="setProductPrimaryImage('${type}', ${quoteJs(id)}, '${target}', ${index})">主圖</button>
+                        <button type="button" onclick="moveProductImage('${type}', ${quoteJs(id)}, '${target}', ${index}, -1)">↑</button>
+                        <button type="button" onclick="moveProductImage('${type}', ${quoteJs(id)}, '${target}', ${index}, 1)">↓</button>
+                        <button type="button" onclick="removeProductImage('${type}', ${quoteJs(id)}, '${target}', ${index})">刪除</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleProductImageDrop(event, type, id) {
+            event.preventDefault();
+            event.currentTarget.style.borderColor = '#cbd5e1';
+            handleProductImageFiles(type, id, event.dataTransfer.files);
+        }
+
+        function handleProductImageFiles(type, id, fileList) {
+            const key = productImageStoreKey(type, id);
+            if (!productImageEditStores[key]) prepareProductImageEditor(type, id, {});
+            const store = productImageEditStores[key];
+            const files = Array.from(fileList || []).filter(file => /^image\/(jpeg|png|webp)$/i.test(file.type));
+            files.forEach(file => {
+                store.pendingFiles.push({ file, previewUrl: URL.createObjectURL(file), isPrimary: store.images.length === 0 && store.pendingFiles.length === 0 });
+            });
+            renderProductImageEditor(type, id);
+        }
+
+        function setProductPrimaryImage(type, id, target, index) {
+            const store = productImageEditStores[productImageStoreKey(type, id)];
+            if (!store) return;
+            store.images = store.images.map((image, imageIndex) => ({ ...image, isPrimary: target === 'saved' && imageIndex === index }));
+            store.pendingFiles = store.pendingFiles.map((item, itemIndex) => ({ ...item, isPrimary: target === 'pending' && itemIndex === index }));
+            renderProductImageEditor(type, id);
+        }
+
+        function moveProductImage(type, id, target, index, delta) {
+            const store = productImageEditStores[productImageStoreKey(type, id)];
+            if (!store) return;
+            const list = target === 'pending' ? store.pendingFiles : store.images;
+            const next = index + delta;
+            if (next < 0 || next >= list.length) return;
+            [list[index], list[next]] = [list[next], list[index]];
+            if (target === 'saved') store.images = normalizePrimaryProductImages(list);
+            renderProductImageEditor(type, id);
+        }
+
+        function removeProductImage(type, id, target, index) {
+            const store = productImageEditStores[productImageStoreKey(type, id)];
+            if (!store) return;
+            if (target === 'pending') {
+                const [removed] = store.pendingFiles.splice(index, 1);
+                if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+            } else {
+                const [removed] = store.images.splice(index, 1);
+                if (removed?.key) store.deletedKeys.push(removed.key);
+                store.images = normalizePrimaryProductImages(store.images);
+            }
+            renderProductImageEditor(type, id);
+        }
+
+        async function deleteRemovedProductImages(type, editorId) {
+            const store = productImageEditStores[productImageStoreKey(type, editorId)];
+            if (!store || !store.deletedKeys.length) return;
+            const response = await fetch(PRODUCT_UPLOAD_API_URL, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ keys: store.deletedKeys })
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.error || '圖片刪除失敗');
+            store.deletedKeys = [];
+        }
+
+        async function uploadPendingProductImages(type, editorId, productId) {
+            const key = productImageStoreKey(type, editorId);
+            const store = productImageEditStores[key];
+            if (!store) return [];
+            if (!store.pendingFiles.length) return normalizePrimaryProductImages(store.images);
+
+            const formData = new FormData();
+            formData.append('productId', productId);
+            store.pendingFiles.forEach(item => formData.append('files', item.file));
+            const response = await fetch(PRODUCT_UPLOAD_API_URL, { method: 'POST', body: formData });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.error || '圖片上傳失敗');
+            const uploaded = (result.images || []).map((image, index) => ({
+                url: image.url,
+                key: image.key,
+                isPrimary: store.pendingFiles[index]?.isPrimary === true || (store.images.length === 0 && index === 0),
+                sortOrder: store.images.length + index
+            }));
+            store.pendingFiles.forEach(item => item.previewUrl && URL.revokeObjectURL(item.previewUrl));
+            store.pendingFiles = [];
+            store.images = normalizePrimaryProductImages([...store.images, ...uploaded]);
+            renderProductImageEditor(type, editorId);
+            return store.images;
         }
 
         function tagPill(tagId) {
@@ -2564,7 +2773,7 @@
         }
 
         function editImageInputHtml(type, product) {
-            return `<input class="product-edit-field" type="text" id="${type}-edit-image-${product.id}" value="${escapeHtml(product.image || '')}" placeholder="只能填 /images/xxx.jpg" style="min-width:180px;font-size:0.75rem;margin-top:0.35rem;">`;
+            return productImagesEditorHtml(type, product);
         }
 
         function productStatusSelectHtml(type, product, mode = 'display') {
@@ -2747,9 +2956,9 @@
             const productId = quoteJs(product.id);
             if (type === 'preorder') {
                 const countdown = `${getPreorderCountdown(product.deadline)}<div style="color:#64748b;font-size:0.75rem;margin-top:0.2rem;">${product.deadline ? escapeHtml(product.deadline.replace('T', ' ')) : ''}</div>`;
-                return `<tr><td style="text-align:center;cursor:pointer;" onclick="toggleProductVariantRow('${type}', ${productId}, this)"><i class="fa-solid fa-chevron-right"></i></td><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${escapeHtml(product.id)}"></td><td>${productImageCell(product.image, product.name)}</td><td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td><td>${tagsPills(product.tagIds)}</td><td>${qty}</td><td>NT$ ${Number(product.costPrice || 0).toLocaleString()}</td><td>${priceText}</td><td>${status}</td><td>${countdown}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-action-edit" onclick="editProductRow('${type}', ${productId})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deleteProduct('${type}', ${productId})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+                return `<tr><td style="text-align:center;cursor:pointer;" onclick="toggleProductVariantRow('${type}', ${productId}, this)"><i class="fa-solid fa-chevron-right"></i></td><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${escapeHtml(product.id)}"></td><td>${productImageCell(productMainImage(product), product.name)}</td><td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td><td>${tagsPills(product.tagIds)}</td><td>${qty}</td><td>NT$ ${Number(product.costPrice || 0).toLocaleString()}</td><td>${priceText}</td><td>${status}</td><td>${countdown}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-action-edit" onclick="editProductRow('${type}', ${productId})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deleteProduct('${type}', ${productId})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             }
-            return `<tr><td style="text-align:center;cursor:pointer;" onclick="toggleProductVariantRow('${type}', ${productId}, this)"><i class="fa-solid fa-chevron-right"></i></td><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${escapeHtml(product.id)}"></td><td>${productImageCell(product.image, product.name)}</td><td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td><td>${tagsPills(product.tagIds)}</td><td>${qty}</td><td>NT$ ${Number(product.costPrice || 0).toLocaleString()}</td><td>${priceText}</td><td>${status}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-action-edit" onclick="editProductRow('${type}', ${productId})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deleteProduct('${type}', ${productId})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+            return `<tr><td style="text-align:center;cursor:pointer;" onclick="toggleProductVariantRow('${type}', ${productId}, this)"><i class="fa-solid fa-chevron-right"></i></td><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${escapeHtml(product.id)}"></td><td>${productImageCell(productMainImage(product), product.name)}</td><td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td><td>${tagsPills(product.tagIds)}</td><td>${qty}</td><td>NT$ ${Number(product.costPrice || 0).toLocaleString()}</td><td>${priceText}</td><td>${status}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-action-edit" onclick="editProductRow('${type}', ${productId})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deleteProduct('${type}', ${productId})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
         }
 
         function renderProductRows(type) {
@@ -2759,6 +2968,7 @@
             const rows = products.filter(product => matchesProductSearch(product, type));
             if (!rows.length) { tbody.innerHTML = `<tr><td colspan="${type === 'preorder' ? 11 : 10}" class="empty-state">尚無符合的${type === 'stock' ? '現貨' : '預購'}商品</td></tr>`; return; }
             tbody.innerHTML = rows.map(product => `${sameId(editingProductRows[type], product.id) ? productEditRow(product, type) : productDisplayRow(product, type)}${productVariantSubRow(product, type)}`).join('');
+            if (editingProductRows[type]) setTimeout(() => renderProductImageEditor(type, editingProductRows[type]), 0);
         }
 
         function renderStockProducts() { renderProductRows('stock'); }
@@ -2775,7 +2985,11 @@
         function renderPreorderProducts() { renderProductRows('preorder'); }
 
         function editProductRow(type, id) { editingProductRows[type] = String(id); renderProductRows(type); }
-        function cancelProductRowEdit(type) { editingProductRows[type] = null; renderProductRows(type); }
+        function cancelProductRowEdit(type) {
+            if (editingProductRows[type]) delete productImageEditStores[productImageStoreKey(type, editingProductRows[type])];
+            editingProductRows[type] = null;
+            renderProductRows(type);
+        }
 
         function toggleEditingProductActive(type, id) {
             const btn = document.getElementById(`${type}-edit-active-${id}`);
@@ -2805,17 +3019,17 @@
                 const qtyEl = document.getElementById(`${type}-edit-qty-${id}`);
                 const activeEl = document.getElementById(`${type}-edit-active-${id}`);
                 if (!nameEl || !descEl || !costEl || !listEl || !qtyEl || !activeEl) return alert('編輯欄位載入不完整，請重新整理後再試。');
-                const imageInput = document.getElementById(`${type}-edit-image-${id}`)?.value || '';
-                const updated = {
+                const uploadedImages = await uploadPendingProductImages(type, id, String(existing.id));
+                await deleteRemovedProductImages(type, id);
+                const updated = applyProductImages({
                     ...existing,
                     name: nameEl.value.trim(),
                     description: descEl.value.trim(),
                     costPrice: Number(costEl.value || 0),
                     listPrice: Number(listEl.value || 0),
                     active: activeEl.dataset.active === 'true',
-                    tagIds: getCheckedRowTagIds(type, id),
-                    image: validateLocalProductImage(imageInput)
-                };
+                    tagIds: getCheckedRowTagIds(type, id)
+                }, uploadedImages);
                 if (type === 'stock') updated.quantity = Number(qtyEl.value || 0);
                 else {
                     updated.quota = Number(qtyEl.value || 0);
@@ -2825,7 +3039,7 @@
                 if (!updated.name) return alert('請填寫商品名稱');
                 if (type === 'stock') stockProducts = stockProducts.map(product => sameId(product.id, id) ? updated : product);
                 else preorderProducts = preorderProducts.map(product => sameId(product.id, id) ? updated : product);
-                delete productBatchImageStore[`${type}-${id}`];
+                delete productImageEditStores[productImageStoreKey(type, id)];
                 editingProductRows[type] = null;
                 persistProductManagement();
                 renderProductRows(type);
@@ -2867,13 +3081,6 @@
                 console.error(error);
                 alert(`商品刪除失敗：${error.message || error}`);
             }
-        }
-
-        function previewProductImage(input, hiddenId, previewId) {
-            const file = input.files && input.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = event => { document.getElementById(hiddenId).value = event.target.result; const preview = document.getElementById(previewId); preview.src = event.target.result; preview.style.display = 'block'; };
-            reader.readAsDataURL(file);
         }
 
         async function deleteStockProduct(id) { await deleteProduct('stock', id); }
@@ -2934,12 +3141,14 @@
             document.getElementById('productBatchTitle').innerText = type === 'stock' ? '批量新增現貨商品' : '批量新增預購商品';
             document.getElementById('product-batch-container').innerHTML = '';
             productBatchImageStore = {};
+            productImageEditStores = {};
             addProductBatchRow();
             document.getElementById('productBatchModal').classList.add('active');
         }
 
         function closeProductBatchModal() {
             document.getElementById('productBatchModal').classList.remove('active');
+            productImageEditStores = Object.fromEntries(Object.entries(productImageEditStores).filter(([key]) => !key.startsWith('stock-p') && !key.startsWith('preorder-p')));
         }
 
         function addProductBatchRow() {
@@ -2957,12 +3166,14 @@
                 <input type="datetime-local" class="pb-deadline" ${type === 'stock' ? 'disabled' : ''}>
                 <input type="text" class="pb-description" placeholder="商品描述">
                 <button class="btn btn-sm btn-danger" onclick="this.closest('.product-batch-row').remove()"><i class="fa-solid fa-trash"></i></button>
-                <input type="text" class="pb-image-url" placeholder="只能填 /images/xxx.jpg" style="grid-column: 1 / 8; font-size:0.8rem;">
+                <div style="grid-column: 1 / 8;">${productImagesEditorHtml(type, { id: rowId, images: [] })}</div>
             `;
             document.getElementById('product-batch-container').appendChild(row);
+            setTimeout(() => renderProductImageEditor(type, rowId), 0);
         }
 
         async function saveProductBatchRows() {
+            try {
             const type = document.getElementById('product-batch-type').value || 'stock';
             const rows = Array.from(document.querySelectorAll('.product-batch-row'));
             const newProducts = [];
@@ -2970,30 +3181,30 @@
             for (let index = 0; index < rows.length; index += 1) {
                 const row = rows[index];
                 const rowId = row.dataset.rowId;
-                const imageValue = row.querySelector('.pb-image-url')?.value || '';
-                const image = validateLocalProductImage(imageValue);
                 const tagIds = Array.from(row.querySelectorAll(`.product-batch-tag-${rowId}:checked`)).map(input => Number(input.value));
+                const productId = Date.now() + Math.random();
                 const base = {
-                    id: Date.now() + Math.random(),
+                    id: productId,
                     name: row.querySelector('.pb-name').value.trim(),
                     costPrice: Number(row.querySelector('.pb-cost').value || 0),
                     listPrice: Number(row.querySelector('.pb-list').value || 0),
                     active: true,
                     tagIds,
-                    description: row.querySelector('.pb-description').value.trim(),
-                    image
+                    description: row.querySelector('.pb-description').value.trim()
                 };
 
                 if (!base.name) continue;
+                const uploadedImages = await uploadPendingProductImages(type, rowId, String(productId));
+                const baseWithImages = applyProductImages(base, uploadedImages);
 
                 if (type === 'stock') {
-                    const product = { ...base, quantity: Number(row.querySelector('.pb-qty').value || 0) };
+                    const product = { ...baseWithImages, quantity: Number(row.querySelector('.pb-qty').value || 0) };
                     product.variants = normalizeProductVariants(product, type);
                     newProducts.push(product);
                     continue;
                 }
 
-                const product = { ...base, quota: Number(row.querySelector('.pb-qty').value || 0), deadline: row.querySelector('.pb-deadline').value };
+                const product = { ...baseWithImages, quota: Number(row.querySelector('.pb-qty').value || 0), deadline: row.querySelector('.pb-deadline').value };
                 product.variants = normalizeProductVariants(product, type);
                 newProducts.push(product);
             }
@@ -3003,6 +3214,10 @@
             else { preorderProducts = [...newProducts, ...preorderProducts]; renderPreorderProducts(); }
             closeProductBatchModal();
             persistProductManagement(); renderProductTags(); await syncProductsToBackend(type, newProducts); await syncProductCatalog(type);
+            } catch (error) {
+                console.error(error);
+                alert(`商品圖片上傳或保存失敗：${error.message || error}`);
+            }
         }
 
         function renderProductTags() {
