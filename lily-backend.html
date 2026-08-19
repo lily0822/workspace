@@ -2478,12 +2478,12 @@
 
         function normalizeProductImageEntry(entry, index = 0) {
             const source = typeof entry === 'string' ? { url: entry } : (entry || {});
-            const url = normalizeStoredProductImageUrl(source.url || source.imageUrl || source.image || '');
+            const url = normalizeStoredProductImageUrl(source.url || source.secure_url || source.secureUrl || source.imageUrl || source.image || '');
             if (!url) return null;
             return {
                 url,
-                publicId: String(source.publicId || source.public_id || source.key || source.objectKey || source.object_key || '').trim(),
-                isPrimary: source.isPrimary === true || source.is_primary === true || index === 0,
+                publicId: String(source.publicId || source.public_id || source.publicID || source.key || source.objectKey || source.object_key || '').trim(),
+                isPrimary: source.isPrimary === true || source.is_primary === true,
                 sortOrder: Number(source.sortOrder ?? source.sort_order ?? index)
             };
         }
