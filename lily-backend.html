@@ -763,8 +763,18 @@
                         <h3><i class="fa-solid fa-circle-nodes" style="color: var(--primary-color);"></i> 品牌LOGO設定</h3>
                         <p>設定後會套用到前端網站首頁左上方的品牌圖案。</p>
                         <div class="form-group">
-                            <label>圖片 URL</label>
-                            <input type="url" id="brand-logo-image" placeholder="貼上品牌 LOGO 圖片連結" oninput="previewBrandSetting('logo')">
+                            <label>商店名稱</label>
+                            <input type="text" id="brand-store-name" placeholder="小企鵝選物" oninput="updateBrandStoreName(this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label>LOGO 圖片</label>
+                            <input type="url" id="brand-logo-image" placeholder="選擇 LOGO 後會自動產生圖片網址" readonly oninput="previewBrandSetting('logo')">
+                            <input type="hidden" id="brand-logo-public-id">
+                            <label class="product-image-dropzone" ondragover="event.preventDefault(); this.style.borderColor='#ec4899';" ondragleave="this.style.borderColor='transparent';" ondrop="handleBrandLogoDrop(event)">
+                                <input type="file" accept="image/jpeg,image/png,image/webp" onchange="handleBrandLogoFile(this.files?.[0]); this.value='';">
+                                <i class="fa-regular fa-image"></i>
+                                <span>選擇或拖曳 LOGO</span>
+                            </label>
                         </div>
                         <div class="form-group">
                             <label>圖片大小</label>
@@ -776,6 +786,7 @@
                         <div class="brand-setting-actions">
                             <div id="brand-logo-preview" class="brand-setting-preview logo-preview"><i class="fa-regular fa-image"></i></div>
                             <button class="btn btn-primary" type="button" onclick="saveBrandSetting('logo')"><i class="fa-solid fa-floppy-disk"></i> 保存LOGO</button>
+                            <button class="btn btn-secondary" type="button" onclick="removeBrandLogo()"><i class="fa-regular fa-trash-can"></i> 移除LOGO</button>
                         </div>
                     </div>
                     <div class="brand-setting-card">
@@ -1620,6 +1631,8 @@
         const BRAND_SETTINGS_KEY = 'pinkkkuin_brand_settings';
         const GENERAL_LEDGER_KEY = 'pinkkkuin_general_ledger';
         const BACKEND_CACHE_KEY = 'pinkkkuin_backend_cache';
+        const DEFAULT_STORE_NAME = '小企鵝選物';
+        const DEFAULT_BRAND_LOGO_URL = 'https://res.cloudinary.com/dhrfwtarc/image/upload/v1782899951/pinkkkuin_logo_q1y5jr.png';
         const PRODUCT_UPLOAD_API_URL = window.PINKKKUIN_UPLOAD_API_URL || 'https://pinkkkuin-shop.vercel.app/api/upload';
         const STOCK_PRODUCT_SOURCE_ID = 2026062001;
         const PREORDER_PRODUCT_SOURCE_ID = 2026062002;
@@ -1636,7 +1649,8 @@
         let ledgerCurrentPage = 1;
         let ledgerPageSize = 10;
         let scheduleDefaultImages = { stall: '', connection: '', product: '', productScale: 100 };
-        let brandSettings = { logo: '', logoScale: 100, watermark: '', textImage: '' };
+        let brandSettings = { storeName: DEFAULT_STORE_NAME, logo: DEFAULT_BRAND_LOGO_URL, logoPublicId: '', logoScale: 100, watermark: '', textImage: '' };
+        let pendingBrandLogoDeletePublicIds = [];
         let editingProductRows = { stock: null, preorder: null };
         let productBatchImageStore = {};
         let productImageEditStores = {};
@@ -1728,7 +1742,7 @@
             }
             if (Array.isArray(data.scheduleSettings)) {
                 scheduleDefaultImages = { stall: '', connection: '', product: '', productScale: 100, ...scheduleDefaultImages };
-                brandSettings = { logo: '', logoScale: 100, watermark: '', textImage: '', ...brandSettings };
+                brandSettings = { storeName: DEFAULT_STORE_NAME, logo: DEFAULT_BRAND_LOGO_URL, logoPublicId: '', logoScale: 100, watermark: '', textImage: '', ...brandSettings };
                 data.scheduleSettings.forEach(setting => {
                     if (setting?.type === 'stall' || setting?.type === 'connection') {
                         scheduleDefaultImages[setting.type] = normalizeProductImageUrl(setting.image || '');
@@ -1736,8 +1750,15 @@
                         scheduleDefaultImages.product = normalizeProductImageUrl(setting.image || '');
                     } else if (setting?.type === 'product-default-scale') {
                         scheduleDefaultImages.productScale = Math.min(200, Math.max(50, Number(setting.image) || 100));
+                    } else if (setting?.type === 'brand') {
+                        const brand = parseBrandSettingsValue(setting.image || '');
+                        brandSettings.storeName = brand.storeName || brandSettings.storeName || DEFAULT_STORE_NAME;
+                        brandSettings.logo = brand.logo || brandSettings.logo || DEFAULT_BRAND_LOGO_URL;
+                        brandSettings.logoPublicId = brand.logoPublicId || '';
                     } else if (setting?.type === 'brand-logo') {
-                        brandSettings.logo = normalizeProductImageUrl(setting.image || '');
+                        if (!brandSettings.logo || brandSettings.logo === DEFAULT_BRAND_LOGO_URL) {
+                            brandSettings.logo = normalizeProductImageUrl(setting.image || '') || DEFAULT_BRAND_LOGO_URL;
+                        }
                     } else if (setting?.type === 'brand-logo-scale') {
                         brandSettings.logoScale = Math.min(200, Math.max(50, Number(setting.image) || 100));
                     } else if (setting?.type === 'brand-watermark') {
@@ -1769,6 +1790,7 @@
                     { id: 'connection', type: 'connection', image: scheduleDefaultImages.connection || '' },
                     { id: 'product-default', type: 'product-default', image: scheduleDefaultImages.product || '' },
                     { id: 'product-default-scale', type: 'product-default-scale', image: String(scheduleDefaultImages.productScale || 100) },
+                    { id: 'brand', type: 'brand', image: brandSettingsPayload() },
                     { id: 'brand-logo', type: 'brand-logo', image: brandSettings.logo || '' },
                     { id: 'brand-logo-scale', type: 'brand-logo-scale', image: String(brandSettings.logoScale || 100) },
                     { id: 'brand-watermark', type: 'brand-watermark', image: brandSettings.watermark || '' },
@@ -2474,6 +2496,31 @@
             if (!raw || /^data:image\//i.test(raw)) return '';
             if (/^https?:\/\//i.test(raw)) return raw;
             return normalizeLocalProductImageUrl(raw);
+        }
+
+        function parseBrandSettingsValue(value = '') {
+            try {
+                const parsed = JSON.parse(String(value || '{}'));
+                return {
+                    storeName: String(parsed.store_name || parsed.storeName || '').trim(),
+                    logo: normalizeProductImageUrl(parsed.logo_url || parsed.logoUrl || ''),
+                    logoPublicId: String(parsed.logo_public_id || parsed.logoPublicId || '').trim()
+                };
+            } catch (error) {
+                return { storeName: '', logo: '', logoPublicId: '' };
+            }
+        }
+
+        function brandSettingsPayload() {
+            return JSON.stringify({
+                store_name: String(brandSettings.storeName || DEFAULT_STORE_NAME).trim() || DEFAULT_STORE_NAME,
+                logo_url: normalizeProductImageUrl(brandSettings.logo || '') || DEFAULT_BRAND_LOGO_URL,
+                logo_public_id: String(brandSettings.logoPublicId || '').trim()
+            });
+        }
+
+        function isManagedBrandLogo(publicId = '') {
+            return String(publicId || '').trim().startsWith('site/logo/');
         }
 
         function normalizeProductImageEntry(entry, index = 0) {
@@ -3490,6 +3537,62 @@
             alert('商品預設圖已保存');
         }
 
+        function updateBrandStoreName(value = '') {
+            brandSettings.storeName = String(value || '').trim() || DEFAULT_STORE_NAME;
+        }
+
+        function setBrandLogoValue(url = '', publicId = '') {
+            brandSettings.logo = normalizeProductImageUrl(url) || '';
+            brandSettings.logoPublicId = String(publicId || '').trim();
+            const input = document.getElementById('brand-logo-image');
+            const publicIdInput = document.getElementById('brand-logo-public-id');
+            if (input) input.value = brandSettings.logo;
+            if (publicIdInput) publicIdInput.value = brandSettings.logoPublicId;
+            previewBrandSetting('logo');
+        }
+
+        function handleBrandLogoDrop(event) {
+            event.preventDefault();
+            event.currentTarget.style.borderColor = 'transparent';
+            handleBrandLogoFile(event.dataTransfer.files?.[0]);
+        }
+
+        async function handleBrandLogoFile(file) {
+            if (!file) return;
+            if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) return alert('LOGO 請選擇 JPG、PNG 或 WebP 圖片');
+            const oldPublicId = brandSettings.logoPublicId || document.getElementById('brand-logo-public-id')?.value || '';
+            const formData = new FormData();
+            formData.append('folder', 'site/logo');
+            formData.append('productId', 'site-logo');
+            formData.append('files', file);
+            try {
+                showLoading();
+                const response = await fetch(PRODUCT_UPLOAD_API_URL, { method: 'POST', body: formData });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(result.error || 'LOGO 上傳失敗');
+                const uploaded = (result.images || [])[0];
+                if (!uploaded?.secure_url && !uploaded?.url) throw new Error('Cloudinary 未回傳 LOGO 圖片網址');
+                setBrandLogoValue(uploaded.secure_url || uploaded.url, uploaded.public_id || uploaded.publicId);
+                if (isManagedBrandLogo(oldPublicId) && oldPublicId !== brandSettings.logoPublicId) {
+                    pendingBrandLogoDeletePublicIds.push(oldPublicId);
+                }
+            } catch (error) {
+                console.error('Brand logo upload failed:', error);
+                alert(error.message || 'LOGO 上傳失敗');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function removeBrandLogo() {
+            const oldPublicId = brandSettings.logoPublicId || document.getElementById('brand-logo-public-id')?.value || '';
+            setBrandLogoValue(DEFAULT_BRAND_LOGO_URL, '');
+            if (isManagedBrandLogo(oldPublicId)) {
+                pendingBrandLogoDeletePublicIds.push(oldPublicId);
+            }
+            await saveBrandSetting('logo');
+        }
+
         function brandSettingMeta(key) {
             const map = {
                 logo: { type: 'brand-logo', inputId: 'brand-logo-image', previewId: 'brand-logo-preview', label: '品牌LOGO' },
@@ -3500,7 +3603,11 @@
         }
 
         function renderBrandManagement() {
-            brandSettings = { logo: '', logoScale: 100, watermark: '', textImage: '', ...safeParseStorage(BRAND_SETTINGS_KEY, {}), ...brandSettings };
+            brandSettings = { storeName: DEFAULT_STORE_NAME, logo: DEFAULT_BRAND_LOGO_URL, logoPublicId: '', logoScale: 100, watermark: '', textImage: '', ...safeParseStorage(BRAND_SETTINGS_KEY, {}), ...brandSettings };
+            const storeNameInput = document.getElementById('brand-store-name');
+            if (storeNameInput) storeNameInput.value = brandSettings.storeName || DEFAULT_STORE_NAME;
+            const logoPublicIdInput = document.getElementById('brand-logo-public-id');
+            if (logoPublicIdInput) logoPublicIdInput.value = brandSettings.logoPublicId || '';
             ['logo', 'watermark', 'textImage'].forEach(key => {
                 const meta = brandSettingMeta(key);
                 if (!meta) return;
@@ -3520,6 +3627,7 @@
             const preview = document.getElementById(meta.previewId);
             if (!input || !preview) return;
             const image = normalizeProductImageUrl(input.value);
+            if (key === 'logo') brandSettings.logo = image || DEFAULT_BRAND_LOGO_URL;
             preview.innerHTML = image
                 ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(meta.label)}預覽">`
                 : '<i class="fa-regular fa-image"></i>';
@@ -3544,18 +3652,42 @@
             if (input.value.trim() && !image) return alert('請輸入有效的圖片 URL');
             brandSettings[key] = image;
             if (key === 'logo') {
+                const storeNameInput = document.getElementById('brand-store-name');
+                const publicIdInput = document.getElementById('brand-logo-public-id');
+                brandSettings.storeName = String(storeNameInput?.value || '').trim() || DEFAULT_STORE_NAME;
+                brandSettings.logo = image || DEFAULT_BRAND_LOGO_URL;
+                brandSettings.logoPublicId = String(publicIdInput?.value || brandSettings.logoPublicId || '').trim();
                 const scaleInput = document.getElementById('brand-logo-scale');
                 brandSettings.logoScale = Math.min(200, Math.max(50, Number(scaleInput?.value) || 100));
             }
             localStorage.setItem(BRAND_SETTINGS_KEY, JSON.stringify(brandSettings));
             previewBrandSetting(key);
-            await fetchAPI('saveScheduleSetting', { id: meta.type, type: meta.type, image }, null, true);
+            const savedSetting = await fetchAPI('saveScheduleSetting', { id: meta.type, type: meta.type, image }, null, true);
+            if (!savedSetting) throw new Error(`${meta.label}保存失敗`);
             if (key === 'logo') {
-                await fetchAPI('saveScheduleSetting', {
+                const savedBrand = await fetchAPI('saveScheduleSetting', {
+                    id: 'brand',
+                    type: 'brand',
+                    image: brandSettingsPayload()
+                }, null, true);
+                if (!savedBrand) throw new Error('品牌設定保存失敗');
+                const savedScale = await fetchAPI('saveScheduleSetting', {
                     id: 'brand-logo-scale',
                     type: 'brand-logo-scale',
                     image: String(brandSettings.logoScale)
                 }, null, true);
+                if (!savedScale) throw new Error('LOGO 大小保存失敗');
+                const cleanupIds = [...new Set(pendingBrandLogoDeletePublicIds)]
+                    .filter(publicId => publicId && publicId !== brandSettings.logoPublicId);
+                pendingBrandLogoDeletePublicIds = [];
+                if (cleanupIds.length) {
+                    try {
+                        await deleteCloudinaryImages(cleanupIds);
+                    } catch (error) {
+                        console.error('Brand logo cleanup failed:', error);
+                        alert(error.message || 'LOGO 設定已保存，但舊圖片清理失敗');
+                    }
+                }
             }
             alert(`${meta.label}已保存`);
         }
