@@ -43,13 +43,14 @@ function normalizeProductImageUrl(image) {
 
 function normalizeProductImageEntry(entry, index) {
   var source = typeof entry === 'string' ? { url: entry } : (entry || {});
-  var url = normalizeProductImageUrl(source.url || source.imageUrl || source.image || '');
+  var url = normalizeProductImageUrl(source.url || source.secure_url || source.secureUrl || source.imageUrl || source.image || '');
   if (!url) return null;
+  var sortOrder = source.sortOrder !== undefined ? source.sortOrder : (source.sort_order !== undefined ? source.sort_order : index);
   return {
     url: url,
-    publicId: String(source.publicId || source.public_id || source.key || source.objectKey || source.object_key || ''),
-    isPrimary: source.isPrimary === true || source.is_primary === true || index === 0,
-    sortOrder: Number(source.sortOrder || source.sort_order || index)
+    publicId: String(source.publicId || source.public_id || source.publicID || source.key || source.objectKey || source.object_key || ''),
+    isPrimary: source.isPrimary === true || source.is_primary === true,
+    sortOrder: Number(sortOrder)
   };
 }
 
@@ -92,9 +93,10 @@ function applyProductImages(product) {
 
 function safeSupabaseMirror(label, callback) {
   try {
-    callback();
+    return callback();
   } catch (error) {
     console.warn('Supabase mirror failed for ' + label + ': ' + error.toString());
+    return { ok: false, error: error.toString() };
   }
 }
 
@@ -110,6 +112,7 @@ function authorizeExternalRequests() {
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
+    var supabaseSync = null;
 
     if (data.action === 'saveVendor') {
       if (!data.payload.id) data.payload.id = Date.now();
@@ -143,7 +146,7 @@ function doPost(e) {
       if (!data.payload.id) data.payload.id = Date.now();
       data.payload = applyProductImages(data.payload);
       saveRow(SHEET_STOCK_PRODUCTS, data.payload);
-      safeSupabaseMirror('saveStockProduct', function() { syncSupabaseProduct('stock', data.payload); });
+      supabaseSync = safeSupabaseMirror('saveStockProduct', function() { return syncSupabaseProduct('stock', data.payload); });
     }
     if (data.action === 'deleteStockProduct') {
       deleteRow(SHEET_STOCK_PRODUCTS, data.id);
@@ -153,7 +156,7 @@ function doPost(e) {
       if (!data.payload.id) data.payload.id = Date.now();
       data.payload = applyProductImages(data.payload);
       saveRow(SHEET_PREORDER_PRODUCTS, data.payload);
-      safeSupabaseMirror('savePreorderProduct', function() { syncSupabaseProduct('preorder', data.payload); });
+      supabaseSync = safeSupabaseMirror('savePreorderProduct', function() { return syncSupabaseProduct('preorder', data.payload); });
     }
     if (data.action === 'deletePreorderProduct') {
       deleteRow(SHEET_PREORDER_PRODUCTS, data.id);
@@ -202,7 +205,9 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
-    return handleResponse({ status: 'success' });
+    var response = { status: 'success' };
+    if (supabaseSync) response.supabaseSync = supabaseSync;
+    return handleResponse(response);
   } catch (error) {
     return handleResponse({ status: 'error', message: error.toString() });
   }
@@ -382,6 +387,16 @@ function supabaseRequest(path, method, payload, prefer) {
   var response = UrlFetchApp.fetch(config.url + '/rest/v1/' + path, options);
   var code = response.getResponseCode();
   var text = response.getContentText();
+  if (String(path).indexOf('product_images') === 0) {
+    console.log(JSON.stringify({
+      label: 'Supabase product_images request',
+      method: method || 'get',
+      path: path,
+      status: code,
+      payloadCount: Array.isArray(payload) ? payload.length : (payload ? 1 : 0),
+      body: text ? text.slice(0, 1000) : ''
+    }));
+  }
   if (code < 200 || code >= 300) {
     throw new Error('Supabase request failed (' + code + '): ' + text);
   }
@@ -688,8 +703,18 @@ function syncSupabaseProductVariants(productId, product, productType) {
 }
 
 function syncSupabaseProductImages(productId, product) {
+  var rawImages = Array.isArray(product.images) ? product.images : parseJsonArray(product.images);
+  var normalizedImages = normalizeProductImages(product);
+  console.log(JSON.stringify({
+    label: 'syncSupabaseProductImages start',
+    productId: productId,
+    legacyId: product && product.id ? String(product.id) : '',
+    hasImages: product && product.images !== undefined,
+    rawImagesLength: rawImages.length,
+    normalizedImagesLength: normalizedImages.length
+  }));
   supabaseRequest('product_images?product_id=eq.' + encodeURIComponent(productId), 'delete', null, 'return=minimal');
-  var images = normalizeProductImages(product).filter(function(image) {
+  var images = normalizedImages.filter(function(image) {
     return !!image.publicId;
   }).map(function(image, index) {
     return {
@@ -701,13 +726,34 @@ function syncSupabaseProductImages(productId, product) {
       is_primary: image.isPrimary === true
     };
   });
-  if (images.length) supabaseRequest('product_images', 'post', images, 'return=minimal');
+  var inserted = [];
+  if (images.length) inserted = supabaseRequest('product_images', 'post', images, 'return=representation') || [];
+  var summary = {
+    called: true,
+    productId: productId,
+    rawImagesLength: rawImages.length,
+    normalizedImagesLength: normalizedImages.length,
+    insertImagesLength: images.length,
+    insertedImagesLength: inserted.length,
+    primaryCount: images.filter(function(image) { return image.is_primary === true; }).length
+  };
+  console.log(JSON.stringify({ label: 'syncSupabaseProductImages done', summary: summary }));
+  return summary;
 }
 
 function syncSupabaseProduct(productType, product) {
   if (!product || !product.name) return;
   var qty = productType === 'stock' ? Number(product.quantity || 0) : Number(product.quota || 0);
   product = applyProductImages(product);
+  var productImages = normalizeProductImages(product);
+  console.log(JSON.stringify({
+    label: 'syncSupabaseProduct start',
+    productType: productType,
+    legacyId: String(product.id || ''),
+    hasImages: product.images !== undefined,
+    imagesLength: Array.isArray(product.images) ? product.images.length : parseJsonArray(product.images).length,
+    normalizedImagesLength: productImages.length
+  }));
   var productPayload = {
     legacy_id: String(product.id),
     product_type: productType,
@@ -725,10 +771,18 @@ function syncSupabaseProduct(productType, product) {
   var rows = supabaseRequest('products?on_conflict=legacy_id', 'post', productPayload, 'resolution=merge-duplicates,return=representation');
   var saved = rows && rows.length ? rows[0] : getSupabaseProductByLegacyId(product.id);
   if (!saved || !saved.id) throw new Error('Supabase product upsert did not return an id.');
+  console.log(JSON.stringify({ label: 'syncSupabaseProduct saved', savedId: saved.id, legacyId: String(product.id || '') }));
   var tagIds = Array.isArray(product.tagIds) ? product.tagIds : parseJsonArray(product.tagIds);
   syncSupabaseProductCategories(saved.id, tagIds);
   syncSupabaseProductVariants(saved.id, product, productType);
-  syncSupabaseProductImages(saved.id, product);
+  var imageSync = syncSupabaseProductImages(saved.id, product);
+  return {
+    ok: true,
+    productType: productType,
+    legacyId: String(product.id || ''),
+    savedId: saved.id,
+    images: imageSync
+  };
 }
 
 function deleteSupabaseProduct(id) {
