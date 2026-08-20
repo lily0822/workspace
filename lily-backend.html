@@ -767,6 +767,10 @@
                             <input type="text" id="brand-store-name" placeholder="小企鵝選物" oninput="updateBrandStoreName(this.value)">
                         </div>
                         <div class="form-group">
+                            <label>英文品牌名稱</label>
+                            <input type="text" id="brand-store-name-en" placeholder="KOPENGUIN SELECT SHOP" oninput="updateBrandStoreNameEn(this.value)">
+                        </div>
+                        <div class="form-group">
                             <label>LOGO 圖片</label>
                             <input type="url" id="brand-logo-image" placeholder="選擇 LOGO 後會自動產生圖片網址" readonly oninput="previewBrandSetting('logo')">
                             <input type="hidden" id="brand-logo-public-id">
@@ -1632,6 +1636,7 @@
         const GENERAL_LEDGER_KEY = 'pinkkkuin_general_ledger';
         const BACKEND_CACHE_KEY = 'pinkkkuin_backend_cache';
         const DEFAULT_STORE_NAME = '小企鵝選物';
+        const DEFAULT_STORE_NAME_EN = 'KOPENGUIN SELECT SHOP';
         const DEFAULT_BRAND_LOGO_URL = 'https://res.cloudinary.com/dhrfwtarc/image/upload/v1782899951/pinkkkuin_logo_q1y5jr.png';
         const PRODUCT_UPLOAD_API_URL = window.PINKKKUIN_UPLOAD_API_URL || 'https://pinkkkuin-shop.vercel.app/api/upload';
         const STOCK_PRODUCT_SOURCE_ID = 2026062001;
@@ -1649,7 +1654,7 @@
         let ledgerCurrentPage = 1;
         let ledgerPageSize = 10;
         let scheduleDefaultImages = { stall: '', connection: '', product: '', productScale: 100 };
-        let brandSettings = { storeName: DEFAULT_STORE_NAME, logo: DEFAULT_BRAND_LOGO_URL, logoPublicId: '', logoScale: 100, watermark: '', textImage: '' };
+        let brandSettings = { storeName: DEFAULT_STORE_NAME, storeNameEn: DEFAULT_STORE_NAME_EN, logo: DEFAULT_BRAND_LOGO_URL, logoPublicId: '', logoScale: 100, watermark: '', textImage: '' };
         let pendingBrandLogoDeletePublicIds = [];
         let editingProductRows = { stock: null, preorder: null };
         let productBatchImageStore = {};
@@ -1742,7 +1747,7 @@
             }
             if (Array.isArray(data.scheduleSettings)) {
                 scheduleDefaultImages = { stall: '', connection: '', product: '', productScale: 100, ...scheduleDefaultImages };
-                brandSettings = { storeName: DEFAULT_STORE_NAME, logo: DEFAULT_BRAND_LOGO_URL, logoPublicId: '', logoScale: 100, watermark: '', textImage: '', ...brandSettings };
+                brandSettings = { storeName: DEFAULT_STORE_NAME, storeNameEn: DEFAULT_STORE_NAME_EN, logo: DEFAULT_BRAND_LOGO_URL, logoPublicId: '', logoScale: 100, watermark: '', textImage: '', ...brandSettings };
                 data.scheduleSettings.forEach(setting => {
                     if (setting?.type === 'stall' || setting?.type === 'connection') {
                         scheduleDefaultImages[setting.type] = normalizeProductImageUrl(setting.image || '');
@@ -1753,6 +1758,7 @@
                     } else if (setting?.type === 'brand') {
                         const brand = parseBrandSettingsValue(setting.image || '');
                         brandSettings.storeName = brand.storeName || brandSettings.storeName || DEFAULT_STORE_NAME;
+                        brandSettings.storeNameEn = brand.storeNameEn || brandSettings.storeNameEn || DEFAULT_STORE_NAME_EN;
                         brandSettings.logo = brand.logo || brandSettings.logo || DEFAULT_BRAND_LOGO_URL;
                         brandSettings.logoPublicId = brand.logoPublicId || '';
                     } else if (setting?.type === 'brand-logo') {
@@ -2503,17 +2509,19 @@
                 const parsed = JSON.parse(String(value || '{}'));
                 return {
                     storeName: String(parsed.store_name || parsed.storeName || '').trim(),
+                    storeNameEn: String(parsed.store_name_en || parsed.storeNameEn || '').trim(),
                     logo: normalizeProductImageUrl(parsed.logo_url || parsed.logoUrl || ''),
                     logoPublicId: String(parsed.logo_public_id || parsed.logoPublicId || '').trim()
                 };
             } catch (error) {
-                return { storeName: '', logo: '', logoPublicId: '' };
+                return { storeName: '', storeNameEn: '', logo: '', logoPublicId: '' };
             }
         }
 
         function brandSettingsPayload() {
             return JSON.stringify({
                 store_name: String(brandSettings.storeName || DEFAULT_STORE_NAME).trim() || DEFAULT_STORE_NAME,
+                store_name_en: String(brandSettings.storeNameEn || DEFAULT_STORE_NAME_EN).trim() || DEFAULT_STORE_NAME_EN,
                 logo_url: normalizeProductImageUrl(brandSettings.logo || '') || DEFAULT_BRAND_LOGO_URL,
                 logo_public_id: String(brandSettings.logoPublicId || '').trim()
             });
@@ -3541,6 +3549,10 @@
             brandSettings.storeName = String(value || '').trim() || DEFAULT_STORE_NAME;
         }
 
+        function updateBrandStoreNameEn(value = '') {
+            brandSettings.storeNameEn = String(value || '').trim() || DEFAULT_STORE_NAME_EN;
+        }
+
         function setBrandLogoValue(url = '', publicId = '') {
             brandSettings.logo = normalizeProductImageUrl(url) || '';
             brandSettings.logoPublicId = String(publicId || '').trim();
@@ -3603,9 +3615,11 @@
         }
 
         function renderBrandManagement() {
-            brandSettings = { storeName: DEFAULT_STORE_NAME, logo: DEFAULT_BRAND_LOGO_URL, logoPublicId: '', logoScale: 100, watermark: '', textImage: '', ...safeParseStorage(BRAND_SETTINGS_KEY, {}), ...brandSettings };
+            brandSettings = { storeName: DEFAULT_STORE_NAME, storeNameEn: DEFAULT_STORE_NAME_EN, logo: DEFAULT_BRAND_LOGO_URL, logoPublicId: '', logoScale: 100, watermark: '', textImage: '', ...safeParseStorage(BRAND_SETTINGS_KEY, {}), ...brandSettings };
             const storeNameInput = document.getElementById('brand-store-name');
             if (storeNameInput) storeNameInput.value = brandSettings.storeName || DEFAULT_STORE_NAME;
+            const storeNameEnInput = document.getElementById('brand-store-name-en');
+            if (storeNameEnInput) storeNameEnInput.value = brandSettings.storeNameEn || DEFAULT_STORE_NAME_EN;
             const logoPublicIdInput = document.getElementById('brand-logo-public-id');
             if (logoPublicIdInput) logoPublicIdInput.value = brandSettings.logoPublicId || '';
             ['logo', 'watermark', 'textImage'].forEach(key => {
@@ -3653,8 +3667,10 @@
             brandSettings[key] = image;
             if (key === 'logo') {
                 const storeNameInput = document.getElementById('brand-store-name');
+                const storeNameEnInput = document.getElementById('brand-store-name-en');
                 const publicIdInput = document.getElementById('brand-logo-public-id');
                 brandSettings.storeName = String(storeNameInput?.value || '').trim() || DEFAULT_STORE_NAME;
+                brandSettings.storeNameEn = String(storeNameEnInput?.value || '').trim() || DEFAULT_STORE_NAME_EN;
                 brandSettings.logo = image || DEFAULT_BRAND_LOGO_URL;
                 brandSettings.logoPublicId = String(publicIdInput?.value || brandSettings.logoPublicId || '').trim();
                 const scaleInput = document.getElementById('brand-logo-scale');
