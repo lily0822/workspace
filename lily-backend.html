@@ -171,6 +171,14 @@
         .brand-setting-preview.logo-preview { border-radius: 999px; width: 96px; height: 96px; }
         .brand-setting-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .brand-setting-preview.logo-preview img { transform-origin: center; }
+        .brand-logo-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 0.75rem; }
+        .brand-logo-card { border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.65rem; background: #fff; display: flex; flex-direction: column; gap: 0.55rem; }
+        .brand-logo-card.active { border-color: var(--primary-color); box-shadow: 0 0 0 2px #fbcfe8; }
+        .brand-logo-thumb { height: 82px; border-radius: 0.55rem; background: #f8fafc; display: grid; place-items: center; overflow: hidden; }
+        .brand-logo-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .brand-logo-status { min-height: 18px; font-size: 0.72rem; font-weight: 800; color: var(--primary-hover); text-align: center; }
+        .brand-logo-card-actions { display: grid; gap: 0.35rem; }
+        .brand-logo-card-actions .btn { width: 100%; justify-content: center; padding: 0.38rem 0.45rem; font-size: 0.72rem; }
         .brand-logo-scale-control { display: grid; grid-template-columns: 1fr auto; gap: 0.75rem; align-items: center; }
         .brand-logo-scale-control input[type="range"] { width: 100%; accent-color: var(--primary-color); }
         .brand-logo-scale-value { min-width: 54px; padding: 0.35rem 0.5rem; border-radius: 0.375rem; background: #fdf2f8; color: var(--primary-hover); font-size: 0.8rem; font-weight: 700; text-align: center; }
@@ -772,12 +780,12 @@
                         </div>
                         <div class="form-group">
                             <label>LOGO 圖片</label>
-                            <input type="url" id="brand-logo-image" placeholder="選擇 LOGO 後會自動產生圖片網址" readonly oninput="previewBrandSetting('logo')">
+                            <input type="url" id="brand-logo-image" placeholder="目前使用中的 LOGO 圖片網址" readonly oninput="previewBrandSetting('logo')">
                             <input type="hidden" id="brand-logo-public-id">
                             <label class="product-image-dropzone" ondragover="event.preventDefault(); this.style.borderColor='#ec4899';" ondragleave="this.style.borderColor='transparent';" ondrop="handleBrandLogoDrop(event)">
-                                <input type="file" accept="image/jpeg,image/png,image/webp" onchange="handleBrandLogoFile(this.files?.[0]); this.value='';">
+                                <input type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="handleBrandLogoFiles(this.files); this.value='';">
                                 <i class="fa-regular fa-image"></i>
-                                <span>選擇或拖曳 LOGO</span>
+                                <span>拖曳 LOGO 圖片到這裡，或點擊選擇</span>
                             </label>
                         </div>
                         <div class="form-group">
@@ -791,6 +799,10 @@
                             <div id="brand-logo-preview" class="brand-setting-preview logo-preview"><i class="fa-regular fa-image"></i></div>
                             <button class="btn btn-primary" type="button" onclick="saveBrandSetting('logo')"><i class="fa-solid fa-floppy-disk"></i> 保存LOGO</button>
                             <button class="btn btn-secondary" type="button" onclick="removeBrandLogo()"><i class="fa-regular fa-trash-can"></i> 移除LOGO</button>
+                        </div>
+                        <div>
+                            <label style="font-size:0.85rem;font-weight:700;color:#334155;">LOGO 圖庫</label>
+                            <div id="brand-logo-gallery" class="brand-logo-gallery"></div>
                         </div>
                     </div>
                     <div class="brand-setting-card">
@@ -1655,6 +1667,7 @@
         let ledgerPageSize = 10;
         let scheduleDefaultImages = { stall: '', connection: '', product: '', productScale: 100 };
         let brandSettings = { storeName: DEFAULT_STORE_NAME, storeNameEn: DEFAULT_STORE_NAME_EN, logo: DEFAULT_BRAND_LOGO_URL, logoPublicId: '', logoScale: 100, watermark: '', textImage: '' };
+        let brandLogoImages = [];
         let pendingBrandLogoDeletePublicIds = [];
         let editingProductRows = { stock: null, preorder: null };
         let productBatchImageStore = {};
@@ -1761,6 +1774,8 @@
                         brandSettings.storeNameEn = brand.storeNameEn || brandSettings.storeNameEn || DEFAULT_STORE_NAME_EN;
                         brandSettings.logo = brand.logo || brandSettings.logo || DEFAULT_BRAND_LOGO_URL;
                         brandSettings.logoPublicId = brand.logoPublicId || '';
+                    } else if (setting?.type === 'brand-logo-library') {
+                        brandLogoImages = parseBrandLogoLibrary(setting.image || '');
                     } else if (setting?.type === 'brand-logo') {
                         if (!brandSettings.logo || brandSettings.logo === DEFAULT_BRAND_LOGO_URL) {
                             brandSettings.logo = normalizeProductImageUrl(setting.image || '') || DEFAULT_BRAND_LOGO_URL;
@@ -1773,6 +1788,7 @@
                         brandSettings.textImage = normalizeProductImageUrl(setting.image || '');
                     }
                 });
+                migrateCurrentBrandLogoToLibrary();
                 localStorage.setItem(SCHEDULE_DEFAULT_IMAGES_KEY, JSON.stringify(scheduleDefaultImages));
                 localStorage.setItem(BRAND_SETTINGS_KEY, JSON.stringify(brandSettings));
                 renderScheduleDefaultImages();
@@ -1797,6 +1813,7 @@
                     { id: 'product-default', type: 'product-default', image: scheduleDefaultImages.product || '' },
                     { id: 'product-default-scale', type: 'product-default-scale', image: String(scheduleDefaultImages.productScale || 100) },
                     { id: 'brand', type: 'brand', image: brandSettingsPayload() },
+                    { id: 'brand-logo-library', type: 'brand-logo-library', image: brandLogoLibraryPayload() },
                     { id: 'brand-logo', type: 'brand-logo', image: brandSettings.logo || '' },
                     { id: 'brand-logo-scale', type: 'brand-logo-scale', image: String(brandSettings.logoScale || 100) },
                     { id: 'brand-watermark', type: 'brand-watermark', image: brandSettings.watermark || '' },
@@ -2525,6 +2542,90 @@
                 logo_url: normalizeProductImageUrl(brandSettings.logo || '') || DEFAULT_BRAND_LOGO_URL,
                 logo_public_id: String(brandSettings.logoPublicId || '').trim()
             });
+        }
+
+        function parseBrandLogoLibrary(value = '') {
+            try {
+                const parsed = JSON.parse(String(value || '{}'));
+                const images = Array.isArray(parsed) ? parsed : parsed.images;
+                return normalizeBrandLogoImages(Array.isArray(images) ? images : []);
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function brandLogoLibraryPayload() {
+            return JSON.stringify({
+                images: normalizeBrandLogoImages(brandLogoImages).map((image, index) => ({
+                    id: image.id,
+                    secure_url: image.secureUrl,
+                    public_id: image.publicId,
+                    sort_order: index,
+                    is_active: image.isActive === true,
+                    created_at: image.createdAt,
+                    updated_at: image.updatedAt
+                }))
+            });
+        }
+
+        function normalizeBrandLogoImages(images = []) {
+            const normalized = (images || []).map((image, index) => {
+                const source = typeof image === 'string' ? { secure_url: image } : (image || {});
+                const secureUrl = normalizeProductImageUrl(source.secure_url || source.secureUrl || source.url || source.logo_url || '');
+                if (!secureUrl) return null;
+                return {
+                    id: String(source.id || source.public_id || source.publicId || `logo-${Date.now()}-${index}`),
+                    secureUrl,
+                    publicId: String(source.public_id || source.publicId || source.logo_public_id || '').trim(),
+                    sortOrder: Number(source.sort_order ?? source.sortOrder ?? index),
+                    isActive: source.is_active === true || source.isActive === true,
+                    createdAt: String(source.created_at || source.createdAt || new Date().toISOString()),
+                    updatedAt: String(source.updated_at || source.updatedAt || source.created_at || source.createdAt || new Date().toISOString())
+                };
+            }).filter(Boolean).sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0));
+            if (!normalized.length) return [];
+            let activeIndex = normalized.findIndex(image => image.isActive);
+            if (activeIndex < 0) activeIndex = 0;
+            return normalized.map((image, index) => ({
+                ...image,
+                sortOrder: index,
+                isActive: index === activeIndex
+            }));
+        }
+
+        function activeBrandLogoImage() {
+            return normalizeBrandLogoImages(brandLogoImages).find(image => image.isActive) || null;
+        }
+
+        function syncBrandSettingsFromLogoLibrary() {
+            brandLogoImages = normalizeBrandLogoImages(brandLogoImages);
+            const active = activeBrandLogoImage();
+            brandSettings.logo = active?.secureUrl || DEFAULT_BRAND_LOGO_URL;
+            brandSettings.logoPublicId = active?.publicId || '';
+        }
+
+        function migrateCurrentBrandLogoToLibrary() {
+            const currentLogo = normalizeProductImageUrl(brandSettings.logo || '');
+            if (!currentLogo || currentLogo === DEFAULT_BRAND_LOGO_URL) {
+                syncBrandSettingsFromLogoLibrary();
+                return;
+            }
+            if (!brandLogoImages.some(image => image.secureUrl === currentLogo || (brandSettings.logoPublicId && image.publicId === brandSettings.logoPublicId))) {
+                brandLogoImages.push({
+                    id: brandSettings.logoPublicId || `legacy-logo-${Date.now()}`,
+                    secureUrl: currentLogo,
+                    publicId: brandSettings.logoPublicId || '',
+                    sortOrder: brandLogoImages.length,
+                    isActive: true,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+            }
+            brandLogoImages = normalizeBrandLogoImages(brandLogoImages.map(image => ({
+                ...image,
+                isActive: image.secureUrl === currentLogo || (!!brandSettings.logoPublicId && image.publicId === brandSettings.logoPublicId)
+            })));
+            syncBrandSettingsFromLogoLibrary();
         }
 
         function isManagedBrandLogo(publicId = '') {
@@ -3566,28 +3667,39 @@
         function handleBrandLogoDrop(event) {
             event.preventDefault();
             event.currentTarget.style.borderColor = 'transparent';
-            handleBrandLogoFile(event.dataTransfer.files?.[0]);
+            handleBrandLogoFiles(event.dataTransfer.files);
         }
 
-        async function handleBrandLogoFile(file) {
-            if (!file) return;
-            if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) return alert('LOGO 請選擇 JPG、PNG 或 WebP 圖片');
-            const oldPublicId = brandSettings.logoPublicId || document.getElementById('brand-logo-public-id')?.value || '';
+        async function handleBrandLogoFiles(fileList) {
+            const files = Array.from(fileList || []).filter(file => /^image\/(jpeg|png|webp)$/i.test(file.type));
+            if (!files.length) return alert('LOGO 請選擇 JPG、PNG 或 WebP 圖片');
             const formData = new FormData();
             formData.append('folder', 'site/logo');
             formData.append('productId', 'site-logo');
-            formData.append('files', file);
+            files.forEach(file => formData.append('files', file));
             try {
                 showLoading();
                 const response = await fetch(PRODUCT_UPLOAD_API_URL, { method: 'POST', body: formData });
                 const result = await response.json().catch(() => ({}));
                 if (!response.ok) throw new Error(result.error || 'LOGO 上傳失敗');
-                const uploaded = (result.images || [])[0];
-                if (!uploaded?.secure_url && !uploaded?.url) throw new Error('Cloudinary 未回傳 LOGO 圖片網址');
-                setBrandLogoValue(uploaded.secure_url || uploaded.url, uploaded.public_id || uploaded.publicId);
-                if (isManagedBrandLogo(oldPublicId) && oldPublicId !== brandSettings.logoPublicId) {
-                    pendingBrandLogoDeletePublicIds.push(oldPublicId);
-                }
+                const uploaded = (result.images || []).filter(image => image?.secure_url || image?.url);
+                if (!uploaded.length) throw new Error('Cloudinary 未回傳 LOGO 圖片網址');
+                const now = new Date().toISOString();
+                const hasActive = brandLogoImages.some(image => image.isActive);
+                uploaded.forEach((image, index) => {
+                    brandLogoImages.push({
+                        id: image.public_id || image.publicId || `logo-${Date.now()}-${index}`,
+                        secureUrl: image.secure_url || image.url,
+                        publicId: image.public_id || image.publicId || '',
+                        sortOrder: brandLogoImages.length,
+                        isActive: !hasActive && index === 0,
+                        createdAt: now,
+                        updatedAt: now
+                    });
+                });
+                syncBrandSettingsFromLogoLibrary();
+                renderBrandManagement();
+                await saveBrandLogoLibrary();
             } catch (error) {
                 console.error('Brand logo upload failed:', error);
                 alert(error.message || 'LOGO 上傳失敗');
@@ -3597,12 +3709,13 @@
         }
 
         async function removeBrandLogo() {
-            const oldPublicId = brandSettings.logoPublicId || document.getElementById('brand-logo-public-id')?.value || '';
-            setBrandLogoValue(DEFAULT_BRAND_LOGO_URL, '');
-            if (isManagedBrandLogo(oldPublicId)) {
-                pendingBrandLogoDeletePublicIds.push(oldPublicId);
+            const active = activeBrandLogoImage();
+            if (!active) {
+                setBrandLogoValue(DEFAULT_BRAND_LOGO_URL, '');
+                await saveBrandSetting('logo');
+                return;
             }
-            await saveBrandSetting('logo');
+            await deleteBrandLogoImage(active.id);
         }
 
         function brandSettingMeta(key) {
@@ -3614,8 +3727,81 @@
             return map[key];
         }
 
+        function renderBrandLogoGallery() {
+            const gallery = document.getElementById('brand-logo-gallery');
+            if (!gallery) return;
+            brandLogoImages = normalizeBrandLogoImages(brandLogoImages);
+            if (!brandLogoImages.length) {
+                gallery.innerHTML = '<span style="font-size:0.78rem;color:#94a3b8;">尚未上傳 LOGO</span>';
+                return;
+            }
+            gallery.innerHTML = brandLogoImages.map(image => `
+                <div class="brand-logo-card ${image.isActive ? 'active' : ''}">
+                    <div class="brand-logo-thumb"><img src="${escapeHtml(image.secureUrl)}" alt="LOGO"></div>
+                    <div class="brand-logo-status">${image.isActive ? '目前使用 ✓' : '&nbsp;'}</div>
+                    <div class="brand-logo-card-actions">
+                        <button class="btn btn-primary" type="button" ${image.isActive ? 'disabled' : ''} onclick="setActiveBrandLogo(${quoteJs(image.id)})">設為目前 LOGO</button>
+                        <button class="btn btn-danger" type="button" onclick="deleteBrandLogoImage(${quoteJs(image.id)})">刪除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function saveBrandLogoLibrary() {
+            syncBrandSettingsFromLogoLibrary();
+            localStorage.setItem(BRAND_SETTINGS_KEY, JSON.stringify(brandSettings));
+            const savedLibrary = await fetchAPI('saveScheduleSetting', {
+                id: 'brand-logo-library',
+                type: 'brand-logo-library',
+                image: brandLogoLibraryPayload()
+            }, null, true);
+            if (!savedLibrary) throw new Error('LOGO 圖庫保存失敗');
+            const savedBrand = await fetchAPI('saveScheduleSetting', {
+                id: 'brand',
+                type: 'brand',
+                image: brandSettingsPayload()
+            }, null, true);
+            if (!savedBrand) throw new Error('品牌設定保存失敗');
+            const savedLogo = await fetchAPI('saveScheduleSetting', {
+                id: 'brand-logo',
+                type: 'brand-logo',
+                image: brandSettings.logo || ''
+            }, null, true);
+            if (!savedLogo) throw new Error('目前 LOGO 保存失敗');
+            renderBrandManagement();
+        }
+
+        async function setActiveBrandLogo(id) {
+            brandLogoImages = normalizeBrandLogoImages(brandLogoImages).map(image => ({
+                ...image,
+                isActive: image.id === id,
+                updatedAt: image.id === id ? new Date().toISOString() : image.updatedAt
+            }));
+            syncBrandSettingsFromLogoLibrary();
+            await saveBrandLogoLibrary();
+            alert('目前 LOGO 已更新');
+        }
+
+        async function deleteBrandLogoImage(id) {
+            const images = normalizeBrandLogoImages(brandLogoImages);
+            const target = images.find(image => image.id === id);
+            if (!target) return;
+            if (isManagedBrandLogo(target.publicId)) {
+                await deleteCloudinaryImages([target.publicId]);
+            }
+            let remaining = images.filter(image => image.id !== id);
+            if (target.isActive && remaining.length) {
+                remaining = remaining.map((image, index) => ({ ...image, isActive: index === 0, updatedAt: index === 0 ? new Date().toISOString() : image.updatedAt }));
+            }
+            brandLogoImages = normalizeBrandLogoImages(remaining);
+            syncBrandSettingsFromLogoLibrary();
+            await saveBrandLogoLibrary();
+            alert('LOGO 已刪除');
+        }
+
         function renderBrandManagement() {
             brandSettings = { storeName: DEFAULT_STORE_NAME, storeNameEn: DEFAULT_STORE_NAME_EN, logo: DEFAULT_BRAND_LOGO_URL, logoPublicId: '', logoScale: 100, watermark: '', textImage: '', ...safeParseStorage(BRAND_SETTINGS_KEY, {}), ...brandSettings };
+            migrateCurrentBrandLogoToLibrary();
             const storeNameInput = document.getElementById('brand-store-name');
             if (storeNameInput) storeNameInput.value = brandSettings.storeName || DEFAULT_STORE_NAME;
             const storeNameEnInput = document.getElementById('brand-store-name-en');
@@ -3632,6 +3818,7 @@
             const scaleInput = document.getElementById('brand-logo-scale');
             if (scaleInput) scaleInput.value = Math.min(200, Math.max(50, Number(brandSettings.logoScale) || 100));
             previewBrandLogoScale();
+            renderBrandLogoGallery();
         }
 
         function previewBrandSetting(key) {
@@ -3687,6 +3874,12 @@
                     image: brandSettingsPayload()
                 }, null, true);
                 if (!savedBrand) throw new Error('品牌設定保存失敗');
+                const savedLibrary = await fetchAPI('saveScheduleSetting', {
+                    id: 'brand-logo-library',
+                    type: 'brand-logo-library',
+                    image: brandLogoLibraryPayload()
+                }, null, true);
+                if (!savedLibrary) throw new Error('LOGO 圖庫保存失敗');
                 const savedScale = await fetchAPI('saveScheduleSetting', {
                     id: 'brand-logo-scale',
                     type: 'brand-logo-scale',
