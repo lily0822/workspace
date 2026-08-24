@@ -648,31 +648,35 @@ function syncSupabaseCategory(tag) {
   if (!tag || !tag.name) return null;
   var slug = slugify(tag.name);
   var legacyId = String(tag.id);
-  var payload = {
-    legacy_id: legacyId,
-    name: String(tag.name),
-    slug: slug,
-    color: tag.color || '',
-    type: tag.type === 'ip' ? 'ip' : 'category',
-    enabled: tag.enabled !== false,
-    sort_order: Number(tag.sortOrder || tag.sort_order || 0)
-  };
-
+  var incomingType = tag.type === 'ip' || tag.type === 'category' ? tag.type : '';
+  var hasEnabled = Object.prototype.hasOwnProperty.call(tag, 'enabled');
+  var hasSortOrder = Object.prototype.hasOwnProperty.call(tag, 'sortOrder') || Object.prototype.hasOwnProperty.call(tag, 'sort_order');
   var existing = supabaseRequest(
-    'categories?select=id,legacy_id&or=(' +
+    'categories?select=id,legacy_id,type,enabled,sort_order&or=(' +
       'legacy_id.eq.' + encodeURIComponent(legacyId) + ',' +
       'slug.eq.' + encodeURIComponent(slug) +
     ')&limit=1',
     'get'
   );
-  if (existing && existing.length && existing[0].id) {
+  var existingRow = existing && existing.length ? existing[0] : null;
+  var payload = {
+    legacy_id: legacyId,
+    name: String(tag.name),
+    slug: slug,
+    color: tag.color || '',
+    type: incomingType || (existingRow && existingRow.type ? existingRow.type : 'category'),
+    enabled: hasEnabled ? tag.enabled !== false : (existingRow ? existingRow.enabled !== false : true),
+    sort_order: hasSortOrder ? Number(tag.sortOrder || tag.sort_order || 0) : Number(existingRow && existingRow.sort_order || 0)
+  };
+
+  if (existingRow && existingRow.id) {
     var updated = supabaseRequest(
-      'categories?id=eq.' + encodeURIComponent(existing[0].id),
+      'categories?id=eq.' + encodeURIComponent(existingRow.id),
       'patch',
       payload,
       'return=representation'
     );
-    return updated && updated.length ? updated[0] : existing[0];
+    return updated && updated.length ? updated[0] : existingRow;
   }
 
   var rows = supabaseRequest('categories?on_conflict=legacy_id', 'post', payload, 'resolution=merge-duplicates,return=representation');

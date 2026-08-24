@@ -150,9 +150,11 @@
         .product-batch-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) 40px; gap: 0.75rem; align-items: start; border: 1px solid #fce7f3; border-radius: 1rem; background: #fff; padding: 1rem; margin-bottom: 0.75rem; }
         .product-batch-row > div, .product-batch-row > label { min-width: 0; }
         .product-batch-field { display: grid; gap: 0.3rem; font-size: 0.74rem; font-weight: 900; color: #64748b; }
-        .product-batch-tags { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; grid-column: 1 / 5; }
-        .product-batch-image-row { grid-column: 1 / 5; min-width: 0; }
-        .product-batch-description { grid-column: span 3; }
+        .product-batch-tags { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; grid-column: 1 / -1; }
+        .product-batch-image-row { grid-column: 1 / -1; min-width: 0; width: 100%; }
+        .product-batch-image-row .product-image-editor { max-width: none; width: 100%; }
+        .product-batch-image-row .product-image-list { width: 100%; align-items: flex-start; }
+        .product-batch-description { grid-column: 1 / -1; }
         .product-filter-card { overflow: visible; position: relative; z-index: 30; }
         .product-default-image-control { margin-left: auto; display: flex; align-items: center; gap: 0.75rem; flex: 1 1 260px; justify-content: flex-end; }
         .product-default-image-preview { width: 58px; height: 58px; border-radius: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; display: grid; place-items: center; overflow: hidden; color: #94a3b8; flex: 0 0 auto; }
@@ -354,14 +356,12 @@
         .product-variant-header { display: grid; grid-template-columns: 0.7fr 1.4fr 1fr 1fr 2fr 40px; gap: 0.5rem; font-size: 0.78rem; font-weight: 700; color: #64748b; margin-bottom: 0.5rem; }
         @media (max-width: 920px) {
             .product-batch-row { grid-template-columns: repeat(2, minmax(0, 1fr)) 40px; }
-            .product-batch-tags, .product-batch-image-row { grid-column: 1 / 3; }
-            .product-batch-description { grid-column: 1 / 3; }
+            .product-batch-tags, .product-batch-image-row, .product-batch-description { grid-column: 1 / -1; }
         }
         @media (max-width: 640px) {
             .product-batch-row { grid-template-columns: 1fr 40px; }
             .product-batch-tags { grid-template-columns: 1fr; }
-            .product-batch-tags, .product-batch-image-row { grid-column: 1 / 2; }
-            .product-batch-description { grid-column: 1 / 2; }
+            .product-batch-tags, .product-batch-image-row, .product-batch-description { grid-column: 1 / -1; }
         }
         
         .hide-tracking.dynamic-header, .hide-tracking .dynamic-row { grid-template-columns: 2fr 2fr 1fr 1fr 40px; }
@@ -1623,7 +1623,7 @@
                     <span>數量</span>
                     <span>IP</span>
                     <span>商品類別</span>
-                    <span>結單時間</span>
+                    <span class="product-batch-preorder-only">結單時間</span>
                     <span>描述</span>
                     <span></span>
                 </div>
@@ -4198,6 +4198,9 @@
             const row = document.createElement('div');
             row.className = 'dynamic-row product-batch-row';
             row.dataset.rowId = rowId;
+            const deadlineField = type === 'preorder'
+                ? '<label class="product-batch-field">結單時間<input type="datetime-local" class="pb-deadline"></label>'
+                : '';
             row.innerHTML = `
                 <label class="product-batch-field">商品名稱<input type="text" class="pb-name" placeholder="商品名稱"></label>
                 <label class="product-batch-field">成本價<input type="number" class="pb-cost" min="0" placeholder="成本價"></label>
@@ -4208,7 +4211,7 @@
                     ${productBatchTagCheckboxes(rowId, 'ip')}
                     ${productBatchTagCheckboxes(rowId, 'category')}
                 </div>
-                <label class="product-batch-field">${type === 'stock' ? '結單時間（現貨不需填）' : '結單時間'}<input type="datetime-local" class="pb-deadline" ${type === 'stock' ? 'disabled' : ''}></label>
+                ${deadlineField}
                 <label class="product-batch-field product-batch-description">描述<input type="text" class="pb-description" placeholder="商品描述"></label>
                 <div class="product-batch-image-row">${productImagesEditorHtml(type, { id: rowId, images: [] })}</div>
             `;
