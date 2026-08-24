@@ -14,7 +14,7 @@ const SHEET_HEADERS = {
   [SHEET_WEBSITES]: ['id', 'name', 'contact', 'location', 'currency', 'link', 'notes'],
   [SHEET_STOCK_PRODUCTS]: ['id', 'name', 'costPrice', 'listPrice', 'quantity', 'tagIds', 'description', 'image', 'images', 'active', 'variantsJson', 'variants', 'createdAt', 'updatedAt'],
   [SHEET_PREORDER_PRODUCTS]: ['id', 'name', 'costPrice', 'listPrice', 'quota', 'deadline', 'tagIds', 'description', 'image', 'images', 'active', 'variantsJson', 'variants', 'createdAt', 'updatedAt'],
-  [SHEET_PRODUCT_TAGS]: ['id', 'name', 'color', 'createdAt', 'updatedAt'],
+  [SHEET_PRODUCT_TAGS]: ['id', 'name', 'type', 'enabled', 'sortOrder', 'color', 'createdAt', 'updatedAt'],
   [SHEET_STALL_SCHEDULES]: ['id', 'period', 'location', 'image', 'stallFee', 'days', 'createdAt', 'updatedAt'],
   [SHEET_CONNECTION_SCHEDULES]: ['id', 'period', 'location', 'image', 'startDate', 'endDate', 'flightFee', 'hotelFee', 'createdAt', 'updatedAt'],
   [SHEET_SCHEDULE_SETTINGS]: ['id', 'type', 'image', 'createdAt', 'updatedAt']
@@ -460,10 +460,13 @@ function readSupabaseBackendOrders() {
 }
 
 function readSupabaseCategories() {
-  return (supabaseRequest('categories?select=*&order=created_at.asc', 'get') || []).map(function(row) {
+  return (supabaseRequest('categories?select=*&order=type.asc,sort_order.asc,name.asc', 'get') || []).map(function(row, index) {
     return {
       id: row.legacy_id || row.id,
       name: row.name || '',
+      type: row.type === 'ip' ? 'ip' : 'category',
+      enabled: row.enabled !== false,
+      sortOrder: Number(row.sort_order || index),
       color: row.color || '#ec4899',
       createdAt: row.created_at || '',
       updatedAt: row.updated_at || ''
@@ -489,7 +492,7 @@ function readSupabaseProducts(productType) {
     'updated_at',
     'product_variants(id,legacy_id,sku,spec,price,stock_quantity,product_url,status,sort_order)',
     'product_images(id,public_id,secure_url,alt_text,sort_order,is_primary)',
-    'product_categories(categories(id,legacy_id,name,color))'
+    'product_categories(categories(id,legacy_id,name,type,enabled,sort_order,color))'
   ].join(',');
   var rows = supabaseRequest('products?select=' + encodeURIComponent(select) + '&product_type=eq.' + productType + '&order=created_at.desc', 'get') || [];
   return rows.map(function(row) {
@@ -649,7 +652,10 @@ function syncSupabaseCategory(tag) {
     legacy_id: legacyId,
     name: String(tag.name),
     slug: slug,
-    color: tag.color || ''
+    color: tag.color || '',
+    type: tag.type === 'ip' ? 'ip' : 'category',
+    enabled: tag.enabled !== false,
+    sort_order: Number(tag.sortOrder || tag.sort_order || 0)
   };
 
   var existing = supabaseRequest(

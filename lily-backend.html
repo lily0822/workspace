@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <style>
         :root {
             --sidebar-bg: #1e293b;
@@ -145,15 +146,20 @@
         .dynamic-row input, .dynamic-row select { min-width: 0; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.25rem; font-size: 0.8rem; }
         .dynamic-header { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr 1fr 40px; gap: 0.5rem; font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; text-align: left; }
         .dynamic-header span { padding-left: 0.5rem; }
-        #product-batch-header, .product-batch-row { grid-template-columns: 1.5fr 0.8fr 0.8fr 0.8fr 1.4fr 1.2fr 1.5fr 40px; }
-        .product-batch-row > div { min-width: 0; }
+        #product-batch-header { display: none; }
+        .product-batch-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) 40px; gap: 0.75rem; align-items: start; border: 1px solid #fce7f3; border-radius: 1rem; background: #fff; padding: 1rem; margin-bottom: 0.75rem; }
+        .product-batch-row > div, .product-batch-row > label { min-width: 0; }
+        .product-batch-field { display: grid; gap: 0.3rem; font-size: 0.74rem; font-weight: 900; color: #64748b; }
+        .product-batch-tags { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; grid-column: 1 / 5; }
+        .product-batch-image-row { grid-column: 1 / 5; min-width: 0; }
+        .product-batch-description { grid-column: span 3; }
         .product-filter-card { overflow: visible; position: relative; z-index: 30; }
         .product-default-image-control { margin-left: auto; display: flex; align-items: center; gap: 0.75rem; flex: 1 1 260px; justify-content: flex-end; }
         .product-default-image-preview { width: 58px; height: 58px; border-radius: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; display: grid; place-items: center; overflow: hidden; color: #94a3b8; flex: 0 0 auto; }
         .product-default-image-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .product-default-modal-preview { width: 160px; height: 160px; border-radius: 0.9rem; border: 1px solid #e2e8f0; background: #f8fafc; display: grid; place-items: center; color: #94a3b8; overflow: hidden; }
         .product-default-modal-preview img { width: 100%; height: 100%; object-fit: contain; display: block; transform-origin: center; }
-        .product-image-editor { border: 1px dashed #cbd5e1; border-radius: 0.7rem; padding: 0.45rem; min-width: 220px; background: #f8fafc; transition: border-color 0.15s ease; }
+        .product-image-editor { border: 1px dashed #cbd5e1; border-radius: 0.7rem; padding: 0.45rem; width: 100%; max-width: 280px; min-width: 0; background: #f8fafc; transition: border-color 0.15s ease; }
         .product-image-list { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.45rem; }
         .product-image-thumb { width: 74px; border: 1px solid #e2e8f0; border-radius: 0.55rem; overflow: hidden; background: white; }
         .product-image-thumb.primary { border-color: #ec4899; box-shadow: 0 0 0 2px rgba(236,72,153,0.16); }
@@ -171,18 +177,124 @@
         .brand-setting-preview.logo-preview { border-radius: 999px; width: 96px; height: 96px; }
         .brand-setting-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .brand-setting-preview.logo-preview img { transform-origin: center; }
-        .brand-logo-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 0.75rem; }
-        .brand-logo-card { border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.65rem; background: #fff; display: flex; flex-direction: column; gap: 0.55rem; }
+        .brand-logo-add-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+        .brand-logo-add-row input[type="file"] { display: none; }
+        .brand-setting-card .form-group:has(#brand-logo-scale) { display: none; }
+        .brand-logo-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 0.85rem; }
+        .brand-logo-card { border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.7rem; background: #fff; display: flex; flex-direction: column; gap: 0.55rem; }
         .brand-logo-card.active { border-color: var(--primary-color); box-shadow: 0 0 0 2px #fbcfe8; }
-        .brand-logo-thumb { height: 82px; border-radius: 0.55rem; background: #f8fafc; display: grid; place-items: center; overflow: hidden; }
-        .brand-logo-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .brand-logo-thumb { height: 112px; border-radius: 999px; background: #f8fafc; display: grid; place-items: center; overflow: hidden; border: 1px solid #e2e8f0; }
+        .brand-logo-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; transform-origin: center; }
         .brand-logo-status { min-height: 18px; font-size: 0.72rem; font-weight: 800; color: var(--primary-hover); text-align: center; }
         .brand-logo-card-actions { display: grid; gap: 0.35rem; }
         .brand-logo-card-actions .btn { width: 100%; justify-content: center; padding: 0.38rem 0.45rem; font-size: 0.72rem; }
         .brand-logo-scale-control { display: grid; grid-template-columns: 1fr auto; gap: 0.75rem; align-items: center; }
         .brand-logo-scale-control input[type="range"] { width: 100%; accent-color: var(--primary-color); }
         .brand-logo-scale-value { min-width: 54px; padding: 0.35rem 0.5rem; border-radius: 0.375rem; background: #fdf2f8; color: var(--primary-hover); font-size: 0.8rem; font-weight: 700; text-align: center; }
+        .logo-editor-stage { width: min(320px, 82vw); aspect-ratio: 1; margin: 0 auto; position: relative; overflow: hidden; border-radius: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; touch-action: none; cursor: grab; }
+        .logo-editor-stage.dragging { cursor: grabbing; }
+        .logo-editor-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transform-origin: center; user-select: none; pointer-events: none; }
+        .logo-editor-grid { position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(to right, transparent calc(33.333% - 0.5px), rgba(148,163,184,0.8) calc(33.333% - 0.5px), rgba(148,163,184,0.8) calc(33.333% + 0.5px), transparent calc(33.333% + 0.5px)), linear-gradient(to right, transparent calc(66.666% - 0.5px), rgba(148,163,184,0.8) calc(66.666% - 0.5px), rgba(148,163,184,0.8) calc(66.666% + 0.5px), transparent calc(66.666% + 0.5px)), linear-gradient(to bottom, transparent calc(33.333% - 0.5px), rgba(148,163,184,0.8) calc(33.333% - 0.5px), rgba(148,163,184,0.8) calc(33.333% + 0.5px), transparent calc(33.333% + 0.5px)), linear-gradient(to bottom, transparent calc(66.666% - 0.5px), rgba(148,163,184,0.8) calc(66.666% - 0.5px), rgba(148,163,184,0.8) calc(66.666% + 0.5px), transparent calc(66.666% + 0.5px)); }
+        .logo-editor-mask { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at center, transparent 0 37%, rgba(15,23,42,0.25) 37.5% 100%); }
+        .logo-editor-circle { position: absolute; inset: 12.5%; border: 2px solid #ec4899; border-radius: 999px; pointer-events: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.9), 0 0 18px rgba(236,72,153,0.2); }
+        .logo-editor-help { color: #64748b; font-size: 0.8rem; line-height: 1.6; text-align: center; }
         .brand-setting-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+        .appearance-center { display: flex; flex-direction: column; gap: 0.85rem; max-height: calc(100vh - 150px); min-height: 520px; overflow: hidden; }
+        .appearance-nav { flex: 0 0 auto; display: flex; gap: 0.65rem; padding: 0.75rem; border: 1px solid #fce7f3; border-radius: 0.9rem; background: #fff; box-shadow: 0 4px 10px rgba(15,23,42,0.04); overflow-x: auto; z-index: 5; }
+        .appearance-nav button { flex: 0 0 128px; min-height: 42px; border: 0; border-radius: 0.6rem; padding: 0.65rem 0.85rem; background: #f8fafc; color: #475569; font-weight: 800; text-align: center; cursor: pointer; }
+        .appearance-nav button.active { background: #fce7f3; color: #be185d; }
+        .appearance-scroll-panel { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 0.35rem; }
+        .appearance-pane { display: none; gap: 1rem; }
+        .appearance-pane.active { display: grid; }
+        .appearance-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 1rem; align-items: flex-start; }
+        .appearance-preview { position: sticky; top: 1rem; border: 1px solid #fce7f3; border-radius: 1rem; background: #fff; padding: 1rem; box-shadow: 0 8px 18px rgba(15,23,42,0.06); }
+        .appearance-preview-header { border: 2px solid #fbcfe8; border-radius: 0.9rem; padding: 0.8rem; background: #fff7fb; }
+        .appearance-preview-brand { display: flex; align-items: center; gap: 0.65rem; }
+        .appearance-preview-logo { width: 58px; height: 58px; border-radius: 999px; overflow: hidden; border: 1px solid #f9a8d4; background: #fff; display: grid; place-items: center; }
+        .appearance-preview-logo img { width: 100%; height: 100%; object-fit: contain; transform-origin: center; }
+        .brand-watermark-preview-stage { position: relative; width: 180px; height: 120px; border-radius: 0.75rem; overflow: hidden; border: 1px solid #e2e8f0; background: linear-gradient(135deg, #f8fafc 25%, #eef2f7 25%, #eef2f7 50%, #f8fafc 50%, #f8fafc 75%, #eef2f7 75%); background-size: 18px 18px; }
+        .brand-watermark-preview-stage img { position: absolute; max-width: none; max-height: none; object-fit: contain; transform-origin: center; }
+        .brand-asset-preview { width: 180px; min-height: 120px; border-radius: 0.75rem; border: 1px solid #e2e8f0; background: #f8fafc; display: grid; place-items: center; overflow: hidden; }
+        .brand-asset-preview img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .appearance-preview-name { font-weight: 900; color: #be185d; line-height: 1.15; }
+        .appearance-preview-en { font-size: 0.68rem; color: #94a3b8; margin-top: 0.15rem; }
+        .appearance-preview-search { margin-top: 0.75rem; height: 34px; border-radius: 999px; background: #fff; border: 1px solid #f9a8d4; color: #94a3b8; font-size: 0.78rem; display: flex; align-items: center; padding: 0 0.8rem; }
+        .appearance-preview-actions { margin-top: 0.75rem; display: flex; gap: 0.45rem; }
+        .appearance-preview-actions span { flex: 1; border-radius: 999px; padding: 0.45rem; text-align: center; font-size: 0.72rem; font-weight: 800; }
+        .appearance-save-state { font-size: 0.78rem; font-weight: 800; color: #be185d; min-height: 1.2rem; }
+        .appearance-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+        .appearance-list { display: grid; gap: 0.75rem; }
+        .appearance-row-card { border: 1px solid #e2e8f0; border-radius: 0.8rem; background: #fff; padding: 0.85rem; display: grid; gap: 0.65rem; }
+        .appearance-card-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+        .appearance-card-title { font-size: 0.92rem; font-weight: 900; color: #334155; }
+        .appearance-danger-small { border: 1px solid #fecdd3; border-radius: 999px; background: #fff1f2; color: #be123c; padding: 0.42rem 0.7rem; font-size: 0.76rem; font-weight: 800; cursor: pointer; }
+        .appearance-compact-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+        .appearance-compact-grid .form-group.wide { grid-column: 1 / -1; }
+        .appearance-compact-grid > .wide { grid-column: 1 / -1; }
+        .appearance-image-field { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 0.75rem; align-items: center; }
+        .appearance-image-preview { width: 112px; height: 72px; border-radius: 0.65rem; border: 1px solid #e2e8f0; background: #f8fafc; display: grid; place-items: center; overflow: hidden; color: #94a3b8; }
+        .appearance-image-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .appearance-advanced-url { font-size: 0.75rem; color: #64748b; }
+        .appearance-advanced-url summary { cursor: pointer; font-weight: 800; }
+        .appearance-subnav { position: sticky; top: 0; z-index: 4; display: flex; gap: 0.55rem; padding: 0.5rem 0 0.8rem; background: #fff; overflow-x: auto; }
+        .appearance-subnav button { flex: 0 0 112px; min-height: 38px; border: 0; border-radius: 999px; background: #f1f5f9; color: #475569; font-weight: 900; cursor: pointer; }
+        .appearance-subnav button.active { background: #fce7f3; color: #be185d; }
+        .home-appearance-pane { display: none; gap: 0.75rem; }
+        .home-appearance-pane.active { display: grid; }
+        .appearance-collapse-summary { display: grid; grid-template-columns: 112px minmax(0, 1fr) auto auto auto; gap: 0.75rem; align-items: center; }
+        .appearance-status-pill { border: 0; border-radius: 999px; padding: 0.45rem 0.75rem; font-size: 0.78rem; font-weight: 900; white-space: nowrap; cursor: pointer; }
+        .appearance-status-pill.on { background: #dcfce7; color: #166534; }
+        .appearance-status-pill.off { background: #f1f5f9; color: #64748b; }
+        .appearance-toggle-button { border: 1px solid #f9a8d4; border-radius: 999px; background: #fff; color: #be185d; padding: 0.45rem 0.75rem; font-size: 0.78rem; font-weight: 900; cursor: pointer; }
+        .appearance-nav-list { display: grid; gap: 0.55rem; user-select: none; }
+        .appearance-nav-sortable { display: grid; gap: 0.55rem; }
+        .appearance-nav-row { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto auto; gap: 0.65rem; align-items: center; border: 1px solid #e2e8f0; border-radius: 0.8rem; background: #fff; padding: 0.72rem; transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease; }
+        .appearance-nav-row:not(.locked):hover { background: #fff7fb; border-color: #f9a8d4; }
+        .appearance-nav-row:not(.locked):hover .appearance-drag-handle { color: #be185d; border-color: #f9a8d4; background: #fdf2f8; }
+        .appearance-nav-row.locked { background: #f8fafc; color: #64748b; opacity: 0.88; }
+        .appearance-drag-handle { width: 34px; height: 34px; border: 1px solid #cbd5e1; border-radius: 0.65rem; background: #fff; color: #64748b; padding: 0; font-size: 1rem; font-weight: 900; cursor: grab; display: inline-grid; place-items: center; touch-action: none; }
+        .appearance-drag-handle:active { cursor: grabbing; }
+        .appearance-drag-handle:disabled { cursor: not-allowed; opacity: 0.65; }
+        .appearance-nav-label { font-size: 0.92rem; font-weight: 900; color: #334155; }
+        .appearance-nav-order-buttons { display: inline-flex; gap: 0.25rem; }
+        .appearance-nav-order-buttons button { width: 28px; height: 28px; border: 1px solid #e2e8f0; border-radius: 999px; background: #fff; color: #64748b; cursor: pointer; font-weight: 900; }
+        .appearance-nav-order-buttons button:disabled { opacity: 0.35; cursor: not-allowed; }
+        .appearance-nav-sortable-ghost { border: 2px dashed #ec4899; background: #fdf2f8; min-height: 58px; opacity: 0.75; }
+        .appearance-nav-sortable-ghost > * { visibility: hidden; }
+        .appearance-nav-sortable-chosen { box-shadow: 0 12px 26px rgba(190, 24, 93, 0.18); transform: translateY(-1px); }
+        .appearance-nav-sortable-drag { opacity: 0.88; box-shadow: 0 18px 36px rgba(15, 23, 42, 0.22); cursor: grabbing; }
+        .appearance-datetime-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; }
+        .appearance-datetime-row .form-group { flex: 0 1 220px; max-width: 220px; }
+        .appearance-date-display { cursor: pointer; background: #fff; }
+        .appearance-date-picker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .appearance-date-picker-popover { display: none; position: fixed; z-index: 6000; width: min(360px, calc(100vw - 24px)); border: 1px solid #f9a8d4; border-radius: 0.9rem; background: #fff; box-shadow: 0 18px 36px rgba(15,23,42,0.18); padding: 0.9rem; }
+        .appearance-date-picker-popover.active { display: block; }
+        .appearance-date-picker-popover h4 { margin: 0 0 0.75rem; font-size: 0.95rem; font-weight: 900; color: #be185d; }
+        .appearance-date-picker-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.85rem; }
+        #section-brand-management[data-appearance-tab="brand"] .brand-settings-grid > .brand-setting-card:nth-child(n+2) { display: none; }
+        #section-brand-management[data-appearance-tab="assets"] .brand-settings-grid > .brand-setting-card:nth-child(1),
+        #section-brand-management[data-appearance-tab="assets"] .brand-settings-grid > .brand-setting-card:nth-child(4),
+        #section-brand-management[data-appearance-tab="assets"] .brand-settings-grid > .brand-setting-card:nth-child(5) { display: none; }
+        #section-brand-management[data-appearance-tab="home"] .brand-settings-grid > .brand-setting-card:not(:nth-child(4)) { display: none; }
+        #section-brand-management[data-appearance-tab="info"] .brand-settings-grid > .brand-setting-card:not(:nth-child(5)) { display: none; }
+        #section-brand-management[data-appearance-tab="home"] .brand-settings-grid > .brand-setting-card { display: none; }
+        #section-brand-management[data-appearance-tab="home"] .brand-settings-grid > .brand-setting-card[data-appearance-card="home"] { display: flex; }
+        #section-brand-management[data-appearance-tab="info"] .brand-settings-grid > .brand-setting-card { display: none; }
+        #section-brand-management[data-appearance-tab="info"] .brand-settings-grid > .brand-setting-card[data-appearance-card="info"] { display: flex; }
+        @media (max-width: 920px) {
+            .appearance-center, .appearance-layout { grid-template-columns: 1fr; }
+            .appearance-nav, .appearance-preview { position: static; }
+            .appearance-center { max-height: none; overflow: visible; }
+            .appearance-scroll-panel { overflow: visible; padding-right: 0; }
+            .appearance-nav button { flex-basis: 118px; }
+            .appearance-compact-grid, .appearance-image-field { grid-template-columns: 1fr; }
+            .appearance-collapse-summary { grid-template-columns: 84px minmax(0, 1fr); }
+            .appearance-collapse-summary > button { justify-self: start; }
+            .appearance-nav-row { grid-template-columns: 42px minmax(0, 1fr); }
+            .appearance-nav-row .appearance-status-pill { grid-column: 2; justify-self: start; }
+            .appearance-nav-order-buttons { grid-column: 2; justify-self: start; }
+            .appearance-datetime-row .form-group { max-width: none; flex-basis: 100%; }
+        }
         .tag-select-menu { position: relative; }
         .tag-select-button { width: 100%; min-height: 40px; padding: 0.625rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; background: #fff; color: #334155; text-align: left; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .tag-select-panel { display: none; position: absolute; top: calc(100% + 0.25rem); left: 0; right: 0; max-height: 220px; overflow-y: auto; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; background: #fff; box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12); z-index: 2000; }
@@ -190,6 +302,45 @@
         .tag-select-option { display: flex; align-items: center; gap: 0.45rem; padding: 0.35rem 0.25rem; font-size: 0.85rem; cursor: pointer; }
         .tag-select-option input[type="checkbox"] { width: 14px; min-width: 14px; height: 14px; flex: 0 0 14px; margin: 0; }
         .tag-select-option span { line-height: 1.25; }
+        .product-tag-board { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+        .product-tag-column { border: 1px solid #fce7f3; border-radius: 1rem; background: #fff; padding: 1rem; display: flex; flex-direction: column; gap: 0.85rem; min-width: 0; }
+        .product-tag-column-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+        .product-tag-column-title { font-size: 1rem; font-weight: 900; color: #334155; }
+        .product-tag-save-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+        .product-tag-save-state { color: #be185d; font-size: 0.82rem; font-weight: 900; min-height: 1.2rem; }
+        .product-tag-list { display: grid; gap: 0.55rem; }
+        .product-tag-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto auto; gap: 0.65rem; align-items: center; border: 1px solid #e2e8f0; border-radius: 0.8rem; background: #fff; padding: 0.72rem; }
+        .product-tag-row:hover { background: #fff7fb; border-color: #f9a8d4; }
+        .product-tag-handle { width: 30px; height: 30px; border: 1px solid #cbd5e1; border-radius: 0.6rem; background: #fff; color: #64748b; cursor: grab; font-weight: 900; }
+        .product-tag-handle:active { cursor: grabbing; }
+        .product-tag-status { border: 0; border-radius: 999px; padding: 0.42rem 0.7rem; font-size: 0.76rem; font-weight: 900; cursor: pointer; }
+        .product-tag-status.on { background: #dcfce7; color: #166534; }
+        .product-tag-status.off { background: #f1f5f9; color: #64748b; }
+        .product-edit-card { display: grid; gap: 1rem; border: 1px solid #fce7f3; border-radius: 1rem; background: #fff; padding: 1rem; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06); min-width: 0; }
+        .product-edit-grid { display: grid; grid-template-columns: minmax(220px, 0.9fr) minmax(240px, 1fr) minmax(220px, 0.85fr); gap: 1rem; align-items: start; min-width: 0; }
+        .product-edit-section { display: grid; gap: 0.65rem; min-width: 0; }
+        .product-edit-section-title { font-size: 0.78rem; font-weight: 900; color: #64748b; letter-spacing: 0.03em; }
+        .product-edit-actions { position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: 0.6rem; border-top: 1px solid #fce7f3; background: rgba(255,255,255,0.96); padding-top: 0.75rem; z-index: 2; }
+        .product-tag-checkbox-wrap { display: flex; flex-wrap: wrap; gap: 0.35rem; max-height: 150px; overflow-y: auto; padding-right: 0.15rem; }
+        .product-tag-check-chip { display: inline-flex; align-items: center; gap: 0.25rem; border: 1px solid var(--tag-border, #e2e8f0); border-radius: 999px; background: var(--tag-bg, #f8fafc); color: var(--tag-fg, #334155); padding: 0.24rem 0.5rem; font-size: 0.75rem; font-weight: 800; line-height: 1.1; }
+        .product-tag-check-chip input { margin: 0; accent-color: var(--tag-fg, #ec4899); }
+        .tag-group-block { display: grid; gap: 0.35rem; min-width: 0; max-width: 100%; }
+        .tag-group-title { font-size: 0.76rem; font-weight: 900; color: #64748b; }
+        .product-tag-edit-rows { display: grid; gap: 0.65rem; }
+        .product-tag-edit-row { display: grid; grid-template-columns: minmax(160px, 1fr) 44px 110px minmax(96px, auto) 34px; gap: 0.5rem; align-items: center; }
+        .product-tag-edit-row input[type="text"] { min-width: 0; }
+        .product-tag-preview-pill { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0.24rem 0.6rem; font-size: 0.78rem; font-weight: 900; white-space: nowrap; border: 1px solid var(--tag-border, #f9a8d4); background: var(--tag-bg, #fce7f3); color: var(--tag-fg, #be185d); }
+        @media (max-width: 920px) {
+            .product-tag-board { grid-template-columns: 1fr; }
+            .product-tag-row { grid-template-columns: 34px minmax(0, 1fr); }
+            .product-tag-row .product-tag-status,
+            .product-tag-row .btn { justify-self: start; }
+            .product-edit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 640px) {
+            .product-edit-grid { grid-template-columns: 1fr; }
+            .product-tag-edit-row { grid-template-columns: 1fr 44px 1fr 1fr 34px; }
+        }
         .product-edit-field { width: 100%; min-width: 92px; padding: 0.55rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; background: #fff; color: #334155; font: inherit; font-size: 0.86rem; transition: border-color 0.2s, box-shadow 0.2s; }
         .product-edit-field:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1); }
         .status-pill { display: inline-flex; align-items: center; justify-content: center; min-width: 72px; padding: 0.42rem 0.85rem; border-radius: 0.5rem; border: none; color: #fff; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
@@ -201,8 +352,17 @@
         .product-variant-row { display: grid; grid-template-columns: 0.7fr 1.4fr 1fr 1fr 2fr 40px; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
         .product-variant-row input { min-width: 0; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.8rem; }
         .product-variant-header { display: grid; grid-template-columns: 0.7fr 1.4fr 1fr 1fr 2fr 40px; gap: 0.5rem; font-size: 0.78rem; font-weight: 700; color: #64748b; margin-bottom: 0.5rem; }
-        #product-batch-header, .product-batch-row { grid-template-columns: 1.5fr 0.8fr 0.8fr 0.8fr 1.4fr 1.2fr 1.5fr 40px; }
-        .product-batch-row > div { min-width: 0; }
+        @media (max-width: 920px) {
+            .product-batch-row { grid-template-columns: repeat(2, minmax(0, 1fr)) 40px; }
+            .product-batch-tags, .product-batch-image-row { grid-column: 1 / 3; }
+            .product-batch-description { grid-column: 1 / 3; }
+        }
+        @media (max-width: 640px) {
+            .product-batch-row { grid-template-columns: 1fr 40px; }
+            .product-batch-tags { grid-template-columns: 1fr; }
+            .product-batch-tags, .product-batch-image-row { grid-column: 1 / 2; }
+            .product-batch-description { grid-column: 1 / 2; }
+        }
         
         .hide-tracking.dynamic-header, .hide-tracking .dynamic-row { grid-template-columns: 2fr 2fr 1fr 1fr 40px; }
         .hide-tracking .col-tracking, .hide-tracking.col-tracking { display: none !important; }
@@ -536,7 +696,7 @@
                             <input type="text" id="stock-product-search" placeholder="搜尋商品名稱">
                         </div>
                         <div class="form-group" style="max-width: 240px;">
-                            <label>標籤</label>
+                            <label>IP / 商品類別</label>
                             <div class="tag-select-menu" id="stock-product-tag-filter"></div>
                         </div>
                         <div class="form-group" style="max-width: 180px;">
@@ -562,7 +722,8 @@
                                 <th style="width: 44px; text-align:center;"><input type="checkbox" onchange="toggleAllProductRows('stock', this)"></th>
                                 <th style="width: 88px;">圖片</th>
                                 <th>商品名稱</th>
-                                <th>標籤</th>
+                                <th>IP</th>
+                                <th>商品類別</th>
                                 <th>庫存</th>
                                 <th>成本價</th>
                                 <th>定價</th>
@@ -594,7 +755,7 @@
                             <input type="text" id="preorder-product-search" placeholder="搜尋商品名稱">
                         </div>
                         <div class="form-group" style="max-width: 240px;">
-                            <label>標籤</label>
+                            <label>IP / 商品類別</label>
                             <div class="tag-select-menu" id="preorder-product-tag-filter"></div>
                         </div>
                         <div class="form-group" style="max-width: 180px;">
@@ -620,7 +781,8 @@
                                 <th style="width: 44px; text-align:center;"><input type="checkbox" onchange="toggleAllProductRows('preorder', this)"></th>
                                 <th style="width: 88px;">圖片</th>
                                 <th>商品名稱</th>
-                                <th>標籤</th>
+                                <th>IP</th>
+                                <th>商品類別</th>
                                 <th>名額</th>
                                 <th>成本價</th>
                                 <th>定價</th>
@@ -640,32 +802,29 @@
                     <h2 class="page-title">商品標籤管理</h2>
                 </div>
                 <div class="table-wrapper" style="padding: 1.25rem;">
-                    <form id="product-tag-form" onsubmit="saveProductTag(event)" class="form-row" style="align-items: flex-end; flex-wrap: wrap;">
-                        <input type="hidden" id="product-tag-id">
-                        <div class="form-group" style="max-width: 220px;">
-                            <label>標籤名稱</label>
-                            <input type="text" id="product-tag-name" placeholder="例：日本限定" required>
+                    <div class="product-tag-save-row">
+                        <p style="margin:0;color:#64748b;font-size:0.86rem;font-weight:700;">IP 與商品類別分開管理；排序與顯示狀態按儲存後才會寫入後端。</p>
+                        <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+                            <span id="product-tag-save-state" class="product-tag-save-state">已儲存</span>
+                            <button class="btn btn-primary" type="button" onclick="saveProductTagsSettings()"><i class="fa-solid fa-floppy-disk"></i> 儲存標籤設定</button>
                         </div>
-                        <div class="form-group" style="max-width: 140px;">
-                            <label>標籤顏色</label>
-                            <input type="color" id="product-tag-color" value="#ec4899">
-                        </div>
-                        <button class="btn btn-primary" id="product-tag-submit" type="submit"><i class="fa-solid fa-plus"></i> 新增標籤</button>
-                        <button class="btn btn-secondary" type="button" onclick="resetProductTagForm()">取消編輯</button>
-                    </form>
-                </div>
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>標籤</th>
-                                <th>顏色</th>
-                                <th>使用數</th>
-                                <th style="width: 120px; text-align: center;">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="product-tags-tbody"></tbody>
-                    </table>
+                    </div>
+                    <div class="product-tag-board" style="margin-top:1rem;">
+                        <section class="product-tag-column">
+                            <div class="product-tag-column-header">
+                                <h3 class="product-tag-column-title">IP</h3>
+                                <button class="btn btn-primary" type="button" onclick="openProductTagForm('ip')"><i class="fa-solid fa-plus"></i> 新增 IP</button>
+                            </div>
+                            <div class="product-tag-list" id="product-tags-ip-list"></div>
+                        </section>
+                        <section class="product-tag-column">
+                            <div class="product-tag-column-header">
+                                <h3 class="product-tag-column-title">商品類別</h3>
+                                <button class="btn btn-primary" type="button" onclick="openProductTagForm('category')"><i class="fa-solid fa-plus"></i> 新增商品類別</button>
+                            </div>
+                            <div class="product-tag-list" id="product-tags-category-list"></div>
+                        </section>
+                    </div>
                 </div>
             </div>
 
@@ -762,10 +921,18 @@
             </div>
 
             <!-- Brand Management Section -->
-            <div id="section-brand-management" class="section-container">
+            <div id="section-brand-management" class="section-container" data-appearance-tab="brand">
                 <div class="page-header">
                     <h2 class="page-title">品牌管理</h2>
                 </div>
+                <div class="appearance-center">
+                <div class="appearance-nav">
+                    <button type="button" class="active" data-appearance-nav="brand" onclick="switchAppearanceTab('brand')">&#21697;&#29260;&#35672;&#21029;</button>
+                    <button type="button" data-appearance-nav="home" onclick="switchAppearanceTab('home')">&#39318;&#38913;&#20839;&#23481;</button>
+                    <button type="button" data-appearance-nav="assets" onclick="switchAppearanceTab('assets')">&#22294;&#29255;&#32032;&#26448;</button>
+                    <button type="button" data-appearance-nav="info" onclick="switchAppearanceTab('info')">&#32178;&#31449;&#36039;&#35338;</button>
+                </div>
+                <div class="appearance-scroll-panel">
                 <div class="brand-settings-grid">
                     <div class="brand-setting-card">
                         <h3><i class="fa-solid fa-circle-nodes" style="color: var(--primary-color);"></i> 品牌LOGO設定</h3>
@@ -782,6 +949,10 @@
                             <label>LOGO 圖片</label>
                             <input type="url" id="brand-logo-image" placeholder="目前使用中的 LOGO 圖片網址" readonly oninput="previewBrandSetting('logo')">
                             <input type="hidden" id="brand-logo-public-id">
+                            <div class="brand-logo-add-row">
+                                <button class="btn btn-primary" type="button" onclick="openBrandLogoPicker()"><i class="fa-solid fa-plus"></i> &#26032;&#22686; LOGO</button>
+                                <input type="file" id="brand-logo-file-input" accept="image/jpeg,image/png,image/webp" multiple onchange="handleBrandLogoFiles(this.files); this.value='';">
+                            </div>
                             <label class="product-image-dropzone" ondragover="event.preventDefault(); this.style.borderColor='#ec4899';" ondragleave="this.style.borderColor='transparent';" ondrop="handleBrandLogoDrop(event)">
                                 <input type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="handleBrandLogoFiles(this.files); this.value='';">
                                 <i class="fa-regular fa-image"></i>
@@ -811,10 +982,32 @@
                         <div class="form-group">
                             <label>圖片 URL</label>
                             <input type="url" id="brand-watermark-image" placeholder="貼上品牌水印圖片連結" oninput="previewBrandSetting('watermark')">
+                            <input type="hidden" id="brand-watermark-public-id">
+                            <button class="btn btn-secondary" type="button" onclick="openBrandAssetPicker('watermark')"><i class="fa-solid fa-upload"></i> 上傳水印</button>
+                            <input type="file" id="brand-watermark-file-input" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleBrandAssetFile('watermark', this.files); this.value='';">
+                        </div>
+                        <div class="form-group">
+                            <label>透明度 <span id="brand-watermark-opacity-value">70%</span></label>
+                            <input type="range" id="brand-watermark-opacity" min="0" max="100" step="5" value="70" oninput="previewBrandSetting('watermark')">
+                        </div>
+                        <div class="form-group">
+                            <label>大小 <span id="brand-watermark-size-value">45%</span></label>
+                            <input type="range" id="brand-watermark-size" min="10" max="100" step="5" value="45" oninput="previewBrandSetting('watermark')">
+                        </div>
+                        <div class="form-group">
+                            <label>位置</label>
+                            <select id="brand-watermark-position" onchange="previewBrandSetting('watermark')">
+                                <option value="top-left">左上</option>
+                                <option value="top-right">右上</option>
+                                <option value="bottom-left">左下</option>
+                                <option value="bottom-right">右下</option>
+                                <option value="center">中央</option>
+                            </select>
                         </div>
                         <div class="brand-setting-actions">
                             <div id="brand-watermark-preview" class="brand-setting-preview"><i class="fa-regular fa-image"></i></div>
                             <button class="btn btn-primary" type="button" onclick="saveBrandSetting('watermark')"><i class="fa-solid fa-floppy-disk"></i> 保存水印</button>
+                            <button class="btn btn-secondary" type="button" onclick="deleteBrandAsset('watermark')"><i class="fa-regular fa-trash-can"></i> 刪除水印</button>
                         </div>
                     </div>
                     <div class="brand-setting-card">
@@ -823,16 +1016,110 @@
                         <div class="form-group">
                             <label>圖片 URL</label>
                             <input type="url" id="brand-text-image" placeholder="貼上品牌文字圖片連結" oninput="previewBrandSetting('textImage')">
+                            <input type="hidden" id="brand-text-public-id">
+                            <button class="btn btn-secondary" type="button" onclick="openBrandAssetPicker('textImage')"><i class="fa-solid fa-upload"></i> 上傳文字圖</button>
+                            <input type="file" id="brand-text-file-input" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleBrandAssetFile('textImage', this.files); this.value='';">
                         </div>
                         <div class="brand-setting-actions">
                             <div id="brand-text-preview" class="brand-setting-preview"><i class="fa-regular fa-image"></i></div>
                             <button class="btn btn-primary" type="button" onclick="saveBrandSetting('textImage')"><i class="fa-solid fa-floppy-disk"></i> 保存文字圖</button>
+                            <button class="btn btn-secondary" type="button" onclick="deleteBrandAsset('textImage')"><i class="fa-regular fa-trash-can"></i> 刪除文字圖</button>
                         </div>
                     </div>
                     <div class="brand-setting-card">
                         <h3><i class="fa-solid fa-house" style="color: var(--primary-color);"></i> 首頁設定</h3>
                         <p>這個區塊先預留，之後可以放首頁主視覺、公告文字、首頁商品排序或版面開關。</p>
                     </div>
+                    <div class="brand-setting-card" data-appearance-card="home">
+                        <h3><i class="fa-solid fa-house" style="color: var(--primary-color);"></i> &#39318;&#38913;&#20839;&#23481;</h3>
+                        <p>&#31649;&#29702;&#38914;&#37096;&#20844;&#21578;&#12289;Banner &#33287;&#39318;&#38913;&#21312;&#22602;&#12290;</p>
+                        <div class="appearance-subnav">
+                            <button type="button" class="active" data-home-appearance-nav="announcements" onclick="switchHomeAppearanceTab('announcements')">公告內容</button>
+                            <button type="button" data-home-appearance-nav="banners" onclick="switchHomeAppearanceTab('banners')">Banner</button>
+                            <button type="button" data-home-appearance-nav="sections" onclick="switchHomeAppearanceTab('sections')">導覽列</button>
+                        </div>
+                        <div class="home-appearance-pane active" data-home-appearance-pane="announcements">
+                        <div class="appearance-card-header">
+                            <div>
+                                <h4 class="appearance-card-title">頂部公告</h4>
+                                <p>可新增多筆公告，前台會依排序顯示為跑馬燈。</p>
+                            </div>
+                            <button class="btn btn-secondary" type="button" onclick="addSiteAnnouncement()"><i class="fa-solid fa-plus"></i> 新增公告</button>
+                        </div>
+                        <div class="appearance-list" id="site-announcement-list"></div>
+                        </div>
+                        <div class="home-appearance-pane" data-home-appearance-pane="banners">
+                        <div class="appearance-card-header">
+                            <div>
+                                <h4 class="appearance-card-title">Banner</h4>
+                                <p>新增首頁輪播圖，預設收合，展開後可編輯完整設定。</p>
+                            </div>
+                            <button class="btn btn-secondary" type="button" onclick="addSiteBanner()"><i class="fa-solid fa-plus"></i> 新增 Banner</button>
+                        </div>
+                        <div class="appearance-list" id="site-banner-list"></div>
+                        </div>
+                        <div class="home-appearance-pane" data-home-appearance-pane="sections">
+                        <div class="appearance-card-header">
+                            <div>
+                                <h4 class="appearance-card-title">導覽列設定</h4>
+                                <p>調整前台 Header 導覽列的顯示、隱藏與排序。首頁固定第一個，不能隱藏或拖曳。</p>
+                            </div>
+                        </div>
+                        <div class="appearance-list" id="homepage-section-list"></div>
+                        </div>
+                        <div class="brand-setting-actions">
+                            <button class="btn btn-primary" type="button" onclick="saveHomepageAppearanceSettings()"><i class="fa-solid fa-floppy-disk"></i> &#20786;&#23384;&#39318;&#38913;&#35373;&#23450;</button>
+                            <span id="homepage-save-state" class="appearance-save-state"></span>
+                        </div>
+                    </div>
+                    <div class="brand-setting-card" data-appearance-card="info">
+                        <h3><i class="fa-solid fa-circle-info" style="color: var(--primary-color);"></i> &#32178;&#31449;&#36039;&#35338;</h3>
+                        <p>&#31038;&#32676;&#36899;&#32080;&#12289;&#32879;&#32097;&#26041;&#24335;&#33287;&#32178;&#31449;&#20998;&#20139;&#36039;&#35338;&#12290;</p>
+                        <div class="form-group">
+                            <label>Instagram URL</label>
+                            <input type="url" id="site-info-instagram-url" placeholder="https://www.instagram.com/pinkkkuin.jp/">
+                        </div>
+                        <div class="form-group">
+                            <label>LINE URL</label>
+                            <input type="url" id="site-info-line-url" placeholder="https://line.me/R/ti/p/@pinkkkuin">
+                        </div>
+                        <div class="form-group">
+                            <label>&#32879;&#32097; Email</label>
+                            <input type="email" id="site-info-contact-email" placeholder="hello@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label>&#21830;&#24215;&#31777;&#20171;</label>
+                            <textarea id="site-info-description" placeholder="&#36664;&#20837;&#21830;&#24215;&#31777;&#20171;"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>網站小圖示（Favicon）</label>
+                            <input type="url" id="site-info-favicon-url" placeholder="網站小圖示圖片網址" readonly>
+                            <input type="hidden" id="site-info-favicon-public-id">
+                            <button class="btn btn-secondary" type="button" onclick="openSiteInfoAssetPicker('favicon')"><i class="fa-solid fa-upload"></i> 上傳網站小圖示</button>
+                            <input type="file" id="site-info-favicon-file-input" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleSiteInfoAssetFile('favicon', this.files); this.value='';">
+                        </div>
+                        <div class="brand-setting-actions">
+                            <div id="site-info-favicon-preview" class="brand-asset-preview"><i class="fa-regular fa-image"></i></div>
+                            <button class="btn btn-secondary" type="button" onclick="deleteSiteInfoAsset('favicon')"><i class="fa-regular fa-trash-can"></i> 刪除網站小圖示</button>
+                        </div>
+                        <div class="form-group">
+                            <label>OG 分享圖</label>
+                            <input type="url" id="site-info-og-url" placeholder="OG 分享圖網址" readonly>
+                            <input type="hidden" id="site-info-og-public-id">
+                            <button class="btn btn-secondary" type="button" onclick="openSiteInfoAssetPicker('og')"><i class="fa-solid fa-upload"></i> 上傳 OG 圖</button>
+                            <input type="file" id="site-info-og-file-input" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleSiteInfoAssetFile('og', this.files); this.value='';">
+                        </div>
+                        <div class="brand-setting-actions">
+                            <div id="site-info-og-preview" class="brand-asset-preview"><i class="fa-regular fa-image"></i></div>
+                            <button class="btn btn-secondary" type="button" onclick="deleteSiteInfoAsset('og')"><i class="fa-regular fa-trash-can"></i> 刪除 OG 圖</button>
+                        </div>
+                        <div class="brand-setting-actions">
+                            <button class="btn btn-primary" type="button" onclick="saveSiteInfoSettings()"><i class="fa-solid fa-floppy-disk"></i> &#20786;&#23384;&#32178;&#31449;&#36039;&#35338;</button>
+                            <span id="site-info-save-state" class="appearance-save-state"></span>
+                        </div>
+                    </div>
+                </div>
+                </div>
                 </div>
             </div>
 
@@ -1334,7 +1621,8 @@
                     <span>成本價</span>
                     <span>定價</span>
                     <span>數量</span>
-                    <span>標籤</span>
+                    <span>IP</span>
+                    <span>商品類別</span>
                     <span>結單時間</span>
                     <span>描述</span>
                     <span></span>
@@ -1477,6 +1765,28 @@
         </div>
     </div>
 
+    <!-- Product Tag Modal -->
+    <div class="modal-overlay" id="productTagModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="productTagModalTitle">新增 IP</h3>
+                <button class="close-btn" onclick="closeProductTagModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="product-tag-form" onsubmit="saveProductTag(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="product-tag-id">
+                    <input type="hidden" id="product-tag-type" value="ip">
+                    <div class="product-tag-edit-rows" id="product-tag-edit-rows"></div>
+                    <button class="btn btn-secondary" type="button" id="product-tag-add-row-button" onclick="addProductTagEditRow()"><i class="fa-solid fa-plus"></i> 再新增一列</button>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" onclick="closeProductTagModal()">取消</button>
+                    <button class="btn btn-primary" id="product-tag-submit" type="submit"><i class="fa-solid fa-plus"></i> 新增</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Product Default Image Modal -->
     <div class="modal-overlay" id="productDefaultImageModal">
         <div class="modal-content">
@@ -1507,6 +1817,56 @@
                 <button class="btn btn-secondary" onclick="closeProductDefaultImageModal()">取消</button>
                 <button class="btn btn-primary" onclick="saveProductDefaultImage()">保存</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Brand Logo Editor Modal -->
+    <div class="modal-overlay" id="brandLogoEditorModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>&#32232;&#36655; LOGO</h3>
+                <button class="close-btn" onclick="closeBrandLogoEditor()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="logo-editor-stage" id="brand-logo-editor-stage">
+                    <img id="brand-logo-editor-image" src="" alt="Logo editor preview">
+                    <div class="logo-editor-grid"></div>
+                    <div class="logo-editor-mask"></div>
+                    <div class="logo-editor-circle"></div>
+                </div>
+                <p class="logo-editor-help">&#25302;&#26355;&#22294;&#29255;&#35519;&#25972;&#20301;&#32622;&#65292;&#22291;&#22280;&#20839;&#26159;&#21069;&#21488; Header &#20027;&#35201;&#39023;&#31034;&#31684;&#22285;&#12290;</p>
+                <div class="form-group">
+                    <label>&#22294;&#29255;&#22823;&#23567;</label>
+                    <div class="brand-logo-scale-control">
+                        <input type="range" id="brand-logo-editor-scale" min="100" max="300" step="5" value="100" oninput="updateBrandLogoEditorScale(this.value)">
+                        <span id="brand-logo-editor-scale-value" class="brand-logo-scale-value">100%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeBrandLogoEditor()">&#21462;&#28040;</button>
+                <button class="btn btn-primary" type="button" onclick="saveBrandLogoEditor()">&#20786;&#23384;&#35373;&#23450;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appearance Date Time Picker Popover -->
+    <div class="appearance-date-picker-popover" id="appearanceDatePickerPopover">
+        <h4 id="appearance-date-picker-title">選擇日期時間</h4>
+        <div class="appearance-date-picker-grid">
+            <div class="form-group">
+                <label>日期</label>
+                <input type="date" id="appearance-date-picker-date">
+            </div>
+            <div class="form-group">
+                <label>時間</label>
+                <input type="time" id="appearance-date-picker-time" step="60">
+            </div>
+        </div>
+        <p style="font-size:0.82rem;color:#64748b;line-height:1.6;margin-top:0.75rem;">按「確定」後才會更新欄位；按「取消」會保留原本時間。</p>
+        <div class="appearance-date-picker-actions">
+            <button class="btn btn-secondary" type="button" onclick="cancelAppearanceDatePicker()">取消</button>
+            <button class="btn btn-primary" type="button" onclick="confirmAppearanceDatePicker()">確定</button>
         </div>
     </div>
 
@@ -1650,13 +2010,16 @@
         const DEFAULT_STORE_NAME = '小企鵝選物';
         const DEFAULT_STORE_NAME_EN = 'KOPENGUIN SELECT SHOP';
         const DEFAULT_BRAND_LOGO_URL = 'https://res.cloudinary.com/dhrfwtarc/image/upload/v1782899951/pinkkkuin_logo_q1y5jr.png';
-        const PRODUCT_UPLOAD_API_URL = window.PINKKKUIN_UPLOAD_API_URL || 'https://pinkkkuin-shop.vercel.app/api/upload';
+        const PRODUCT_UPLOAD_API_URL = window.PINKKKUIN_UPLOAD_API_URL || (/^(127\.0\.0\.1|localhost)$/.test(location.hostname) ? 'http://127.0.0.1:3000/api/upload' : 'https://pinkkkuin-shop.vercel.app/api/upload');
         const STOCK_PRODUCT_SOURCE_ID = 2026062001;
         const PREORDER_PRODUCT_SOURCE_ID = 2026062002;
         let vendors = [];
         let websites = [];
         let orders = [];
         let productTags = [];
+        let productTagActiveType = 'ip';
+        let productTagSortables = { ip: null, category: null };
+        let deletedProductTagIds = [];
         let stockProducts = [];
         let preorderProducts = [];
         let stallSchedules = [];
@@ -1666,8 +2029,32 @@
         let ledgerCurrentPage = 1;
         let ledgerPageSize = 10;
         let scheduleDefaultImages = { stall: '', connection: '', product: '', productScale: 100 };
-        let brandSettings = { storeName: DEFAULT_STORE_NAME, storeNameEn: DEFAULT_STORE_NAME_EN, logo: DEFAULT_BRAND_LOGO_URL, logoPublicId: '', logoScale: 100, watermark: '', textImage: '' };
+        let brandSettings = { storeName: DEFAULT_STORE_NAME, storeNameEn: DEFAULT_STORE_NAME_EN, logo: DEFAULT_BRAND_LOGO_URL, logoPublicId: '', logoScale: 100, watermark: '', watermarkPublicId: '', watermarkOpacity: 70, watermarkSize: 45, watermarkPosition: 'bottom-right', textImage: '', textImagePublicId: '' };
         let brandLogoImages = [];
+        let brandLogoEditorState = null;
+        let siteInfoSettings = { instagramUrl: 'https://www.instagram.com/pinkkkuin.jp/', lineUrl: 'https://line.me/R/ti/p/@pinkkkuin', contactEmail: '', description: '', faviconUrl: '', faviconPublicId: '', ogImageUrl: '', ogImagePublicId: '' };
+        let siteAnnouncements = [];
+        let siteBanners = [];
+        let expandedSiteBannerIds = new Set();
+        let homeAppearanceTab = 'announcements';
+        let appearanceDatePickerState = null;
+        let siteNavigation = [
+            { key: 'home', label: '首頁', href: '/', enabled: true, locked: true, sortOrder: 0 },
+            { key: 'products', label: '全部商品', href: '/products', enabled: true, sortOrder: 1 },
+            { key: 'preorder', label: '預購商品', href: '/category/preorder', enabled: true, sortOrder: 2 },
+            { key: 'stock', label: '現貨', href: '/category/in_stock', enabled: true, sortOrder: 3 },
+            { key: 'live_order', label: '連線 / 擺攤', href: '/category/live_order', enabled: true, sortOrder: 4 },
+            { key: 'guide', label: '購物須知', href: '/guide', enabled: true, sortOrder: 5 },
+            { key: 'faq', label: 'FAQ', href: '/faq', enabled: true, sortOrder: 6 },
+            { key: 'contact', label: '聯絡小企鵝', href: '/contact', enabled: true, sortOrder: 7 }
+        ];
+        let homepageSections = [
+            { id: 'category_shortcuts', enabled: true, title: '分類捷徑', sortOrder: 0, maxItems: 8 },
+            { id: 'latest', enabled: true, title: '最新上架', sortOrder: 1, maxItems: 6 },
+            { id: 'stock', enabled: true, title: '現貨商品', sortOrder: 2, maxItems: 6 },
+            { id: 'preorder', enabled: true, title: '預購商品', sortOrder: 3, maxItems: 6 },
+            { id: 'guide', enabled: true, title: '購物流程', sortOrder: 4, maxItems: 5 }
+        ];
         let pendingBrandLogoDeletePublicIds = [];
         let editingProductRows = { stock: null, preorder: null };
         let productBatchImageStore = {};
@@ -1739,7 +2126,7 @@
             orders = processAPIData(data.orders || []);
 
             if (Array.isArray(data.productTags) && data.productTags.length) {
-                productTags = data.productTags;
+                productTags = normalizeProductTags(data.productTags);
                 localStorage.setItem(PRODUCT_TAGS_KEY, JSON.stringify(productTags));
             }
             if (Array.isArray(data.stockProducts) && data.stockProducts.length) {
@@ -1760,7 +2147,7 @@
             }
             if (Array.isArray(data.scheduleSettings)) {
                 scheduleDefaultImages = { stall: '', connection: '', product: '', productScale: 100, ...scheduleDefaultImages };
-                brandSettings = { storeName: DEFAULT_STORE_NAME, storeNameEn: DEFAULT_STORE_NAME_EN, logo: DEFAULT_BRAND_LOGO_URL, logoPublicId: '', logoScale: 100, watermark: '', textImage: '', ...brandSettings };
+                brandSettings = { storeName: DEFAULT_STORE_NAME, storeNameEn: DEFAULT_STORE_NAME_EN, logo: DEFAULT_BRAND_LOGO_URL, logoPublicId: '', logoScale: 100, watermark: '', watermarkPublicId: '', watermarkOpacity: 70, watermarkSize: 45, watermarkPosition: 'bottom-right', textImage: '', textImagePublicId: '', ...brandSettings };
                 data.scheduleSettings.forEach(setting => {
                     if (setting?.type === 'stall' || setting?.type === 'connection') {
                         scheduleDefaultImages[setting.type] = normalizeProductImageUrl(setting.image || '');
@@ -1783,9 +2170,19 @@
                     } else if (setting?.type === 'brand-logo-scale') {
                         brandSettings.logoScale = Math.min(200, Math.max(50, Number(setting.image) || 100));
                     } else if (setting?.type === 'brand-watermark') {
-                        brandSettings.watermark = normalizeProductImageUrl(setting.image || '');
+                        brandSettings = { ...brandSettings, ...parseBrandWatermarkSetting(setting.image || '') };
                     } else if (setting?.type === 'brand-text-image') {
-                        brandSettings.textImage = normalizeProductImageUrl(setting.image || '');
+                        brandSettings = { ...brandSettings, ...parseBrandAssetSetting(setting.image || '', 'textImage') };
+                    } else if (setting?.type === 'site-info') {
+                        siteInfoSettings = { ...siteInfoSettings, ...parseSiteInfoSettings(setting.image || '') };
+                    } else if (setting?.type === 'site-announcements') {
+                        siteAnnouncements = parseSiteAnnouncements(setting.image || '');
+                    } else if (setting?.type === 'site-banners') {
+                        siteBanners = parseSiteBanners(setting.image || '');
+                    } else if (setting?.type === 'homepage-sections') {
+                        homepageSections = parseHomepageSections(setting.image || '');
+                    } else if (setting?.type === 'site-navigation') {
+                        siteNavigation = parseSiteNavigation(setting.image || '');
                     }
                 });
                 migrateCurrentBrandLogoToLibrary();
@@ -1816,8 +2213,13 @@
                     { id: 'brand-logo-library', type: 'brand-logo-library', image: brandLogoLibraryPayload() },
                     { id: 'brand-logo', type: 'brand-logo', image: brandSettings.logo || '' },
                     { id: 'brand-logo-scale', type: 'brand-logo-scale', image: String(brandSettings.logoScale || 100) },
-                    { id: 'brand-watermark', type: 'brand-watermark', image: brandSettings.watermark || '' },
-                    { id: 'brand-text-image', type: 'brand-text-image', image: brandSettings.textImage || '' }
+                    { id: 'brand-watermark', type: 'brand-watermark', image: brandWatermarkPayload() },
+                    { id: 'brand-text-image', type: 'brand-text-image', image: brandTextImagePayload() },
+                    { id: 'site-info', type: 'site-info', image: siteInfoSettingsPayload() },
+                    { id: 'site-announcements', type: 'site-announcements', image: siteAnnouncementPayload() },
+                    { id: 'site-banners', type: 'site-banners', image: siteBannersPayload() },
+                    { id: 'homepage-sections', type: 'homepage-sections', image: homepageSectionsPayload() },
+                    { id: 'site-navigation', type: 'site-navigation', image: siteNavigationPayload() }
                 ]
             };
         }
@@ -1926,6 +2328,17 @@
         window.addEventListener('DOMContentLoaded', loadData);
         window.addEventListener('DOMContentLoaded', initProductManagement);
         window.addEventListener('DOMContentLoaded', initScheduleManagement);
+        window.addEventListener('DOMContentLoaded', () => {
+            const stage = document.getElementById('brand-logo-editor-stage');
+            if (!stage) return;
+            stage.addEventListener('mousedown', startBrandLogoEditorDrag);
+            stage.addEventListener('touchstart', startBrandLogoEditorDrag, { passive: false });
+            window.addEventListener('mousemove', moveBrandLogoEditorDrag);
+            window.addEventListener('touchmove', moveBrandLogoEditorDrag, { passive: false });
+            window.addEventListener('mouseup', endBrandLogoEditorDrag);
+            window.addEventListener('touchend', endBrandLogoEditorDrag);
+            window.addEventListener('touchcancel', endBrandLogoEditorDrag);
+        });
 
         function populateFilterVendors() {
             const vSelectNormal = document.getElementById('filter-v-vendor');
@@ -2325,10 +2738,35 @@
 
         function defaultProductTags() {
             return [
-                { id: 1, name: '日本限定', color: '#ec4899' },
-                { id: 2, name: '熱門現貨', color: '#10b981' },
-                { id: 3, name: '預購倒數', color: '#f59e0b' }
+                { id: 1, name: '日本限定', type: 'category', enabled: true, sortOrder: 0, color: '#ec4899' },
+                { id: 2, name: '熱門現貨', type: 'category', enabled: true, sortOrder: 1, color: '#10b981' },
+                { id: 3, name: '預購倒數', type: 'category', enabled: true, sortOrder: 2, color: '#f59e0b' }
             ];
+        }
+
+        function normalizeProductTag(tag = {}, index = 0) {
+            const type = tag.type === 'ip' ? 'ip' : 'category';
+            return {
+                id: tag.id || Date.now() + index,
+                name: String(tag.name || '').trim(),
+                type,
+                enabled: tag.enabled !== false,
+                sortOrder: Number(tag.sort_order ?? tag.sortOrder ?? index),
+                color: tag.color || (type === 'ip' ? '#ec4899' : '#10b981')
+            };
+        }
+
+        function normalizeProductTags(tags = []) {
+            return (Array.isArray(tags) ? tags : [])
+                .map(normalizeProductTag)
+                .filter(tag => tag.name)
+                .sort((a, b) => a.type.localeCompare(b.type) || Number(a.sortOrder || 0) - Number(b.sortOrder || 0));
+        }
+
+        function productTagsByType(type, includeDisabled = true) {
+            return normalizeProductTags(productTags)
+                .filter(tag => tag.type === type && (includeDisabled || tag.enabled !== false))
+                .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0));
         }
 
         function defaultStockProducts() {
@@ -2399,7 +2837,7 @@
         }
 
         function initProductManagement() {
-            productTags = safeParseStorage(PRODUCT_TAGS_KEY, defaultProductTags());
+            productTags = normalizeProductTags(safeParseStorage(PRODUCT_TAGS_KEY, defaultProductTags()));
             if (!Array.isArray(productTags) || productTags.length === 0) productTags = defaultProductTags();
             stockProducts = safeParseStorage(STOCK_PRODUCTS_KEY, defaultStockProducts()).map(p => normalizeProduct(p, 'stock'));
             preorderProducts = safeParseStorage(PREORDER_PRODUCTS_KEY, defaultPreorderProducts()).map(p => normalizeProduct(p, 'preorder'));
@@ -2544,6 +2982,266 @@
             });
         }
 
+        function parseBrandAssetSetting(value = '', key = 'textImage') {
+            const raw = String(value || '').trim();
+            const urlKey = key === 'watermark' ? 'watermark' : 'textImage';
+            const publicIdKey = key === 'watermark' ? 'watermarkPublicId' : 'textImagePublicId';
+            if (!raw) return { [urlKey]: '', [publicIdKey]: '' };
+            try {
+                const parsed = JSON.parse(raw);
+                return {
+                    [urlKey]: normalizeProductImageUrl(parsed.secure_url || parsed.url || parsed.image || ''),
+                    [publicIdKey]: String(parsed.public_id || parsed.publicId || '').trim()
+                };
+            } catch (error) {
+                return { [urlKey]: normalizeProductImageUrl(raw), [publicIdKey]: '' };
+            }
+        }
+
+        function parseBrandWatermarkSetting(value = '') {
+            const base = parseBrandAssetSetting(value, 'watermark');
+            try {
+                const parsed = JSON.parse(String(value || '{}'));
+                return {
+                    ...base,
+                    watermarkOpacity: Math.max(0, Math.min(100, Number(parsed.opacity ?? parsed.watermarkOpacity ?? 70) || 70)),
+                    watermarkSize: Math.max(10, Math.min(100, Number(parsed.size ?? parsed.watermarkSize ?? 45) || 45)),
+                    watermarkPosition: ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center'].includes(parsed.position) ? parsed.position : 'bottom-right'
+                };
+            } catch (error) {
+                return { ...base, watermarkOpacity: 70, watermarkSize: 45, watermarkPosition: 'bottom-right' };
+            }
+        }
+
+        function brandWatermarkPayload() {
+            return JSON.stringify({
+                secure_url: normalizeProductImageUrl(brandSettings.watermark || ''),
+                public_id: String(brandSettings.watermarkPublicId || '').trim(),
+                opacity: Math.max(0, Math.min(100, Number(brandSettings.watermarkOpacity) || 70)),
+                size: Math.max(10, Math.min(100, Number(brandSettings.watermarkSize) || 45)),
+                position: ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center'].includes(brandSettings.watermarkPosition) ? brandSettings.watermarkPosition : 'bottom-right'
+            });
+        }
+
+        function brandTextImagePayload() {
+            return JSON.stringify({
+                secure_url: normalizeProductImageUrl(brandSettings.textImage || ''),
+                public_id: String(brandSettings.textImagePublicId || '').trim()
+            });
+        }
+
+        function parseSiteInfoSettings(value = '') {
+            try {
+                const parsed = JSON.parse(String(value || '{}'));
+                return {
+                    instagramUrl: String(parsed.instagram_url || parsed.instagramUrl || siteInfoSettings.instagramUrl || '').trim(),
+                    lineUrl: String(parsed.line_url || parsed.lineUrl || siteInfoSettings.lineUrl || '').trim(),
+                    contactEmail: String(parsed.contact_email || parsed.contactEmail || '').trim(),
+                    description: String(parsed.description || '').trim(),
+                    faviconUrl: normalizeProductImageUrl(parsed.favicon_url || parsed.faviconUrl || ''),
+                    faviconPublicId: String(parsed.favicon_public_id || parsed.faviconPublicId || '').trim(),
+                    ogImageUrl: normalizeProductImageUrl(parsed.og_image_url || parsed.ogImageUrl || ''),
+                    ogImagePublicId: String(parsed.og_image_public_id || parsed.ogImagePublicId || '').trim()
+                };
+            } catch (error) {
+                return {};
+            }
+        }
+
+        function siteInfoSettingsPayload() {
+            return JSON.stringify({
+                instagram_url: String(siteInfoSettings.instagramUrl || '').trim(),
+                line_url: String(siteInfoSettings.lineUrl || '').trim(),
+                contact_email: String(siteInfoSettings.contactEmail || '').trim(),
+                description: String(siteInfoSettings.description || '').trim(),
+                favicon_url: normalizeProductImageUrl(siteInfoSettings.faviconUrl || ''),
+                favicon_public_id: String(siteInfoSettings.faviconPublicId || '').trim(),
+                og_image_url: normalizeProductImageUrl(siteInfoSettings.ogImageUrl || ''),
+                og_image_public_id: String(siteInfoSettings.ogImagePublicId || '').trim()
+            });
+        }
+
+        function parseSiteAnnouncements(value = '') {
+            try {
+                const parsed = JSON.parse(String(value || '{}'));
+                const list = Array.isArray(parsed) ? parsed : Array.isArray(parsed.announcements) ? parsed.announcements : (parsed.text || parsed.enabled !== undefined) ? [parsed] : [];
+                return list.map((item, index) => ({
+                    id: String(item.id || `announcement-${Date.now()}-${index}`),
+                    name: String(item.name || item.note || `公告 ${index + 1}`).trim(),
+                    text: String(item.text || '').trim(),
+                    href: String(item.href || item.link || '').trim(),
+                    enabled: item.enabled !== false,
+                    startAt: String(item.start_at || item.startAt || '').trim(),
+                    endAt: String(item.end_at || item.endAt || '').trim(),
+                    sortOrder: Number(item.sort_order ?? item.sortOrder ?? index)
+                })).sort((a, b) => a.sortOrder - b.sortOrder);
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function siteAnnouncementPayload() {
+            return JSON.stringify({
+                announcements: siteAnnouncements
+                    .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0))
+                    .map((announcement, index) => ({
+                        id: announcement.id,
+                        name: String(announcement.name || '').trim(),
+                        text: String(announcement.text || '').trim(),
+                        href: String(announcement.href || '').trim(),
+                        enabled: announcement.enabled === true,
+                        start_at: String(announcement.startAt || '').trim(),
+                        end_at: String(announcement.endAt || '').trim(),
+                        sort_order: Number(announcement.sortOrder ?? index)
+                    }))
+            });
+        }
+
+        function parseSiteBanners(value = '') {
+            try {
+                const parsed = JSON.parse(String(value || '{}'));
+                const banners = Array.isArray(parsed) ? parsed : parsed.banners;
+                return (Array.isArray(banners) ? banners : []).map((banner, index) => ({
+                    id: String(banner.id || `banner-${Date.now()}-${index}`),
+                    name: String(banner.name || `Banner ${index + 1}`),
+                    desktopImageUrl: normalizeProductImageUrl(banner.desktop_image_url || banner.desktopImageUrl || ''),
+                    desktopPublicId: String(banner.desktop_public_id || banner.desktopPublicId || '').trim(),
+                    mobileImageUrl: normalizeProductImageUrl(banner.mobile_image_url || banner.mobileImageUrl || ''),
+                    mobilePublicId: String(banner.mobile_public_id || banner.mobilePublicId || '').trim(),
+                    href: String(banner.href || '').trim(),
+                    enabled: banner.enabled !== false,
+                    sortOrder: Number(banner.sort_order ?? banner.sortOrder ?? index),
+                    startAt: String(banner.start_at || banner.startAt || '').trim(),
+                    endAt: String(banner.end_at || banner.endAt || '').trim()
+                })).sort((a, b) => a.sortOrder - b.sortOrder);
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function siteBannersPayload() {
+            return JSON.stringify({
+                banners: siteBanners.map((banner, index) => ({
+                    id: banner.id,
+                    name: banner.name,
+                    desktop_image_url: banner.desktopImageUrl,
+                    desktop_public_id: banner.desktopPublicId,
+                    mobile_image_url: banner.mobileImageUrl,
+                    mobile_public_id: banner.mobilePublicId,
+                    href: banner.href,
+                    enabled: banner.enabled === true,
+                    sort_order: index,
+                    start_at: banner.startAt,
+                    end_at: banner.endAt
+                }))
+            });
+        }
+
+        function parseHomepageSections(value = '') {
+            try {
+                const parsed = JSON.parse(String(value || '{}'));
+                const sections = Array.isArray(parsed) ? parsed : parsed.sections;
+                const allowedSectionIds = new Set(['category_shortcuts', 'latest', 'stock', 'preorder', 'guide']);
+                const base = new Map(homepageSections.map(section => [section.id, { ...section }]));
+                if (!Array.isArray(sections) || !sections.length) return Array.from(base.values()).sort((a, b) => a.sortOrder - b.sortOrder);
+                sections.forEach((section, index) => {
+                    const id = String(section.id || '').trim();
+                    if (!id || !allowedSectionIds.has(id)) return;
+                    const fallback = base.get(id) || { id, enabled: true, title: id, sortOrder: index, maxItems: 6 };
+                    base.set(id, {
+                        id,
+                        enabled: section.enabled === undefined ? fallback.enabled : section.enabled === true,
+                        title: String(section.title || fallback.title || id).trim(),
+                        sortOrder: Number(section.sort_order ?? section.sortOrder ?? fallback.sortOrder),
+                        maxItems: Math.max(1, Math.min(24, Number(section.max_items ?? section.maxItems ?? fallback.maxItems) || fallback.maxItems))
+                    });
+                });
+                return Array.from(base.values()).filter(section => allowedSectionIds.has(section.id)).sort((a, b) => a.sortOrder - b.sortOrder);
+                /*
+                return sections.map((section, index) => ({
+                    id: String(section.id || `section-${index}`),
+                    enabled: section.enabled !== false,
+                    title: String(section.title || section.id || '').trim(),
+                    sortOrder: Number(section.sort_order ?? section.sortOrder ?? index),
+                    maxItems: Math.max(1, Math.min(24, Number(section.max_items ?? section.maxItems ?? 6) || 6))
+                })).sort((a, b) => a.sortOrder - b.sortOrder);
+                */
+            } catch (error) {
+                return homepageSections;
+            }
+        }
+
+        function homepageSectionsPayload() {
+            return JSON.stringify({
+                sections: homepageSections.map((section, index) => ({
+                    id: section.id,
+                    enabled: section.enabled === true,
+                    title: section.title,
+                    sort_order: index,
+                    max_items: section.maxItems
+                }))
+            });
+        }
+
+        function defaultSiteNavigation() {
+            return [
+                { key: 'home', label: '首頁', href: '/', enabled: true, locked: true, sortOrder: 0 },
+                { key: 'products', label: '全部商品', href: '/products', enabled: true, sortOrder: 1 },
+                { key: 'preorder', label: '預購商品', href: '/category/preorder', enabled: true, sortOrder: 2 },
+                { key: 'stock', label: '現貨', href: '/category/in_stock', enabled: true, sortOrder: 3 },
+                { key: 'live_order', label: '連線 / 擺攤', href: '/category/live_order', enabled: true, sortOrder: 4 },
+                { key: 'guide', label: '購物須知', href: '/guide', enabled: true, sortOrder: 5 },
+                { key: 'faq', label: 'FAQ', href: '/faq', enabled: true, sortOrder: 6 },
+                { key: 'contact', label: '聯絡小企鵝', href: '/contact', enabled: true, sortOrder: 7 }
+            ];
+        }
+
+        function normalizeSiteNavigation(items = []) {
+            const defaults = defaultSiteNavigation();
+            const byKey = new Map(defaults.map(item => [item.key, { ...item }]));
+            (items || []).forEach((item, index) => {
+                const key = String(item.key || '').trim();
+                const base = byKey.get(key);
+                if (!base) return;
+                byKey.set(key, {
+                    ...base,
+                    label: String(item.label || base.label).trim() || base.label,
+                    enabled: base.locked ? true : item.enabled === undefined ? base.enabled : item.enabled === true,
+                    sortOrder: base.locked ? 0 : Number(item.sort_order ?? item.sortOrder ?? index)
+                });
+            });
+            const normalized = Array.from(byKey.values()).sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0));
+            const home = normalized.find(item => item.key === 'home') || defaults[0];
+            const rest = normalized.filter(item => item.key !== 'home');
+            return [
+                { ...home, enabled: true, locked: true, sortOrder: 0 },
+                ...rest.map((item, index) => ({ ...item, locked: false, sortOrder: index + 1 }))
+            ];
+        }
+
+        function parseSiteNavigation(value = '') {
+            try {
+                const parsed = JSON.parse(String(value || '{}'));
+                const items = Array.isArray(parsed) ? parsed : parsed.items;
+                return normalizeSiteNavigation(Array.isArray(items) ? items : []);
+            } catch (error) {
+                return normalizeSiteNavigation([]);
+            }
+        }
+
+        function siteNavigationPayload() {
+            return JSON.stringify({
+                items: normalizeSiteNavigation(siteNavigation).map((item, index) => ({
+                    key: item.key,
+                    label: item.label,
+                    href: item.href,
+                    enabled: item.locked ? true : item.enabled === true,
+                    locked: item.locked === true,
+                    sort_order: index
+                }))
+            });
+        }
+
         function parseBrandLogoLibrary(value = '') {
             try {
                 const parsed = JSON.parse(String(value || '{}'));
@@ -2562,10 +3260,26 @@
                     public_id: image.publicId,
                     sort_order: index,
                     is_active: image.isActive === true,
+                    scale: image.scale,
+                    position_x: image.positionX,
+                    position_y: image.positionY,
                     created_at: image.createdAt,
                     updated_at: image.updatedAt
                 }))
             });
+        }
+
+        function clampBrandLogoNumber(value, min, max, fallback) {
+            const number = Number(value);
+            if (!Number.isFinite(number)) return fallback;
+            return Math.min(max, Math.max(min, number));
+        }
+
+        function brandLogoTransformStyle(image = {}) {
+            const scale = clampBrandLogoNumber(image.scale, 1, 3, 1);
+            const x = clampBrandLogoNumber(image.positionX, -100, 100, 0);
+            const y = clampBrandLogoNumber(image.positionY, -100, 100, 0);
+            return `transform:translate(${x}%, ${y}%) scale(${scale});transform-origin:center;`;
         }
 
         function normalizeBrandLogoImages(images = []) {
@@ -2573,12 +3287,16 @@
                 const source = typeof image === 'string' ? { secure_url: image } : (image || {});
                 const secureUrl = normalizeProductImageUrl(source.secure_url || source.secureUrl || source.url || source.logo_url || '');
                 if (!secureUrl) return null;
+                const legacyScale = clampBrandLogoNumber(Number(brandSettings.logoScale || 100) / 100, 1, 3, 1);
                 return {
                     id: String(source.id || source.public_id || source.publicId || `logo-${Date.now()}-${index}`),
                     secureUrl,
                     publicId: String(source.public_id || source.publicId || source.logo_public_id || '').trim(),
                     sortOrder: Number(source.sort_order ?? source.sortOrder ?? index),
                     isActive: source.is_active === true || source.isActive === true,
+                    scale: clampBrandLogoNumber(source.scale, 1, 3, legacyScale),
+                    positionX: clampBrandLogoNumber(source.position_x ?? source.positionX, -100, 100, 0),
+                    positionY: clampBrandLogoNumber(source.position_y ?? source.positionY, -100, 100, 0),
                     createdAt: String(source.created_at || source.createdAt || new Date().toISOString()),
                     updatedAt: String(source.updated_at || source.updatedAt || source.created_at || source.createdAt || new Date().toISOString())
                 };
@@ -2602,6 +3320,7 @@
             const active = activeBrandLogoImage();
             brandSettings.logo = active?.secureUrl || DEFAULT_BRAND_LOGO_URL;
             brandSettings.logoPublicId = active?.publicId || '';
+            brandSettings.logoScale = Math.round((active?.scale || 1) * 100);
         }
 
         function migrateCurrentBrandLogoToLibrary() {
@@ -2617,6 +3336,9 @@
                     publicId: brandSettings.logoPublicId || '',
                     sortOrder: brandLogoImages.length,
                     isActive: true,
+                    scale: clampBrandLogoNumber(Number(brandSettings.logoScale || 100) / 100, 1, 3, 1),
+                    positionX: 0,
+                    positionY: 0,
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
                 });
@@ -2687,7 +3409,7 @@
         }
 
         function getSelectedTagIds(selectId) {
-            return Array.from(document.getElementById(selectId).selectedOptions).map(option => Number(option.value));
+            return Array.from(document.getElementById(selectId).selectedOptions).map(option => String(option.value));
         }
 
         function setSelectedTagIds(selectId, tagIds = []) {
@@ -2696,7 +3418,7 @@
         }
 
         function getProductTag(tagId) {
-            return productTags.find(tag => String(tag.id) === String(tagId)) || { name: '未標籤', color: '#94a3b8' };
+            return normalizeProductTags(productTags).find(tag => String(tag.id) === String(tagId)) || { name: '未分類', type: 'category', enabled: true, color: '#94a3b8' };
         }
 
         function renderProductTagOptions() {
@@ -2707,14 +3429,21 @@
             const container = document.getElementById(`${type}-product-tag-filter`);
             if (!container) return;
             const selected = selectedFilterValues(`${type}-product-tag-filter`);
-            const label = selected.length ? `已選 ${selected.length} 個標籤` : '全部標籤';
+            const visibleTags = normalizeProductTags(productTags).filter(tag => tag.enabled !== false || selected.includes(String(tag.id)));
+            const label = selected.length ? `已選 ${selected.length} 個項目` : '全部 IP / 類別';
             container.innerHTML = `
                 <button type="button" class="tag-select-button" onclick="toggleTagFilterMenu('${type}')">
                     <span id="${type}-tag-filter-label">${label}</span>
                     <i class="fa-solid fa-chevron-down"></i>
                 </button>
                 <div class="tag-select-panel">
-                    ${productTags.map(tag => `<label class="tag-select-option"><input type="checkbox" class="${type}-tag-filter-check" value="${tag.id}" ${selected.includes(String(tag.id)) ? 'checked' : ''} onchange="updateTagFilterLabel('${type}')"><span>${escapeHtml(tag.name)}</span></label>`).join('')}
+                    ${['ip', 'category'].map(tagType => {
+                        const title = tagType === 'ip' ? 'IP' : '商品類別';
+                        const tags = visibleTags.filter(tag => tag.type === tagType);
+                        if (!tags.length) return '';
+                        return `<div style="padding:0.35rem 0.25rem 0.15rem;font-size:0.74rem;font-weight:900;color:#64748b;">${title}</div>` +
+                            tags.map(tag => `<label class="tag-select-option"><input type="checkbox" class="${type}-tag-filter-check" value="${tag.id}" ${selected.includes(String(tag.id)) ? 'checked' : ''} onchange="updateTagFilterLabel('${type}')"><span>${escapeHtml(tag.name)}${tag.enabled === false ? '（已停用）' : ''}</span></label>`).join('');
+                    }).join('')}
                 </div>
             `;
         }
@@ -2733,7 +3462,7 @@
         function updateTagFilterLabel(type) {
             const selected = selectedFilterValues(`${type}-product-tag-filter`);
             const label = document.getElementById(`${type}-tag-filter-label`);
-            if (label) label.innerText = selected.length ? `已選 ${selected.length} 個標籤` : '全部標籤';
+            if (label) label.innerText = selected.length ? `已選 ${selected.length} 個項目` : '全部 IP / 類別';
         }
 
         function productImageCell(image, name) {
@@ -2916,13 +3645,47 @@
             return store.images;
         }
 
+        function normalizeHexColor(color, fallback = '#ec4899') {
+            const value = String(color || '').trim();
+            if (/^#[0-9a-fA-F]{6}$/.test(value)) return value.toLowerCase();
+            return fallback;
+        }
+
+        function hexToRgb(color) {
+            const hex = normalizeHexColor(color).slice(1);
+            return {
+                r: parseInt(hex.slice(0, 2), 16),
+                g: parseInt(hex.slice(2, 4), 16),
+                b: parseInt(hex.slice(4, 6), 16)
+            };
+        }
+
+        function readableTextColor(color) {
+            const { r, g, b } = hexToRgb(color);
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            return luminance > 0.72 ? '#334155' : normalizeHexColor(color);
+        }
+
+        function tagStyleVars(color) {
+            const safeColor = normalizeHexColor(color);
+            return `--tag-bg:${safeColor}22;--tag-border:${safeColor}66;--tag-fg:${readableTextColor(safeColor)};`;
+        }
+
         function tagPill(tagId) {
             const tag = getProductTag(tagId);
-            return `<span style="display:inline-flex;align-items:center;border-radius:999px;padding:0.2rem 0.55rem;background:${tag.color}20;color:${tag.color};font-weight:700;font-size:0.78rem;margin:0.1rem;">${escapeHtml(tag.name)}</span>`;
+            return `<span class="product-tag-preview-pill" style="${tagStyleVars(tag.color)};margin:0.1rem;">${escapeHtml(tag.name)}</span>`;
         }
 
         function tagsPills(tagIds = []) {
-            return tagIds.length ? tagIds.map(tagPill).join('') : '<span style="color:#94a3b8;">未標籤</span>';
+            return tagIds.length ? tagIds.map(tagPill).join('') : '<span style="color:#94a3b8;">—</span>';
+        }
+
+        function tagPillsByType(tagIds = [], tagType = 'category') {
+            const ids = tagIds.map(String);
+            const tags = normalizeProductTags(productTags)
+                .filter(tag => tag.type === tagType && ids.includes(String(tag.id)))
+                .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0));
+            return tags.length ? `<div style="display:flex;flex-wrap:wrap;gap:0.15rem;max-width:220px;">${tags.map(tag => tagPill(tag.id)).join('')}</div>` : '<span style="color:#94a3b8;">—</span>';
         }
 
         function selectedFilterValues(selectId) {
@@ -2957,7 +3720,11 @@
 
         function tagCheckboxesHtml(type, id, selectedIds = []) {
             const selected = selectedIds.map(String);
-            return `<div style="display:flex;flex-wrap:wrap;gap:0.4rem;max-width:240px;">${productTags.map(tag => `<label style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.78rem;"><input type="checkbox" data-product-type="${type}" data-product-id="${escapeHtml(id)}" value="${tag.id}" ${selected.includes(String(tag.id)) ? 'checked' : ''}> ${escapeHtml(tag.name)}</label>`).join('')}</div>`;
+            const htmlForType = tagType => {
+                const tags = normalizeProductTags(productTags).filter(tag => tag.type === tagType && (tag.enabled !== false || selected.includes(String(tag.id))));
+                return `<div class="tag-group-block"><div class="tag-group-title">${tagType === 'ip' ? 'IP' : '商品類別'}</div><div class="product-tag-checkbox-wrap">${tags.map(tag => `<label class="product-tag-check-chip" style="${tagStyleVars(tag.color)}"><input type="checkbox" data-product-type="${type}" data-product-id="${escapeHtml(id)}" value="${tag.id}" ${selected.includes(String(tag.id)) ? 'checked' : ''}> ${escapeHtml(tag.name)}${tag.enabled === false ? '（已停用）' : ''}</label>`).join('') || '<span style="font-size:0.75rem;color:#94a3b8;">尚無可選項目</span>'}</div></div>`;
+            };
+            return `<div style="display:grid;gap:0.75rem;min-width:0;">${htmlForType('ip')}${htmlForType('category')}</div>`;
         }
 
         function editImageInputHtml(type, product) {
@@ -3010,7 +3777,7 @@
         }
 
         function productVariantSubRow(product, type) {
-            const colspan = type === 'preorder' ? 11 : 10;
+            const colspan = type === 'preorder' ? 12 : 11;
             const productId = quoteJs(product.id);
             return `<tr class="sub-row" id="${type}-variant-row-${product.id}">
                 <td colspan="${colspan}">
@@ -3131,10 +3898,35 @@
             const statusCell = productStatusSelectHtml(type, product, 'edit');
             const deadlineCell = type === 'preorder' ? `<input class="product-edit-field" type="datetime-local" id="${type}-edit-deadline-${product.id}" value="${escapeHtml(product.deadline || '')}" style="min-width:160px;">` : statusCell;
             const productId = quoteJs(product.id);
-            if (type === 'preorder') {
-                return `<tr><td style="text-align:center;cursor:pointer;" onclick="toggleProductVariantRow('${type}', ${productId}, this)"><i class="fa-solid fa-chevron-right"></i></td><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${escapeHtml(product.id)}"></td><td>${productImageCell(product.image, product.name)}${editImageInputHtml(type, product)}</td><td><input class="product-edit-field" type="text" id="${type}-edit-name-${product.id}" value="${escapeHtml(product.name)}" placeholder="商品名稱"><input class="product-edit-field" type="text" id="${type}-edit-description-${product.id}" value="${escapeHtml(product.description || '')}" placeholder="商品描述" style="margin-top:0.45rem;"></td><td>${tagCheckboxesHtml(type, product.id, product.tagIds)}</td><td><input class="product-edit-field" type="number" id="${type}-edit-qty-${product.id}" value="${Number(product[qtyKey] || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-cost-${product.id}" value="${Number(product.costPrice || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-list-${product.id}" value="${Number(product.listPrice || 0)}" min="0"></td><td>${statusCell}</td><td>${deadlineCell}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-primary" onclick="saveProductRow('${type}', ${productId})"><i class="fa-solid fa-floppy-disk"></i></button><button class="btn btn-sm btn-secondary" onclick="cancelProductRowEdit('${type}')"><i class="fa-solid fa-xmark"></i></button></div></td></tr>`;
-            }
-            return `<tr><td style="text-align:center;cursor:pointer;" onclick="toggleProductVariantRow('${type}', ${productId}, this)"><i class="fa-solid fa-chevron-right"></i></td><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${escapeHtml(product.id)}"></td><td>${productImageCell(product.image, product.name)}${editImageInputHtml(type, product)}</td><td><input class="product-edit-field" type="text" id="${type}-edit-name-${product.id}" value="${escapeHtml(product.name)}" placeholder="商品名稱"><input class="product-edit-field" type="text" id="${type}-edit-description-${product.id}" value="${escapeHtml(product.description || '')}" placeholder="商品描述" style="margin-top:0.45rem;"></td><td>${tagCheckboxesHtml(type, product.id, product.tagIds)}</td><td><input class="product-edit-field" type="number" id="${type}-edit-qty-${product.id}" value="${Number(product[qtyKey] || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-cost-${product.id}" value="${Number(product.costPrice || 0)}" min="0"></td><td><input class="product-edit-field" type="number" id="${type}-edit-list-${product.id}" value="${Number(product.listPrice || 0)}" min="0"></td><td>${deadlineCell}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-primary" onclick="saveProductRow('${type}', ${productId})"><i class="fa-solid fa-floppy-disk"></i></button><button class="btn btn-sm btn-secondary" onclick="cancelProductRowEdit('${type}')"><i class="fa-solid fa-xmark"></i></button></div></td></tr>`;
+            const colSpan = type === 'preorder' ? 12 : 11;
+            return `<tr class="product-edit-row"><td colspan="${colSpan}">
+                <div class="product-edit-card">
+                    <div class="product-edit-grid">
+                        <section class="product-edit-section">
+                            <div class="product-edit-section-title">商品圖片 / 基本資料</div>
+                            ${editImageInputHtml(type, product)}
+                            <input class="product-edit-field" type="text" id="${type}-edit-name-${product.id}" value="${escapeHtml(product.name)}" placeholder="商品名稱">
+                            <textarea class="product-edit-field" id="${type}-edit-description-${product.id}" placeholder="商品描述" rows="4" style="resize:vertical;">${escapeHtml(product.description || '')}</textarea>
+                        </section>
+                        <section class="product-edit-section">
+                            <div class="product-edit-section-title">IP / 商品類別</div>
+                            ${tagCheckboxesHtml(type, product.id, product.tagIds)}
+                        </section>
+                        <section class="product-edit-section">
+                            <div class="product-edit-section-title">價格 / 狀態</div>
+                            <label style="display:grid;gap:0.35rem;font-size:0.76rem;font-weight:900;color:#64748b;">${type === 'stock' ? '庫存' : '名額'}<input class="product-edit-field" type="number" id="${type}-edit-qty-${product.id}" value="${Number(product[qtyKey] || 0)}" min="0"></label>
+                            <label style="display:grid;gap:0.35rem;font-size:0.76rem;font-weight:900;color:#64748b;">成本價<input class="product-edit-field" type="number" id="${type}-edit-cost-${product.id}" value="${Number(product.costPrice || 0)}" min="0"></label>
+                            <label style="display:grid;gap:0.35rem;font-size:0.76rem;font-weight:900;color:#64748b;">定價<input class="product-edit-field" type="number" id="${type}-edit-list-${product.id}" value="${Number(product.listPrice || 0)}" min="0"></label>
+                            <label style="display:grid;gap:0.35rem;font-size:0.76rem;font-weight:900;color:#64748b;">狀態${statusCell}</label>
+                            ${type === 'preorder' ? `<label style="display:grid;gap:0.35rem;font-size:0.76rem;font-weight:900;color:#64748b;">結單倒數${deadlineCell}</label>` : ''}
+                        </section>
+                    </div>
+                    <div class="product-edit-actions">
+                        <button class="btn btn-secondary" type="button" onclick="cancelProductRowEdit('${type}')"><i class="fa-solid fa-xmark"></i> 取消</button>
+                        <button class="btn btn-primary" type="button" onclick="saveProductRow('${type}', ${productId})"><i class="fa-solid fa-floppy-disk"></i> 保存商品</button>
+                    </div>
+                </div>
+            </td></tr>`;
         }
 
         function productDisplayRow(product, type) {
@@ -3144,9 +3936,9 @@
             const productId = quoteJs(product.id);
             if (type === 'preorder') {
                 const countdown = `${getPreorderCountdown(product.deadline)}<div style="color:#64748b;font-size:0.75rem;margin-top:0.2rem;">${product.deadline ? escapeHtml(product.deadline.replace('T', ' ')) : ''}</div>`;
-                return `<tr><td style="text-align:center;cursor:pointer;" onclick="toggleProductVariantRow('${type}', ${productId}, this)"><i class="fa-solid fa-chevron-right"></i></td><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${escapeHtml(product.id)}"></td><td>${productImageCell(productMainImage(product), product.name)}</td><td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td><td>${tagsPills(product.tagIds)}</td><td>${qty}</td><td>NT$ ${Number(product.costPrice || 0).toLocaleString()}</td><td>${priceText}</td><td>${status}</td><td>${countdown}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-action-edit" onclick="editProductRow('${type}', ${productId})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deleteProduct('${type}', ${productId})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+                return `<tr><td style="text-align:center;cursor:pointer;" onclick="toggleProductVariantRow('${type}', ${productId}, this)"><i class="fa-solid fa-chevron-right"></i></td><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${escapeHtml(product.id)}"></td><td>${productImageCell(productMainImage(product), product.name)}</td><td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td><td>${tagPillsByType(product.tagIds, 'ip')}</td><td>${tagPillsByType(product.tagIds, 'category')}</td><td>${qty}</td><td>NT$ ${Number(product.costPrice || 0).toLocaleString()}</td><td>${priceText}</td><td>${status}</td><td>${countdown}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-action-edit" onclick="editProductRow('${type}', ${productId})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deleteProduct('${type}', ${productId})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             }
-            return `<tr><td style="text-align:center;cursor:pointer;" onclick="toggleProductVariantRow('${type}', ${productId}, this)"><i class="fa-solid fa-chevron-right"></i></td><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${escapeHtml(product.id)}"></td><td>${productImageCell(productMainImage(product), product.name)}</td><td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td><td>${tagsPills(product.tagIds)}</td><td>${qty}</td><td>NT$ ${Number(product.costPrice || 0).toLocaleString()}</td><td>${priceText}</td><td>${status}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-action-edit" onclick="editProductRow('${type}', ${productId})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deleteProduct('${type}', ${productId})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+            return `<tr><td style="text-align:center;cursor:pointer;" onclick="toggleProductVariantRow('${type}', ${productId}, this)"><i class="fa-solid fa-chevron-right"></i></td><td style="text-align:center;"><input type="checkbox" class="${type}-product-check" value="${escapeHtml(product.id)}"></td><td>${productImageCell(productMainImage(product), product.name)}</td><td><strong>${escapeHtml(product.name)}</strong><div style="color:#64748b;font-size:0.78rem;margin-top:0.25rem;">${escapeHtml(product.description || '')}</div></td><td>${tagPillsByType(product.tagIds, 'ip')}</td><td>${tagPillsByType(product.tagIds, 'category')}</td><td>${qty}</td><td>NT$ ${Number(product.costPrice || 0).toLocaleString()}</td><td>${priceText}</td><td>${status}</td><td><div class="product-row-actions"><button class="btn btn-sm btn-action-edit" onclick="editProductRow('${type}', ${productId})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deleteProduct('${type}', ${productId})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
         }
 
         function renderProductRows(type) {
@@ -3154,7 +3946,7 @@
             if (!tbody) return;
             const products = type === 'stock' ? stockProducts : preorderProducts;
             const rows = products.filter(product => matchesProductSearch(product, type));
-            if (!rows.length) { tbody.innerHTML = `<tr><td colspan="${type === 'preorder' ? 11 : 10}" class="empty-state">尚無符合的${type === 'stock' ? '現貨' : '預購'}商品</td></tr>`; return; }
+            if (!rows.length) { tbody.innerHTML = `<tr><td colspan="${type === 'preorder' ? 12 : 11}" class="empty-state">尚無符合的${type === 'stock' ? '現貨' : '預購'}商品</td></tr>`; return; }
             tbody.innerHTML = rows.map(product => `${sameId(editingProductRows[type], product.id) ? productEditRow(product, type) : productDisplayRow(product, type)}${productVariantSubRow(product, type)}`).join('');
             if (editingProductRows[type]) setTimeout(() => renderProductImageEditor(type, editingProductRows[type]), 0);
         }
@@ -3192,7 +3984,7 @@
         function getCheckedRowTagIds(type, id) {
             return Array.from(document.querySelectorAll(`input[data-product-type="${type}"]`))
                 .filter(input => input.checked && input.dataset.productId === String(id))
-                .map(input => Number(input.value));
+                .map(input => String(input.value));
         }
 
         async function saveProductRow(type, id) {
@@ -3346,8 +4138,11 @@
             const ids = selectedProductIds(type); if (!ids.length) return alert('請先勾選商品');
             const listPrice = prompt('批量更新定價，留空代表不變');
             const costPrice = prompt('批量更新成本價，留空代表不變');
-            const tagNames = prompt('批量更新標籤名稱，多個用逗號分隔，留空代表不變');
-            const tagIds = tagNames ? ensureTagsByNames(tagNames.split(',').map(s => s.trim()).filter(Boolean)) : null;
+            const ipNames = prompt('批量更新 IP，多個用逗號分隔，留空代表不變');
+            const categoryNames = prompt('批量更新商品類別，多個用逗號分隔，留空代表不變');
+            const ipTagIds = ipNames ? ensureTagsByNames(ipNames.split(',').map(s => s.trim()).filter(Boolean), 'ip') : null;
+            const categoryTagIds = categoryNames ? ensureTagsByNames(categoryNames.split(',').map(s => s.trim()).filter(Boolean), 'category') : null;
+            const tagIds = ipTagIds || categoryTagIds ? [...(ipTagIds || []), ...(categoryTagIds || [])] : null;
             const updater = product => ids.some(id => sameId(id, product.id)) ? { ...product, listPrice: listPrice ? Number(listPrice) : product.listPrice, costPrice: costPrice ? Number(costPrice) : product.costPrice, tagIds: tagIds || product.tagIds } : product;
             if (type === 'stock') { stockProducts = stockProducts.map(updater); renderStockProducts(); } else { preorderProducts = preorderProducts.map(updater); renderPreorderProducts(); }
             persistProductManagement(); renderProductTagOptions(); renderProductTags();
@@ -3356,18 +4151,30 @@
             await syncProductCatalog(type);
         }
 
-        function ensureTagsByNames(names) {
+        function ensureTagsByNames(names, type = 'category') {
+            const normalizedType = type === 'ip' ? 'ip' : 'category';
             return names.map(name => {
-                let tag = productTags.find(t => t.name === name);
-                if (!tag) { tag = { id: Date.now() + Math.random(), name, color: '#ec4899' }; productTags.push(tag); }
+                let tag = productTags.find(t => t.name === name && t.type === normalizedType);
+                if (!tag) {
+                    tag = normalizeProductTag({ id: Date.now() + Math.random(), name, type: normalizedType, enabled: true, sortOrder: productTagsByType(normalizedType).length, color: normalizedType === 'ip' ? '#ec4899' : '#f59e0b' });
+                    productTags.push(tag);
+                    markProductTagsDirty();
+                }
                 return tag.id;
             });
         }
 
         function batchAddProducts(type) { openProductBatchModal(type); }
 
-        function productBatchTagCheckboxes(rowId) {
-            return `<div style="display:flex;flex-direction:column;gap:0.25rem;max-height:92px;overflow:auto;">${productTags.map(tag => `<label style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.76rem;"><input type="checkbox" class="product-batch-tag-${rowId}" value="${tag.id}"> ${escapeHtml(tag.name)}</label>`).join('')}</div>`;
+        function productBatchTagCheckboxes(rowId, tagType) {
+            const tags = normalizeProductTags(productTags).filter(tag => tag.type === tagType && tag.enabled !== false);
+            const checkboxClass = tagType === 'ip' ? 'pb-ip-tag' : 'pb-category-tag';
+            return `<div class="tag-group-block">
+                <div class="tag-group-title">${tagType === 'ip' ? 'IP' : '商品類別'}</div>
+                <div class="product-tag-checkbox-wrap" style="max-height:118px;">
+                    ${tags.map(tag => `<label class="product-tag-check-chip" style="${tagStyleVars(tag.color)}"><input type="checkbox" class="${checkboxClass}" data-row-id="${escapeHtml(rowId)}" value="${tag.id}"> ${escapeHtml(tag.name)}</label>`).join('') || '<span style="font-size:0.75rem;color:#94a3b8;">尚無可選項目</span>'}
+                </div>
+            </div>`;
         }
 
         function openProductBatchModal(type) {
@@ -3392,15 +4199,18 @@
             row.className = 'dynamic-row product-batch-row';
             row.dataset.rowId = rowId;
             row.innerHTML = `
-                <input type="text" class="pb-name" placeholder="商品名稱">
-                <input type="number" class="pb-cost" min="0" placeholder="成本價">
-                <input type="number" class="pb-list" min="0" placeholder="定價">
-                <input type="number" class="pb-qty" min="0" placeholder="${type === 'stock' ? '庫存' : '名額'}">
-                <div>${productBatchTagCheckboxes(rowId)}</div>
-                <input type="datetime-local" class="pb-deadline" ${type === 'stock' ? 'disabled' : ''}>
-                <input type="text" class="pb-description" placeholder="商品描述">
-                <button class="btn btn-sm btn-danger" onclick="this.closest('.product-batch-row').remove()"><i class="fa-solid fa-trash"></i></button>
-                <div style="grid-column: 1 / 8;">${productImagesEditorHtml(type, { id: rowId, images: [] })}</div>
+                <label class="product-batch-field">商品名稱<input type="text" class="pb-name" placeholder="商品名稱"></label>
+                <label class="product-batch-field">成本價<input type="number" class="pb-cost" min="0" placeholder="成本價"></label>
+                <label class="product-batch-field">定價<input type="number" class="pb-list" min="0" placeholder="定價"></label>
+                <label class="product-batch-field">${type === 'stock' ? '庫存' : '名額'}<input type="number" class="pb-qty" min="0" placeholder="${type === 'stock' ? '庫存' : '名額'}"></label>
+                <button class="btn btn-sm btn-danger" type="button" onclick="this.closest('.product-batch-row').remove()" style="align-self:end;"><i class="fa-solid fa-trash"></i></button>
+                <div class="product-batch-tags">
+                    ${productBatchTagCheckboxes(rowId, 'ip')}
+                    ${productBatchTagCheckboxes(rowId, 'category')}
+                </div>
+                <label class="product-batch-field">${type === 'stock' ? '結單時間（現貨不需填）' : '結單時間'}<input type="datetime-local" class="pb-deadline" ${type === 'stock' ? 'disabled' : ''}></label>
+                <label class="product-batch-field product-batch-description">描述<input type="text" class="pb-description" placeholder="商品描述"></label>
+                <div class="product-batch-image-row">${productImagesEditorHtml(type, { id: rowId, images: [] })}</div>
             `;
             document.getElementById('product-batch-container').appendChild(row);
             setTimeout(() => renderProductImageEditor(type, rowId), 0);
@@ -3423,7 +4233,9 @@
             for (let index = 0; index < rows.length; index += 1) {
                 const row = rows[index];
                 const rowId = row.dataset.rowId;
-                const tagIds = Array.from(row.querySelectorAll(`.product-batch-tag-${rowId}:checked`)).map(input => Number(input.value));
+                const ipTagIds = Array.from(row.querySelectorAll('.pb-ip-tag:checked')).map(input => String(input.value));
+                const categoryTagIds = Array.from(row.querySelectorAll('.pb-category-tag:checked')).map(input => String(input.value));
+                const tagIds = [...ipTagIds, ...categoryTagIds];
                 const productId = Date.now() + Math.random();
                 const base = {
                     id: productId,
@@ -3476,61 +4288,287 @@
             }
         }
 
+        function markProductTagsDirty() {
+            const state = document.getElementById('product-tag-save-state');
+            if (state) state.textContent = '尚未儲存';
+        }
+
+        function setProductTagsSaved() {
+            const state = document.getElementById('product-tag-save-state');
+            if (state) state.textContent = '已儲存';
+        }
+
+        function productTagUsageCount(id) {
+            return stockProducts.filter(product => (product.tagIds || []).map(String).includes(String(id))).length
+                + preorderProducts.filter(product => (product.tagIds || []).map(String).includes(String(id))).length;
+        }
+
+        function openProductTagForm(type = 'ip', id = '') {
+            const normalizedType = type === 'category' ? 'category' : 'ip';
+            const tag = id ? normalizeProductTags(productTags).find(item => String(item.id) === String(id)) : null;
+            productTagActiveType = tag?.type || normalizedType;
+            const modal = document.getElementById('productTagModal');
+            const title = document.getElementById('productTagModalTitle');
+            const submit = document.getElementById('product-tag-submit');
+            const addRowButton = document.getElementById('product-tag-add-row-button');
+            document.getElementById('product-tag-id').value = tag?.id || '';
+            document.getElementById('product-tag-type').value = productTagActiveType;
+            if (title) title.textContent = tag ? `編輯${productTagActiveType === 'ip' ? ' IP' : '商品類別'}` : `新增${productTagActiveType === 'ip' ? ' IP' : '商品類別'}`;
+            if (submit) submit.innerHTML = tag ? '<i class="fa-solid fa-floppy-disk"></i> 儲存' : '<i class="fa-solid fa-plus"></i> 新增';
+            if (addRowButton) addRowButton.style.display = tag ? 'none' : 'inline-flex';
+            renderProductTagEditRows(tag ? [{ name: tag.name, color: normalizeHexColor(tag.color) }] : [{ name: '', color: '#ec4899' }, { name: '', color: '#f59e0b' }, { name: '', color: '#38bdf8' }]);
+            modal?.classList.add('active');
+            setTimeout(() => document.querySelector('#product-tag-edit-rows input[data-field="name"]')?.focus(), 50);
+        }
+
+        function closeProductTagModal() {
+            const modal = document.getElementById('productTagModal');
+            const form = document.getElementById('product-tag-form');
+            form?.reset();
+            modal?.classList.remove('active');
+            document.getElementById('product-tag-id').value = '';
+            document.getElementById('product-tag-type').value = productTagActiveType;
+            const rows = document.getElementById('product-tag-edit-rows');
+            if (rows) rows.innerHTML = '';
+        }
+
+        function productTagEditRowsData() {
+            return Array.from(document.querySelectorAll('#product-tag-edit-rows .product-tag-edit-row')).map(row => ({
+                name: row.querySelector('[data-field="name"]')?.value.trim() || '',
+                color: normalizeHexColor(row.querySelector('[data-field="hex"]')?.value || row.querySelector('[data-field="color"]')?.value || '#ec4899')
+            }));
+        }
+
+        function renderProductTagEditRows(rows = [{ name: '', color: '#ec4899' }]) {
+            const container = document.getElementById('product-tag-edit-rows');
+            if (!container) return;
+            const safeRows = rows.length ? rows : [{ name: '', color: '#ec4899' }];
+            container.innerHTML = safeRows.map((row, index) => productTagEditRowHtml(index, row.name, row.color, safeRows.length)).join('');
+            safeRows.forEach((row, index) => updateProductTagPreview(index));
+        }
+
+        function productTagEditRowHtml(index, name = '', color = '#ec4899', total = 1) {
+            const safeColor = normalizeHexColor(color);
+            const previewName = name.trim() || '標籤預覽';
+            return `<div class="product-tag-edit-row" data-index="${index}">
+                <input class="product-edit-field" type="text" data-field="name" value="${escapeHtml(name)}" placeholder="${productTagActiveType === 'ip' ? 'IP 名稱' : '商品類別名稱'}" oninput="updateProductTagPreview(${index})">
+                <input type="color" data-field="color" value="${safeColor}" oninput="syncProductTagColor(${index}, this.value)">
+                <input class="product-edit-field" type="text" data-field="hex" value="${safeColor}" maxlength="7" oninput="syncProductTagHex(${index}, this.value)">
+                <span class="product-tag-preview-pill" data-field="preview" style="${tagStyleVars(safeColor)}">${escapeHtml(previewName)}</span>
+                <button class="btn btn-sm btn-secondary" type="button" onclick="removeProductTagEditRow(${index})" ${total <= 1 ? 'disabled' : ''} aria-label="刪除此列">×</button>
+            </div>`;
+        }
+
+        function addProductTagEditRow() {
+            const rows = productTagEditRowsData();
+            rows.push({ name: '', color: '#ec4899' });
+            renderProductTagEditRows(rows);
+        }
+
+        function removeProductTagEditRow(index) {
+            const rows = productTagEditRowsData();
+            if (rows.length <= 1) return;
+            rows.splice(index, 1);
+            renderProductTagEditRows(rows);
+        }
+
+        function syncProductTagColor(index, color) {
+            const row = document.querySelector(`#product-tag-edit-rows .product-tag-edit-row[data-index="${index}"]`);
+            const hex = row?.querySelector('[data-field="hex"]');
+            if (hex) hex.value = normalizeHexColor(color);
+            updateProductTagPreview(index);
+        }
+
+        function syncProductTagHex(index, value) {
+            const row = document.querySelector(`#product-tag-edit-rows .product-tag-edit-row[data-index="${index}"]`);
+            const colorInput = row?.querySelector('[data-field="color"]');
+            if (/^#[0-9a-fA-F]{6}$/.test(value) && colorInput) colorInput.value = value;
+            updateProductTagPreview(index);
+        }
+
+        function updateProductTagPreview(index) {
+            const row = document.querySelector(`#product-tag-edit-rows .product-tag-edit-row[data-index="${index}"]`);
+            if (!row) return;
+            const name = row.querySelector('[data-field="name"]')?.value.trim() || '標籤預覽';
+            const hex = row.querySelector('[data-field="hex"]')?.value || '#ec4899';
+            const color = normalizeHexColor(hex);
+            const preview = row.querySelector('[data-field="preview"]');
+            if (preview) {
+                preview.textContent = name;
+                preview.setAttribute('style', tagStyleVars(color));
+            }
+        }
+
+        function toggleProductTagEnabled(id) {
+            productTags = normalizeProductTags(productTags).map(tag => String(tag.id) === String(id) ? { ...tag, enabled: tag.enabled === false } : tag);
+            persistProductManagement();
+            markProductTagsDirty();
+            renderProductTagOptions();
+            renderProductTags();
+            renderStockProducts();
+            renderPreorderProducts();
+        }
+
+        function initProductTagSortable(type) {
+            const normalizedType = type === 'category' ? 'category' : 'ip';
+            const list = document.getElementById(`product-tags-${normalizedType}-list`);
+            if (!list || !window.Sortable) return;
+            if (productTagSortables[normalizedType]) {
+                productTagSortables[normalizedType].destroy();
+                productTagSortables[normalizedType] = null;
+            }
+            productTagSortables[normalizedType] = Sortable.create(list, {
+                animation: 180,
+                handle: '.product-tag-handle',
+                draggable: '.product-tag-row',
+                ghostClass: 'appearance-nav-sortable-ghost',
+                chosenClass: 'appearance-nav-sortable-chosen',
+                dragClass: 'appearance-nav-sortable-drag',
+                forceFallback: true,
+                fallbackOnBody: true,
+                scroll: true,
+                bubbleScroll: true,
+                onEnd: () => {
+                    const ids = Array.from(list.querySelectorAll('.product-tag-row')).map(row => String(row.dataset.tagId || ''));
+                    productTags = normalizeProductTags(productTags).map(tag => {
+                        if (tag.type !== normalizedType) return tag;
+                        const nextIndex = ids.indexOf(String(tag.id));
+                        return nextIndex >= 0 ? { ...tag, sortOrder: nextIndex } : tag;
+                    });
+                    persistProductManagement();
+                    markProductTagsDirty();
+                    renderProductTags();
+                }
+            });
+        }
+
+        function productTagRowHtml(tag) {
+            const usage = productTagUsageCount(tag.id);
+            return `<div class="product-tag-row" data-tag-id="${escapeHtml(tag.id)}">
+                <button type="button" class="product-tag-handle" title="拖曳排序" aria-label="拖曳排序">⋮⋮</button>
+                <div>${tagPill(tag.id)}<div style="font-size:0.74rem;color:#64748b;margin-top:0.25rem;">${usage} 個商品使用</div></div>
+                <button type="button" class="product-tag-status ${tag.enabled ? 'on' : 'off'}" onclick="toggleProductTagEnabled(${quoteJs(tag.id)})">${tag.enabled ? '顯示中' : '隱藏中'}</button>
+                <button class="btn btn-sm btn-action-edit" type="button" onclick="openProductTagForm(${quoteJs(tag.type)}, ${quoteJs(tag.id)})"><i class="fa-solid fa-pen"></i> 編輯</button>
+                <button class="btn btn-sm btn-action-delete" type="button" onclick="deleteProductTag(${quoteJs(tag.id)})"><i class="fa-solid fa-trash"></i> 刪除</button>
+            </div>`;
+        }
+
+        function renderProductTagList(type) {
+            const normalizedType = type === 'category' ? 'category' : 'ip';
+            const list = document.getElementById(`product-tags-${normalizedType}-list`);
+            if (!list) return;
+            const visibleTags = productTagsByType(normalizedType);
+            if (!visibleTags.length) {
+                list.innerHTML = `<div style="border:1px dashed #f9a8d4;border-radius:0.9rem;background:#fff7fb;padding:1rem;color:#64748b;font-weight:800;">目前尚無${normalizedType === 'ip' ? ' IP' : '商品類別'}，請點上方新增。</div>`;
+                initProductTagSortable(normalizedType);
+                return;
+            }
+            list.innerHTML = visibleTags.map(productTagRowHtml).join('');
+            initProductTagSortable(normalizedType);
+        }
+
         function renderProductTags() {
-            const tbody = document.getElementById('product-tags-tbody');
-            if (!tbody) return;
             if (!Array.isArray(productTags) || productTags.length === 0) {
                 productTags = defaultProductTags();
                 persistProductManagement();
                 renderProductTagOptions();
             }
-            tbody.innerHTML = productTags.map(tag => {
-                const usage = stockProducts.filter(product => (product.tagIds || []).map(String).includes(String(tag.id))).length + preorderProducts.filter(product => (product.tagIds || []).map(String).includes(String(tag.id))).length;
-                return `<tr><td>${tagPill(tag.id)}</td><td><span style="display:inline-flex;align-items:center;gap:0.5rem;"><span style="width:1rem;height:1rem;border-radius:999px;background:${tag.color};display:inline-block;"></span>${escapeHtml(tag.color)}</span></td><td>${usage} 個商品</td><td><div class="product-row-actions"><button class="btn btn-sm btn-action-edit" onclick="editProductTag(${tag.id})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-sm btn-action-delete" onclick="deleteProductTag(${tag.id})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
-            }).join('');
+            productTags = normalizeProductTags(productTags);
+            renderProductTagList('ip');
+            renderProductTagList('category');
         }
 
-        async function saveProductTag(event) {
+        function saveProductTag(event) {
             event.preventDefault();
             const id = document.getElementById('product-tag-id').value;
-            const name = document.getElementById('product-tag-name').value.trim(); const color = document.getElementById('product-tag-color').value; if (!name) return;
-            let savedTag = null;
-            if (id) {
-                productTags = productTags.map(tag => {
-                    if (String(tag.id) !== String(id)) return tag;
-                    savedTag = { ...tag, name, color };
-                    return savedTag;
-                });
-            } else if (!productTags.some(tag => tag.name === name)) {
-                savedTag = { id: Date.now(), name, color };
-                productTags.unshift(savedTag);
+            const type = document.getElementById('product-tag-type').value === 'ip' ? 'ip' : 'category';
+            const rows = Array.from(document.querySelectorAll('#product-tag-edit-rows .product-tag-edit-row')).map((row, index) => ({
+                rowNumber: index + 1,
+                name: row.querySelector('[data-field="name"]')?.value.trim() || '',
+                hex: row.querySelector('[data-field="hex"]')?.value.trim() || ''
+            }));
+            if (!rows.length) return;
+            const validRows = rows.filter(row => row.name || row.hex);
+            if (!validRows.length) return alert('請至少填寫一筆名稱');
+            for (const row of validRows) {
+                if (!row.name) return alert(`第 ${row.rowNumber} 列名稱不能空白`);
+                if (!/^#[0-9a-fA-F]{6}$/.test(row.hex)) return alert(`第 ${row.rowNumber} 列 HEX 顏色格式不正確，請使用 #RRGGBB`);
             }
-            persistProductManagement(); resetProductTagForm(); renderProductTagOptions(); renderProductTags(); renderStockProducts(); renderPreorderProducts();
-            if (savedTag) await fetchAPI('saveProductTag', savedTag, null, true);
+            if (id) {
+                const row = validRows[0];
+                const duplicate = normalizeProductTags(productTags).some(tag => String(tag.id) !== String(id) && tag.type === type && tag.name.trim() === row.name);
+                if (duplicate) return alert(`${type === 'ip' ? 'IP' : '商品類別'}名稱已存在：${row.name}`);
+                productTags = normalizeProductTags(productTags).map(tag => String(tag.id) === String(id) ? normalizeProductTag({ ...tag, name: row.name, color: normalizeHexColor(row.hex) }) : tag);
+            } else {
+                const seen = new Set();
+                const existingNames = new Set(normalizeProductTags(productTags).filter(tag => tag.type === type).map(tag => tag.name.trim()));
+                for (const row of validRows) {
+                    if (seen.has(row.name)) return alert(`同一批新增重複名稱：${row.name}`);
+                    if (existingNames.has(row.name)) return alert(`${type === 'ip' ? 'IP' : '商品類別'}名稱已存在：${row.name}`);
+                    seen.add(row.name);
+                }
+                const startOrder = productTagsByType(type).length;
+                validRows.forEach((row, index) => {
+                    productTags.push(normalizeProductTag({ id: `${Date.now()}-${index}`, name: row.name, type, enabled: true, sortOrder: startOrder + index, color: normalizeHexColor(row.hex) }));
+                });
+            }
+            persistProductManagement();
+            markProductTagsDirty();
+            closeProductTagModal();
+            renderProductTagOptions();
+            renderProductTags();
+            renderStockProducts();
+            renderPreorderProducts();
         }
 
         function editProductTag(id) {
-            const tag = productTags.find(item => String(item.id) === String(id));
-            if (!tag) return;
-            document.getElementById('product-tag-id').value = tag.id;
-            document.getElementById('product-tag-name').value = tag.name;
-            document.getElementById('product-tag-color').value = tag.color || '#ec4899';
-            document.getElementById('product-tag-submit').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> 保存標籤';
+            const tag = normalizeProductTags(productTags).find(item => String(item.id) === String(id));
+            if (tag) openProductTagForm(tag.type, tag.id);
         }
 
         function resetProductTagForm() {
-            const form = document.getElementById('product-tag-form');
-            if (form) form.reset();
-            document.getElementById('product-tag-id').value = '';
-            document.getElementById('product-tag-color').value = '#ec4899';
-            document.getElementById('product-tag-submit').innerHTML = '<i class="fa-solid fa-plus"></i> 新增標籤';
+            closeProductTagModal();
         }
 
-        async function deleteProductTag(id) {
-            const usage = stockProducts.some(product => (product.tagIds || []).map(String).includes(String(id))) || preorderProducts.some(product => (product.tagIds || []).map(String).includes(String(id)));
-            if (usage) return alert('這個標籤目前有商品使用，請先改商品標籤再刪除。'); if (!confirm('確定刪除此商品標籤嗎？')) return;
-            productTags = productTags.filter(tag => tag.id !== id); persistProductManagement(); renderProductTagOptions(); renderProductTags();
-            await fetchAPI('deleteProductTag', null, id, true);
+        function deleteProductTag(id) {
+            const tag = normalizeProductTags(productTags).find(item => String(item.id) === String(id));
+            const usageCount = productTagUsageCount(id);
+            const label = tag?.name ? `「${tag.name}」` : '此標籤';
+            if (!confirm(usageCount ? `${label} 目前有 ${usageCount} 件商品正在使用，確定要刪除嗎？按「儲存標籤設定」後才會正式刪除。` : `確定刪除 ${label} 嗎？按「儲存標籤設定」後才會正式刪除。`)) return;
+            productTags = normalizeProductTags(productTags).filter(item => String(item.id) !== String(id));
+            stockProducts = stockProducts.map(product => ({ ...product, tagIds: (product.tagIds || []).filter(tagId => String(tagId) !== String(id)) }));
+            preorderProducts = preorderProducts.map(product => ({ ...product, tagIds: (product.tagIds || []).filter(tagId => String(tagId) !== String(id)) }));
+            if (!deletedProductTagIds.map(String).includes(String(id))) deletedProductTagIds.push(id);
+            persistProductManagement();
+            markProductTagsDirty();
+            renderProductTagOptions();
+            renderProductTags();
+            renderStockProducts();
+            renderPreorderProducts();
+        }
+
+        async function saveProductTagsSettings() {
+            const state = document.getElementById('product-tag-save-state');
+            if (state) state.textContent = '儲存中...';
+            try {
+                for (const id of deletedProductTagIds) {
+                    await fetchAPI('deleteProductTag', null, id, true);
+                }
+                const normalized = normalizeProductTags(productTags);
+                for (const tag of normalized) {
+                    await fetchAPI('saveProductTag', tag, null, true);
+                }
+                productTags = normalized;
+                deletedProductTagIds = [];
+                persistProductManagement();
+                setProductTagsSaved();
+                renderProductTagOptions();
+                renderProductTags();
+                alert('商品標籤設定已儲存');
+            } catch (error) {
+                markProductTagsDirty();
+                alert(`商品標籤設定儲存失敗：${error.message || error}`);
+            }
         }
 
         function initScheduleManagement() {
@@ -3664,6 +4702,19 @@
             previewBrandSetting('logo');
         }
 
+        function openBrandLogoPicker() {
+            document.getElementById('brand-logo-file-input')?.click();
+        }
+
+        function switchAppearanceTab(tab = 'brand') {
+            const section = document.getElementById('section-brand-management');
+            if (!section) return;
+            section.dataset.appearanceTab = tab;
+            document.querySelectorAll('[data-appearance-nav]').forEach(button => {
+                button.classList.toggle('active', button.dataset.appearanceNav === tab);
+            });
+        }
+
         function handleBrandLogoDrop(event) {
             event.preventDefault();
             event.currentTarget.style.borderColor = 'transparent';
@@ -3693,6 +4744,9 @@
                         publicId: image.public_id || image.publicId || '',
                         sortOrder: brandLogoImages.length,
                         isActive: !hasActive && index === 0,
+                        scale: 1,
+                        positionX: 0,
+                        positionY: 0,
                         createdAt: now,
                         updatedAt: now
                     });
@@ -3720,11 +4774,50 @@
 
         function brandSettingMeta(key) {
             const map = {
-                logo: { type: 'brand-logo', inputId: 'brand-logo-image', previewId: 'brand-logo-preview', label: '品牌LOGO' },
-                watermark: { type: 'brand-watermark', inputId: 'brand-watermark-image', previewId: 'brand-watermark-preview', label: '品牌水印' },
-                textImage: { type: 'brand-text-image', inputId: 'brand-text-image', previewId: 'brand-text-preview', label: '品牌文字圖' }
+                logo: { type: 'brand-logo', inputId: 'brand-logo-image', previewId: 'brand-logo-preview', label: '品牌LOGO', publicIdInputId: 'brand-logo-public-id', publicIdKey: 'logoPublicId' },
+                watermark: { type: 'brand-watermark', inputId: 'brand-watermark-image', previewId: 'brand-watermark-preview', label: '品牌水印', publicIdInputId: 'brand-watermark-public-id', publicIdKey: 'watermarkPublicId' },
+                textImage: { type: 'brand-text-image', inputId: 'brand-text-image', previewId: 'brand-text-preview', label: '品牌文字圖', publicIdInputId: 'brand-text-public-id', publicIdKey: 'textImagePublicId' }
             };
             return map[key];
+        }
+
+        function openBrandAssetPicker(key) {
+            const inputId = key === 'watermark' ? 'brand-watermark-file-input' : 'brand-text-file-input';
+            document.getElementById(inputId)?.click();
+        }
+
+        async function handleBrandAssetFile(key, fileList) {
+            const file = Array.from(fileList || []).find(item => /^image\/(jpeg|png|webp)$/i.test(item.type));
+            if (!file) return alert('請選擇 JPG、PNG 或 WebP 圖片');
+            const folder = key === 'watermark' ? 'site/watermark' : 'site/brand-text';
+            const formData = new FormData();
+            formData.append('folder', folder);
+            formData.append('productId', folder.replace(/\//g, '-'));
+            formData.append('files', file);
+            try {
+                showLoading();
+                const response = await fetch(PRODUCT_UPLOAD_API_URL, { method: 'POST', body: formData });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(result.error || '圖片上傳失敗');
+                const uploaded = (result.images || [])[0];
+                const url = uploaded?.secure_url || uploaded?.url || '';
+                const publicId = uploaded?.public_id || uploaded?.publicId || '';
+                if (!url) throw new Error('Cloudinary 未回傳圖片網址');
+                const meta = brandSettingMeta(key);
+                const input = document.getElementById(meta.inputId);
+                const publicInput = document.getElementById(meta.publicIdInputId);
+                if (input) input.value = url;
+                if (publicInput) publicInput.value = publicId;
+                brandSettings[key] = url;
+                if (meta.publicIdKey) brandSettings[meta.publicIdKey] = publicId;
+                previewBrandSetting(key);
+                await saveBrandSetting(key);
+            } catch (error) {
+                console.error('Brand asset upload failed:', error);
+                alert(error.message || '圖片上傳失敗');
+            } finally {
+                hideLoading();
+            }
         }
 
         function renderBrandLogoGallery() {
@@ -3737,14 +4830,115 @@
             }
             gallery.innerHTML = brandLogoImages.map(image => `
                 <div class="brand-logo-card ${image.isActive ? 'active' : ''}">
-                    <div class="brand-logo-thumb"><img src="${escapeHtml(image.secureUrl)}" alt="LOGO"></div>
+                    <div class="brand-logo-thumb"><img src="${escapeHtml(image.secureUrl)}" alt="LOGO" style="${brandLogoTransformStyle(image)}"></div>
                     <div class="brand-logo-status">${image.isActive ? '目前使用 ✓' : '&nbsp;'}</div>
                     <div class="brand-logo-card-actions">
+                        <button class="btn btn-secondary" type="button" onclick="openBrandLogoEditor(${quoteJs(image.id)})">&#32232;&#36655;</button>
                         <button class="btn btn-primary" type="button" ${image.isActive ? 'disabled' : ''} onclick="setActiveBrandLogo(${quoteJs(image.id)})">設為目前 LOGO</button>
                         <button class="btn btn-danger" type="button" onclick="deleteBrandLogoImage(${quoteJs(image.id)})">刪除</button>
                     </div>
                 </div>
             `).join('');
+        }
+
+        function updateBrandLogoEditorPreview() {
+            if (!brandLogoEditorState) return;
+            const image = document.getElementById('brand-logo-editor-image');
+            const scaleInput = document.getElementById('brand-logo-editor-scale');
+            const scaleValue = document.getElementById('brand-logo-editor-scale-value');
+            const scale = clampBrandLogoNumber(brandLogoEditorState.scale, 1, 3, 1);
+            if (image) {
+                image.src = brandLogoEditorState.secureUrl || '';
+                image.style.transform = `translate(${brandLogoEditorState.positionX}%, ${brandLogoEditorState.positionY}%) scale(${scale})`;
+            }
+            if (scaleInput) scaleInput.value = String(Math.round(scale * 100));
+            if (scaleValue) scaleValue.textContent = `${Math.round(scale * 100)}%`;
+        }
+
+        function openBrandLogoEditor(id) {
+            const image = normalizeBrandLogoImages(brandLogoImages).find(item => item.id === id);
+            if (!image) return;
+            brandLogoEditorState = {
+                id: image.id,
+                secureUrl: image.secureUrl,
+                scale: clampBrandLogoNumber(image.scale, 1, 3, 1),
+                positionX: clampBrandLogoNumber(image.positionX, -100, 100, 0),
+                positionY: clampBrandLogoNumber(image.positionY, -100, 100, 0),
+                dragging: false,
+                startClientX: 0,
+                startClientY: 0,
+                startPositionX: 0,
+                startPositionY: 0
+            };
+            document.getElementById('brandLogoEditorModal')?.classList.add('active');
+            updateBrandLogoEditorPreview();
+        }
+
+        function closeBrandLogoEditor() {
+            brandLogoEditorState = null;
+            document.getElementById('brandLogoEditorModal')?.classList.remove('active');
+        }
+
+        function updateBrandLogoEditorScale(value) {
+            if (!brandLogoEditorState) return;
+            brandLogoEditorState.scale = clampBrandLogoNumber(Number(value) / 100, 1, 3, 1);
+            updateBrandLogoEditorPreview();
+        }
+
+        async function saveBrandLogoEditor() {
+            if (!brandLogoEditorState) return;
+            const now = new Date().toISOString();
+            brandLogoImages = normalizeBrandLogoImages(brandLogoImages).map(image => image.id === brandLogoEditorState.id
+                ? {
+                    ...image,
+                    scale: clampBrandLogoNumber(brandLogoEditorState.scale, 1, 3, 1),
+                    positionX: clampBrandLogoNumber(brandLogoEditorState.positionX, -100, 100, 0),
+                    positionY: clampBrandLogoNumber(brandLogoEditorState.positionY, -100, 100, 0),
+                    updatedAt: now
+                }
+                : image);
+            closeBrandLogoEditor();
+            await saveBrandLogoLibrary();
+        }
+
+        function brandLogoEditorPointerPosition(event) {
+            const point = event.touches?.[0] || event.changedTouches?.[0] || event;
+            return {
+                x: Number(point.clientX || 0),
+                y: Number(point.clientY || 0)
+            };
+        }
+
+        function startBrandLogoEditorDrag(event) {
+            if (!brandLogoEditorState) return;
+            const position = brandLogoEditorPointerPosition(event);
+            brandLogoEditorState.dragging = true;
+            brandLogoEditorState.startClientX = position.x;
+            brandLogoEditorState.startClientY = position.y;
+            brandLogoEditorState.startPositionX = brandLogoEditorState.positionX;
+            brandLogoEditorState.startPositionY = brandLogoEditorState.positionY;
+            document.getElementById('brand-logo-editor-stage')?.classList.add('dragging');
+            event.preventDefault();
+        }
+
+        function moveBrandLogoEditorDrag(event) {
+            if (!brandLogoEditorState?.dragging) return;
+            const stage = document.getElementById('brand-logo-editor-stage');
+            const rect = stage?.getBoundingClientRect();
+            if (!rect?.width || !rect?.height) return;
+            const position = brandLogoEditorPointerPosition(event);
+            const deltaX = ((position.x - brandLogoEditorState.startClientX) / rect.width) * 100;
+            const deltaY = ((position.y - brandLogoEditorState.startClientY) / rect.height) * 100;
+            brandLogoEditorState.positionX = clampBrandLogoNumber(brandLogoEditorState.startPositionX + deltaX, -100, 100, 0);
+            brandLogoEditorState.positionY = clampBrandLogoNumber(brandLogoEditorState.startPositionY + deltaY, -100, 100, 0);
+            updateBrandLogoEditorPreview();
+            event.preventDefault();
+        }
+
+        function endBrandLogoEditorDrag() {
+            if (!brandLogoEditorState) return;
+            brandLogoEditorState.dragging = false;
+            document.getElementById('brand-logo-editor-stage')?.classList.remove('dragging');
         }
 
         async function saveBrandLogoLibrary() {
@@ -3800,7 +4994,7 @@
         }
 
         function renderBrandManagement() {
-            brandSettings = { storeName: DEFAULT_STORE_NAME, storeNameEn: DEFAULT_STORE_NAME_EN, logo: DEFAULT_BRAND_LOGO_URL, logoPublicId: '', logoScale: 100, watermark: '', textImage: '', ...safeParseStorage(BRAND_SETTINGS_KEY, {}), ...brandSettings };
+            brandSettings = { storeName: DEFAULT_STORE_NAME, storeNameEn: DEFAULT_STORE_NAME_EN, logo: DEFAULT_BRAND_LOGO_URL, logoPublicId: '', logoScale: 100, watermark: '', watermarkPublicId: '', watermarkOpacity: 70, watermarkSize: 45, watermarkPosition: 'bottom-right', textImage: '', textImagePublicId: '', ...safeParseStorage(BRAND_SETTINGS_KEY, {}), ...brandSettings };
             migrateCurrentBrandLogoToLibrary();
             const storeNameInput = document.getElementById('brand-store-name');
             if (storeNameInput) storeNameInput.value = brandSettings.storeName || DEFAULT_STORE_NAME;
@@ -3813,12 +5007,501 @@
                 if (!meta) return;
                 const input = document.getElementById(meta.inputId);
                 if (input) input.value = normalizeProductImageUrl(brandSettings[key] || '');
+                const publicInput = document.getElementById(meta.publicIdInputId || '');
+                if (publicInput) publicInput.value = String(brandSettings[meta.publicIdKey] || '').trim();
                 previewBrandSetting(key);
             });
+            const watermarkOpacityInput = document.getElementById('brand-watermark-opacity');
+            const watermarkSizeInput = document.getElementById('brand-watermark-size');
+            const watermarkPositionInput = document.getElementById('brand-watermark-position');
+            if (watermarkOpacityInput) watermarkOpacityInput.value = Math.max(0, Math.min(100, Number(brandSettings.watermarkOpacity) || 70));
+            if (watermarkSizeInput) watermarkSizeInput.value = Math.max(10, Math.min(100, Number(brandSettings.watermarkSize) || 45));
+            if (watermarkPositionInput) watermarkPositionInput.value = ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center'].includes(brandSettings.watermarkPosition) ? brandSettings.watermarkPosition : 'bottom-right';
+            previewBrandSetting('watermark');
+            renderBrandWatermarkControls();
             const scaleInput = document.getElementById('brand-logo-scale');
             if (scaleInput) scaleInput.value = Math.min(200, Math.max(50, Number(brandSettings.logoScale) || 100));
             previewBrandLogoScale();
             renderBrandLogoGallery();
+            renderSiteInfoSettings();
+            renderHomepageAppearanceSettings();
+        }
+
+        function renderSiteInfoSettings() {
+            const fields = {
+                'site-info-instagram-url': siteInfoSettings.instagramUrl,
+                'site-info-line-url': siteInfoSettings.lineUrl,
+                'site-info-contact-email': siteInfoSettings.contactEmail,
+                'site-info-description': siteInfoSettings.description,
+                'site-info-favicon-url': siteInfoSettings.faviconUrl,
+                'site-info-favicon-public-id': siteInfoSettings.faviconPublicId,
+                'site-info-og-url': siteInfoSettings.ogImageUrl,
+                'site-info-og-public-id': siteInfoSettings.ogImagePublicId
+            };
+            Object.entries(fields).forEach(([id, value]) => {
+                const input = document.getElementById(id);
+                if (input) input.value = value || '';
+            });
+            renderSiteInfoAssetPreview('favicon');
+            renderSiteInfoAssetPreview('og');
+        }
+
+        async function saveSiteInfoSettings() {
+            siteInfoSettings.instagramUrl = String(document.getElementById('site-info-instagram-url')?.value || '').trim();
+            siteInfoSettings.lineUrl = String(document.getElementById('site-info-line-url')?.value || '').trim();
+            siteInfoSettings.contactEmail = String(document.getElementById('site-info-contact-email')?.value || '').trim();
+            siteInfoSettings.description = String(document.getElementById('site-info-description')?.value || '').trim();
+            siteInfoSettings.faviconUrl = normalizeProductImageUrl(document.getElementById('site-info-favicon-url')?.value || '');
+            siteInfoSettings.faviconPublicId = String(document.getElementById('site-info-favicon-public-id')?.value || '').trim();
+            siteInfoSettings.ogImageUrl = normalizeProductImageUrl(document.getElementById('site-info-og-url')?.value || '');
+            siteInfoSettings.ogImagePublicId = String(document.getElementById('site-info-og-public-id')?.value || '').trim();
+            const state = document.getElementById('site-info-save-state');
+            if (state) state.textContent = '儲存中...';
+            const saved = await fetchAPI('saveScheduleSetting', {
+                id: 'site-info',
+                type: 'site-info',
+                image: siteInfoSettingsPayload()
+            }, null, true);
+            if (!saved) throw new Error('Site info save failed');
+            if (state) state.textContent = '已儲存';
+            alert('網站資訊已儲存');
+        }
+
+        function switchHomeAppearanceTab(tab = 'announcements') {
+            homeAppearanceTab = tab;
+            document.querySelectorAll('[data-home-appearance-nav]').forEach(button => {
+                button.classList.toggle('active', button.dataset.homeAppearanceNav === tab);
+            });
+            document.querySelectorAll('[data-home-appearance-pane]').forEach(pane => {
+                pane.classList.toggle('active', pane.dataset.homeAppearancePane === tab);
+            });
+        }
+
+        function appearanceDateDisplay(value = '') {
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+            const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+            if (match) return `${match[1]}/${match[2]}/${match[3]} ${match[4]}:${match[5]}`;
+            const date = new Date(raw);
+            if (Number.isNaN(date.getTime())) return raw;
+            return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+        }
+
+        function appearanceDateParts(value = '') {
+            const raw = String(value || '').trim();
+            const match = raw.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
+            if (match) return { date: match[1], time: match[2] };
+            return { date: '', time: '00:00' };
+        }
+
+        function positionAppearanceDatePicker(anchor) {
+            const popover = document.getElementById('appearanceDatePickerPopover');
+            if (!popover || !anchor) return;
+            const rect = anchor.getBoundingClientRect();
+            const margin = 8;
+            const width = Math.min(360, window.innerWidth - 24);
+            const estimatedHeight = 240;
+            let left = Math.max(12, Math.min(rect.left, window.innerWidth - width - 12));
+            let top = rect.bottom + margin;
+            if (top + estimatedHeight > window.innerHeight - 12) {
+                top = Math.max(12, rect.top - estimatedHeight - margin);
+            }
+            popover.style.width = `${width}px`;
+            popover.style.left = `${left}px`;
+            popover.style.top = `${top}px`;
+        }
+
+        function openAppearanceDatePicker(kind, index, field, anchor) {
+            const source = kind === 'announcement' ? siteAnnouncements[index] : siteBanners[index];
+            if (!source) return;
+            const currentValue = String(source[field] || '').trim();
+            const parts = appearanceDateParts(currentValue);
+            appearanceDatePickerState = { kind, index, field, originalValue: currentValue };
+            const title = document.getElementById('appearance-date-picker-title');
+            const dateInput = document.getElementById('appearance-date-picker-date');
+            const timeInput = document.getElementById('appearance-date-picker-time');
+            if (title) title.textContent = `${field === 'startAt' ? '開始時間' : '結束時間'}`;
+            if (dateInput) dateInput.value = parts.date;
+            if (timeInput) timeInput.value = parts.time || '00:00';
+            positionAppearanceDatePicker(anchor);
+            document.getElementById('appearanceDatePickerPopover')?.classList.add('active');
+        }
+
+        function cancelAppearanceDatePicker() {
+            appearanceDatePickerState = null;
+            document.getElementById('appearanceDatePickerPopover')?.classList.remove('active');
+        }
+
+        function confirmAppearanceDatePicker() {
+            if (!appearanceDatePickerState) return cancelAppearanceDatePicker();
+            const dateValue = String(document.getElementById('appearance-date-picker-date')?.value || '').trim();
+            const timeValue = String(document.getElementById('appearance-date-picker-time')?.value || '00:00').trim() || '00:00';
+            const nextValue = dateValue ? `${dateValue}T${timeValue}` : '';
+            const { kind, index, field } = appearanceDatePickerState;
+            if (kind === 'announcement') updateSiteAnnouncement(index, field, nextValue);
+            else updateSiteBanner(index, field, nextValue);
+            cancelAppearanceDatePicker();
+            if (kind === 'announcement') renderSiteAnnouncementList();
+            else renderSiteBannerList();
+        }
+
+        function renderHomepageAppearanceSettings() {
+            renderSiteAnnouncementList();
+            renderSiteBannerList();
+            renderHomepageSectionList();
+            switchHomeAppearanceTab(homeAppearanceTab);
+        }
+
+        function renderSiteAnnouncementList() {
+            const list = document.getElementById('site-announcement-list');
+            if (!list) return;
+            siteAnnouncements = (Array.isArray(siteAnnouncements) ? siteAnnouncements : []).sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0));
+            if (!siteAnnouncements.length) {
+                list.innerHTML = '<div class="appearance-row-card" style="color:#94a3b8;font-size:0.85rem;">目前沒有公告，點「新增公告」建立第一筆。</div>';
+                return;
+            }
+            list.innerHTML = siteAnnouncements.map((announcement, index) => `
+                <div class="appearance-row-card">
+                    <div class="appearance-card-header">
+                        <span class="appearance-card-title">公告 ${index + 1}</span>
+                        <button class="appearance-danger-small" type="button" onclick="deleteSiteAnnouncement(${index})"><i class="fa-regular fa-trash-can"></i> 刪除</button>
+                    </div>
+                    <div class="appearance-compact-grid">
+                        <div class="form-group"><label>公告名稱／備註</label><input type="text" value="${escapeHtml(announcement.name || '')}" onchange="updateSiteAnnouncement(${index}, 'name', this.value)"></div>
+                        <div class="form-group"><label>排序</label><input type="number" value="${Number(announcement.sortOrder || index)}" onchange="updateSiteAnnouncement(${index}, 'sortOrder', this.value)"></div>
+                        <div class="form-group wide"><label>公告文字</label><input type="text" value="${escapeHtml(announcement.text || '')}" onchange="updateSiteAnnouncement(${index}, 'text', this.value)"></div>
+                        <div class="form-group wide"><label>公告連結</label><input type="url" value="${escapeHtml(announcement.href || '')}" placeholder="https://" onchange="updateSiteAnnouncement(${index}, 'href', this.value)"></div>
+                        <div class="form-group"><label>是否顯示</label><select onchange="updateSiteAnnouncement(${index}, 'enabled', this.value === 'true')"><option value="true" ${announcement.enabled ? 'selected' : ''}>顯示</option><option value="false" ${!announcement.enabled ? 'selected' : ''}>停用</option></select></div>
+                        <div class="appearance-datetime-row wide">
+                            <div class="form-group"><label>開始時間</label><input class="appearance-date-display" type="text" readonly value="${escapeHtml(appearanceDateDisplay(announcement.startAt || ''))}" placeholder="未設定" onclick="openAppearanceDatePicker('announcement', ${index}, 'startAt', this)"></div>
+                            <div class="form-group"><label>結束時間</label><input class="appearance-date-display" type="text" readonly value="${escapeHtml(appearanceDateDisplay(announcement.endAt || ''))}" placeholder="未設定" onclick="openAppearanceDatePicker('announcement', ${index}, 'endAt', this)"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderSiteBannerList() {
+            const list = document.getElementById('site-banner-list');
+            if (!list) return;
+            if (!siteBanners.length) {
+                list.innerHTML = '<div class="appearance-row-card" style="color:#94a3b8;font-size:0.85rem;">目前沒有 Banner。</div>';
+                return;
+            }
+            list.innerHTML = siteBanners.map((banner, index) => `
+                <div class="appearance-row-card" data-banner-id="${escapeHtml(banner.id || '')}">
+                    ${siteBannerSummaryHtml(banner, index)}
+                    ${expandedSiteBannerIds.has(banner.id) ? `
+                    <div class="appearance-compact-grid">
+                        <div class="form-group"><label>Banner 名稱</label><input type="text" value="${escapeHtml(banner.name || '')}" onchange="updateSiteBanner(${index}, 'name', this.value)"></div>
+                        <div class="form-group"><label>排序</label><input type="number" value="${Number(banner.sortOrder || index)}" onchange="updateSiteBanner(${index}, 'sortOrder', this.value)"></div>
+                        <div class="form-group"><label>是否顯示</label><select onchange="updateSiteBanner(${index}, 'enabled', this.value === 'true')"><option value="true" ${banner.enabled ? 'selected' : ''}>顯示</option><option value="false" ${!banner.enabled ? 'selected' : ''}>停用</option></select></div>
+                        <div class="form-group"><label>點擊連結</label><input type="url" value="${escapeHtml(banner.href || '')}" placeholder="https://" onchange="updateSiteBanner(${index}, 'href', this.value)"></div>
+                        <div class="appearance-datetime-row wide">
+                            <div class="form-group"><label>開始時間</label><input class="appearance-date-display" type="text" readonly value="${escapeHtml(appearanceDateDisplay(banner.startAt || ''))}" placeholder="未設定" onclick="openAppearanceDatePicker('banner', ${index}, 'startAt', this)"></div>
+                            <div class="form-group"><label>結束時間</label><input class="appearance-date-display" type="text" readonly value="${escapeHtml(appearanceDateDisplay(banner.endAt || ''))}" placeholder="未設定" onclick="openAppearanceDatePicker('banner', ${index}, 'endAt', this)"></div>
+                        </div>
+                    </div>
+                    <div class="appearance-image-field">
+                        <div class="appearance-image-preview">${banner.desktopImageUrl ? `<img src="${escapeHtml(banner.desktopImageUrl)}" alt="電腦版 Banner 預覽">` : '<i class="fa-regular fa-image"></i>'}</div>
+                        <div class="form-group"><label>電腦版圖片</label><input type="file" id="site-banner-desktop-${index}" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleSiteBannerImageFile(${index}, 'desktop', this.files); this.value='';"><button class="btn btn-secondary" type="button" onclick="document.getElementById('site-banner-desktop-${index}')?.click()">上傳電腦版圖片</button><details class="appearance-advanced-url"><summary>圖片網址</summary><input type="url" value="${escapeHtml(banner.desktopImageUrl || '')}" onchange="updateSiteBanner(${index}, 'desktopImageUrl', this.value)"></details></div>
+                    </div>
+                    <div class="appearance-image-field">
+                        <div class="appearance-image-preview">${banner.mobileImageUrl ? `<img src="${escapeHtml(banner.mobileImageUrl)}" alt="手機版 Banner 預覽">` : '<i class="fa-regular fa-image"></i>'}</div>
+                        <div class="form-group"><label>手機版圖片</label><input type="file" id="site-banner-mobile-${index}" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleSiteBannerImageFile(${index}, 'mobile', this.files); this.value='';"><button class="btn btn-secondary" type="button" onclick="document.getElementById('site-banner-mobile-${index}')?.click()">上傳手機版圖片</button><details class="appearance-advanced-url"><summary>圖片網址</summary><input type="url" value="${escapeHtml(banner.mobileImageUrl || '')}" onchange="updateSiteBanner(${index}, 'mobileImageUrl', this.value)"></details></div>
+                    </div>
+                    <div class="brand-setting-actions">
+                        <button class="btn btn-primary" type="button" onclick="saveHomepageAppearanceSettings()"><i class="fa-solid fa-floppy-disk"></i> 儲存</button>
+                        <span id="site-banner-save-state-${index}" class="appearance-save-state"></span>
+                    </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function siteBannerSummaryHtml(banner, index) {
+            const image = banner.desktopImageUrl || banner.mobileImageUrl || '';
+            const expanded = expandedSiteBannerIds.has(banner.id);
+            return `
+                <div class="appearance-collapse-summary">
+                    <div class="appearance-image-preview">${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(banner.name || 'Banner')} 縮圖">` : '<i class="fa-regular fa-image"></i>'}</div>
+                    <div>
+                        <div class="appearance-card-title">${escapeHtml(banner.name || `Banner ${index + 1}`)}</div>
+                        <div style="font-size:0.76rem;color:#64748b;margin-top:0.25rem;">排序 ${Number(banner.sortOrder || index)}</div>
+                    </div>
+                    <button class="appearance-status-pill ${banner.enabled ? 'on' : 'off'}" type="button" onclick="toggleSiteBannerEnabled(${index})">${banner.enabled ? '顯示中' : '隱藏中'}</button>
+                    <button class="appearance-danger-small" type="button" onclick="deleteSiteBanner(${index})"><i class="fa-regular fa-trash-can"></i> 刪除</button>
+                    <button class="appearance-toggle-button" type="button" onclick="toggleSiteBannerExpanded(${index})">${expanded ? '收合 ▲' : '展開 ▼'}</button>
+                </div>
+            `;
+        }
+
+        function renderHomepageSectionList() {
+            const list = document.getElementById('homepage-section-list');
+            if (!list) return;
+            siteNavigation = normalizeSiteNavigation(siteNavigation);
+            const home = siteNavigation.find(item => item.key === 'home') || siteNavigation[0];
+            const sortableItems = siteNavigation.filter(item => item.key !== 'home');
+            list.innerHTML = `
+                <div class="appearance-row-card appearance-nav-list">
+                    <div style="display:grid;grid-template-columns:42px minmax(0,1fr) auto auto;gap:0.65rem;align-items:center;color:#64748b;font-size:0.78rem;font-weight:900;padding:0 0.72rem;">
+                        <span></span>
+                        <span>導覽名稱</span>
+                        <span>狀態</span>
+                        <span>備用排序</span>
+                    </div>
+                    <div class="appearance-nav-row locked" data-nav-key="home">
+                        <button class="appearance-drag-handle" type="button" disabled title="首頁固定第一個">🔒</button>
+                        <div class="appearance-nav-label">${escapeHtml(home.label || '首頁')}</div>
+                        <button class="appearance-status-pill on" type="button" disabled title="首頁固定顯示">顯示中</button>
+                        <div class="appearance-nav-order-buttons"><button type="button" disabled>↑</button><button type="button" disabled>↓</button></div>
+                    </div>
+                    <div class="appearance-nav-sortable" id="site-navigation-sortable">
+                        ${sortableItems.map((item, listIndex) => {
+                            const index = siteNavigation.findIndex(navItem => navItem.key === item.key);
+                            return `
+                        <div class="appearance-nav-row" data-nav-key="${escapeHtml(item.key)}">
+                            <button class="appearance-drag-handle" type="button" title="拖曳排序" aria-label="拖曳 ${escapeHtml(item.label || '')}">⋮⋮</button>
+                            <div class="appearance-nav-label">${escapeHtml(item.label || '')}</div>
+                            <button class="appearance-status-pill ${item.enabled ? 'on' : 'off'}" type="button" onclick="toggleSiteNavigationEnabled(${index})">${item.enabled ? '顯示中' : '隱藏中'}</button>
+                            <div class="appearance-nav-order-buttons">
+                                <button type="button" onclick="moveSiteNavigationItem(${index}, -1)" ${listIndex === 0 ? 'disabled' : ''} aria-label="上移 ${escapeHtml(item.label || '')}">↑</button>
+                                <button type="button" onclick="moveSiteNavigationItem(${index}, 1)" ${listIndex === sortableItems.length - 1 ? 'disabled' : ''} aria-label="下移 ${escapeHtml(item.label || '')}">↓</button>
+                            </div>
+                        </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+            initSiteNavigationSortable();
+        }
+
+        function addSiteBanner() {
+            const id = `banner-${Date.now()}`;
+            siteBanners.push({
+                id,
+                name: '新增 Banner',
+                desktopImageUrl: '',
+                desktopPublicId: '',
+                mobileImageUrl: '',
+                mobilePublicId: '',
+                href: '',
+                enabled: true,
+                sortOrder: siteBanners.length,
+                startAt: '',
+                endAt: ''
+            });
+            expandedSiteBannerIds = new Set([id]);
+            renderSiteBannerList();
+            markHomepageAppearanceDirty();
+        }
+
+        function toggleSiteBannerExpanded(index) {
+            const id = siteBanners[index]?.id;
+            if (!id) return;
+            if (expandedSiteBannerIds.has(id)) expandedSiteBannerIds.delete(id);
+            else expandedSiteBannerIds.add(id);
+            renderSiteBannerList();
+        }
+
+        function addSiteAnnouncement() {
+            siteAnnouncements.push({
+                id: `announcement-${Date.now()}`,
+                name: `公告 ${siteAnnouncements.length + 1}`,
+                text: '',
+                href: '',
+                enabled: true,
+                startAt: '',
+                endAt: '',
+                sortOrder: siteAnnouncements.length
+            });
+            renderSiteAnnouncementList();
+            markHomepageAppearanceDirty();
+        }
+
+        function updateSiteAnnouncement(index, key, value) {
+            if (!siteAnnouncements[index]) return;
+            siteAnnouncements[index][key] = key === 'enabled' ? value === true : key === 'sortOrder' ? Number(value) || 0 : String(value || '');
+            markHomepageAppearanceDirty();
+        }
+
+        function deleteSiteAnnouncement(index) {
+            const announcement = siteAnnouncements[index];
+            if (!announcement) return;
+            if (!confirm('確定要刪除此公告嗎？')) return;
+            siteAnnouncements.splice(index, 1);
+            siteAnnouncements = siteAnnouncements.map((item, itemIndex) => ({ ...item, sortOrder: Number(item.sortOrder ?? itemIndex) }));
+            renderSiteAnnouncementList();
+            markHomepageAppearanceDirty();
+        }
+
+        function updateSiteBanner(index, key, value) {
+            if (!siteBanners[index]) return;
+            siteBanners[index][key] = key === 'enabled' ? value === true : key === 'sortOrder' ? Number(value) || 0 : String(value || '');
+            markHomepageAppearanceDirty();
+        }
+
+        function toggleSiteBannerEnabled(index) {
+            if (!siteBanners[index]) return;
+            siteBanners[index].enabled = siteBanners[index].enabled !== true;
+            markHomepageAppearanceDirty();
+            renderSiteBannerList();
+        }
+
+        async function handleSiteBannerImageFile(index, target, fileList) {
+            const banner = siteBanners[index];
+            const file = Array.from(fileList || []).find(item => /^image\/(jpeg|png|webp)$/i.test(item.type));
+            if (!banner || !file) return alert('請選擇 JPG、PNG 或 WebP 圖片');
+            const formData = new FormData();
+            formData.append('folder', 'site/banners');
+            formData.append('productId', 'site-banner');
+            formData.append('files', file);
+            try {
+                showLoading();
+                const response = await fetch(PRODUCT_UPLOAD_API_URL, { method: 'POST', body: formData });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(result.error || 'Banner 圖片上傳失敗');
+                const uploaded = (result.images || [])[0];
+                const url = uploaded?.secure_url || uploaded?.url || '';
+                const publicId = uploaded?.public_id || uploaded?.publicId || '';
+                if (!url) throw new Error('Cloudinary 未回傳圖片網址');
+                if (target === 'mobile') {
+                    banner.mobileImageUrl = url;
+                    banner.mobilePublicId = publicId;
+                } else {
+                    banner.desktopImageUrl = url;
+                    banner.desktopPublicId = publicId;
+                }
+                renderSiteBannerList();
+                markHomepageAppearanceDirty();
+            } catch (error) {
+                console.error('Banner upload failed:', error);
+                alert(error.message || 'Banner 圖片上傳失敗');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function deleteSiteBanner(index) {
+            const banner = siteBanners[index];
+            if (!banner) return;
+            if (!confirm(banner.enabled ? '確定要刪除此使用中的 Banner 嗎？' : '確定要刪除此 Banner 嗎？')) return;
+            const publicIds = [banner.desktopPublicId, banner.mobilePublicId].filter(Boolean);
+            if (publicIds.length) await deleteCloudinaryImages(publicIds);
+            siteBanners.splice(index, 1);
+            renderSiteBannerList();
+            markHomepageAppearanceDirty();
+        }
+
+        function updateHomepageSection(index, key, value) {
+            if (!homepageSections[index]) return;
+            homepageSections[index][key] = key === 'enabled' ? value === true : ['sortOrder', 'maxItems'].includes(key) ? Number(value) || 0 : String(value || '');
+            markHomepageAppearanceDirty();
+        }
+
+        let siteNavigationSortable = null;
+
+        function toggleSiteNavigationEnabled(index) {
+            siteNavigation = normalizeSiteNavigation(siteNavigation);
+            const item = siteNavigation[index];
+            if (!item || item.locked) return;
+            item.enabled = item.enabled !== true;
+            markHomepageAppearanceDirty();
+            renderHomepageSectionList();
+        }
+
+        function moveSiteNavigationItem(index, direction) {
+            siteNavigation = normalizeSiteNavigation(siteNavigation);
+            const targetIndex = index + direction;
+            if (index <= 0 || targetIndex <= 0 || targetIndex >= siteNavigation.length || siteNavigation[index]?.locked) return;
+            const items = [...siteNavigation];
+            const [moved] = items.splice(index, 1);
+            items.splice(targetIndex, 0, moved);
+            siteNavigation = normalizeSiteNavigation(items.map((item, index) => ({ ...item, sortOrder: index })));
+            markHomepageAppearanceDirty();
+            renderHomepageSectionList();
+        }
+
+        function syncSiteNavigationFromSortable() {
+            const container = document.getElementById('site-navigation-sortable');
+            if (!container) return;
+            siteNavigation = normalizeSiteNavigation(siteNavigation);
+            const currentByKey = new Map(siteNavigation.map(item => [item.key, item]));
+            const home = currentByKey.get('home') || defaultSiteNavigation()[0];
+            const sortedKeys = Array.from(container.querySelectorAll('.appearance-nav-row'))
+                .map(row => row.dataset.navKey)
+                .filter(key => key && key !== 'home' && currentByKey.has(key));
+            siteNavigation = normalizeSiteNavigation([
+                { ...home, key: 'home', enabled: true, locked: true, sortOrder: 0 },
+                ...sortedKeys.map((key, index) => ({ ...currentByKey.get(key), sortOrder: index + 1 }))
+            ]);
+        }
+
+        function initSiteNavigationSortable() {
+            const container = document.getElementById('site-navigation-sortable');
+            if (!container) return;
+            if (siteNavigationSortable) {
+                siteNavigationSortable.destroy();
+                siteNavigationSortable = null;
+            }
+            if (!window.Sortable) {
+                console.warn('SortableJS is not loaded; navigation fallback buttons remain available.');
+                return;
+            }
+            siteNavigationSortable = Sortable.create(container, {
+                animation: 180,
+                handle: '.appearance-drag-handle',
+                draggable: '.appearance-nav-row',
+                ghostClass: 'appearance-nav-sortable-ghost',
+                chosenClass: 'appearance-nav-sortable-chosen',
+                dragClass: 'appearance-nav-sortable-drag',
+                forceFallback: true,
+                fallbackOnBody: true,
+                fallbackTolerance: 4,
+                delay: 120,
+                delayOnTouchOnly: true,
+                scroll: true,
+                bubbleScroll: true,
+                filter: '.appearance-status-pill, .appearance-nav-order-buttons button',
+                preventOnFilter: false,
+                onEnd: () => {
+                    syncSiteNavigationFromSortable();
+                    markHomepageAppearanceDirty();
+                    renderHomepageSectionList();
+                }
+            });
+        }
+
+        function markHomepageAppearanceDirty() {
+            const state = document.getElementById('homepage-save-state');
+            if (state) state.textContent = '尚未儲存';
+            document.querySelectorAll('[id^="site-banner-save-state-"]').forEach(element => {
+                element.textContent = '尚未儲存';
+            });
+        }
+
+        async function saveHomepageAppearanceSettings() {
+            siteAnnouncements = siteAnnouncements.sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0));
+            siteBanners = siteBanners.sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0));
+            homepageSections = homepageSections.sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0));
+            siteNavigation = normalizeSiteNavigation(siteNavigation);
+            const state = document.getElementById('homepage-save-state');
+            if (state) state.textContent = '儲存中...';
+            const saves = [
+                fetchAPI('saveScheduleSetting', { id: 'site-announcements', type: 'site-announcements', image: siteAnnouncementPayload() }, null, true),
+                fetchAPI('saveScheduleSetting', { id: 'site-banners', type: 'site-banners', image: siteBannersPayload() }, null, true),
+                fetchAPI('saveScheduleSetting', { id: 'homepage-sections', type: 'homepage-sections', image: homepageSectionsPayload() }, null, true),
+                fetchAPI('saveScheduleSetting', { id: 'site-navigation', type: 'site-navigation', image: siteNavigationPayload() }, null, true)
+            ];
+            const results = await Promise.all(saves);
+            if (results.some(result => !result)) throw new Error('Homepage settings save failed');
+            if (state) state.textContent = '已儲存';
+            document.querySelectorAll('[id^="site-banner-save-state-"]').forEach(element => {
+                element.textContent = '已儲存';
+            });
+            renderHomepageAppearanceSettings();
+            alert('首頁內容設定已儲存');
         }
 
         function previewBrandSetting(key) {
@@ -3829,10 +5512,61 @@
             if (!input || !preview) return;
             const image = normalizeProductImageUrl(input.value);
             if (key === 'logo') brandSettings.logo = image || DEFAULT_BRAND_LOGO_URL;
+            if (key === 'watermark') {
+                brandSettings.watermark = image;
+                preview.innerHTML = image
+                    ? `<div class="brand-watermark-preview-stage"><img src="${escapeHtml(image)}" alt="${escapeHtml(meta.label)}預覽"></div>`
+                    : '<i class="fa-regular fa-image"></i>';
+                renderBrandWatermarkControls();
+                return;
+            }
             preview.innerHTML = image
                 ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(meta.label)}預覽">`
                 : '<i class="fa-regular fa-image"></i>';
             if (key === 'logo') previewBrandLogoScale();
+        }
+
+        function renderBrandWatermarkControls() {
+            const opacityInput = document.getElementById('brand-watermark-opacity');
+            const opacityValue = document.getElementById('brand-watermark-opacity-value');
+            const sizeInput = document.getElementById('brand-watermark-size');
+            const sizeValue = document.getElementById('brand-watermark-size-value');
+            const positionInput = document.getElementById('brand-watermark-position');
+            const opacity = Math.max(0, Math.min(100, Number(opacityInput?.value || brandSettings.watermarkOpacity) || 70));
+            const size = Math.max(10, Math.min(100, Number(sizeInput?.value || brandSettings.watermarkSize) || 45));
+            const position = ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center'].includes(positionInput?.value || brandSettings.watermarkPosition)
+                ? (positionInput?.value || brandSettings.watermarkPosition)
+                : 'bottom-right';
+            brandSettings.watermarkOpacity = opacity;
+            brandSettings.watermarkSize = size;
+            brandSettings.watermarkPosition = position;
+            if (opacityInput) opacityInput.value = opacity;
+            if (opacityValue) opacityValue.textContent = `${opacity}%`;
+            if (sizeInput) sizeInput.value = size;
+            if (sizeValue) sizeValue.textContent = `${size}%`;
+            if (positionInput) positionInput.value = position;
+
+            const image = document.querySelector('#brand-watermark-preview img');
+            if (!image) return;
+            const stageSize = 180;
+            const pixelSize = Math.round(stageSize * (size / 100));
+            const inset = 10;
+            const positions = {
+                'top-left': { left: `${inset}px`, right: '', top: `${inset}px`, bottom: '', transform: '' },
+                'top-right': { left: '', right: `${inset}px`, top: `${inset}px`, bottom: '', transform: '' },
+                'bottom-left': { left: `${inset}px`, right: '', top: '', bottom: `${inset}px`, transform: '' },
+                'bottom-right': { left: '', right: `${inset}px`, top: '', bottom: `${inset}px`, transform: '' },
+                center: { left: '50%', right: '', top: '50%', bottom: '', transform: 'translate(-50%, -50%)' }
+            };
+            const style = positions[position] || positions['bottom-right'];
+            image.style.width = `${pixelSize}px`;
+            image.style.height = `${pixelSize}px`;
+            image.style.opacity = String(opacity / 100);
+            image.style.left = style.left;
+            image.style.right = style.right;
+            image.style.top = style.top;
+            image.style.bottom = style.bottom;
+            image.style.transform = style.transform;
         }
 
         function previewBrandLogoScale() {
@@ -3840,8 +5574,10 @@
             const value = document.getElementById('brand-logo-scale-value');
             const previewImage = document.querySelector('#brand-logo-preview img');
             const scale = Math.min(200, Math.max(50, Number(input?.value) || 100));
+            const activeLogo = activeBrandLogoImage();
             if (value) value.textContent = `${scale}%`;
-            if (previewImage) previewImage.style.transform = `scale(${scale / 100})`;
+            if (previewImage && activeLogo) previewImage.setAttribute('style', brandLogoTransformStyle(activeLogo));
+            else if (previewImage) previewImage.style.transform = `scale(${scale / 100})`;
         }
 
         async function saveBrandSetting(key) {
@@ -3852,6 +5588,9 @@
             const image = normalizeProductImageUrl(input.value);
             if (input.value.trim() && !image) return alert('請輸入有效的圖片 URL');
             brandSettings[key] = image;
+            if (meta.publicIdInputId && meta.publicIdKey) {
+                brandSettings[meta.publicIdKey] = String(document.getElementById(meta.publicIdInputId)?.value || brandSettings[meta.publicIdKey] || '').trim();
+            }
             if (key === 'logo') {
                 const storeNameInput = document.getElementById('brand-store-name');
                 const storeNameEnInput = document.getElementById('brand-store-name-en');
@@ -3863,9 +5602,11 @@
                 const scaleInput = document.getElementById('brand-logo-scale');
                 brandSettings.logoScale = Math.min(200, Math.max(50, Number(scaleInput?.value) || 100));
             }
+            if (key === 'watermark') renderBrandWatermarkControls();
             localStorage.setItem(BRAND_SETTINGS_KEY, JSON.stringify(brandSettings));
             previewBrandSetting(key);
-            const savedSetting = await fetchAPI('saveScheduleSetting', { id: meta.type, type: meta.type, image }, null, true);
+            const payloadImage = key === 'watermark' ? brandWatermarkPayload() : key === 'textImage' ? brandTextImagePayload() : image;
+            const savedSetting = await fetchAPI('saveScheduleSetting', { id: meta.type, type: meta.type, image: payloadImage }, null, true);
             if (!savedSetting) throw new Error(`${meta.label}保存失敗`);
             if (key === 'logo') {
                 const savedBrand = await fetchAPI('saveScheduleSetting', {
@@ -3899,6 +5640,102 @@
                 }
             }
             alert(`${meta.label}已保存`);
+        }
+
+        function renderSiteInfoAssetPreview(kind) {
+            const url = kind === 'favicon' ? siteInfoSettings.faviconUrl : siteInfoSettings.ogImageUrl;
+            const preview = document.getElementById(kind === 'favicon' ? 'site-info-favicon-preview' : 'site-info-og-preview');
+            if (!preview) return;
+            preview.innerHTML = url
+                ? `<img src="${escapeHtml(url)}" alt="${kind === 'favicon' ? 'Favicon' : 'OG 分享圖'}預覽">`
+                : '<i class="fa-regular fa-image"></i>';
+        }
+
+        function openSiteInfoAssetPicker(kind) {
+            document.getElementById(kind === 'favicon' ? 'site-info-favicon-file-input' : 'site-info-og-file-input')?.click();
+        }
+
+        async function handleSiteInfoAssetFile(kind, fileList) {
+            const allowed = /^image\/(jpeg|png|webp)$/i;
+            const file = Array.from(fileList || []).find(item => allowed.test(item.type));
+            if (!file) return alert('請選擇 JPG、PNG 或 WebP 圖片');
+            const folder = kind === 'favicon' ? 'site/favicon' : 'site/og';
+            const formData = new FormData();
+            formData.append('folder', folder);
+            formData.append('productId', folder.replace(/\//g, '-'));
+            formData.append('files', file);
+            try {
+                showLoading();
+                const response = await fetch(PRODUCT_UPLOAD_API_URL, { method: 'POST', body: formData });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(result.error || '網站資訊圖片上傳失敗');
+                const uploaded = (result.images || [])[0];
+                const url = uploaded?.secure_url || uploaded?.url || '';
+                const publicId = uploaded?.public_id || uploaded?.publicId || '';
+                if (!url) throw new Error('Cloudinary 未回傳圖片網址');
+                if (kind === 'favicon') {
+                    siteInfoSettings.faviconUrl = url;
+                    siteInfoSettings.faviconPublicId = publicId;
+                    const urlInput = document.getElementById('site-info-favicon-url');
+                    const publicInput = document.getElementById('site-info-favicon-public-id');
+                    if (urlInput) urlInput.value = url;
+                    if (publicInput) publicInput.value = publicId;
+                } else {
+                    siteInfoSettings.ogImageUrl = url;
+                    siteInfoSettings.ogImagePublicId = publicId;
+                    const urlInput = document.getElementById('site-info-og-url');
+                    const publicInput = document.getElementById('site-info-og-public-id');
+                    if (urlInput) urlInput.value = url;
+                    if (publicInput) publicInput.value = publicId;
+                }
+                renderSiteInfoAssetPreview(kind);
+                await saveSiteInfoSettings();
+            } catch (error) {
+                console.error('Site info asset upload failed:', error);
+                alert(error.message || '網站資訊圖片上傳失敗');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function deleteSiteInfoAsset(kind) {
+            const isFavicon = kind === 'favicon';
+            const publicId = isFavicon ? siteInfoSettings.faviconPublicId : siteInfoSettings.ogImagePublicId;
+            if (!confirm(`確定要刪除此${isFavicon ? ' Favicon' : ' OG 分享圖'}嗎？`)) return;
+            if (publicId) await deleteCloudinaryImages([publicId]);
+            if (isFavicon) {
+                siteInfoSettings.faviconUrl = '';
+                siteInfoSettings.faviconPublicId = '';
+                const urlInput = document.getElementById('site-info-favicon-url');
+                const publicInput = document.getElementById('site-info-favicon-public-id');
+                if (urlInput) urlInput.value = '';
+                if (publicInput) publicInput.value = '';
+            } else {
+                siteInfoSettings.ogImageUrl = '';
+                siteInfoSettings.ogImagePublicId = '';
+                const urlInput = document.getElementById('site-info-og-url');
+                const publicInput = document.getElementById('site-info-og-public-id');
+                if (urlInput) urlInput.value = '';
+                if (publicInput) publicInput.value = '';
+            }
+            renderSiteInfoAssetPreview(kind);
+            await saveSiteInfoSettings();
+        }
+
+        async function deleteBrandAsset(key) {
+            const meta = brandSettingMeta(key);
+            if (!meta) return;
+            const publicId = String(brandSettings[meta.publicIdKey] || '').trim();
+            if (!confirm(`確定要刪除此${meta.label}嗎？`)) return;
+            if (publicId) await deleteCloudinaryImages([publicId]);
+            brandSettings[key] = '';
+            if (meta.publicIdKey) brandSettings[meta.publicIdKey] = '';
+            const input = document.getElementById(meta.inputId);
+            const publicInput = document.getElementById(meta.publicIdInputId);
+            if (input) input.value = '';
+            if (publicInput) publicInput.value = '';
+            previewBrandSetting(key);
+            await saveBrandSetting(key);
         }
 
         function scheduleList(type) {
