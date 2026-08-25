@@ -10,6 +10,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script>
+        if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+            document.write('<script src="./backend-env.local.js"><\/script>');
+        }
+    </script>
     <style>
         :root {
             --sidebar-bg: #1e293b;
@@ -375,10 +380,13 @@
         .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.7); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(2px); }
         .loading-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
         .spinner { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: var(--primary-color); animation: spin 1s ease-in-out infinite; }
+        .environment-badge { display: none; position: fixed; right: 1rem; top: 0.75rem; z-index: 2000; border-radius: 999px; background: #f97316; color: white; box-shadow: 0 8px 18px rgba(249, 115, 22, 0.28); padding: 0.35rem 0.75rem; font-size: 0.75rem; font-weight: 900; letter-spacing: 0.08em; }
+        .environment-badge.active { display: inline-flex; align-items: center; gap: 0.35rem; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+    <div class="environment-badge" id="environmentBadge">STAGING</div>
 
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
@@ -1996,7 +2004,12 @@
         });
 
         // --- Data & API ---
-        const API_URL = 'https://script.google.com/macros/s/AKfycbyC48NPyP1ookWXtJAiV9TAUO05rLcroNAF_Bd9GrNDHWCaTF4YrbKmKzT-mHpI-a7Fgw/exec';
+        const PRODUCTION_BACKEND_API_URL = 'https://script.google.com/macros/s/AKfycbyC48NPyP1ookWXtJAiV9TAUO05rLcroNAF_Bd9GrNDHWCaTF4YrbKmKzT-mHpI-a7Fgw/exec';
+        const LOCAL_BACKEND_API_URL = String(window.PINKKKUIN_BACKEND_API_URL || '').trim();
+        const API_URL = LOCAL_BACKEND_API_URL || PRODUCTION_BACKEND_API_URL;
+        const BACKEND_ENV_LABEL = String(window.PINKKKUIN_BACKEND_ENV || (LOCAL_BACKEND_API_URL ? 'STAGING' : 'PRODUCTION')).toUpperCase();
+        const IS_STAGING_BACKEND = BACKEND_ENV_LABEL === 'STAGING' || API_URL !== PRODUCTION_BACKEND_API_URL;
+        const IS_LOCAL_BACKEND_PAGE = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
         const CUSTOMER_ORDER_SOURCE_ID = 2026061002;
         const PRODUCT_TAGS_KEY = 'pinkkkuin_product_tags';
         const STOCK_PRODUCTS_KEY = 'pinkkkuin_stock_products';
@@ -2067,6 +2080,20 @@
 
         function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
         function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
+
+        function renderEnvironmentBadge() {
+            const badge = document.getElementById('environmentBadge');
+            if (!badge) return;
+            if (IS_STAGING_BACKEND) {
+                badge.textContent = BACKEND_ENV_LABEL || 'STAGING';
+                badge.classList.add('active');
+                console.info(`Backend environment: ${BACKEND_ENV_LABEL}`);
+            } else {
+                badge.classList.remove('active');
+            }
+        }
+
+        renderEnvironmentBadge();
 
         function renderBackendData() {
             populateFilterVendors();
@@ -2257,6 +2284,9 @@
         async function fetchAPI(action, payload = null, id = null, skipRender = false) {
             showLoading();
             try {
+                if (IS_LOCAL_BACKEND_PAGE && IS_STAGING_BACKEND && !LOCAL_BACKEND_API_URL) {
+                    throw new Error('本機 STAGING 後台尚未設定 backend-env.local.js 的 PINKKKUIN_BACKEND_API_URL，已阻止連到正式 Apps Script。');
+                }
                 const body = { action: action };
                 if (payload) {
                     body.payload = JSON.parse(JSON.stringify(payload));
