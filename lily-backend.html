@@ -71,8 +71,8 @@
         .topbar-icon:hover { color: var(--primary-color); }
         .user-profile { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; }
         .user-avatar { width: 32px; height: 32px; border-radius: 50%; background-color: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .content { flex: 1; padding: 2rem; overflow-y: auto; position: relative; }
-        .section-container { display: none; flex-direction: column; gap: 1.5rem; animation: fadeIn 0.3s ease; }
+        .content { flex: 1; min-width: 0; padding: 2rem; overflow-y: auto; position: relative; }
+        .section-container { display: none; min-width: 0; flex-direction: column; gap: 1.5rem; animation: fadeIn 0.3s ease; }
         .section-container.active { display: flex; }
 
         /* Welcome Section */
@@ -111,6 +111,147 @@
         .empty-state { text-align: center; padding: 3rem; color: #94a3b8; }
         .date-link { color: var(--primary-color); text-decoration: underline; cursor: pointer; font-weight: 600; }
         .date-link:hover { color: var(--primary-hover); }
+        .storefront-order-layout { display: block; min-width: 0; }
+        .storefront-order-table-shell { max-width: 100%; min-width: 0; overflow: hidden; }
+        .storefront-order-table-scroll { overflow-x: auto; overflow-y: hidden; max-width: 100%; overscroll-behavior-x: contain; }
+        .storefront-order-table { min-width: 1540px; table-layout: auto; }
+        .storefront-order-table th, .storefront-order-table td { white-space: nowrap; vertical-align: middle; padding: 0.78rem 0.85rem; }
+        .storefront-order-table th:nth-child(2), .storefront-order-table td:nth-child(2) { min-width: 82px; }
+        .storefront-order-table th:nth-child(3), .storefront-order-table td:nth-child(3) { min-width: 150px; }
+        .storefront-order-table th:nth-child(4), .storefront-order-table td:nth-child(4),
+        .storefront-order-table th:nth-child(6), .storefront-order-table td:nth-child(6) { min-width: 110px; }
+        .storefront-order-table th:nth-child(5), .storefront-order-table td:nth-child(5) { min-width: 120px; }
+        .storefront-order-table th:nth-child(7), .storefront-order-table td:nth-child(7),
+        .storefront-order-table th:nth-child(8), .storefront-order-table td:nth-child(8) { min-width: 118px; }
+        .storefront-order-table th:nth-child(9), .storefront-order-table td:nth-child(9),
+        .storefront-order-table th:nth-child(10), .storefront-order-table td:nth-child(10),
+        .storefront-order-table th:nth-child(11), .storefront-order-table td:nth-child(11) { min-width: 104px; text-align: center; }
+        .storefront-order-table th:nth-child(12), .storefront-order-table td:nth-child(12) { min-width: 112px; text-align: right; }
+        .storefront-order-table th { position: sticky; top: 0; z-index: 2; }
+        .storefront-order-table .order-no-cell { position: sticky; left: 0; z-index: 3; background: white; min-width: 190px; box-shadow: 8px 0 12px rgba(15, 23, 42, 0.04); }
+        .storefront-order-table th.order-no-cell { background: #f8fafc; z-index: 4; }
+        .storefront-order-table .order-action-cell { position: sticky; right: 0; z-index: 3; background: white; min-width: 150px; box-shadow: -8px 0 12px rgba(15, 23, 42, 0.04); }
+        .storefront-order-table th.order-action-cell { background: #f8fafc; z-index: 4; }
+        .storefront-order-table tr:hover .order-no-cell, .storefront-order-table tr:hover .order-action-cell { background: var(--table-hover); }
+        .storefront-order-no { display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 900; color: #334155; }
+        .copy-order-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid #fbcfe8; border-radius: 999px; background: #fff7fb; color: #be185d; cursor: pointer; transition: all 0.16s ease; flex: 0 0 auto; }
+        .copy-order-btn:hover { background: #fce7f3; transform: translateY(-1px); }
+        .copy-order-btn.copied { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+        .storefront-order-copy-toast { position: fixed; right: 1rem; bottom: 1rem; z-index: 2000; border-radius: 999px; background: #be185d; color: white; padding: 0.55rem 0.9rem; font-size: 0.82rem; font-weight: 900; box-shadow: 0 12px 30px rgba(190, 24, 93, 0.26); opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.18s ease, transform 0.18s ease; }
+        .storefront-order-copy-toast.show { opacity: 1; transform: translateY(0); }
+        .storefront-order-filterbar { display: grid; gap: 0.55rem; padding: 0.75rem 0.85rem; border: 1px solid #fce7f3; border-radius: 0.9rem; background: #fff7fb; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
+        .storefront-order-search-row { display: flex; gap: 0.5rem; align-items: center; }
+        .storefront-order-search-input { flex: 1 1 360px; min-width: 220px; }
+        .storefront-order-filter-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end; }
+        .storefront-order-filter-field { display: grid; gap: 0.22rem; min-width: 112px; }
+        .storefront-order-filter-field label { color: #64748b; font-size: 0.72rem; font-weight: 900; }
+        .storefront-order-filter-field input, .storefront-order-filter-field select, .storefront-order-search-input { min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.72rem; padding: 0.42rem 0.62rem; background: white; color: #334155; font-size: 0.82rem; font-weight: 800; outline: none; }
+        .storefront-order-filter-field input { width: 138px; }
+        .storefront-order-filter-field select { width: 118px; }
+        .storefront-order-filter-field input:focus, .storefront-order-filter-field select:focus, .storefront-order-search-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
+        .storefront-order-pagination-footer { display: flex; align-items: center; justify-content: space-between; gap: 0.85rem; flex-wrap: wrap; padding-top: 0.85rem; color: #64748b; font-size: 0.8rem; font-weight: 900; }
+        .storefront-order-result-count { color: #64748b; font-size: 0.8rem; font-weight: 900; padding: 0 0.15rem; }
+        .storefront-order-pagination-controls { display: flex; align-items: center; justify-content: flex-end; gap: 0.38rem; flex-wrap: wrap; }
+        .storefront-order-page-size-select { min-height: 32px; border: 1px solid #fbcfe8; border-radius: 999px; padding: 0.32rem 0.72rem; background: white; color: #334155; font-size: 0.8rem; font-weight: 900; outline: none; }
+        .storefront-order-pagination { display: flex; justify-content: flex-end; align-items: center; gap: 0.32rem; flex-wrap: wrap; color: #64748b; font-size: 0.8rem; font-weight: 900; }
+        .storefront-order-page-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; border: 1px solid #fbcfe8; border-radius: 999px; background: white; color: #be185d; font-size: 0.8rem; font-weight: 900; cursor: pointer; transition: all 0.16s ease; }
+        .storefront-order-page-btn:hover:not(:disabled), .storefront-order-page-btn.active { background: #fce7f3; border-color: #f472b6; color: #9d174d; }
+        .storefront-order-page-btn.active { box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.14); }
+        .storefront-order-page-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .storefront-order-page-ellipsis { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; color: #94a3b8; }
+        .storefront-order-detail-row > td { padding: 0; background: #fff7fb; white-space: normal; border-bottom: 1px solid #fce7f3; }
+        .storefront-order-detail-viewport { position: sticky; left: 0; z-index: 2; width: var(--storefront-order-detail-width, 100%); max-width: var(--storefront-order-detail-width, 100%); min-width: 0; padding: 0.9rem; box-sizing: border-box; overflow-x: hidden; }
+        .storefront-order-inline-detail { width: 100%; max-width: 100%; min-width: 0; display: grid; gap: 0.75rem; padding: 0.9rem 1rem; border: 1px solid #fbcfe8; border-radius: 1rem; background: #fff; box-shadow: none; overflow: hidden; }
+        .storefront-order-inline-header { z-index: 2; display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding-bottom: 0.62rem; border-bottom: 1px dashed #f9a8d4; background: white; max-width: 100%; }
+        .storefront-order-inline-title { display: flex; align-items: center; gap: 0.75rem; min-width: 0; flex-wrap: wrap; }
+        .storefront-order-inline-eyebrow { color: #be185d; font-size: 0.78rem; font-weight: 900; letter-spacing: 0.02em; }
+        .storefront-order-inline-no { display: inline-flex; align-items: center; gap: 0.45rem; min-width: 0; color: #334155; font-size: 0.95rem; font-weight: 950; }
+        .storefront-order-inline-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; color: #64748b; font-size: 0.78rem; font-weight: 800; }
+        .storefront-order-inline-grid { display: grid; gap: 0.7rem; }
+        .storefront-order-inline-section { display: grid; gap: 0.55rem; padding-bottom: 0.72rem; border-bottom: 1px dashed #f9a8d4; }
+        .storefront-order-inline-section:last-child { padding-bottom: 0; border-bottom: 0; }
+        .storefront-order-inline-section h3 { font-size: 0.88rem; color: #be185d; margin: 0; }
+        .storefront-order-info-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 0; row-gap: 0.7rem; align-items: start; }
+        .storefront-order-mini-section { display: grid; gap: 0.32rem; align-content: start; padding: 0 12px; border-right: 1px dashed #fbcfe8; min-width: 0; }
+        .storefront-order-mini-section:first-child { padding-left: 0; }
+        .storefront-order-mini-section:last-child { padding-right: 0; border-right: 0; }
+        .storefront-order-mini-section h4 { color: #9d174d; font-size: 0.8rem; font-weight: 950; margin: 0; }
+        .storefront-order-status-panel { display: grid; gap: 0.5rem; }
+        .storefront-order-status-row { display: grid; grid-template-columns: 50px 58px minmax(80px, 92px); gap: 0.25rem; align-items: center; min-width: 0; }
+        .storefront-order-status-heading { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; color: #64748b; font-size: 0.78rem; font-weight: 900; }
+        .storefront-order-status-label { color: #64748b; font-size: 0.78rem; font-weight: 900; white-space: nowrap; }
+        .storefront-order-status-select { min-width: 0; }
+        .storefront-order-status-cancel { margin-top: 0.15rem; justify-self: start; width: fit-content; }
+        .storefront-order-action-buttons { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+        .storefront-order-action-buttons .btn { min-height: 30px; padding: 0.34rem 0.65rem; font-size: 0.76rem; border-radius: 999px; }
+        .storefront-order-status-note { color: #94a3b8; font-size: 0.76rem; font-weight: 800; }
+        .storefront-order-section { display: grid; gap: 0.5rem; padding-bottom: 1rem; border-bottom: 1px dashed #f9a8d4; }
+        .storefront-order-section:last-child { border-bottom: 0; padding-bottom: 0; }
+        .storefront-order-section h3 { font-size: 0.95rem; color: #be185d; }
+        .storefront-order-kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.2rem 4px; font-size: 0.79rem; line-height: 1.45; margin: 0; }
+        .storefront-order-kv dt { color: #64748b; font-weight: 800; }
+        .storefront-order-kv dd { color: #334155; font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+        .storefront-order-items { display: grid; gap: 0.55rem; }
+        .storefront-order-item { border: 1px solid #fce7f3; border-radius: 0.8rem; padding: 0.7rem; background: #fff7fb; display: grid; gap: 0.35rem; font-size: 0.82rem; }
+        .storefront-order-item-title { font-weight: 900; color: #334155; }
+        .storefront-order-item-meta { color: #64748b; font-weight: 700; }
+        .storefront-order-item-table-wrap { overflow-x: visible; max-width: 100%; border: 1px solid #fce7f3; border-radius: 0.75rem; }
+        .storefront-order-item-table { width: 100%; max-width: 100%; min-width: 0; background: white; table-layout: fixed; }
+        .storefront-order-item-table th, .storefront-order-item-table td { padding: 9px 12px; white-space: nowrap; vertical-align: middle; height: 40px; }
+        .storefront-order-item-table th { color: #be185d; font-size: 0.78rem; }
+        .storefront-order-item-table td { font-size: 0.82rem; }
+        .storefront-order-item-table th:not(:first-child), .storefront-order-item-table td:not(:first-child) { text-align: center; }
+        .storefront-order-item-table th:first-child, .storefront-order-item-table td:first-child { text-align: left; }
+        .storefront-order-item-table td:first-child strong { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+        .storefront-order-item-table tfoot td { background: #fff7fb; border-top: 1px dashed #f9a8d4; font-weight: 900; }
+        .storefront-order-item-table .summary-label { text-align: right; color: #64748b; }
+        .storefront-order-item-table .summary-qty { text-align: center; color: #334155; }
+        .storefront-order-item-table .summary-value { text-align: center; color: #334155; }
+        .storefront-order-item-table .discount-row .summary-value { color: #be185d; }
+        .storefront-order-item-table .total-row td { color: #be185d; font-size: 0.9rem; }
+        .status-pill { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; border-radius: 999px; padding: 0.24rem 0.56rem; font-size: 0.76rem; font-weight: 900; border: 1px solid transparent; white-space: nowrap; }
+        .status-pill.pending { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+        .status-pill.processing { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+        .status-pill.paid, .status-pill.shipped, .status-pill.completed { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+        .status-pill.cancelled, .status-pill.failed { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+        .status-pill.refunded, .status-pill.preparing { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+        .order-type-pill { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0.28rem 0.66rem; font-size: 0.76rem; font-weight: 900; border: 1px solid transparent; white-space: nowrap; }
+        .order-type-pill.stock { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+        .order-type-pill.preorder { background: #fce7f3; color: #9d174d; border-color: #f9a8d4; }
+        .order-type-pill.unknown { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+        .storefront-order-status-controls { display: grid; gap: 0.5rem; min-width: 168px; }
+        .storefront-order-status-control { display: contents; }
+        .storefront-order-status-controls select, .storefront-order-status-panel select { width: 100%; min-height: 30px; border: 1px solid #fbcfe8; border-radius: 0.7rem; padding: 0.3rem 0.46rem; color: #334155; background: white; font-size: 0.76rem; font-weight: 800; }
+        .storefront-order-status-controls select:disabled, .storefront-order-status-panel select:disabled { opacity: 0.62; cursor: not-allowed; }
+        .storefront-order-status-actions { display: flex; flex-wrap: nowrap; justify-content: center; gap: 0.4rem; }
+        .storefront-order-warning { border: 1px solid #fed7aa; background: #fff7ed; color: #c2410c; border-radius: 0.8rem; padding: 0.7rem; font-size: 0.82rem; font-weight: 800; line-height: 1.6; }
+        .storefront-order-feedback { border: 1px solid #bbf7d0; background: #dcfce7; color: #166534; }
+        .storefront-order-feedback.error { border-color: #fecaca; background: #fee2e2; color: #991b1b; }
+        .storefront-cancel-modal-note { border: 1px solid #fecaca; background: #fef2f2; color: #991b1b; border-radius: 0.8rem; padding: 0.75rem; font-size: 0.85rem; font-weight: 800; line-height: 1.6; }
+        @media (max-width: 1100px) {
+            .storefront-order-inline-detail { min-width: 0; }
+            .storefront-order-info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .storefront-order-mini-section:nth-child(2n) { padding-right: 0; border-right: 0; }
+            .storefront-order-mini-section:nth-child(2n + 1) { padding-left: 0; }
+        }
+        @media (max-width: 720px) {
+            .content { padding: 1rem; }
+            .storefront-order-search-row { align-items: stretch; flex-direction: column; }
+            .storefront-order-search-input { flex-basis: auto; width: 100%; }
+            .storefront-order-filter-field, .storefront-order-filter-field input, .storefront-order-filter-field select { width: 100%; min-width: 0; }
+            .storefront-order-pagination-footer { align-items: flex-start; flex-direction: column; }
+            .storefront-order-pagination-controls { justify-content: flex-start; width: 100%; }
+            .storefront-order-pagination { justify-content: flex-start; }
+            .storefront-order-table { min-width: 1280px; }
+            .storefront-order-table th, .storefront-order-table td { padding: 0.68rem 0.72rem; }
+            .storefront-order-kv { grid-template-columns: 82px minmax(0, 1fr); }
+            .storefront-order-detail-viewport { padding: 0.75rem; }
+            .storefront-order-inline-detail { min-width: 0; padding: 0.75rem; }
+            .storefront-order-info-grid { grid-template-columns: 1fr; }
+            .storefront-order-mini-section { padding: 0; border-right: 0; border-bottom: 1px dashed #fbcfe8; padding-bottom: 0.6rem; }
+            .storefront-order-mini-section:last-child { border-bottom: 0; padding-bottom: 0; }
+            .storefront-order-status-row { grid-template-columns: 50px 58px minmax(80px, 1fr); }
+        }
         
         /* Sub Tables */
         .sub-row { display: none; background-color: #f8fafc; }
@@ -426,6 +567,7 @@
                     <i class="chevron fa-solid fa-angle-down"></i>
                 </div>
                 <div class="submenu">
+                    <div class="submenu-item" onclick="openTab('storefront-orders', '訂單管理')">訂單管理</div>
                     <div class="submenu-item" onclick="openTab('customer-orders', '客戶訂單明細')">客戶訂單明細</div>
                 </div>
             </div>
@@ -633,6 +775,111 @@
                 </div>
             </div>
 
+
+            <!-- Customer Orders Section -->
+            <div id="section-storefront-orders" class="section-container">
+                <div class="page-header">
+                    <h2 class="page-title">訂單管理</h2>
+                    <div class="toolbar">
+                        <button class="btn btn-secondary" onclick="loadStorefrontOrders(true)"><i class="fa-solid fa-rotate"></i> 重新整理</button>
+                    </div>
+                </div>
+                <div class="storefront-order-filterbar">
+                    <div class="storefront-order-search-row">
+                        <input id="storefront-order-search" class="storefront-order-search-input" type="search" placeholder="搜尋訂單編號、姓名、手機、Email" onkeydown="handleStorefrontOrderSearchKey(event)">
+                        <button class="btn btn-primary" type="button" onclick="applyStorefrontOrderFilters()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
+                    </div>
+                    <div class="storefront-order-filter-row">
+                        <div class="storefront-order-filter-field">
+                            <label for="storefront-order-date-from">開始日期</label>
+                            <input id="storefront-order-date-from" type="date">
+                        </div>
+                        <div class="storefront-order-filter-field">
+                            <label for="storefront-order-date-to">結束日期</label>
+                            <input id="storefront-order-date-to" type="date">
+                        </div>
+                        <div class="storefront-order-filter-field">
+                            <label for="storefront-order-type-filter">訂單類型</label>
+                            <select id="storefront-order-type-filter">
+                                <option value="all">全部</option>
+                                <option value="stock">現貨</option>
+                                <option value="preorder">預購</option>
+                            </select>
+                        </div>
+                        <div class="storefront-order-filter-field">
+                            <label for="storefront-order-status-filter">訂單狀態</label>
+                            <select id="storefront-order-status-filter">
+                                <option value="all">全部</option>
+                                <option value="pending">待處理</option>
+                                <option value="processing">處理中</option>
+                                <option value="completed">已完成</option>
+                                <option value="cancelled">已取消</option>
+                            </select>
+                        </div>
+                        <div class="storefront-order-filter-field">
+                            <label for="storefront-order-payment-filter">付款狀態</label>
+                            <select id="storefront-order-payment-filter">
+                                <option value="all">全部</option>
+                                <option value="pending">待付款</option>
+                                <option value="paid">已付款</option>
+                                <option value="failed">付款失敗</option>
+                                <option value="refunded">已退款</option>
+                            </select>
+                        </div>
+                        <div class="storefront-order-filter-field">
+                            <label for="storefront-order-shipping-filter">配送狀態</label>
+                            <select id="storefront-order-shipping-filter">
+                                <option value="all">全部</option>
+                                <option value="pending">待處理</option>
+                                <option value="preparing">備貨中</option>
+                                <option value="shipped">已出貨</option>
+                                <option value="completed">已完成</option>
+                                <option value="cancelled">已取消</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-secondary" type="button" onclick="clearStorefrontOrderFilters()"><i class="fa-solid fa-eraser"></i> 清除條件</button>
+                    </div>
+                </div>
+                <div class="storefront-order-layout">
+                    <div class="table-wrapper storefront-order-table-shell">
+                        <div class="storefront-order-table-scroll">
+                            <table class="storefront-order-table">
+                                <thead>
+                                    <tr>
+                                        <th class="order-no-cell">訂單編號</th>
+                                        <th>類型</th>
+                                        <th>建立時間</th>
+                                        <th>顧客姓名</th>
+                                        <th>顧客手機</th>
+                                        <th>收件人</th>
+                                        <th>配送方式</th>
+                                        <th>付款方式</th>
+                                        <th>訂單狀態</th>
+                                        <th>付款狀態</th>
+                                        <th>配送狀態</th>
+                                        <th>訂單金額</th>
+                                        <th class="order-action-cell" style="text-align:center;">查看明細</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="storefront-order-tbody">
+                                    <tr><td colspan="13" class="empty-state">尚未載入訂單</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="storefront-order-pagination-footer">
+                        <div id="storefront-order-result-count" class="storefront-order-result-count">共 0 筆數據</div>
+                        <div class="storefront-order-pagination-controls">
+                            <select id="storefront-order-page-size" class="storefront-order-page-size-select" aria-label="每頁筆數" onchange="changeStorefrontOrderPageSize(this.value)">
+                                <option value="10">10筆/頁</option>
+                                <option value="20">20筆/頁</option>
+                                <option value="50">50筆/頁</option>
+                            </select>
+                            <div id="storefront-order-pagination" class="storefront-order-pagination"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Customer Orders Section -->
             <div id="section-customer-orders" class="section-container">
@@ -1878,6 +2125,43 @@
         </div>
     </div>
 
+    <!-- Storefront Order Cancel Modal -->
+    <div class="modal-overlay" id="storefrontOrderCancelModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-triangle-exclamation"></i> 取消訂單</h3>
+                <button class="close-btn" type="button" onclick="closeStorefrontCancelModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="storefront-cancel-order-id">
+                <div class="storefront-cancel-modal-note" id="storefront-cancel-warning">
+                    取消後會將這張訂單標記為已取消，並把此訂單扣除的庫存或預購名額加回。
+                </div>
+                <div class="form-group">
+                    <label>取消原因</label>
+                    <select id="storefront-cancel-reason-preset" onchange="toggleStorefrontCancelOtherReason()">
+                        <option value="">請選擇取消原因</option>
+                        <option value="客人要求取消">客人要求取消</option>
+                        <option value="商品缺貨">商品缺貨</option>
+                        <option value="訂單資料有誤">訂單資料有誤</option>
+                        <option value="重複下單">重複下單</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+                <div class="form-group" id="storefront-cancel-other-group" style="display:none;">
+                    <label>其他原因</label>
+                    <textarea id="storefront-cancel-reason" rows="4" placeholder="請輸入取消原因"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeStorefrontCancelModal()">取消</button>
+                <button class="btn btn-danger" type="button" onclick="confirmCancelStorefrontOrder()"><i class="fa-solid fa-ban"></i> 確認取消訂單</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="storefront-order-copy-toast" id="storefrontOrderCopyToast" role="status" aria-live="polite">已複製訂單編號</div>
+
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
@@ -1911,6 +2195,7 @@
             if(name === 'vendors') { renderVendors(); renderWebsites(); }
             if(name === 'vendors-orders') renderVendorsOrders();
             if(name === 'website-orders') renderWebsiteOrders();
+            if(name === 'storefront-orders') loadStorefrontOrders();
             if(name === 'customer-orders') renderCustomerOrders();
             if(name === 'stock-products') renderStockProducts();
             if(name === 'preorder-products') renderPreorderProducts();
@@ -2029,6 +2314,12 @@
         let vendors = [];
         let websites = [];
         let orders = [];
+        let storefrontOrders = [];
+        let expandedStorefrontOrderIds = new Set();
+        let updatingStorefrontOrderIds = new Set();
+        let storefrontOrderFilters = { q: '', dateFrom: '', dateTo: '', orderType: 'all', status: 'all', paymentStatus: 'all', shippingStatus: 'all' };
+        let storefrontOrderPagination = { page: 1, pageSize: 10, total: 0, totalPages: 0 };
+        let storefrontOrderRequestSeq = 0;
         let productTags = [];
         let productTagActiveType = 'ip';
         let productTagSortables = { ip: null, category: null };
@@ -2101,6 +2392,7 @@
             renderWebsites();
             if (activeTab === 'vendors-orders') renderVendorsOrders();
             if (activeTab === 'website-orders') renderWebsiteOrders();
+            if (activeTab === 'storefront-orders') loadStorefrontOrders();
             if (activeTab === 'customer-orders') renderCustomerOrders();
             renderProductTagOptions();
             renderStockProducts();
@@ -5892,6 +6184,639 @@
                     </div></td>
                 </tr>`;
             }).join('');
+        }
+
+        const STOREFRONT_STATUS_OPTIONS = {
+            order: [
+                { value: 'pending', label: '待處理' },
+                { value: 'processing', label: '處理中' },
+                { value: 'completed', label: '已完成' }
+            ],
+            payment: [
+                { value: 'pending', label: '待付款' },
+                { value: 'paid', label: '已付款' },
+                { value: 'failed', label: '付款失敗' },
+                { value: 'refunded', label: '已退款' }
+            ],
+            shipping: [
+                { value: 'pending', label: '待處理' },
+                { value: 'preparing', label: '備貨中' },
+                { value: 'shipped', label: '已出貨' },
+                { value: 'completed', label: '已完成' }
+            ]
+        };
+
+        function storefrontStatusLabel(kind, value) {
+            const normalized = String(value || '').trim();
+            const maps = {
+                order: { pending: '待處理', processing: '處理中', completed: '已完成', cancelled: '已取消', paid: '已付款', shipped: '已出貨' },
+                payment: { pending: '待付款', paid: '已付款', failed: '付款失敗', refunded: '已退款' },
+                shipping: { pending: '待處理', preparing: '備貨中', shipped: '已出貨', completed: '已完成', cancelled: '已取消' }
+            };
+            return maps[kind]?.[normalized] || normalized || '—';
+        }
+
+        function storefrontStatusClass(value) {
+            return String(value || 'pending').trim().replace(/[^a-z_]/gi, '-') || 'pending';
+        }
+
+        function storefrontMethodLabel(kind, value) {
+            const normalized = String(value || '').trim();
+            const maps = {
+                shipping: { home_delivery: '宅配', convenience_store: '超商取貨', meetup: '面交' },
+                payment: { pending: '待付款', bank_transfer: '銀行轉帳', line_pay: 'LINE Pay', cash: '現金' },
+                productType: { stock: '現貨', preorder: '預購' }
+            };
+            return maps[kind]?.[normalized] || normalized || '—';
+        }
+
+        function storefrontOrderTypeBadge(value) {
+            const normalized = String(value || '').trim();
+            const typeClass = normalized === 'stock' || normalized === 'preorder' ? normalized : 'unknown';
+            return `<span class="order-type-pill ${typeClass}">${storefrontMethodLabel('productType', normalized)}</span>`;
+        }
+
+        function storefrontOrderNoCell(orderNo) {
+            const safeOrderNo = escapeHtml(orderNo || '—');
+            return `<span class="storefront-order-no"><button class="copy-order-btn" type="button" title="複製訂單編號" aria-label="複製訂單編號 ${safeOrderNo}" onclick="copyStorefrontOrderNo(event, '${safeOrderNo}', this)"><i class="fa-regular fa-copy"></i></button><strong>${safeOrderNo}</strong></span>`;
+        }
+
+        let storefrontCopyToastTimer = null;
+        async function copyStorefrontOrderNo(event, orderNo, button) {
+            event?.stopPropagation?.();
+            const value = String(orderNo || '').trim();
+            if (!value || value === '—') return;
+            try {
+                if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(value);
+                } else {
+                    const input = document.createElement('textarea');
+                    input.value = value;
+                    input.setAttribute('readonly', '');
+                    input.style.position = 'fixed';
+                    input.style.opacity = '0';
+                    document.body.appendChild(input);
+                    input.select();
+                    document.execCommand('copy');
+                    input.remove();
+                }
+                if (button) {
+                    const original = button.innerHTML;
+                    button.classList.add('copied');
+                    button.innerHTML = '<i class="fa-solid fa-check"></i>';
+                    setTimeout(() => {
+                        button.classList.remove('copied');
+                        button.innerHTML = original;
+                    }, 1100);
+                }
+                const toast = document.getElementById('storefrontOrderCopyToast');
+                if (toast) {
+                    toast.classList.add('show');
+                    clearTimeout(storefrontCopyToastTimer);
+                    storefrontCopyToastTimer = setTimeout(() => toast.classList.remove('show'), 1500);
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function storefrontStatusSelect(kind, order, value) {
+            const disabled = order.status === 'cancelled' || order.status === 'completed';
+            const options = STOREFRONT_STATUS_OPTIONS[kind] || [];
+            const current = String(value || '').trim();
+            const normalizedOptions = options.some(option => option.value === current)
+                ? options
+                : [{ value: current, label: storefrontStatusLabel(kind, current) }, ...options].filter(option => option.value);
+            const updating = updatingStorefrontOrderIds.has(String(order.id || ''));
+            return `<select class="storefront-order-status-select" ${disabled || updating ? 'disabled' : ''} onchange="updateStorefrontOrderStatus('${escapeHtml(order.id)}', '${kind}', this.value)">
+                <option value="" disabled>變更狀態</option>
+                ${normalizedOptions.map(option => `<option value="${escapeHtml(option.value)}" ${option.value === current ? 'selected' : ''}>${escapeHtml(option.label)}</option>`).join('')}
+            </select>`;
+        }
+
+        function storefrontNextOrderStatuses(order) {
+            const status = String(order.status || '').trim();
+            if (status === 'pending') return ['processing', 'completed'];
+            if (status === 'processing') return ['completed'];
+            return [];
+        }
+
+        function storefrontOrderStatusControl(order) {
+            const nextStatuses = storefrontNextOrderStatuses(order);
+            const updating = updatingStorefrontOrderIds.has(String(order.id || ''));
+            if (!nextStatuses.length) {
+                return `<div class="storefront-order-status-note">${order.status === 'cancelled' ? '已取消訂單不可變更狀態' : '此訂單狀態不可再變更'}</div>`;
+            }
+            return `<div class="storefront-order-action-buttons">
+                ${nextStatuses.map(status => `<button class="btn btn-sm btn-primary" type="button" ${updating ? 'disabled' : ''} onclick="updateStorefrontOrderStatus('${escapeHtml(order.id)}', 'order', '${escapeHtml(status)}')">${updating ? '更新中...' : `設為${storefrontStatusLabel('order', status)}`}</button>`).join('')}
+            </div>`;
+        }
+
+        function storefrontStatusControl(kind, order, value) {
+            return `<div class="storefront-order-status-control">
+                <span class="storefront-order-status-label">${kind === 'payment' ? '付款狀態' : '配送狀態'}</span>
+                <span class="status-pill ${storefrontStatusClass(value)}">${storefrontStatusLabel(kind, value)}</span>
+                ${storefrontStatusSelect(kind, order, value)}
+            </div>`;
+        }
+
+        function showStorefrontOrderFeedback(message, type = 'success') {
+            const toast = document.getElementById('storefrontOrderCopyToast');
+            if (!toast) return;
+            toast.textContent = message;
+            toast.classList.toggle('error', type === 'error');
+            toast.classList.add('show');
+            clearTimeout(storefrontCopyToastTimer);
+            storefrontCopyToastTimer = setTimeout(() => {
+                toast.classList.remove('show', 'error');
+                toast.textContent = '已複製訂單編號';
+            }, 1800);
+        }
+
+        function storefrontOrderWarnings(order) {
+            const warnings = [];
+            if (order.status === 'cancelled') warnings.push(`取消原因：${escapeHtml(order.cancelReason || '—')}`);
+            if (order.status === 'cancelled' && order.paymentStatus === 'paid') warnings.push('此訂單已付款但已取消，請人工確認退款流程。');
+            return warnings.map(text => `<div class="storefront-order-warning">${text}</div>`).join('');
+        }
+
+        function storefrontMoney(value) {
+            const amount = Number(value || 0);
+            return `NT$ ${Math.round(Number.isFinite(amount) ? amount : 0).toLocaleString('zh-TW')}`;
+        }
+
+        function storefrontDateTime(value) {
+            if (!value) return '—';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return escapeHtml(value);
+            return date.toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+        }
+
+        function readStorefrontOrderFilterInputs() {
+            return {
+                q: document.getElementById('storefront-order-search')?.value.trim() || '',
+                dateFrom: document.getElementById('storefront-order-date-from')?.value || '',
+                dateTo: document.getElementById('storefront-order-date-to')?.value || '',
+                orderType: document.getElementById('storefront-order-type-filter')?.value || 'all',
+                status: document.getElementById('storefront-order-status-filter')?.value || 'all',
+                paymentStatus: document.getElementById('storefront-order-payment-filter')?.value || 'all',
+                shippingStatus: document.getElementById('storefront-order-shipping-filter')?.value || 'all'
+            };
+        }
+
+        function writeStorefrontOrderFilterInputs(filters = storefrontOrderFilters) {
+            const fieldMap = {
+                'storefront-order-search': filters.q || '',
+                'storefront-order-date-from': filters.dateFrom || '',
+                'storefront-order-date-to': filters.dateTo || '',
+                'storefront-order-type-filter': filters.orderType || 'all',
+                'storefront-order-status-filter': filters.status || 'all',
+                'storefront-order-payment-filter': filters.paymentStatus || 'all',
+                'storefront-order-shipping-filter': filters.shippingStatus || 'all'
+            };
+            Object.entries(fieldMap).forEach(([id, value]) => {
+                const el = document.getElementById(id);
+                if (el) el.value = value;
+            });
+        }
+
+        function storefrontOrderFiltersApplied(filters = storefrontOrderFilters) {
+            return Boolean(
+                filters.q ||
+                filters.dateFrom ||
+                filters.dateTo ||
+                (filters.orderType && filters.orderType !== 'all') ||
+                (filters.status && filters.status !== 'all') ||
+                (filters.paymentStatus && filters.paymentStatus !== 'all') ||
+                (filters.shippingStatus && filters.shippingStatus !== 'all')
+            );
+        }
+
+        function storefrontOrderQueryString(filters = storefrontOrderFilters) {
+            const params = new URLSearchParams();
+            if (filters.q) params.set('q', filters.q);
+            if (filters.dateFrom) params.set('date_from', filters.dateFrom);
+            if (filters.dateTo) params.set('date_to', filters.dateTo);
+            if (filters.orderType && filters.orderType !== 'all') params.set('order_type', filters.orderType);
+            if (filters.status && filters.status !== 'all') params.set('status', filters.status);
+            if (filters.paymentStatus && filters.paymentStatus !== 'all') params.set('payment_status', filters.paymentStatus);
+            if (filters.shippingStatus && filters.shippingStatus !== 'all') params.set('shipping_status', filters.shippingStatus);
+            params.set('page', String(Math.max(1, Number(storefrontOrderPagination.page || 1))));
+            params.set('page_size', String([10, 20, 50].includes(Number(storefrontOrderPagination.pageSize)) ? Number(storefrontOrderPagination.pageSize) : 10));
+            const query = params.toString();
+            return query ? `?${query}` : '';
+        }
+
+        function updateStorefrontOrderResultCount(total = storefrontOrderPagination.total) {
+            const el = document.getElementById('storefront-order-result-count');
+            if (!el) return;
+            const count = Math.max(0, Number(total || 0));
+            el.textContent = `共 ${count} 筆數據`;
+        }
+
+        function updateStorefrontOrderPageSizeSelect() {
+            const select = document.getElementById('storefront-order-page-size');
+            if (select) select.value = String(storefrontOrderPagination.pageSize || 10);
+        }
+
+        function storefrontOrderPageWindow(page, totalPages) {
+            if (totalPages <= 0) return [];
+            const pages = new Set([1, totalPages]);
+            for (let i = page - 2; i <= page + 2; i += 1) {
+                if (i >= 1 && i <= totalPages) pages.add(i);
+            }
+            const sorted = [...pages].sort((a, b) => a - b);
+            const result = [];
+            sorted.forEach((value, index) => {
+                if (index > 0 && value - sorted[index - 1] > 1) result.push('ellipsis');
+                result.push(value);
+            });
+            return result;
+        }
+
+        function renderStorefrontOrderPagination() {
+            const container = document.getElementById('storefront-order-pagination');
+            if (!container) return;
+            const page = Math.max(1, Number(storefrontOrderPagination.page || 1));
+            const totalPages = Math.max(0, Number(storefrontOrderPagination.totalPages || 0));
+            if (totalPages <= 0) {
+                container.innerHTML = '';
+                return;
+            }
+            const pageItems = storefrontOrderPageWindow(page, totalPages).map(item => {
+                if (item === 'ellipsis') return '<span class="storefront-order-page-ellipsis">…</span>';
+                return `<button class="storefront-order-page-btn ${item === page ? 'active' : ''}" type="button" ${item === page ? 'disabled' : ''} onclick="goToStorefrontOrderPage(${item})">${item}</button>`;
+            }).join('');
+            container.innerHTML = `
+                <button class="storefront-order-page-btn" type="button" aria-label="上一頁" ${page <= 1 ? 'disabled' : ''} onclick="goToStorefrontOrderPage(${page - 1})">‹</button>
+                ${pageItems}
+                <button class="storefront-order-page-btn" type="button" aria-label="下一頁" ${page >= totalPages ? 'disabled' : ''} onclick="goToStorefrontOrderPage(${page + 1})">›</button>
+            `;
+        }
+
+        function setStorefrontOrderPagination(pagination = {}) {
+            const pageSize = [10, 20, 50].includes(Number(pagination.page_size)) ? Number(pagination.page_size) : storefrontOrderPagination.pageSize;
+            const total = Math.max(0, Number(pagination.total || 0));
+            const totalPages = Math.max(0, Number(pagination.total_pages || 0));
+            const page = totalPages > 0
+                ? Math.min(Math.max(1, Number(pagination.page || storefrontOrderPagination.page || 1)), totalPages)
+                : 1;
+            storefrontOrderPagination = { page, pageSize, total, totalPages };
+            updateStorefrontOrderResultCount(total);
+            updateStorefrontOrderPageSizeSelect();
+            renderStorefrontOrderPagination();
+        }
+
+        function scrollStorefrontOrderListIntoView() {
+            const target = document.querySelector('.storefront-order-table-shell');
+            target?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function applyStorefrontOrderFilters() {
+            storefrontOrderFilters = readStorefrontOrderFilterInputs();
+            storefrontOrderPagination.page = 1;
+            expandedStorefrontOrderIds = new Set();
+            loadStorefrontOrders(true);
+        }
+
+        function clearStorefrontOrderFilters() {
+            storefrontOrderFilters = { q: '', dateFrom: '', dateTo: '', orderType: 'all', status: 'all', paymentStatus: 'all', shippingStatus: 'all' };
+            storefrontOrderPagination.page = 1;
+            writeStorefrontOrderFilterInputs();
+            expandedStorefrontOrderIds = new Set();
+            loadStorefrontOrders(true);
+        }
+
+        function handleStorefrontOrderSearchKey(event) {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+            applyStorefrontOrderFilters();
+        }
+
+        function changeStorefrontOrderPageSize(value) {
+            const pageSize = Number(value);
+            storefrontOrderPagination.pageSize = [10, 20, 50].includes(pageSize) ? pageSize : 10;
+            storefrontOrderPagination.page = 1;
+            expandedStorefrontOrderIds = new Set();
+            loadStorefrontOrders(true);
+        }
+
+        function goToStorefrontOrderPage(page) {
+            const totalPages = Math.max(1, Number(storefrontOrderPagination.totalPages || 1));
+            const nextPage = Math.min(Math.max(1, Number(page || 1)), totalPages);
+            if (nextPage === storefrontOrderPagination.page) return;
+            storefrontOrderPagination.page = nextPage;
+            expandedStorefrontOrderIds = new Set();
+            loadStorefrontOrders(true);
+            scrollStorefrontOrderListIntoView();
+        }
+
+        async function loadStorefrontOrders(force = false) {
+            if (storefrontOrders.length && !force) {
+                writeStorefrontOrderFilterInputs();
+                renderStorefrontOrders();
+                setStorefrontOrderPagination(storefrontOrderPagination);
+                return;
+            }
+            const tbody = document.getElementById('storefront-order-tbody');
+            const requestSeq = ++storefrontOrderRequestSeq;
+            writeStorefrontOrderFilterInputs();
+            if (tbody) tbody.innerHTML = '<tr><td colspan="13" class="empty-state">訂單讀取中...</td></tr>';
+            updateStorefrontOrderPageSizeSelect();
+            try {
+                const response = await fetch(`/api/backend/orders${storefrontOrderQueryString()}`, { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '訂單讀取失敗');
+                if (requestSeq !== storefrontOrderRequestSeq) return;
+                storefrontOrders = Array.isArray(result.orders) ? result.orders : [];
+                setStorefrontOrderPagination(result.pagination || { page: 1, page_size: storefrontOrderPagination.pageSize, total: storefrontOrders.length, total_pages: storefrontOrders.length ? 1 : 0 });
+                const validIds = new Set(storefrontOrders.map(order => String(order.id)));
+                expandedStorefrontOrderIds = new Set([...expandedStorefrontOrderIds].filter(id => validIds.has(id)));
+                renderStorefrontOrders();
+            } catch (error) {
+                if (requestSeq !== storefrontOrderRequestSeq) return;
+                console.error(error);
+                if (tbody) tbody.innerHTML = `<tr><td colspan="13" class="empty-state">載入訂單失敗，請稍後再試。</td></tr>`;
+                setStorefrontOrderPagination({ page: 1, page_size: storefrontOrderPagination.pageSize, total: 0, total_pages: 0 });
+            }
+        }
+
+        function renderStorefrontOrders() {
+            const tbody = document.getElementById('storefront-order-tbody');
+            if (!tbody) return;
+            updateStorefrontOrderDetailViewportWidth();
+            bindStorefrontOrderDetailViewport();
+            const sorted = [...storefrontOrders].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+            if (!sorted.length) {
+                tbody.innerHTML = `<tr><td colspan="13" class="empty-state">${storefrontOrderFiltersApplied() ? '沒有符合條件的訂單' : '目前沒有訂單'}</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = sorted.map(order => {
+                const orderId = String(order.id || '');
+                const isExpanded = expandedStorefrontOrderIds.has(orderId);
+                return `
+                <tr class="${isExpanded ? 'storefront-order-expanded' : ''}">
+                    <td class="order-no-cell">${storefrontOrderNoCell(order.orderNo)}</td>
+                    <td>${storefrontOrderTypeBadge(order.orderType)}</td>
+                    <td>${storefrontDateTime(order.createdAt)}</td>
+                    <td>${escapeHtml(order.customerName || '—')}</td>
+                    <td>${escapeHtml(order.customerPhone || '—')}</td>
+                    <td>${escapeHtml(order.recipientName || '—')}</td>
+                    <td>${storefrontMethodLabel('shipping', order.deliveryMethod)}</td>
+                    <td>${storefrontMethodLabel('payment', order.paymentMethod)}</td>
+                    <td><span class="status-pill ${storefrontStatusClass(order.status)}">${storefrontStatusLabel('order', order.status)}</span></td>
+                    <td><span class="status-pill ${storefrontStatusClass(order.paymentStatus)}">${storefrontStatusLabel('payment', order.paymentStatus)}</span></td>
+                    <td><span class="status-pill ${storefrontStatusClass(order.shippingStatus)}">${storefrontStatusLabel('shipping', order.shippingStatus)}</span></td>
+                    <td><strong>${storefrontMoney(order.total)}</strong></td>
+                    <td class="order-action-cell" style="text-align:center;"><div class="storefront-order-status-actions">
+                        <button class="btn btn-sm btn-primary" onclick="toggleStorefrontOrderDetail('${escapeHtml(orderId)}')"><i class="fa-solid ${isExpanded ? 'fa-chevron-up' : 'fa-eye'}"></i> ${isExpanded ? '收合' : '查看明細'}</button>
+                        <button class="btn btn-sm btn-danger" ${order.status === 'cancelled' || order.status === 'completed' ? 'disabled' : ''} onclick="openStorefrontCancelModal('${escapeHtml(orderId)}')"><i class="fa-solid fa-ban"></i> 取消</button>
+                    </div></td>
+                </tr>
+                ${isExpanded ? renderStorefrontOrderDetailRow(order) : ''}
+            `;
+            }).join('');
+        }
+
+        function toggleStorefrontOrderDetail(id) {
+            const orderId = String(id || '');
+            if (!orderId) return;
+            if (expandedStorefrontOrderIds.has(orderId)) {
+                expandedStorefrontOrderIds.delete(orderId);
+            } else {
+                expandedStorefrontOrderIds.add(orderId);
+            }
+            renderStorefrontOrders();
+        }
+
+        function collapseStorefrontOrderDetail(id) {
+            expandedStorefrontOrderIds.delete(String(id || ''));
+            renderStorefrontOrders();
+        }
+
+        function renderStorefrontOrderDetailRow(order) {
+            const items = Array.isArray(order.items) ? order.items : [];
+            const orderId = String(order.id || '');
+            const shippingFee = Number(order.shippingFee || 0);
+            const discountAmount = Number(order.discountAmount || 0);
+            const totalQuantity = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+            const itemRows = items.length
+                ? items.map(item => `
+                    <tr>
+                        <td><strong>${escapeHtml(item.productName || '—')}</strong></td>
+                        <td>${escapeHtml(item.variantSpec || '單一規格')}</td>
+                        <td>${storefrontMoney(item.unitPrice)}</td>
+                        <td>${Number(item.quantity || 0)}</td>
+                        <td><strong>${storefrontMoney(item.subtotal)}</strong></td>
+                    </tr>
+                `).join('')
+                : '<tr><td colspan="5" class="empty-state" style="padding:1rem;">沒有商品明細</td></tr>';
+            const totalRows = `
+                ${shippingFee > 0 ? `
+                <tr class="summary-row">
+                    <td colspan="3" class="summary-label">運費</td>
+                    <td class="summary-qty"></td>
+                    <td class="summary-value">${storefrontMoney(shippingFee)}</td>
+                </tr>` : ''}
+                ${discountAmount > 0 ? `
+                <tr class="summary-row discount-row">
+                    <td colspan="3" class="summary-label">優惠</td>
+                    <td class="summary-qty"></td>
+                    <td class="summary-value">-${storefrontMoney(discountAmount)}</td>
+                </tr>` : ''}
+                <tr class="total-row">
+                    <td colspan="3" class="summary-label">總計</td>
+                    <td class="summary-qty">${totalQuantity}</td>
+                    <td class="summary-value">${storefrontMoney(order.total)}</td>
+                </tr>
+            `;
+            const recipientExtraRows = [
+                order.deliveryAddress ? `<dt>地址</dt><dd>${escapeHtml(order.deliveryAddress)}</dd>` : '',
+                (order.convenienceStoreName || order.convenienceStoreId) ? `<dt>門市</dt><dd>${escapeHtml(order.convenienceStoreName || order.convenienceStoreId)}</dd>` : ''
+            ].filter(Boolean).join('');
+            const paymentExtraRows = order.paymentTransactionId
+                ? `<dt>交易編號</dt><dd>${escapeHtml(order.paymentTransactionId)}</dd>`
+                : '';
+            return `
+                <tr class="storefront-order-detail-row" data-order-detail-for="${escapeHtml(orderId)}">
+                    <td colspan="13">
+                        <div class="storefront-order-detail-viewport">
+                        <div class="storefront-order-inline-detail">
+                            <div class="storefront-order-inline-header">
+                                <div class="storefront-order-inline-title">
+                                    <strong class="storefront-order-inline-no">訂單號【<span style="color:#2563eb;font-weight:950;">${escapeHtml(order.orderNo || '—')}</span>】訂單明細</strong>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:0.45rem;flex:0 0 auto;">
+                                    <button class="btn-icon" type="button" title="收合明細" aria-label="收合訂單明細" onclick="collapseStorefrontOrderDetail('${escapeHtml(orderId)}')"><i class="fa-solid fa-chevron-up"></i></button>
+                                </div>
+                            </div>
+                            ${storefrontOrderWarnings(order)}
+                            <div class="storefront-order-inline-grid">
+                                <section class="storefront-order-inline-section">
+                                    <h3>商品明細</h3>
+                                    <div class="storefront-order-item-table-wrap">
+                                        <table class="storefront-order-item-table">
+                                            <colgroup>
+                                                <col style="width:45%">
+                                                <col style="width:15%">
+                                                <col style="width:15%">
+                                                <col style="width:10%">
+                                                <col style="width:15%">
+                                            </colgroup>
+                                            <thead>
+                                                <tr><th>商品名稱</th><th>規格</th><th>單價</th><th>數量</th><th>小計</th></tr>
+                                            </thead>
+                                            <tbody>${itemRows}</tbody>
+                                            <tfoot>${totalRows}</tfoot>
+                                        </table>
+                                    </div>
+                                </section>
+                                <section class="storefront-order-inline-section">
+                                    <div class="storefront-order-info-grid">
+                                        <div class="storefront-order-mini-section">
+                                            <h4>顧客資料</h4>
+                                            <dl class="storefront-order-kv">
+                                                <dt>姓名</dt><dd>${escapeHtml(order.customerName || '—')}</dd>
+                                                <dt>手機</dt><dd>${escapeHtml(order.customerPhone || '—')}</dd>
+                                                <dt>Email</dt><dd>${escapeHtml(order.customerEmail || '—')}</dd>
+                                            </dl>
+                                        </div>
+                                        <div class="storefront-order-mini-section">
+                                            <h4>收件資料</h4>
+                                            <dl class="storefront-order-kv">
+                                                <dt>收件人</dt><dd>${escapeHtml(order.recipientName || '—')}</dd>
+                                                <dt>收件手機</dt><dd>${escapeHtml(order.recipientPhone || '—')}</dd>
+                                                <dt>配送方式</dt><dd>${storefrontMethodLabel('shipping', order.deliveryMethod)}</dd>
+                                                ${recipientExtraRows}
+                                            </dl>
+                                        </div>
+                                        <div class="storefront-order-mini-section">
+                                            <h4>付款資料</h4>
+                                            <dl class="storefront-order-kv">
+                                                <dt>付款方式</dt><dd>${storefrontMethodLabel('payment', order.paymentMethod)}</dd>
+                                                <dt>付款狀態</dt><dd><span class="status-pill ${storefrontStatusClass(order.paymentStatus)}">${storefrontStatusLabel('payment', order.paymentStatus)}</span></dd>
+                                                ${paymentExtraRows}
+                                            </dl>
+                                        </div>
+                                        <div class="storefront-order-mini-section">
+                                            <h4>狀態操作</h4>
+                                            <div class="storefront-order-status-panel">
+                                                <div class="storefront-order-status-row">
+                                                    <span class="storefront-order-status-label">訂單狀態</span>
+                                                    <span class="status-pill ${storefrontStatusClass(order.status)}">${storefrontStatusLabel('order', order.status)}</span>
+                                                    ${storefrontOrderStatusControl(order)}
+                                                </div>
+                                                <div class="storefront-order-status-row">${storefrontStatusControl('payment', order, order.paymentStatus)}</div>
+                                                <div class="storefront-order-status-row">${storefrontStatusControl('shipping', order, order.shippingStatus)}</div>
+                                                <button class="btn btn-danger btn-sm storefront-order-status-cancel" type="button" ${order.status === 'cancelled' || order.status === 'completed' ? 'disabled' : ''} onclick="openStorefrontCancelModal('${escapeHtml(orderId)}')"><i class="fa-solid fa-ban"></i> 取消訂單</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function updateStorefrontOrderDetailViewportWidth() {
+            const scroll = document.querySelector('.storefront-order-table-scroll');
+            if (!scroll) return;
+            scroll.style.setProperty('--storefront-order-detail-width', `${scroll.clientWidth}px`);
+        }
+
+        function bindStorefrontOrderDetailViewport() {
+            const scroll = document.querySelector('.storefront-order-table-scroll');
+            if (!scroll || scroll.dataset.detailViewportBound === '1') return;
+            scroll.dataset.detailViewportBound = '1';
+            window.addEventListener('resize', updateStorefrontOrderDetailViewportWidth);
+            scroll.addEventListener('wheel', event => {
+                if (event.target?.closest?.('.storefront-order-detail-viewport') && Math.abs(event.deltaX || 0) > Math.abs(event.deltaY || 0)) {
+                    event.preventDefault();
+                }
+            }, { passive: false });
+        }
+
+        async function updateStorefrontOrderStatus(orderId, kind, value) {
+            const order = storefrontOrders.find(row => String(row.id) === String(orderId));
+            if (!order) {
+                showStorefrontOrderFeedback('找不到訂單資料', 'error');
+                return;
+            }
+            const payload = { id: orderId };
+            if (kind === 'order') payload.status = value;
+            if (kind === 'payment') payload.paymentStatus = value;
+            if (kind === 'shipping') payload.shippingStatus = value;
+            const orderKey = String(orderId || '');
+            updatingStorefrontOrderIds.add(orderKey);
+            renderStorefrontOrders();
+            try {
+                const response = await fetch(`/api/backend/orders/${encodeURIComponent(orderId)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '狀態更新失敗');
+                showStorefrontOrderFeedback(`${kind === 'order' ? '訂單' : kind === 'payment' ? '付款' : '配送'}狀態已更新`);
+                await loadStorefrontOrders(true);
+            } catch (error) {
+                showStorefrontOrderFeedback(error.message || '狀態更新失敗', 'error');
+                await loadStorefrontOrders(true);
+            } finally {
+                updatingStorefrontOrderIds.delete(orderKey);
+                renderStorefrontOrders();
+            }
+        }
+
+        function openStorefrontCancelModal(orderId) {
+            const order = storefrontOrders.find(row => String(row.id) === String(orderId));
+            if (!order) return alert('找不到訂單資料');
+            document.getElementById('storefront-cancel-order-id').value = orderId;
+            document.getElementById('storefront-cancel-reason-preset').value = '';
+            document.getElementById('storefront-cancel-reason').value = '';
+            toggleStorefrontCancelOtherReason();
+            const warning = document.getElementById('storefront-cancel-warning');
+            if (warning) {
+                warning.innerHTML = order.paymentStatus === 'paid'
+                    ? '此訂單已付款。取消會返還庫存或名額，但不會自動退款，請人工確認退款流程。'
+                    : '取消後會將這張訂單標記為已取消，並把此訂單扣除的庫存或預購名額加回。';
+            }
+            document.getElementById('storefrontOrderCancelModal').classList.add('active');
+        }
+
+        function closeStorefrontCancelModal() {
+            document.getElementById('storefrontOrderCancelModal').classList.remove('active');
+        }
+
+        function toggleStorefrontCancelOtherReason() {
+            const preset = document.getElementById('storefront-cancel-reason-preset')?.value || '';
+            const group = document.getElementById('storefront-cancel-other-group');
+            if (group) group.style.display = preset === 'other' ? 'flex' : 'none';
+        }
+
+        async function confirmCancelStorefrontOrder() {
+            const orderId = document.getElementById('storefront-cancel-order-id').value;
+            const preset = document.getElementById('storefront-cancel-reason-preset').value;
+            const otherReason = document.getElementById('storefront-cancel-reason').value.trim();
+            const cancelReason = preset === 'other' ? otherReason : preset;
+            if (!cancelReason) return alert('請輸入取消原因');
+            if (!confirm('確認要取消此訂單嗎？')) return;
+            try {
+                const response = await fetch(`/api/backend/orders/${encodeURIComponent(orderId)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'cancel', cancelReason })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '取消訂單失敗');
+                closeStorefrontCancelModal();
+                await loadStorefrontOrders(true);
+            } catch (error) {
+                alert(error.message || '取消訂單失敗');
+            }
         }
 
         function clearScheduleSearch(type) {
