@@ -3103,6 +3103,9 @@
 
         function normalizeProduct(product, type) {
             const oldPrice = Number(product.price || 0);
+            const hasExplicitVariants = Array.isArray(product.variants)
+                ? product.variants.length > 0
+                : parseProductVariantsJson(product.variantsJson).length > 0;
             let normalized = {
                 ...product,
                 costPrice: Number(product.costPrice ?? Math.round(oldPrice * 0.7) ?? 0),
@@ -3114,6 +3117,11 @@
             };
             normalized = applyProductImages(normalized, normalizeProductImages(normalized));
             normalized.variants = normalizeProductVariants(normalized, type);
+            Object.defineProperty(normalized, '__hasExplicitVariants', {
+                value: hasExplicitVariants,
+                enumerable: false,
+                configurable: true
+            });
             return normalized;
         }
 
@@ -3145,6 +3153,31 @@
             const min = Math.min(...prices);
             const max = Math.max(...prices);
             return min === max ? `NT$ ${min.toLocaleString()}` : `NT$ ${min.toLocaleString()} ~ ${max.toLocaleString()}`;
+        }
+
+        function safeProductQuantity(value) {
+            const quantity = Number(value ?? 0);
+            return Number.isFinite(quantity) ? quantity : 0;
+        }
+
+        function productHasExplicitVariants(product) {
+            if (typeof product.__hasExplicitVariants === 'boolean') return product.__hasExplicitVariants;
+            if (Array.isArray(product.variants) && product.variants.length) return true;
+            return parseProductVariantsJson(product.variantsJson).length > 0;
+        }
+
+        function productDisplayQuantity(product, type) {
+            const fallback = type === 'stock' ? safeProductQuantity(product.quantity) : safeProductQuantity(product.quota);
+            if (!productHasExplicitVariants(product)) return { quantity: fallback, isVariantTotal: false };
+            const variants = normalizeProductVariants(product, type);
+            if (!variants.length) return { quantity: fallback, isVariantTotal: false };
+            const total = variants.reduce((sum, variant) => sum + safeProductQuantity(variant.quantity ?? variant.qty), 0);
+            return { quantity: total, isVariantTotal: true };
+        }
+
+        function productQuantityCell(product, type) {
+            const display = productDisplayQuantity(product, type);
+            return `<div style="display:grid;gap:0.15rem;line-height:1.25;"><strong>${Number(display.quantity || 0).toLocaleString()}</strong>${display.isVariantTotal ? '<span style="color:#94a3b8;font-size:0.72rem;font-weight:800;">規格合計</span>' : ''}</div>`;
         }
 
         function parseProductVariantsJson(value) {
@@ -4253,7 +4286,7 @@
 
         function productDisplayRow(product, type) {
             const status = type === 'stock' ? productStatusSelectHtml(type, product, 'display') : productStatusSelectHtml(type, product, 'display');
-            const qty = type === 'stock' ? product.quantity : product.quota;
+            const qty = productQuantityCell(product, type);
             const priceText = productPriceRange(product);
             const productId = quoteJs(product.id);
             if (type === 'preorder') {
