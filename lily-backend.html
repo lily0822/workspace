@@ -140,6 +140,36 @@
         .storefront-order-copy-toast { position: fixed; right: 1rem; bottom: 1rem; z-index: 2000; border-radius: 999px; background: #be185d; color: white; padding: 0.55rem 0.9rem; font-size: 0.82rem; font-weight: 900; box-shadow: 0 12px 30px rgba(190, 24, 93, 0.26); opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.18s ease, transform 0.18s ease; }
         .storefront-order-copy-toast.show { opacity: 1; transform: translateY(0); }
         .storefront-order-filterbar { display: grid; gap: 0.55rem; padding: 0.75rem 0.85rem; border: 1px solid #fce7f3; border-radius: 0.9rem; background: #fff7fb; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
+        .member-line-settings-card { display: grid; gap: 0.75rem; margin-bottom: 0.85rem; padding: 0.85rem 1rem; border: 1px solid #fce7f3; border-radius: 0.9rem; background: #fff7fb; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
+        .member-line-settings-header { display: flex; justify-content: space-between; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+        .member-line-settings-header h3 { margin: 0; color: #be185d; font-size: 0.95rem; font-weight: 950; }
+        .member-line-settings-header p { margin: 0.2rem 0 0; color: #64748b; font-size: 0.78rem; font-weight: 800; }
+        .member-line-settings-grid { display: grid; grid-template-columns: repeat(4, minmax(130px, 1fr)); gap: 0.55rem; }
+        .member-line-toggle { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; border: 1px dashed #f9a8d4; border-radius: 0.8rem; background: white; padding: 0.55rem 0.7rem; color: #334155; font-size: 0.82rem; font-weight: 900; }
+        .member-line-toggle input { width: 38px; height: 20px; accent-color: #ec4899; cursor: pointer; }
+        .member-line-settings-status { min-height: 18px; color: #64748b; font-size: 0.76rem; font-weight: 900; }
+        .backend-member-filterbar { display: grid; gap: 0.55rem; padding: 0.75rem 0.85rem; border: 1px solid #fce7f3; border-radius: 0.9rem; background: #fff7fb; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
+        .backend-member-filter-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end; }
+        .backend-member-filter-field { display: grid; gap: 0.22rem; min-width: 130px; }
+        .backend-member-filter-field label { color: #64748b; font-size: 0.72rem; font-weight: 900; }
+        .backend-member-filter-field input, .backend-member-filter-field select { min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.72rem; padding: 0.42rem 0.62rem; background: white; color: #334155; font-size: 0.82rem; font-weight: 800; outline: none; }
+        .backend-member-table { min-width: 1120px; }
+        .backend-member-table th, .backend-member-table td { white-space: nowrap; vertical-align: middle; padding: 0.72rem 0.8rem; }
+        .backend-member-pill { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0.22rem 0.55rem; font-size: 0.74rem; font-weight: 900; border: 1px solid #e2e8f0; background: #f8fafc; color: #475569; }
+        .backend-member-pill.on { border-color: #bbf7d0; background: #dcfce7; color: #166534; }
+        .backend-member-pill.off { border-color: #fecaca; background: #fee2e2; color: #991b1b; }
+        .backend-member-detail-card { margin: 0.75rem 0 1rem; padding: 0.9rem; border: 1px solid #fbcfe8; border-radius: 1rem; background: #fff; display: grid; gap: 0.75rem; }
+        .backend-member-detail-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; padding-bottom: 0.55rem; border-bottom: 1px dashed #f9a8d4; }
+        .backend-member-detail-title { color: #be185d; font-size: 0.95rem; font-weight: 950; }
+        .backend-member-detail-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.7rem; }
+        .backend-member-detail-section { display: grid; gap: 0.35rem; min-width: 0; }
+        .backend-member-detail-section h4 { margin: 0; color: #9d174d; font-size: 0.8rem; font-weight: 950; }
+        .backend-member-kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.2rem 0.4rem; font-size: 0.79rem; line-height: 1.5; }
+        .backend-member-kv dt { color: #64748b; font-weight: 800; }
+        .backend-member-kv dd { margin: 0; color: #334155; font-weight: 800; min-width: 0; overflow-wrap: anywhere; }
+        .backend-member-address-list, .backend-member-order-list { display: grid; gap: 0.45rem; }
+        .backend-member-address-item, .backend-member-order-item { border: 1px dashed #fbcfe8; border-radius: 0.75rem; padding: 0.55rem; background: #fff7fb; font-size: 0.8rem; font-weight: 800; color: #334155; }
+        .backend-member-pagination-footer { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; padding-top: 0.8rem; color: #64748b; font-size: 0.8rem; font-weight: 900; }
         .storefront-order-search-row { display: flex; gap: 0.5rem; align-items: center; }
         .storefront-order-search-input { flex: 1 1 360px; min-width: 220px; }
         .storefront-order-filter-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end; }
@@ -242,12 +272,16 @@
             .storefront-order-pagination-footer { align-items: flex-start; flex-direction: column; }
             .storefront-order-pagination-controls { justify-content: flex-start; width: 100%; }
             .storefront-order-pagination { justify-content: flex-start; }
+            .member-line-settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .backend-member-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .storefront-order-table { min-width: 1280px; }
             .storefront-order-table th, .storefront-order-table td { padding: 0.68rem 0.72rem; }
             .storefront-order-kv { grid-template-columns: 82px minmax(0, 1fr); }
             .storefront-order-detail-viewport { padding: 0.75rem; }
             .storefront-order-inline-detail { min-width: 0; padding: 0.75rem; }
             .storefront-order-info-grid { grid-template-columns: 1fr; }
+            .member-line-settings-grid { grid-template-columns: 1fr; }
+            .backend-member-detail-grid { grid-template-columns: 1fr; }
             .storefront-order-mini-section { padding: 0; border-right: 0; border-bottom: 1px dashed #fbcfe8; padding-bottom: 0.6rem; }
             .storefront-order-mini-section:last-child { border-bottom: 0; padding-bottom: 0; }
             .storefront-order-status-row { grid-template-columns: 50px 58px minmax(80px, 1fr); }
@@ -555,6 +589,7 @@
                     <i class="chevron fa-solid fa-angle-down"></i>
                 </div>
                 <div class="submenu">
+                    <div class="submenu-item" onclick="openTab('backend-members', '會員管理')">會員管理</div>
                     <div class="submenu-item" onclick="openTab('vendors', '叫貨處管理')">叫貨處管理</div>
                     <div class="submenu-item" onclick="openTab('vendors-orders', '廠商叫貨明細')">廠商叫貨明細</div>
                     <div class="submenu-item" onclick="openTab('website-orders', '購物網站叫貨明細')">購物網站叫貨明細</div>
@@ -776,6 +811,74 @@
             </div>
 
 
+            <!-- Backend Member Management Section -->
+            <div id="section-backend-members" class="section-container">
+                <div class="page-header">
+                    <h2 class="page-title">會員管理</h2>
+                    <div class="toolbar">
+                        <button class="btn btn-secondary" onclick="loadBackendMembers(true)"><i class="fa-solid fa-rotate"></i> 重新整理</button>
+                    </div>
+                </div>
+                <div class="backend-member-filterbar">
+                    <div class="backend-member-filter-row">
+                        <div class="backend-member-filter-field" style="min-width:260px;">
+                            <label for="backend-member-search">搜尋</label>
+                            <input id="backend-member-search" type="search" placeholder="Email、顯示名稱、電話" onkeydown="handleBackendMemberSearchKey(event)">
+                        </div>
+                        <div class="backend-member-filter-field">
+                            <label for="backend-member-line-filter">LINE 狀態</label>
+                            <select id="backend-member-line-filter">
+                                <option value="all">全部</option>
+                                <option value="linked">已綁定</option>
+                                <option value="unlinked">未綁定</option>
+                            </select>
+                        </div>
+                        <div class="backend-member-filter-field">
+                            <label for="backend-member-status-filter">會員狀態</label>
+                            <select id="backend-member-status-filter">
+                                <option value="all">全部</option>
+                                <option value="active">啟用</option>
+                                <option value="disabled">停用</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" type="button" onclick="applyBackendMemberFilters()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
+                        <button class="btn btn-secondary" type="button" onclick="clearBackendMemberFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
+                    </div>
+                </div>
+                <div class="table-wrapper" style="margin-top:0.85rem; overflow-x:auto;">
+                    <table class="backend-member-table">
+                        <thead>
+                            <tr>
+                                <th>註冊時間</th>
+                                <th>Email</th>
+                                <th>顯示名稱</th>
+                                <th>電話</th>
+                                <th>LINE</th>
+                                <th>會員狀態</th>
+                                <th>訂單數</th>
+                                <th>最近訂單</th>
+                                <th style="text-align:center;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="backend-member-tbody">
+                            <tr><td colspan="9" class="empty-state">尚未載入會員資料</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="backend-member-pagination-footer">
+                    <div id="backend-member-result-count">共 0 筆會員</div>
+                    <div style="display:flex;align-items:center;gap:0.45rem;flex-wrap:wrap;">
+                        <select id="backend-member-page-size" class="storefront-order-page-size-select" onchange="changeBackendMemberPageSize(this.value)" aria-label="每頁會員筆數">
+                            <option value="10">10 筆</option>
+                            <option value="20">20 筆</option>
+                            <option value="50">50 筆</option>
+                        </select>
+                        <div id="backend-member-pagination" class="storefront-order-pagination"></div>
+                    </div>
+                </div>
+                <div id="backend-member-detail"></div>
+            </div>
+
             <!-- Customer Orders Section -->
             <div id="section-storefront-orders" class="section-container">
                 <div class="page-header">
@@ -783,6 +886,22 @@
                     <div class="toolbar">
                         <button class="btn btn-secondary" onclick="loadStorefrontOrders(true)"><i class="fa-solid fa-rotate"></i> 重新整理</button>
                     </div>
+                </div>
+                <div class="member-line-settings-card">
+                    <div class="member-line-settings-header">
+                        <div>
+                            <h3>會員 LINE 通知</h3>
+                            <p>只影響已綁定 LINE 的會員訂單；管理員 LINE 通知不受影響。</p>
+                        </div>
+                        <button class="btn btn-primary btn-sm" type="button" onclick="saveMemberLineNotificationSettings()"><i class="fa-solid fa-floppy-disk"></i> 儲存設定</button>
+                    </div>
+                    <div class="member-line-settings-grid">
+                        <label class="member-line-toggle"><span>下單成功</span><input type="checkbox" id="member-line-order-created"></label>
+                        <label class="member-line-toggle"><span>訂單取消</span><input type="checkbox" id="member-line-order-cancelled"></label>
+                        <label class="member-line-toggle"><span>付款完成</span><input type="checkbox" id="member-line-payment-completed"></label>
+                        <label class="member-line-toggle"><span>出貨</span><input type="checkbox" id="member-line-order-shipped"></label>
+                    </div>
+                    <div id="member-line-settings-status" class="member-line-settings-status"></div>
                 </div>
                 <div class="storefront-order-filterbar">
                     <div class="storefront-order-search-row">
@@ -2195,7 +2314,11 @@
             if(name === 'vendors') { renderVendors(); renderWebsites(); }
             if(name === 'vendors-orders') renderVendorsOrders();
             if(name === 'website-orders') renderWebsiteOrders();
-            if(name === 'storefront-orders') loadStorefrontOrders();
+            if(name === 'storefront-orders') {
+                loadStorefrontOrders();
+                loadMemberLineNotificationSettings();
+            }
+            if(name === 'backend-members') loadBackendMembers();
             if(name === 'customer-orders') renderCustomerOrders();
             if(name === 'stock-products') renderStockProducts();
             if(name === 'preorder-products') renderPreorderProducts();
@@ -2320,6 +2443,13 @@
         let storefrontOrderFilters = { q: '', dateFrom: '', dateTo: '', orderType: 'all', status: 'all', paymentStatus: 'all', shippingStatus: 'all' };
         let storefrontOrderPagination = { page: 1, pageSize: 10, total: 0, totalPages: 0 };
         let storefrontOrderRequestSeq = 0;
+        let memberLineNotificationSettingsLoaded = false;
+        let memberLineNotificationSettings = { order_created: false, order_cancelled: false, payment_completed: false, order_shipped: false };
+        let backendMembers = [];
+        let backendMemberFilters = { q: '', line: 'all', status: 'all' };
+        let backendMemberPagination = { page: 1, pageSize: 20, total: 0, totalPages: 0 };
+        let backendMemberRequestSeq = 0;
+        let expandedBackendMemberId = '';
         let productTags = [];
         let productTagActiveType = 'ip';
         let productTagSortables = { ip: null, category: null };
@@ -2392,7 +2522,10 @@
             renderWebsites();
             if (activeTab === 'vendors-orders') renderVendorsOrders();
             if (activeTab === 'website-orders') renderWebsiteOrders();
-            if (activeTab === 'storefront-orders') loadStorefrontOrders();
+            if (activeTab === 'storefront-orders') {
+                loadStorefrontOrders();
+                loadMemberLineNotificationSettings();
+            }
             if (activeTab === 'customer-orders') renderCustomerOrders();
             renderProductTagOptions();
             renderStockProducts();
@@ -6542,6 +6675,337 @@
             expandedStorefrontOrderIds = new Set();
             loadStorefrontOrders(true);
             scrollStorefrontOrderListIntoView();
+        }
+
+        function setMemberLineNotificationStatus(message = '', type = 'info') {
+            const el = document.getElementById('member-line-settings-status');
+            if (!el) return;
+            el.textContent = message;
+            el.style.color = type === 'error' ? '#be123c' : type === 'success' ? '#047857' : '#64748b';
+        }
+
+        function normalizeMemberLineNotificationSettings(settings = {}) {
+            return {
+                order_created: settings.order_created === true,
+                order_cancelled: settings.order_cancelled === true,
+                payment_completed: settings.payment_completed === true,
+                order_shipped: settings.order_shipped === true
+            };
+        }
+
+        function renderMemberLineNotificationSettings() {
+            const settings = normalizeMemberLineNotificationSettings(memberLineNotificationSettings);
+            const fields = {
+                'member-line-order-created': settings.order_created,
+                'member-line-order-cancelled': settings.order_cancelled,
+                'member-line-payment-completed': settings.payment_completed,
+                'member-line-order-shipped': settings.order_shipped
+            };
+            Object.entries(fields).forEach(([id, checked]) => {
+                const input = document.getElementById(id);
+                if (input) input.checked = checked;
+            });
+        }
+
+        function readMemberLineNotificationSettingsInputs() {
+            return normalizeMemberLineNotificationSettings({
+                order_created: document.getElementById('member-line-order-created')?.checked === true,
+                order_cancelled: document.getElementById('member-line-order-cancelled')?.checked === true,
+                payment_completed: document.getElementById('member-line-payment-completed')?.checked === true,
+                order_shipped: document.getElementById('member-line-order-shipped')?.checked === true
+            });
+        }
+
+        async function loadMemberLineNotificationSettings(force = false) {
+            if (memberLineNotificationSettingsLoaded && !force) {
+                renderMemberLineNotificationSettings();
+                return;
+            }
+            try {
+                setMemberLineNotificationStatus('通知設定讀取中...');
+                const response = await fetch('/api/backend/member-line-notifications', { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '通知設定讀取失敗。');
+                memberLineNotificationSettings = normalizeMemberLineNotificationSettings(result.settings || {});
+                memberLineNotificationSettingsLoaded = true;
+                renderMemberLineNotificationSettings();
+                setMemberLineNotificationStatus('通知設定已載入。', 'success');
+            } catch (error) {
+                console.error(error);
+                memberLineNotificationSettings = normalizeMemberLineNotificationSettings(memberLineNotificationSettings);
+                renderMemberLineNotificationSettings();
+                setMemberLineNotificationStatus(error.message || '通知設定讀取失敗。', 'error');
+            }
+        }
+
+        async function saveMemberLineNotificationSettings() {
+            try {
+                setMemberLineNotificationStatus('通知設定儲存中...');
+                const response = await fetch('/api/backend/member-line-notifications', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ settings: readMemberLineNotificationSettingsInputs() })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '通知設定儲存失敗。');
+                memberLineNotificationSettings = normalizeMemberLineNotificationSettings(result.settings || {});
+                memberLineNotificationSettingsLoaded = true;
+                renderMemberLineNotificationSettings();
+                setMemberLineNotificationStatus('通知設定已儲存，立即生效。', 'success');
+            } catch (error) {
+                console.error(error);
+                setMemberLineNotificationStatus(error.message || '通知設定儲存失敗。', 'error');
+            }
+        }
+
+        function maskFallback(value) {
+            return value ? escapeHtml(value) : '—';
+        }
+
+        function backendMemberStatusBadge(status) {
+            const normalized = String(status || 'active').trim();
+            return `<span class="backend-member-pill ${normalized === 'disabled' ? 'off' : 'on'}">${normalized === 'disabled' ? '停用' : '啟用'}</span>`;
+        }
+
+        function backendMemberLineBadge(linked) {
+            return `<span class="backend-member-pill ${linked ? 'on' : 'off'}">${linked ? '已綁定' : '未綁定'}</span>`;
+        }
+
+        function readBackendMemberFilterInputs() {
+            return {
+                q: document.getElementById('backend-member-search')?.value.trim() || '',
+                line: document.getElementById('backend-member-line-filter')?.value || 'all',
+                status: document.getElementById('backend-member-status-filter')?.value || 'all'
+            };
+        }
+
+        function writeBackendMemberFilterInputs(filters = backendMemberFilters) {
+            const fields = {
+                'backend-member-search': filters.q || '',
+                'backend-member-line-filter': filters.line || 'all',
+                'backend-member-status-filter': filters.status || 'all',
+                'backend-member-page-size': String(backendMemberPagination.pageSize || 20)
+            };
+            Object.entries(fields).forEach(([id, value]) => {
+                const el = document.getElementById(id);
+                if (el) el.value = value;
+            });
+        }
+
+        function backendMemberQueryString() {
+            const params = new URLSearchParams();
+            if (backendMemberFilters.q) params.set('q', backendMemberFilters.q);
+            if (backendMemberFilters.line && backendMemberFilters.line !== 'all') params.set('line', backendMemberFilters.line);
+            if (backendMemberFilters.status && backendMemberFilters.status !== 'all') params.set('status', backendMemberFilters.status);
+            params.set('page', String(Math.max(1, Number(backendMemberPagination.page || 1))));
+            params.set('page_size', String([10, 20, 50].includes(Number(backendMemberPagination.pageSize)) ? Number(backendMemberPagination.pageSize) : 20));
+            const query = params.toString();
+            return query ? `?${query}` : '';
+        }
+
+        function renderBackendMemberPagination() {
+            const container = document.getElementById('backend-member-pagination');
+            const count = document.getElementById('backend-member-result-count');
+            if (count) count.textContent = `共 ${Number(backendMemberPagination.total || 0).toLocaleString('zh-TW')} 筆會員`;
+            if (!container) return;
+            const page = Math.max(1, Number(backendMemberPagination.page || 1));
+            const totalPages = Math.max(0, Number(backendMemberPagination.totalPages || 0));
+            if (!totalPages) {
+                container.innerHTML = '';
+                return;
+            }
+            const start = Math.max(1, page - 2);
+            const end = Math.min(totalPages, page + 2);
+            const buttons = [];
+            buttons.push(`<button class="storefront-order-page-btn" type="button" ${page <= 1 ? 'disabled' : ''} onclick="goToBackendMemberPage(${page - 1})">‹</button>`);
+            for (let i = start; i <= end; i += 1) {
+                buttons.push(`<button class="storefront-order-page-btn ${i === page ? 'active' : ''}" type="button" ${i === page ? 'disabled' : ''} onclick="goToBackendMemberPage(${i})">${i}</button>`);
+            }
+            buttons.push(`<button class="storefront-order-page-btn" type="button" ${page >= totalPages ? 'disabled' : ''} onclick="goToBackendMemberPage(${page + 1})">›</button>`);
+            container.innerHTML = buttons.join('');
+        }
+
+        function setBackendMemberPagination(pagination = {}) {
+            const pageSize = [10, 20, 50].includes(Number(pagination.page_size)) ? Number(pagination.page_size) : backendMemberPagination.pageSize;
+            const total = Math.max(0, Number(pagination.total || 0));
+            const totalPages = Math.max(0, Number(pagination.total_pages || 0));
+            const page = totalPages > 0 ? Math.min(Math.max(1, Number(pagination.page || 1)), totalPages) : 1;
+            backendMemberPagination = { page, pageSize, total, totalPages };
+            writeBackendMemberFilterInputs();
+            renderBackendMemberPagination();
+        }
+
+        function applyBackendMemberFilters() {
+            backendMemberFilters = readBackendMemberFilterInputs();
+            backendMemberPagination.page = 1;
+            expandedBackendMemberId = '';
+            loadBackendMembers(true);
+        }
+
+        function clearBackendMemberFilters() {
+            backendMemberFilters = { q: '', line: 'all', status: 'all' };
+            backendMemberPagination.page = 1;
+            expandedBackendMemberId = '';
+            writeBackendMemberFilterInputs();
+            loadBackendMembers(true);
+        }
+
+        function changeBackendMemberPageSize(value) {
+            const nextSize = Number(value);
+            backendMemberPagination.pageSize = [10, 20, 50].includes(nextSize) ? nextSize : 20;
+            backendMemberPagination.page = 1;
+            expandedBackendMemberId = '';
+            loadBackendMembers(true);
+        }
+
+        function goToBackendMemberPage(page) {
+            backendMemberPagination.page = Math.max(1, Number(page || 1));
+            expandedBackendMemberId = '';
+            loadBackendMembers(true);
+        }
+
+        function handleBackendMemberSearchKey(event) {
+            if (event.key === 'Enter') applyBackendMemberFilters();
+        }
+
+        async function loadBackendMembers(force = false) {
+            if (backendMembers.length && !force) {
+                writeBackendMemberFilterInputs();
+                renderBackendMembers();
+                renderBackendMemberPagination();
+                return;
+            }
+            const tbody = document.getElementById('backend-member-tbody');
+            const detail = document.getElementById('backend-member-detail');
+            const requestSeq = ++backendMemberRequestSeq;
+            writeBackendMemberFilterInputs();
+            if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="empty-state">會員資料讀取中...</td></tr>';
+            if (detail) detail.innerHTML = '';
+            try {
+                const response = await fetch(`/api/backend/members${backendMemberQueryString()}`, { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '會員資料讀取失敗。');
+                if (requestSeq !== backendMemberRequestSeq) return;
+                backendMembers = Array.isArray(result.members) ? result.members : [];
+                setBackendMemberPagination(result.pagination || {});
+                renderBackendMembers();
+            } catch (error) {
+                console.error(error);
+                if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="empty-state">會員資料讀取失敗，請稍後再試。</td></tr>';
+                setBackendMemberPagination({ page: 1, page_size: backendMemberPagination.pageSize, total: 0, total_pages: 0 });
+            }
+        }
+
+        function renderBackendMembers() {
+            const tbody = document.getElementById('backend-member-tbody');
+            if (!tbody) return;
+            if (!backendMembers.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">沒有符合條件的會員</td></tr>';
+                return;
+            }
+            tbody.innerHTML = backendMembers.map(member => `
+                <tr>
+                    <td>${storefrontDateTime(member.createdAt)}</td>
+                    <td><strong>${escapeHtml(member.email || '—')}</strong>${member.emailVerified ? '' : '<div style="color:#be123c;font-size:0.74rem;font-weight:900;">未驗證</div>'}</td>
+                    <td>${maskFallback(member.displayName)}</td>
+                    <td>${maskFallback(member.phoneMasked)}</td>
+                    <td>${backendMemberLineBadge(member.lineLinked)}</td>
+                    <td>${backendMemberStatusBadge(member.status)}</td>
+                    <td>${Number(member.orderCount || 0).toLocaleString('zh-TW')}</td>
+                    <td>${member.lastOrderAt ? storefrontDateTime(member.lastOrderAt) : '—'}</td>
+                    <td style="text-align:center;"><div class="product-row-actions">
+                        <button class="btn btn-sm btn-primary" type="button" onclick="openBackendMemberDetail('${escapeHtml(member.userId)}')"><i class="fa-solid fa-eye"></i> 詳情</button>
+                        <button class="btn btn-sm ${member.status === 'disabled' ? 'btn-success' : 'btn-danger'}" type="button" onclick="updateBackendMemberStatus('${escapeHtml(member.userId)}', '${member.status === 'disabled' ? 'active' : 'disabled'}')">${member.status === 'disabled' ? '啟用' : '停用'}</button>
+                    </div></td>
+                </tr>
+            `).join('');
+        }
+
+        async function openBackendMemberDetail(userId, reveal = false) {
+            const detail = document.getElementById('backend-member-detail');
+            if (!detail) return;
+            expandedBackendMemberId = userId;
+            detail.innerHTML = '<div class="backend-member-detail-card">會員詳情讀取中...</div>';
+            try {
+                const response = await fetch(`/api/backend/members/${encodeURIComponent(userId)}${reveal ? '?reveal=1' : ''}`, { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '會員詳情讀取失敗。');
+                renderBackendMemberDetail(result.member, Boolean(result.piiRevealed));
+            } catch (error) {
+                console.error(error);
+                detail.innerHTML = '<div class="backend-member-detail-card">會員詳情讀取失敗，請稍後再試。</div>';
+            }
+        }
+
+        function renderBackendMemberDetail(member, revealed = false) {
+            const detail = document.getElementById('backend-member-detail');
+            if (!detail || !member) return;
+            const user = member.user || {};
+            const profile = member.profile || {};
+            const line = member.line || {};
+            const addresses = Array.isArray(member.addresses) ? member.addresses : [];
+            const orders = Array.isArray(member.orders) ? member.orders : [];
+            detail.innerHTML = `
+                <div class="backend-member-detail-card">
+                    <div class="backend-member-detail-header">
+                        <div>
+                            <div class="backend-member-detail-title">會員詳情｜${escapeHtml(user.email || '—')}</div>
+                            <div style="color:#64748b;font-size:0.78rem;font-weight:800;">${user.emailVerified ? 'Email 已驗證' : 'Email 未驗證'}・${backendMemberStatusBadge(profile.status)}</div>
+                        </div>
+                        <div style="display:flex;gap:0.45rem;flex-wrap:wrap;">
+                            <button class="btn btn-sm btn-secondary" type="button" onclick="openBackendMemberDetail('${escapeHtml(user.userId)}', ${revealed ? 'false' : 'true'})">${revealed ? '隱藏完整資料' : '顯示完整資料'}</button>
+                            <button class="btn btn-sm ${profile.status === 'disabled' ? 'btn-success' : 'btn-danger'}" type="button" onclick="updateBackendMemberStatus('${escapeHtml(user.userId)}', '${profile.status === 'disabled' ? 'active' : 'disabled'}')">${profile.status === 'disabled' ? '啟用會員' : '停用會員'}</button>
+                        </div>
+                    </div>
+                    <div class="backend-member-detail-grid">
+                        <section class="backend-member-detail-section">
+                            <h4>基本資料</h4>
+                            <dl class="backend-member-kv">
+                                <dt>註冊</dt><dd>${storefrontDateTime(user.createdAt)}</dd>
+                                <dt>名稱</dt><dd>${maskFallback(profile.displayName)}</dd>
+                                <dt>電話</dt><dd>${maskFallback(profile.phone)}</dd>
+                            </dl>
+                        </section>
+                        <section class="backend-member-detail-section">
+                            <h4>LINE</h4>
+                            <dl class="backend-member-kv">
+                                <dt>狀態</dt><dd>${backendMemberLineBadge(line.linked)}</dd>
+                                <dt>綁定時間</dt><dd>${line.linkedAt ? storefrontDateTime(line.linkedAt) : '—'}</dd>
+                            </dl>
+                        </section>
+                        <section class="backend-member-detail-section">
+                            <h4>地址</h4>
+                            <div class="backend-member-address-list">
+                                ${addresses.length ? addresses.map(address => `<div class="backend-member-address-item">${address.isDefault ? '<strong>預設</strong>・' : ''}${escapeHtml(address.recipientName || '—')}・${escapeHtml(address.phone || '—')}<br>${escapeHtml([address.postalCode, address.city, address.district, address.addressLine].filter(Boolean).join(' '))}</div>`).join('') : '<div class="backend-member-address-item">尚無地址</div>'}
+                            </div>
+                        </section>
+                        <section class="backend-member-detail-section">
+                            <h4>會員訂單</h4>
+                            <div class="backend-member-order-list">
+                                ${orders.length ? orders.map(order => `<div class="backend-member-order-item"><strong>${escapeHtml(order.orderNo || '—')}</strong>・${storefrontOrderTypeBadge(order.orderType)}・${storefrontMoney(order.total)}<br>${storefrontStatusLabel('order', order.status)} / ${storefrontStatusLabel('payment', order.paymentStatus)} / ${storefrontStatusLabel('shipping', order.shippingStatus)}</div>`).join('') : '<div class="backend-member-order-item">尚無會員訂單</div>'}
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function updateBackendMemberStatus(userId, status) {
+            const action = status === 'disabled' ? '停用' : '啟用';
+            if (!confirm(`確定要${action}這位會員嗎？`)) return;
+            try {
+                const response = await fetch('/api/backend/members', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, status })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '會員狀態更新失敗。');
+                await loadBackendMembers(true);
+                if (expandedBackendMemberId === userId) await openBackendMemberDetail(userId);
+            } catch (error) {
+                alert(error.message || '會員狀態更新失敗。');
+            }
         }
 
         async function loadStorefrontOrders(force = false) {
