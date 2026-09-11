@@ -416,6 +416,13 @@
         .appearance-image-field { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 0.75rem; align-items: center; }
         .appearance-image-preview { width: 112px; height: 72px; border-radius: 0.65rem; border: 1px solid #e2e8f0; background: #f8fafc; display: grid; place-items: center; overflow: hidden; color: #94a3b8; }
         .appearance-image-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .banner-image-editor { display: grid; gap: 0.75rem; min-width: 0; }
+        .banner-image-preview-stage { width: 100%; height: clamp(240px, 38vw, 420px); border-radius: 1rem; border: 1px solid #f9a8d4; background: #fff7fb; display: grid; place-items: center; overflow: auto; color: #94a3b8; }
+        .banner-image-preview-stage img { width: 100%; height: 100%; object-fit: contain; display: block; transform-origin: center; transition: transform 0.18s ease; }
+        .banner-image-preview-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .banner-image-preview-controls button { min-width: 38px; height: 36px; border: 1px solid #f9a8d4; border-radius: 999px; background: #fff; color: #be185d; padding: 0 0.8rem; font-weight: 900; cursor: pointer; }
+        .banner-image-preview-controls .banner-preview-reset { min-width: 94px; }
+        .banner-image-preview-zoom { min-width: 54px; color: #475569; font-size: 0.82rem; font-weight: 900; text-align: center; }
         .appearance-advanced-url { font-size: 0.75rem; color: #64748b; }
         .appearance-advanced-url summary { cursor: pointer; font-weight: 800; }
         .appearance-subnav { position: sticky; top: 0; z-index: 4; display: flex; gap: 0.55rem; padding: 0.5rem 0 0.8rem; background: #fff; overflow-x: auto; }
@@ -476,6 +483,7 @@
             .appearance-nav-row .appearance-status-pill { grid-column: 2; justify-self: start; }
             .appearance-nav-order-buttons { grid-column: 2; justify-self: start; }
             .appearance-datetime-row .form-group { max-width: none; flex-basis: 100%; }
+            .banner-image-preview-stage { height: min(82vw, 340px); }
         }
         .tag-select-menu { position: relative; }
         .tag-select-button { width: 100%; min-height: 40px; padding: 0.625rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; background: #fff; color: #334155; text-align: left; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
@@ -3589,19 +3597,27 @@
             try {
                 const parsed = JSON.parse(String(value || '{}'));
                 const banners = Array.isArray(parsed) ? parsed : parsed.banners;
-                return (Array.isArray(banners) ? banners : []).map((banner, index) => ({
-                    id: String(banner.id || `banner-${Date.now()}-${index}`),
-                    name: String(banner.name || `Banner ${index + 1}`),
-                    desktopImageUrl: normalizeProductImageUrl(banner.desktop_image_url || banner.desktopImageUrl || ''),
-                    desktopPublicId: String(banner.desktop_public_id || banner.desktopPublicId || '').trim(),
-                    mobileImageUrl: normalizeProductImageUrl(banner.mobile_image_url || banner.mobileImageUrl || ''),
-                    mobilePublicId: String(banner.mobile_public_id || banner.mobilePublicId || '').trim(),
-                    href: String(banner.href || '').trim(),
-                    enabled: banner.enabled !== false,
-                    sortOrder: Number(banner.sort_order ?? banner.sortOrder ?? index),
-                    startAt: String(banner.start_at || banner.startAt || '').trim(),
-                    endAt: String(banner.end_at || banner.endAt || '').trim()
-                })).sort((a, b) => a.sortOrder - b.sortOrder);
+                return (Array.isArray(banners) ? banners : []).map((banner, index) => {
+                    const desktopImageUrl = normalizeProductImageUrl(banner.desktop_image_url || banner.desktopImageUrl || banner.image || '');
+                    const mobileImageUrl = normalizeProductImageUrl(banner.mobile_image_url || banner.mobileImageUrl || '');
+                    const imageUrl = desktopImageUrl || mobileImageUrl;
+                    const desktopPublicId = String(banner.desktop_public_id || banner.desktopPublicId || '').trim();
+                    const mobilePublicId = String(banner.mobile_public_id || banner.mobilePublicId || '').trim();
+                    return {
+                        id: String(banner.id || `banner-${Date.now()}-${index}`),
+                        name: String(banner.name || `Banner ${index + 1}`),
+                        desktopImageUrl: imageUrl,
+                        desktopPublicId,
+                        mobileImageUrl: imageUrl,
+                        mobilePublicId,
+                        href: String(banner.href || '').trim(),
+                        enabled: banner.enabled !== false,
+                        sortOrder: Number(banner.sort_order ?? banner.sortOrder ?? index),
+                        startAt: String(banner.start_at || banner.startAt || '').trim(),
+                        endAt: String(banner.end_at || banner.endAt || '').trim(),
+                        previewZoom: 100
+                    };
+                }).sort((a, b) => a.sortOrder - b.sortOrder);
             } catch (error) {
                 return [];
             }
@@ -3609,19 +3625,24 @@
 
         function siteBannersPayload() {
             return JSON.stringify({
-                banners: siteBanners.map((banner, index) => ({
-                    id: banner.id,
-                    name: banner.name,
-                    desktop_image_url: banner.desktopImageUrl,
-                    desktop_public_id: banner.desktopPublicId,
-                    mobile_image_url: banner.mobileImageUrl,
-                    mobile_public_id: banner.mobilePublicId,
-                    href: banner.href,
-                    enabled: banner.enabled === true,
-                    sort_order: index,
-                    start_at: banner.startAt,
-                    end_at: banner.endAt
-                }))
+                banners: siteBanners.map((banner, index) => {
+                    const imageUrl = normalizeProductImageUrl(banner.desktopImageUrl || banner.mobileImageUrl || '');
+                    const desktopPublicId = String(banner.desktopPublicId || banner.mobilePublicId || '').trim();
+                    const mobilePublicId = String(banner.mobilePublicId || banner.desktopPublicId || '').trim();
+                    return {
+                        id: banner.id,
+                        name: banner.name,
+                        desktop_image_url: imageUrl,
+                        desktop_public_id: desktopPublicId,
+                        mobile_image_url: imageUrl,
+                        mobile_public_id: mobilePublicId,
+                        href: banner.href,
+                        enabled: banner.enabled === true,
+                        sort_order: index,
+                        start_at: banner.startAt,
+                        end_at: banner.endAt
+                    };
+                })
             });
         }
 
@@ -5693,13 +5714,17 @@
                             <div class="form-group"><label>結束時間</label><input class="appearance-date-display" type="text" readonly value="${escapeHtml(appearanceDateDisplay(banner.endAt || ''))}" placeholder="未設定" onclick="openAppearanceDatePicker('banner', ${index}, 'endAt', this)"></div>
                         </div>
                     </div>
-                    <div class="appearance-image-field">
-                        <div class="appearance-image-preview">${banner.desktopImageUrl ? `<img src="${escapeHtml(banner.desktopImageUrl)}" alt="電腦版 Banner 預覽">` : '<i class="fa-regular fa-image"></i>'}</div>
-                        <div class="form-group"><label>電腦版圖片</label><input type="file" id="site-banner-desktop-${index}" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleSiteBannerImageFile(${index}, 'desktop', this.files); this.value='';"><button class="btn btn-secondary" type="button" onclick="document.getElementById('site-banner-desktop-${index}')?.click()">上傳電腦版圖片</button><details class="appearance-advanced-url"><summary>圖片網址</summary><input type="url" value="${escapeHtml(banner.desktopImageUrl || '')}" onchange="updateSiteBanner(${index}, 'desktopImageUrl', this.value)"></details></div>
-                    </div>
-                    <div class="appearance-image-field">
-                        <div class="appearance-image-preview">${banner.mobileImageUrl ? `<img src="${escapeHtml(banner.mobileImageUrl)}" alt="手機版 Banner 預覽">` : '<i class="fa-regular fa-image"></i>'}</div>
-                        <div class="form-group"><label>手機版圖片</label><input type="file" id="site-banner-mobile-${index}" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleSiteBannerImageFile(${index}, 'mobile', this.files); this.value='';"><button class="btn btn-secondary" type="button" onclick="document.getElementById('site-banner-mobile-${index}')?.click()">上傳手機版圖片</button><details class="appearance-advanced-url"><summary>圖片網址</summary><input type="url" value="${escapeHtml(banner.mobileImageUrl || '')}" onchange="updateSiteBanner(${index}, 'mobileImageUrl', this.value)"></details></div>
+                    <div class="banner-image-editor">
+                        <div class="banner-image-preview-stage" id="site-banner-preview-stage-${index}">
+                            ${banner.desktopImageUrl ? `<img id="site-banner-preview-image-${index}" src="${escapeHtml(banner.desktopImageUrl)}" alt="Banner 圖片預覽" style="transform:scale(${Math.max(50, Math.min(200, Number(banner.previewZoom) || 100)) / 100});">` : '<i class="fa-regular fa-image"></i>'}
+                        </div>
+                        <div class="banner-image-preview-controls" aria-label="Banner 預覽縮放控制">
+                            <button type="button" aria-label="縮小 Banner 預覽" onclick="adjustSiteBannerPreviewZoom(${index}, -25)">−</button>
+                            <span class="banner-image-preview-zoom" id="site-banner-preview-zoom-${index}">${Math.max(50, Math.min(200, Number(banner.previewZoom) || 100))}%</span>
+                            <button type="button" aria-label="放大 Banner 預覽" onclick="adjustSiteBannerPreviewZoom(${index}, 25)">＋</button>
+                            <button class="banner-preview-reset" type="button" onclick="setSiteBannerPreviewZoom(${index}, 100)">重設 100%</button>
+                        </div>
+                        <div class="form-group"><label>Banner 圖片（電腦與手機共用）</label><input type="file" id="site-banner-image-${index}" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleSiteBannerImageFile(${index}, this.files); this.value='';"><button class="btn btn-secondary" type="button" onclick="document.getElementById('site-banner-image-${index}')?.click()">上傳 Banner 圖片</button><details class="appearance-advanced-url"><summary>圖片網址</summary><input type="url" value="${escapeHtml(banner.desktopImageUrl || '')}" onchange="updateSiteBannerImageUrl(${index}, this.value)"></details></div>
                     </div>
                     <div class="brand-setting-actions">
                         <button class="btn btn-primary" type="button" onclick="saveHomepageAppearanceSettings()"><i class="fa-solid fa-floppy-disk"></i> 儲存</button>
@@ -5781,7 +5806,8 @@
                 enabled: true,
                 sortOrder: siteBanners.length,
                 startAt: '',
-                endAt: ''
+                endAt: '',
+                previewZoom: 100
             });
             expandedSiteBannerIds = new Set([id]);
             renderSiteBannerList();
@@ -5833,6 +5859,33 @@
             markHomepageAppearanceDirty();
         }
 
+        function updateSiteBannerImageUrl(index, value) {
+            const banner = siteBanners[index];
+            if (!banner) return;
+            const imageUrl = normalizeProductImageUrl(value || '');
+            banner.desktopImageUrl = imageUrl;
+            banner.mobileImageUrl = imageUrl;
+            banner.previewZoom = 100;
+            markHomepageAppearanceDirty();
+            renderSiteBannerList();
+        }
+
+        function setSiteBannerPreviewZoom(index, value) {
+            const banner = siteBanners[index];
+            if (!banner) return;
+            const zoom = Math.max(50, Math.min(200, Number(value) || 100));
+            banner.previewZoom = zoom;
+            const image = document.getElementById(`site-banner-preview-image-${index}`);
+            const label = document.getElementById(`site-banner-preview-zoom-${index}`);
+            if (image) image.style.transform = `scale(${zoom / 100})`;
+            if (label) label.textContent = `${zoom}%`;
+        }
+
+        function adjustSiteBannerPreviewZoom(index, delta) {
+            const current = Number(siteBanners[index]?.previewZoom) || 100;
+            setSiteBannerPreviewZoom(index, current + Number(delta || 0));
+        }
+
         function toggleSiteBannerEnabled(index) {
             if (!siteBanners[index]) return;
             siteBanners[index].enabled = siteBanners[index].enabled !== true;
@@ -5840,7 +5893,7 @@
             renderSiteBannerList();
         }
 
-        async function handleSiteBannerImageFile(index, target, fileList) {
+        async function handleSiteBannerImageFile(index, fileList) {
             const banner = siteBanners[index];
             const file = Array.from(fileList || []).find(item => /^image\/(jpeg|png|webp)$/i.test(item.type));
             if (!banner || !file) return alert('請選擇 JPG、PNG 或 WebP 圖片');
@@ -5857,13 +5910,11 @@
                 const url = uploaded?.secure_url || uploaded?.url || '';
                 const publicId = uploaded?.public_id || uploaded?.publicId || '';
                 if (!url) throw new Error('Cloudinary 未回傳圖片網址');
-                if (target === 'mobile') {
-                    banner.mobileImageUrl = url;
-                    banner.mobilePublicId = publicId;
-                } else {
-                    banner.desktopImageUrl = url;
-                    banner.desktopPublicId = publicId;
-                }
+                banner.desktopImageUrl = url;
+                banner.desktopPublicId = publicId;
+                banner.mobileImageUrl = url;
+                banner.mobilePublicId = publicId;
+                banner.previewZoom = 100;
                 renderSiteBannerList();
                 markHomepageAppearanceDirty();
             } catch (error) {
