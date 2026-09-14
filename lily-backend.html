@@ -416,15 +416,18 @@
         .appearance-image-field { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 0.75rem; align-items: center; }
         .appearance-image-preview { width: 112px; height: 72px; border-radius: 0.65rem; border: 1px solid #e2e8f0; background: #f8fafc; display: grid; place-items: center; overflow: hidden; color: #94a3b8; }
         .appearance-image-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .banner-image-editor { display: grid; gap: 0.75rem; width: min(100%, 220px); min-width: 0; justify-self: start; }
-        .banner-image-preview-stage { width: 100%; min-height: 140px; border-radius: 1rem; border: 1px solid #f9a8d4; background: #fff7fb; display: grid; place-items: center; overflow: hidden; color: #94a3b8; }
-        .banner-image-preview-stage.has-image { min-height: 0; }
+        .banner-media-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: 1rem; align-items: start; }
+        .banner-media-fields { display: grid; gap: 0.75rem; min-width: 0; }
+        .banner-media-fields .appearance-datetime-row { display: grid; gap: 0.75rem; }
+        .banner-media-fields .appearance-datetime-row .form-group { width: 100%; max-width: none; }
+        .banner-image-editor { display: grid; gap: 0.75rem; width: 220px; max-width: 100%; min-width: 0; justify-self: start; }
+        .banner-image-preview-stage { width: 100%; aspect-ratio: 1 / 1; border-radius: 1rem; border: 1px solid #f9a8d4; background: #fff7fb; display: grid; place-items: center; overflow: hidden; color: #94a3b8; }
         .banner-image-preview-stage.is-zoomed { place-items: start; overflow: auto; }
-        .banner-image-preview-stage img { width: 100%; height: auto; object-fit: contain; display: block; transform-origin: center; transition: transform 0.18s ease; }
+        .banner-image-preview-stage img { width: 100%; height: 100%; object-fit: contain; display: block; transform-origin: center; transition: transform 0.18s ease; }
         .banner-image-preview-stage.is-zoomed img { transform-origin: top left; }
-        .banner-image-preview-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .banner-image-preview-controls { display: grid; grid-template-columns: 38px 54px 38px; justify-content: center; align-items: center; gap: 0.5rem; }
         .banner-image-preview-controls button { min-width: 38px; height: 36px; border: 1px solid #f9a8d4; border-radius: 999px; background: #fff; color: #be185d; padding: 0 0.8rem; font-weight: 900; cursor: pointer; }
-        .banner-image-preview-controls .banner-preview-reset { min-width: 94px; }
+        .banner-image-preview-controls .banner-preview-reset { grid-column: 1 / -1; justify-self: center; min-width: 94px; }
         .banner-image-preview-zoom { min-width: 54px; color: #475569; font-size: 0.82rem; font-weight: 900; text-align: center; }
         .appearance-advanced-url { font-size: 0.75rem; color: #64748b; }
         .appearance-advanced-url summary { cursor: pointer; font-weight: 800; }
@@ -486,7 +489,8 @@
             .appearance-nav-row .appearance-status-pill { grid-column: 2; justify-self: start; }
             .appearance-nav-order-buttons { grid-column: 2; justify-self: start; }
             .appearance-datetime-row .form-group { max-width: none; flex-basis: 100%; }
-            .banner-image-editor { width: 100%; }
+            .banner-media-layout { grid-template-columns: 1fr; }
+            .banner-image-editor { width: min(100%, 220px); }
         }
         .tag-select-menu { position: relative; }
         .tag-select-button { width: 100%; min-height: 40px; padding: 0.625rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; background: #fff; color: #334155; text-align: left; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
@@ -5712,13 +5716,17 @@
                         <div class="form-group"><label>排序</label><input type="number" value="${Number(banner.sortOrder || index)}" onchange="updateSiteBanner(${index}, 'sortOrder', this.value)"></div>
                         <div class="form-group"><label>是否顯示</label><select onchange="updateSiteBanner(${index}, 'enabled', this.value === 'true')"><option value="true" ${banner.enabled ? 'selected' : ''}>顯示</option><option value="false" ${!banner.enabled ? 'selected' : ''}>停用</option></select></div>
                         <div class="form-group"><label>點擊連結</label><input type="url" value="${escapeHtml(banner.href || '')}" placeholder="https://" onchange="updateSiteBanner(${index}, 'href', this.value)"></div>
-                        <div class="appearance-datetime-row wide">
+                    </div>
+                    <div class="banner-media-layout">
+                        <div class="banner-media-fields">
+                        <div class="appearance-datetime-row">
                             <div class="form-group"><label>開始時間</label><input class="appearance-date-display" type="text" readonly value="${escapeHtml(appearanceDateDisplay(banner.startAt || ''))}" placeholder="未設定" onclick="openAppearanceDatePicker('banner', ${index}, 'startAt', this)"></div>
                             <div class="form-group"><label>結束時間</label><input class="appearance-date-display" type="text" readonly value="${escapeHtml(appearanceDateDisplay(banner.endAt || ''))}" placeholder="未設定" onclick="openAppearanceDatePicker('banner', ${index}, 'endAt', this)"></div>
                         </div>
-                    </div>
-                    <div class="banner-image-editor">
-                        <div class="banner-image-preview-stage ${banner.desktopImageUrl ? 'has-image' : ''} ${Math.max(50, Math.min(200, Number(banner.previewZoom) || 100)) > 100 ? 'is-zoomed' : ''}" id="site-banner-preview-stage-${index}">
+                        <div class="form-group"><label>Banner 圖片（電腦與手機共用）</label><input type="file" id="site-banner-image-${index}" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleSiteBannerImageFile(${index}, this.files); this.value='';"><button class="btn btn-secondary" type="button" onclick="document.getElementById('site-banner-image-${index}')?.click()">上傳 Banner 圖片</button><details class="appearance-advanced-url"><summary>圖片網址</summary><input type="url" value="${escapeHtml(banner.desktopImageUrl || '')}" onchange="updateSiteBannerImageUrl(${index}, this.value)"></details></div>
+                        </div>
+                        <div class="banner-image-editor">
+                        <div class="banner-image-preview-stage ${Math.max(50, Math.min(200, Number(banner.previewZoom) || 100)) > 100 ? 'is-zoomed' : ''}" id="site-banner-preview-stage-${index}">
                             ${banner.desktopImageUrl ? `<img id="site-banner-preview-image-${index}" src="${escapeHtml(banner.desktopImageUrl)}" alt="Banner 圖片預覽" style="transform:scale(${Math.max(50, Math.min(200, Number(banner.previewZoom) || 100)) / 100});">` : '<i class="fa-regular fa-image"></i>'}
                         </div>
                         <div class="banner-image-preview-controls" aria-label="Banner 預覽縮放控制">
@@ -5727,7 +5735,7 @@
                             <button type="button" aria-label="放大 Banner 預覽" onclick="adjustSiteBannerPreviewZoom(${index}, 25)">＋</button>
                             <button class="banner-preview-reset" type="button" onclick="setSiteBannerPreviewZoom(${index}, 100)">重設 100%</button>
                         </div>
-                        <div class="form-group"><label>Banner 圖片（電腦與手機共用）</label><input type="file" id="site-banner-image-${index}" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleSiteBannerImageFile(${index}, this.files); this.value='';"><button class="btn btn-secondary" type="button" onclick="document.getElementById('site-banner-image-${index}')?.click()">上傳 Banner 圖片</button><details class="appearance-advanced-url"><summary>圖片網址</summary><input type="url" value="${escapeHtml(banner.desktopImageUrl || '')}" onchange="updateSiteBannerImageUrl(${index}, this.value)"></details></div>
+                        </div>
                     </div>
                     <div class="brand-setting-actions">
                         <button class="btn btn-primary" type="button" onclick="saveHomepageAppearanceSettings()"><i class="fa-solid fa-floppy-disk"></i> 儲存</button>
