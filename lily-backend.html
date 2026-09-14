@@ -416,10 +416,11 @@
         .appearance-image-field { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 0.75rem; align-items: center; }
         .appearance-image-preview { width: 112px; height: 72px; border-radius: 0.65rem; border: 1px solid #e2e8f0; background: #f8fafc; display: grid; place-items: center; overflow: hidden; color: #94a3b8; }
         .appearance-image-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .banner-image-editor { display: grid; gap: 0.75rem; width: min(100%, 560px); min-width: 0; justify-self: start; }
-        .banner-image-preview-stage { width: 100%; height: clamp(240px, 32vw, 420px); border-radius: 1rem; border: 1px solid #f9a8d4; background: #fff7fb; display: grid; place-items: center; overflow: hidden; color: #94a3b8; }
+        .banner-image-editor { display: grid; gap: 0.75rem; width: min(100%, 220px); min-width: 0; justify-self: start; }
+        .banner-image-preview-stage { width: 100%; min-height: 140px; border-radius: 1rem; border: 1px solid #f9a8d4; background: #fff7fb; display: grid; place-items: center; overflow: hidden; color: #94a3b8; }
+        .banner-image-preview-stage.has-image { min-height: 0; }
         .banner-image-preview-stage.is-zoomed { place-items: start; overflow: auto; }
-        .banner-image-preview-stage img { width: 100%; height: 100%; object-fit: contain; display: block; transform-origin: center; transition: transform 0.18s ease; }
+        .banner-image-preview-stage img { width: 100%; height: auto; object-fit: contain; display: block; transform-origin: center; transition: transform 0.18s ease; }
         .banner-image-preview-stage.is-zoomed img { transform-origin: top left; }
         .banner-image-preview-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
         .banner-image-preview-controls button { min-width: 38px; height: 36px; border: 1px solid #f9a8d4; border-radius: 999px; background: #fff; color: #be185d; padding: 0 0.8rem; font-weight: 900; cursor: pointer; }
@@ -486,7 +487,6 @@
             .appearance-nav-order-buttons { grid-column: 2; justify-self: start; }
             .appearance-datetime-row .form-group { max-width: none; flex-basis: 100%; }
             .banner-image-editor { width: 100%; }
-            .banner-image-preview-stage { height: min(82vw, 340px); }
         }
         .tag-select-menu { position: relative; }
         .tag-select-button { width: 100%; min-height: 40px; padding: 0.625rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; background: #fff; color: #334155; text-align: left; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
@@ -5718,7 +5718,7 @@
                         </div>
                     </div>
                     <div class="banner-image-editor">
-                        <div class="banner-image-preview-stage ${Math.max(50, Math.min(200, Number(banner.previewZoom) || 100)) > 100 ? 'is-zoomed' : ''}" id="site-banner-preview-stage-${index}">
+                        <div class="banner-image-preview-stage ${banner.desktopImageUrl ? 'has-image' : ''} ${Math.max(50, Math.min(200, Number(banner.previewZoom) || 100)) > 100 ? 'is-zoomed' : ''}" id="site-banner-preview-stage-${index}">
                             ${banner.desktopImageUrl ? `<img id="site-banner-preview-image-${index}" src="${escapeHtml(banner.desktopImageUrl)}" alt="Banner 圖片預覽" style="transform:scale(${Math.max(50, Math.min(200, Number(banner.previewZoom) || 100)) / 100});">` : '<i class="fa-regular fa-image"></i>'}
                         </div>
                         <div class="banner-image-preview-controls" aria-label="Banner 預覽縮放控制">
