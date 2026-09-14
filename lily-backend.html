@@ -139,6 +139,10 @@
         .copy-order-btn.copied { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
         .storefront-order-copy-toast { position: fixed; right: 1rem; bottom: 1rem; z-index: 2000; border-radius: 999px; background: #be185d; color: white; padding: 0.55rem 0.9rem; font-size: 0.82rem; font-weight: 900; box-shadow: 0 12px 30px rgba(190, 24, 93, 0.26); opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.18s ease, transform 0.18s ease; }
         .storefront-order-copy-toast.show { opacity: 1; transform: translateY(0); }
+        .backend-toast { position: fixed; top: 1rem; left: 50%; z-index: 12000; display: flex; align-items: center; justify-content: center; gap: 0.55rem; width: max-content; max-width: min(420px, calc(100vw - 2rem)); box-sizing: border-box; padding: 0.72rem 1rem; border-radius: 0.8rem; color: white; font-size: 0.86rem; font-weight: 900; line-height: 1.4; text-align: left; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.2); opacity: 0; visibility: hidden; transform: translate(-50%, -12px); pointer-events: none; transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease; }
+        .backend-toast.success { background: #15803d; }
+        .backend-toast.error { background: #b91c1c; }
+        .backend-toast.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
         .storefront-order-filterbar { display: grid; gap: 0.55rem; padding: 0.75rem 0.85rem; border: 1px solid #fce7f3; border-radius: 0.9rem; background: #fff7fb; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
         .member-line-settings-card { display: grid; gap: 0.75rem; margin-bottom: 0.85rem; padding: 0.85rem 1rem; border: 1px solid #fce7f3; border-radius: 0.9rem; background: #fff7fb; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
         .member-line-settings-header { display: flex; justify-content: space-between; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
@@ -2295,6 +2299,10 @@
     </div>
 
     <div class="storefront-order-copy-toast" id="storefrontOrderCopyToast" role="status" aria-live="polite">已複製訂單編號</div>
+    <div class="backend-toast" id="backendToast" role="status" aria-live="polite" aria-atomic="true">
+        <i id="backendToastIcon" class="fa-solid fa-circle-check" aria-hidden="true"></i>
+        <span id="backendToastMessage"></span>
+    </div>
 
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
@@ -2303,6 +2311,24 @@
     </div>
 
     <script>
+        let backendToastTimer = null;
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('backendToast');
+            const icon = document.getElementById('backendToastIcon');
+            const messageNode = document.getElementById('backendToastMessage');
+            if (!toast || !messageNode) return;
+            const normalizedType = type === 'error' ? 'error' : 'success';
+            window.clearTimeout(backendToastTimer);
+            toast.classList.remove('show', 'success', 'error');
+            toast.classList.add(normalizedType);
+            messageNode.textContent = String(message || (normalizedType === 'error' ? '操作失敗，請稍後再試' : '儲存成功'));
+            if (icon) icon.className = normalizedType === 'error' ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-circle-check';
+            void toast.offsetWidth;
+            toast.classList.add('show');
+            backendToastTimer = window.setTimeout(() => toast.classList.remove('show'), 3200);
+        }
+
         // --- Navigation & Tabs ---
         let openTabs = [];
         let activeTab = 'welcome';
@@ -2383,7 +2409,8 @@
                     btn.innerHTML = '<i class="fa-solid fa-xmark"></i> 未出貨';
                 }
 
-                await fetchAPI('saveOrder', o, null, true);
+                const result = await fetchAPI('saveOrder', o, null, true);
+                if (result) showToast('訂單狀態已更新', 'success');
             }
         }
 
@@ -2402,7 +2429,8 @@
                         btn.innerHTML = '<i class="fa-solid fa-xmark"></i> 未出貨';
                     }
 
-                    await fetchAPI('saveOrder', o, null, true);
+                    const result = await fetchAPI('saveOrder', o, null, true);
+                    if (result) showToast('商品出貨狀態已更新', 'success');
                 }
             }
         }
@@ -2758,13 +2786,14 @@
                         applyLocalBackendMutation(action, body.payload || payload, id);
                     }
                     renderBackendData();
+                    showToast(String(action).toLowerCase().startsWith('delete') ? '刪除成功' : '儲存成功', 'success');
                     return result;
                 } else {
-                    alert('發生錯誤: ' + result.message);
+                    showToast('操作失敗，請稍後再試', 'error')
                 }
             } catch (err) {
                 console.error(err);
-                alert('網路錯誤，請稍後再試。');
+                showToast('操作失敗，請檢查網路後再試', 'error')
             } finally {
                 hideLoading();
             }
@@ -2787,7 +2816,7 @@
                 renderBackendData();
             } catch (err) {
                 console.error(err);
-                if (!cached) alert('無法載入資料，請檢查網路連線。');
+                if (!cached) showToast('無法載入資料，請檢查網路連線。', 'error')
             } finally {
                 if (!cached) hideLoading();
             }
@@ -2877,7 +2906,7 @@
                 location: document.getElementById('v-location').value, currency: document.getElementById('v-currency').value,
                 notes: document.getElementById('v-notes').value
             };
-            if(!data.name) return alert('請填寫廠商名稱');
+            if(!data.name) return showToast('請填寫廠商名稱', 'error')
             closeVendorModal();
             await fetchAPI('saveVendor', data);
         }
@@ -2934,7 +2963,7 @@
                 location: document.getElementById('w-location').value, currency: document.getElementById('w-currency').value,
                 link: document.getElementById('w-link').value, notes: document.getElementById('w-notes').value
             };
-            if(!data.name) return alert('請填寫購物網站名稱');
+            if(!data.name) return showToast('請填寫購物網站名稱', 'error')
             closeWebsiteModal();
             await fetchAPI('saveWebsite', data);
         }
@@ -3132,11 +3161,12 @@
 
         function deleteSelectedLedgerEntries() {
             const ids = selectedLedgerEntryIds();
-            if (!ids.length) return alert('請先勾選要刪除的總帳資料');
+            if (!ids.length) return showToast('請先勾選要刪除的總帳資料', 'error')
             if (!confirm(`確定要刪除選取的 ${ids.length} 筆總帳資料嗎？`)) return;
             generalLedger = generalLedger.filter(entry => !ids.includes(Number(entry.id)));
             persistGeneralLedger();
             renderGeneralLedger();
+            showToast('刪除成功', 'success');
         }
 
         function setExclusiveLedgerCheckbox(name, selected) {
@@ -3182,11 +3212,11 @@
             const type = getCheckedLedgerValue('ledger-type');
             const note = document.getElementById('ledger-note').value.trim();
 
-            if (!date) return alert('請選擇日期');
-            if (!category) return alert('請選擇內容分類');
-            if (!content) return alert('請輸入內容說明');
-            if (!amount || amount <= 0) return alert('請輸入大於 0 的金額');
-            if (!type) return alert('請選擇支出或收入');
+            if (!date) return showToast('請選擇日期', 'error')
+            if (!category) return showToast('請選擇內容分類', 'error')
+            if (!content) return showToast('請輸入內容說明', 'error')
+            if (!amount || amount <= 0) return showToast('請輸入大於 0 的金額', 'error')
+            if (!type) return showToast('請選擇支出或收入', 'error')
 
             const payload = { id: id ? Number(id) : Date.now(), date, category, content, amount, type, note };
             if (id) {
@@ -3197,6 +3227,7 @@
             persistGeneralLedger();
             renderGeneralLedger();
             closeLedgerModal();
+            showToast('儲存成功', 'success');
         }
 
         function deleteLedgerEntry(id) {
@@ -3204,6 +3235,7 @@
             generalLedger = generalLedger.filter(entry => Number(entry.id) !== Number(id));
             persistGeneralLedger();
             renderGeneralLedger();
+            showToast('刪除成功', 'success');
         }
 
         function defaultProductTags() {
@@ -3379,7 +3411,7 @@
             const products = type === 'stock' ? stockProducts : preorderProducts;
             const sourceId = type === 'stock' ? STOCK_PRODUCT_SOURCE_ID : PREORDER_PRODUCT_SOURCE_ID;
             const orderData = { id: sourceId, date: new Date().toISOString().slice(0, 10), vendorId: sourceId, orderNo: type === 'stock' ? 'STOCK-PRODUCT-CATALOG' : 'PREORDER-PRODUCT-CATALOG', trackingNo: '', shipped: '未出貨', shippedDate: '', items: products.map(product => productToCatalogItem(product, type)) };
-            await fetchAPI('saveOrder', orderData, null, true);
+            return await fetchAPI('saveOrder', orderData, null, true);
         }
 
         function productSaveAction(type) {
@@ -3408,8 +3440,10 @@
 
         async function syncProductsToBackend(type, products) {
             for (const product of products) {
-                await saveProductToBackend(type, product);
+                const result = await saveProductToBackend(type, product);
+                if (!result) return false;
             }
+            return true;
         }
 
         function persistProductManagement() {
@@ -4029,7 +4063,7 @@
                 await deleteCloudinaryImages(publicIds);
             } catch (cleanupError) {
                 console.error('Cloudinary cleanup failed after product save error:', cleanupError);
-                alert(`商品儲存失敗，且清理已上傳圖片也失敗：${cleanupError.message || cleanupError}`);
+                showToast('商品儲存失敗，且已上傳圖片清理失敗，請稍後再試', 'error')
             }
         }
 
@@ -4386,9 +4420,9 @@
             try {
                 const products = type === 'stock' ? stockProducts : preorderProducts;
                 const existing = products.find(product => sameId(product.id, id));
-                if (!existing) return alert('找不到這個商品，請重新整理後再試。');
+                if (!existing) return showToast('找不到這個商品，請重新整理後再試。', 'error')
                 const variants = collectProductVariants(type, id);
-                if (!variants.length) return alert('請至少填寫一個規格');
+                if (!variants.length) return showToast('請至少填寫一個規格', 'error')
                 const firstVariant = variants[0];
                 const totalQty = variants.reduce((sum, variant) => sum + Number(variant.quantity || 0), 0);
                 const updated = { ...existing, variants, listPrice: Number(firstVariant.price || existing.listPrice || 0) };
@@ -4402,10 +4436,10 @@
                 const result = await saveProductToBackend(type, updated);
                 if (!result || result.status !== 'success') throw new Error('後端商品資料沒有回傳成功');
                 await syncProductCatalog(type);
-                alert('規格明細已保存');
+                showToast('規格明細已保存', 'success')
             } catch (error) {
                 console.error(error);
-                alert(`規格明細保存失敗：${error.message || error}`);
+                showToast('規格明細儲存失敗，請稍後再試', 'error')
             }
         }
 
@@ -4515,14 +4549,14 @@
             try {
                 const products = type === 'stock' ? stockProducts : preorderProducts;
                 const existing = products.find(product => sameId(product.id, id));
-                if (!existing) return alert('找不到這個商品，請重新整理後再試。');
+                if (!existing) return showToast('找不到這個商品，請重新整理後再試。', 'error')
                 const nameEl = document.getElementById(`${type}-edit-name-${id}`);
                 const descEl = document.getElementById(`${type}-edit-description-${id}`);
                 const costEl = document.getElementById(`${type}-edit-cost-${id}`);
                 const listEl = document.getElementById(`${type}-edit-list-${id}`);
                 const qtyEl = document.getElementById(`${type}-edit-qty-${id}`);
                 const activeEl = document.getElementById(`${type}-edit-active-${id}`);
-                if (!nameEl || !descEl || !costEl || !listEl || !qtyEl || !activeEl) return alert('編輯欄位載入不完整，請重新整理後再試。');
+                if (!nameEl || !descEl || !costEl || !listEl || !qtyEl || !activeEl) return showToast('編輯欄位載入不完整，請重新整理後再試。', 'error')
                 const uploadedImages = await uploadPendingProductImages(type, id, String(existing.id));
                 const store = productImageEditStores[productImageStoreKey(type, id)];
                 uploadedPublicIds.push(...(store?.lastUploadedPublicIds || []));
@@ -4542,7 +4576,7 @@
                     updated.deadline = document.getElementById(`${type}-edit-deadline-${id}`)?.value || '';
                 }
                 updated.variants = normalizeProductVariants({ ...updated, variants: existing.variants }, type).map((variant, index) => index === 0 ? { ...variant, price: updated.listPrice, quantity: type === 'stock' ? updated.quantity : updated.quota } : variant);
-                if (!updated.name) return alert('請填寫商品名稱');
+                if (!updated.name) return showToast('請填寫商品名稱', 'error')
                 if (type === 'stock') stockProducts = stockProducts.map(product => sameId(product.id, id) ? updated : product);
                 else preorderProducts = preorderProducts.map(product => sameId(product.id, id) ? updated : product);
                 delete productImageEditStores[productImageStoreKey(type, id)];
@@ -4553,13 +4587,15 @@
                 const result = await saveProductToBackend(type, updated);
                 if (!result || result.status !== 'success') throw new Error('後端商品資料沒有回傳成功');
                 await syncProductCatalog(type);
+                let cleanupFailed = false;
                 try {
                     await deleteCloudinaryImages(deletedPublicIds);
                 } catch (cleanupError) {
+                    cleanupFailed = true;
                     console.error('Cloudinary delete failed after product save:', cleanupError);
-                    alert(`商品已儲存，但 Cloudinary 舊圖片刪除失敗：${cleanupError.message || cleanupError}`);
+                    showToast('商品已儲存，但舊圖片清理失敗', 'error')
                 }
-                alert('商品已保存');
+                if (!cleanupFailed) showToast('商品已保存', 'success')
             } catch (error) {
                 console.error(error);
                 if (type === 'stock') stockProducts = previousProducts;
@@ -4570,7 +4606,7 @@
                 if (uploadedPublicIds.length) {
                     await cleanupUploadedProductImages(uploadedPublicIds);
                 }
-                alert(`商品保存失敗：${error.message || error}`);
+                showToast('商品儲存失敗，請稍後再試', 'error')
             } finally {
                 productSaveInProgress[saveKey] = false;
                 setSavingButton(saveButton, false);
@@ -4583,8 +4619,10 @@
             persistProductManagement();
             renderProductRows(type);
             const updated = (type === 'stock' ? stockProducts : preorderProducts).find(product => sameId(product.id, id));
-            if (updated) await saveProductToBackend(type, updated);
-            await syncProductCatalog(type);
+            const saved = updated ? await saveProductToBackend(type, updated) : null;
+            if (!saved) return;
+            const catalogSaved = await syncProductCatalog(type);
+            if (catalogSaved) showToast('商品狀態已更新', 'success');
         }
 
         async function deleteProduct(type, id) {
@@ -4602,10 +4640,10 @@
                 const result = await deleteProductFromBackend(type, id);
                 if (!result || result.status !== 'success') throw new Error('後端商品資料沒有回傳成功');
                 await syncProductCatalog(type);
-                alert('商品已刪除');
+                showToast('商品已刪除', 'success')
             } catch (error) {
                 console.error(error);
-                alert(`商品刪除失敗：${error.message || error}`);
+                showToast('商品刪除失敗，請稍後再試', 'error')
             }
         }
 
@@ -4617,7 +4655,7 @@
         async function batchDeleteProducts(type) {
             try {
                 const ids = selectedProductIds(type);
-                if (!ids.length) return alert('請先勾選商品');
+                if (!ids.length) return showToast('請先勾選商品', 'error')
                 if (!confirm(`確定刪除 ${ids.length} 個商品嗎？`)) return;
                 const products = type === 'stock' ? stockProducts : preorderProducts;
                 const publicIds = products
@@ -4628,17 +4666,22 @@
                 else { preorderProducts = preorderProducts.filter(p => !ids.some(id => sameId(id, p.id))); renderPreorderProducts(); }
                 persistProductManagement();
                 renderProductTags();
-                for (const id of ids) await deleteProductFromBackend(type, id);
-                await syncProductCatalog(type);
+                for (const id of ids) {
+                    const deleted = await deleteProductFromBackend(type, id);
+                    if (!deleted) return;
+                }
+                const catalogSaved = await syncProductCatalog(type);
+                if (!catalogSaved) return;
+                showToast('商品已刪除', 'success');
 } catch (error) {
                 console.error(error);
-                alert(`商品刪除失敗：${error.message || error}`);
+                showToast('商品刪除失敗，請稍後再試', 'error')
             }
         }
 
         async function batchSetProductActive(type, active) {
             const ids = selectedProductIds(type);
-            if (!ids.length) return alert('請先勾選商品');
+            if (!ids.length) return showToast('請先勾選商品', 'error')
             const label = active ? '上架' : '下架';
             if (!confirm(`確定批量${label} ${ids.length} 個商品嗎？`)) return;
             const updater = product => ids.some(id => sameId(id, product.id)) ? { ...product, active } : product;
@@ -4646,12 +4689,15 @@
             else { preorderProducts = preorderProducts.map(updater); renderPreorderProducts(); }
             persistProductManagement();
             const updatedProducts = (type === 'stock' ? stockProducts : preorderProducts).filter(product => ids.some(id => sameId(id, product.id)));
-            await syncProductsToBackend(type, updatedProducts);
-            await syncProductCatalog(type);
+            const productsSaved = await syncProductsToBackend(type, updatedProducts);
+            if (!productsSaved) return;
+            const catalogSaved = await syncProductCatalog(type);
+            if (!catalogSaved) return;
+            showToast(`商品已批量${label}`, 'success');
         }
 
         async function batchEditProducts(type) {
-            const ids = selectedProductIds(type); if (!ids.length) return alert('請先勾選商品');
+            const ids = selectedProductIds(type); if (!ids.length) return showToast('請先勾選商品', 'error')
             const listPrice = prompt('批量更新定價，留空代表不變');
             const costPrice = prompt('批量更新成本價，留空代表不變');
             const ipNames = prompt('批量更新 IP，多個用逗號分隔，留空代表不變');
@@ -4663,8 +4709,11 @@
             if (type === 'stock') { stockProducts = stockProducts.map(updater); renderStockProducts(); } else { preorderProducts = preorderProducts.map(updater); renderPreorderProducts(); }
             persistProductManagement(); renderProductTagOptions(); renderProductTags();
             const updatedProducts = (type === 'stock' ? stockProducts : preorderProducts).filter(product => ids.some(id => sameId(id, product.id)));
-            await syncProductsToBackend(type, updatedProducts);
-            await syncProductCatalog(type);
+            const productsSaved = await syncProductsToBackend(type, updatedProducts);
+            if (!productsSaved) return;
+            const catalogSaved = await syncProductCatalog(type);
+            if (!catalogSaved) return;
+            showToast('商品已批量更新', 'success');
         }
 
         function ensureTagsByNames(names, type = 'category') {
@@ -4784,11 +4833,17 @@
                 newProducts.push(product);
             }
 
-            if (!newProducts.length) return alert('請至少填寫一個商品名稱');
+            if (!newProducts.length) return showToast('請至少填寫一個商品名稱', 'error')
             if (type === 'stock') { stockProducts = [...newProducts, ...stockProducts]; renderStockProducts(); }
             else { preorderProducts = [...newProducts, ...preorderProducts]; renderPreorderProducts(); }
             closeProductBatchModal();
-            persistProductManagement(); renderProductTags(); await syncProductsToBackend(type, newProducts); await syncProductCatalog(type);
+            persistProductManagement();
+            renderProductTags();
+            const productsSaved = await syncProductsToBackend(type, newProducts);
+            if (!productsSaved) throw new Error('後端商品資料沒有回傳成功');
+            const catalogSaved = await syncProductCatalog(type);
+            if (!catalogSaved) throw new Error('後端商品目錄沒有回傳成功');
+            showToast('商品已保存', 'success');
             } catch (error) {
                 console.error(error);
                 stockProducts = previousStockProducts;
@@ -4800,7 +4855,7 @@
                 if (uploadedPublicIds.length) {
                     await cleanupUploadedProductImages(uploadedPublicIds);
                 }
-                alert(`商品圖片上傳或保存失敗：${error.message || error}`);
+                showToast('商品圖片上傳或儲存失敗，請稍後再試', 'error')
             } finally {
                 productSaveInProgress[saveKey] = false;
                 setSavingButton(saveButton, false);
@@ -5008,22 +5063,22 @@
             }));
             if (!rows.length) return;
             const validRows = rows.filter(row => row.name || row.hex);
-            if (!validRows.length) return alert('請至少填寫一筆名稱');
+            if (!validRows.length) return showToast('請至少填寫一筆名稱', 'error')
             for (const row of validRows) {
-                if (!row.name) return alert(`第 ${row.rowNumber} 列名稱不能空白`);
-                if (!/^#[0-9a-fA-F]{6}$/.test(row.hex)) return alert(`第 ${row.rowNumber} 列 HEX 顏色格式不正確，請使用 #RRGGBB`);
+                if (!row.name) return showToast(`第 ${row.rowNumber} 列名稱不能空白`, 'error')
+                if (!/^#[0-9a-fA-F]{6}$/.test(row.hex)) return showToast(`第 ${row.rowNumber} 列 HEX 顏色格式不正確，請使用 #RRGGBB`, 'error')
             }
             if (id) {
                 const row = validRows[0];
                 const duplicate = normalizeProductTags(productTags).some(tag => String(tag.id) !== String(id) && tag.type === type && tag.name.trim() === row.name);
-                if (duplicate) return alert(`${type === 'ip' ? 'IP' : '商品類別'}名稱已存在：${row.name}`);
+                if (duplicate) return showToast(`${type === 'ip' ? 'IP' : '商品類別'}名稱已存在：${row.name}`, 'error')
                 productTags = normalizeProductTags(productTags).map(tag => String(tag.id) === String(id) ? normalizeProductTag({ ...tag, name: row.name, color: normalizeHexColor(row.hex) }) : tag);
             } else {
                 const seen = new Set();
                 const existingNames = new Set(normalizeProductTags(productTags).filter(tag => tag.type === type).map(tag => tag.name.trim()));
                 for (const row of validRows) {
-                    if (seen.has(row.name)) return alert(`同一批新增重複名稱：${row.name}`);
-                    if (existingNames.has(row.name)) return alert(`${type === 'ip' ? 'IP' : '商品類別'}名稱已存在：${row.name}`);
+                    if (seen.has(row.name)) return showToast(`同一批新增重複名稱：${row.name}`, 'error')
+                    if (existingNames.has(row.name)) return showToast(`${type === 'ip' ? 'IP' : '商品類別'}名稱已存在：${row.name}`, 'error')
                     seen.add(row.name);
                 }
                 const startOrder = productTagsByType(type).length;
@@ -5071,11 +5126,13 @@
             if (state) state.textContent = '儲存中...';
             try {
                 for (const id of deletedProductTagIds) {
-                    await fetchAPI('deleteProductTag', null, id, true);
+                    const result = await fetchAPI('deleteProductTag', null, id, true);
+                    if (!result) throw new Error('商品標籤刪除失敗');
                 }
                 const normalized = normalizeProductTags(productTags);
                 for (const tag of normalized) {
-                    await fetchAPI('saveProductTag', tag, null, true);
+                    const result = await fetchAPI('saveProductTag', tag, null, true);
+                    if (!result) throw new Error('商品標籤儲存失敗');
                 }
                 productTags = normalized;
                 deletedProductTagIds = [];
@@ -5083,10 +5140,10 @@
                 setProductTagsSaved();
                 renderProductTagOptions();
                 renderProductTags();
-                alert('商品標籤設定已儲存');
+                showToast('商品標籤設定已儲存', 'success')
             } catch (error) {
                 markProductTagsDirty();
-                alert(`商品標籤設定儲存失敗：${error.message || error}`);
+                showToast('商品標籤設定儲存失敗，請稍後再試', 'error')
             }
         }
 
@@ -5135,12 +5192,12 @@
             const input = document.getElementById(`${type}-default-schedule-image`);
             if (!input) return;
             const image = normalizeProductImageUrl(input.value);
-            if (input.value.trim() && !image) return alert('請貼上有效的圖片 URL');
+            if (input.value.trim() && !image) return showToast('請貼上有效的圖片 URL', 'error')
             scheduleDefaultImages[type] = image;
             persistScheduleManagement();
             previewScheduleDefaultImage(type);
-            await fetchAPI('saveScheduleSetting', { id: type, type, image }, null, true);
-            alert(`${type === 'stall' ? '擺攤' : '連線'}預設圖片已保存`);
+            const result = await fetchAPI('saveScheduleSetting', { id: type, type, image }, null, true);
+            if (result) showToast(`${type === 'stall' ? '擺攤' : '連線'}預設圖片已保存`, 'success')
         }
 
         function renderProductDefaultImagePreviews() {
@@ -5187,20 +5244,22 @@
             const input = document.getElementById('product-default-image-input');
             if (!input) return;
             const image = normalizeLocalProductImageUrl(input.value);
-            if (input.value.trim() && !image) return alert('只能使用 images 資料夾裡的本地圖片，例如 /images/chii001.png');
+            if (input.value.trim() && !image) return showToast('只能使用 images 資料夾裡的本地圖片，例如 /images/chii001.png', 'error')
             scheduleDefaultImages.product = image;
             const scaleInput = document.getElementById('product-default-image-scale');
             scheduleDefaultImages.productScale = Math.min(200, Math.max(50, Number(scaleInput?.value) || 100));
             persistScheduleManagement();
             renderProductDefaultImagePreviews();
-            await fetchAPI('saveScheduleSetting', { id: 'product-default', type: 'product-default', image }, null, true);
-            await fetchAPI('saveScheduleSetting', {
+            const imageSaved = await fetchAPI('saveScheduleSetting', { id: 'product-default', type: 'product-default', image }, null, true);
+            if (!imageSaved) return;
+            const scaleSaved = await fetchAPI('saveScheduleSetting', {
                 id: 'product-default-scale',
                 type: 'product-default-scale',
                 image: String(scheduleDefaultImages.productScale)
             }, null, true);
+            if (!scaleSaved) return;
             closeProductDefaultImageModal();
-            alert('商品預設圖已保存');
+            showToast('商品預設圖已保存', 'success')
         }
 
         function updateBrandStoreName(value = '') {
@@ -5242,7 +5301,7 @@
 
         async function handleBrandLogoFiles(fileList) {
             const files = Array.from(fileList || []).filter(file => /^image\/(jpeg|png|webp)$/i.test(file.type));
-            if (!files.length) return alert('LOGO 請選擇 JPG、PNG 或 WebP 圖片');
+            if (!files.length) return showToast('LOGO 請選擇 JPG、PNG 或 WebP 圖片', 'error')
             const formData = new FormData();
             formData.append('folder', 'site/logo');
             formData.append('productId', 'site-logo');
@@ -5273,9 +5332,10 @@
                 syncBrandSettingsFromLogoLibrary();
                 renderBrandManagement();
                 await saveBrandLogoLibrary();
+                showToast('LOGO 上傳並儲存成功', 'success');
             } catch (error) {
                 console.error('Brand logo upload failed:', error);
-                alert(error.message || 'LOGO 上傳失敗');
+                showToast('LOGO 上傳失敗，請稍後再試', 'error')
             } finally {
                 hideLoading();
             }
@@ -5307,7 +5367,7 @@
 
         async function handleBrandAssetFile(key, fileList) {
             const file = Array.from(fileList || []).find(item => /^image\/(jpeg|png|webp)$/i.test(item.type));
-            if (!file) return alert('請選擇 JPG、PNG 或 WebP 圖片');
+            if (!file) return showToast('請選擇 JPG、PNG 或 WebP 圖片', 'error')
             const folder = key === 'watermark' ? 'site/watermark' : 'site/brand-text';
             const formData = new FormData();
             formData.append('folder', folder);
@@ -5333,7 +5393,7 @@
                 await saveBrandSetting(key);
             } catch (error) {
                 console.error('Brand asset upload failed:', error);
-                alert(error.message || '圖片上傳失敗');
+                showToast('圖片上傳失敗，請稍後再試', 'error')
             } finally {
                 hideLoading();
             }
@@ -5492,7 +5552,7 @@
             }));
             syncBrandSettingsFromLogoLibrary();
             await saveBrandLogoLibrary();
-            alert('目前 LOGO 已更新');
+            showToast('目前 LOGO 已更新', 'success')
         }
 
         async function deleteBrandLogoImage(id) {
@@ -5509,7 +5569,7 @@
             brandLogoImages = normalizeBrandLogoImages(remaining);
             syncBrandSettingsFromLogoLibrary();
             await saveBrandLogoLibrary();
-            alert('LOGO 已刪除');
+            showToast('LOGO 已刪除', 'success')
         }
 
         function renderBrandManagement() {
@@ -5583,7 +5643,7 @@
             }, null, true);
             if (!saved) throw new Error('Site info save failed');
             if (state) state.textContent = '已儲存';
-            alert('網站資訊已儲存');
+            showToast('網站資訊已儲存', 'success')
         }
 
         function switchHomeAppearanceTab(tab = 'announcements') {
@@ -5909,7 +5969,7 @@
         async function handleSiteBannerImageFile(index, fileList) {
             const banner = siteBanners[index];
             const file = Array.from(fileList || []).find(item => /^image\/(jpeg|png|webp)$/i.test(item.type));
-            if (!banner || !file) return alert('請選擇 JPG、PNG 或 WebP 圖片');
+            if (!banner || !file) return showToast('請選擇 JPG、PNG 或 WebP 圖片', 'error')
             const formData = new FormData();
             formData.append('folder', 'site/banners');
             formData.append('productId', 'site-banner');
@@ -5930,9 +5990,10 @@
                 banner.previewZoom = 100;
                 renderSiteBannerList();
                 markHomepageAppearanceDirty();
+                showToast('Banner 圖片上傳成功', 'success');
             } catch (error) {
                 console.error('Banner upload failed:', error);
-                alert(error.message || 'Banner 圖片上傳失敗');
+                showToast('Banner 圖片上傳失敗，請稍後再試', 'error')
             } finally {
                 hideLoading();
             }
@@ -5947,6 +6008,7 @@
             siteBanners.splice(index, 1);
             renderSiteBannerList();
             markHomepageAppearanceDirty();
+            showToast('Banner 已刪除，請儲存首頁內容設定', 'success');
         }
 
         function updateHomepageSection(index, key, value) {
@@ -6056,7 +6118,7 @@
                 element.textContent = '已儲存';
             });
             renderHomepageAppearanceSettings();
-            alert('首頁內容設定已儲存');
+            showToast('首頁內容設定已儲存', 'success')
         }
 
         function previewBrandSetting(key) {
@@ -6141,7 +6203,7 @@
             const input = document.getElementById(meta.inputId);
             if (!input) return;
             const image = normalizeProductImageUrl(input.value);
-            if (input.value.trim() && !image) return alert('請輸入有效的圖片 URL');
+            if (input.value.trim() && !image) return showToast('請輸入有效的圖片 URL', 'error')
             brandSettings[key] = image;
             if (meta.publicIdInputId && meta.publicIdKey) {
                 brandSettings[meta.publicIdKey] = String(document.getElementById(meta.publicIdInputId)?.value || brandSettings[meta.publicIdKey] || '').trim();
@@ -6190,11 +6252,11 @@
                         await deleteCloudinaryImages(cleanupIds);
                     } catch (error) {
                         console.error('Brand logo cleanup failed:', error);
-                        alert(error.message || 'LOGO 設定已保存，但舊圖片清理失敗');
+                        showToast('LOGO 設定已儲存，但舊圖片清理失敗', 'error')
                     }
                 }
             }
-            alert(`${meta.label}已保存`);
+            showToast(`${meta.label}已保存`, 'success')
         }
 
         function renderSiteInfoAssetPreview(kind) {
@@ -6213,7 +6275,7 @@
         async function handleSiteInfoAssetFile(kind, fileList) {
             const allowed = /^image\/(jpeg|png|webp)$/i;
             const file = Array.from(fileList || []).find(item => allowed.test(item.type));
-            if (!file) return alert('請選擇 JPG、PNG 或 WebP 圖片');
+            if (!file) return showToast('請選擇 JPG、PNG 或 WebP 圖片', 'error')
             const folder = kind === 'favicon' ? 'site/favicon' : 'site/og';
             const formData = new FormData();
             formData.append('folder', folder);
@@ -6247,7 +6309,7 @@
                 await saveSiteInfoSettings();
             } catch (error) {
                 console.error('Site info asset upload failed:', error);
-                alert(error.message || '網站資訊圖片上傳失敗');
+                showToast('網站資訊圖片上傳失敗，請稍後再試', 'error')
             } finally {
                 hideLoading();
             }
@@ -6550,19 +6612,6 @@
             </div>`;
         }
 
-        function showStorefrontOrderFeedback(message, type = 'success') {
-            const toast = document.getElementById('storefrontOrderCopyToast');
-            if (!toast) return;
-            toast.textContent = message;
-            toast.classList.toggle('error', type === 'error');
-            toast.classList.add('show');
-            clearTimeout(storefrontCopyToastTimer);
-            storefrontCopyToastTimer = setTimeout(() => {
-                toast.classList.remove('show', 'error');
-                toast.textContent = '已複製訂單編號';
-            }, 1800);
-        }
-
         function storefrontOrderWarnings(order) {
             const warnings = [];
             if (order.status === 'cancelled') warnings.push(`取消原因：${escapeHtml(order.cancelReason || '—')}`);
@@ -6816,9 +6865,11 @@
                 memberLineNotificationSettingsLoaded = true;
                 renderMemberLineNotificationSettings();
                 setMemberLineNotificationStatus('通知設定已儲存，立即生效。', 'success');
+                showToast('通知設定已儲存', 'success');
             } catch (error) {
                 console.error(error);
                 setMemberLineNotificationStatus(error.message || '通知設定儲存失敗。', 'error');
+                showToast('通知設定儲存失敗，請稍後再試', 'error');
             }
         }
 
@@ -7067,8 +7118,10 @@
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '會員狀態更新失敗。');
                 await loadBackendMembers(true);
                 if (expandedBackendMemberId === userId) await openBackendMemberDetail(userId);
+                showToast(`會員已${action}`, 'success');
             } catch (error) {
-                alert(error.message || '會員狀態更新失敗。');
+                console.error(error);
+                showToast('會員狀態更新失敗，請稍後再試', 'error')
             }
         }
 
@@ -7303,7 +7356,7 @@
         async function updateStorefrontOrderStatus(orderId, kind, value) {
             const order = storefrontOrders.find(row => String(row.id) === String(orderId));
             if (!order) {
-                showStorefrontOrderFeedback('找不到訂單資料', 'error');
+                showToast('找不到訂單資料', 'error');
                 return;
             }
             const payload = { id: orderId };
@@ -7321,10 +7374,11 @@
                 });
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '狀態更新失敗');
-                showStorefrontOrderFeedback(`${kind === 'order' ? '訂單' : kind === 'payment' ? '付款' : '配送'}狀態已更新`);
+                showToast(`${kind === 'order' ? '訂單' : kind === 'payment' ? '付款' : '配送'}狀態已更新`, 'success');
                 await loadStorefrontOrders(true);
             } catch (error) {
-                showStorefrontOrderFeedback(error.message || '狀態更新失敗', 'error');
+                console.error(error);
+                showToast('訂單狀態更新失敗，請稍後再試', 'error');
                 await loadStorefrontOrders(true);
             } finally {
                 updatingStorefrontOrderIds.delete(orderKey);
@@ -7334,7 +7388,7 @@
 
         function openStorefrontCancelModal(orderId) {
             const order = storefrontOrders.find(row => String(row.id) === String(orderId));
-            if (!order) return alert('找不到訂單資料');
+            if (!order) return showToast('找不到訂單資料', 'error')
             document.getElementById('storefront-cancel-order-id').value = orderId;
             document.getElementById('storefront-cancel-reason-preset').value = '';
             document.getElementById('storefront-cancel-reason').value = '';
@@ -7363,7 +7417,7 @@
             const preset = document.getElementById('storefront-cancel-reason-preset').value;
             const otherReason = document.getElementById('storefront-cancel-reason').value.trim();
             const cancelReason = preset === 'other' ? otherReason : preset;
-            if (!cancelReason) return alert('請輸入取消原因');
+            if (!cancelReason) return showToast('請輸入取消原因', 'error')
             if (!confirm('確認要取消此訂單嗎？')) return;
             try {
                 const response = await fetch(`/api/backend/orders/${encodeURIComponent(orderId)}`, {
@@ -7375,8 +7429,10 @@
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '取消訂單失敗');
                 closeStorefrontCancelModal();
                 await loadStorefrontOrders(true);
+                showToast('訂單已取消', 'success');
             } catch (error) {
-                alert(error.message || '取消訂單失敗');
+                console.error(error);
+                showToast('取消訂單失敗，請稍後再試', 'error')
             }
         }
 
@@ -7471,14 +7527,15 @@
                 hotelFee: Number(document.getElementById('schedule-hotel-fee').value || 0)
             };
             const hasTime = type === 'connection' ? (data.startDate && data.endDate) : data.days.length;
-            if (!data.period || !data.location || !hasTime) return alert(type === 'connection' ? '請填寫連線名稱、地點、開始日期與結束日期' : '請填寫市集名稱、地點與至少一天擺攤時間');
+            if (!data.period || !data.location || !hasTime) return showToast(type === 'connection' ? '請填寫連線名稱、地點、開始日期與結束日期' : '請填寫市集名稱、地點與至少一天擺攤時間', 'error')
             const current = scheduleList(type);
             const next = id ? current.map(item => String(item.id) === String(id) ? data : item) : [data, ...current];
             setScheduleList(type, next);
             persistScheduleManagement();
             closeScheduleModal();
             renderSchedules(type);
-            await fetchAPI(type === 'stall' ? 'saveStallSchedule' : 'saveConnectionSchedule', data, null, true);
+            const result = await fetchAPI(type === 'stall' ? 'saveStallSchedule' : 'saveConnectionSchedule', data, null, true);
+            if (result) showToast('時程已儲存', 'success');
         }
 
         async function deleteSchedule(type, id) {
@@ -7486,7 +7543,8 @@
             setScheduleList(type, scheduleList(type).filter(item => String(item.id) !== String(id)));
             persistScheduleManagement();
             renderSchedules(type);
-            await fetchAPI(type === 'stall' ? 'deleteStallSchedule' : 'deleteConnectionSchedule', null, id, true);
+            const result = await fetchAPI(type === 'stall' ? 'deleteStallSchedule' : 'deleteConnectionSchedule', null, id, true);
+            if (result) showToast('時程已刪除', 'success');
         }
         // --- Orders ---
         function renderVendorsOrders() {
@@ -8041,7 +8099,7 @@
         async function saveBatchOrder() {
             const date = document.getElementById('batch-date').value;
             const vendorId = document.getElementById('batch-vendor').value;
-            if(!date || !vendorId) return alert('請選擇日期與廠商');
+            if(!date || !vendorId) return showToast('請選擇日期與廠商', 'error')
 
             const rows = document.querySelectorAll('.batch-new-row');
             const newItems = [];
@@ -8059,7 +8117,7 @@
                 }
             });
 
-            if(newItems.length === 0) return alert('請至少填寫一個商品名稱');
+            if(newItems.length === 0) return showToast('請至少填寫一個商品名稱', 'error')
 
             let orderData;
             if (currentEditingOrderId) {
@@ -8094,7 +8152,7 @@
         // --- Batch Edit & Delete ---
         async function batchDeleteItems(orderId) {
             const chks = document.querySelectorAll(`.item-chk-${orderId}:checked`);
-            if(chks.length === 0) return alert('請先勾選要刪除的商品');
+            if(chks.length === 0) return showToast('請先勾選要刪除的商品', 'error')
             if(confirm(`確定要刪除勾選的 ${chks.length} 件商品嗎？`)) {
                 const o = orders.find(x => x.id === orderId);
                 const idsToRemove = Array.from(chks).map(c => parseFloat(c.value));
@@ -8117,7 +8175,7 @@
 
         function batchEditItems(orderId) {
             const chks = document.querySelectorAll(`.item-chk-${orderId}:checked`);
-            if(chks.length === 0) return alert('請先勾選要編輯的商品');
+            if(chks.length === 0) return showToast('請先勾選要編輯的商品', 'error')
             
             editOrderId = orderId;
             const o = orders.find(x => x.id === orderId);
@@ -8212,7 +8270,7 @@
             const date = document.getElementById('edit-main-date').value;
             const vendorId = document.getElementById('edit-main-vendor').value;
             
-            if(!date || !vendorId) return alert('請選擇日期與廠商');
+            if(!date || !vendorId) return showToast('請選擇日期與廠商', 'error')
             
             const o = orders.find(x => x.id === orderId);
             if(o) {
