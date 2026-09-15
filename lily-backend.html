@@ -321,6 +321,9 @@
         .form-group textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1); }
         .schedule-preview { width: 72px; height: 72px; border-radius: 0.5rem; object-fit: cover; border: 1px solid #e2e8f0; background: #f8fafc; display: block; }
         .schedule-preview.empty { display: inline-flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 1.25rem; }
+        .schedule-image-upload { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+        .schedule-image-preview { width: min(100%, 240px); aspect-ratio: 16 / 9; border: 1px solid #e2e8f0; border-radius: 0.75rem; background: #f8fafc; display: grid; place-items: center; overflow: hidden; color: #94a3b8; }
+        .schedule-image-preview img { width: 100%; height: 100%; object-fit: contain; display: block; }
         .stall-day-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr 40px; gap: 0.5rem; align-items: center; }
         .stall-day-row input { min-width: 0; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: inherit; font-size: 0.875rem; color: #334155; }
         .schedule-time-lines { display: flex; flex-direction: column; gap: 0.25rem; color: #334155; }
@@ -2133,8 +2136,14 @@
                     <button class="btn btn-secondary" type="button" style="align-self: flex-start;" onclick="addStallDayRow()"><i class="fa-solid fa-plus"></i> 新增一天</button>
                 </div>
                 <div class="form-group">
-                    <label>預告圖連結</label>
-                    <input type="url" id="schedule-image" placeholder="貼上 Cloudinary 或圖片網址">
+                    <label>預告圖片</label>
+                    <input type="hidden" id="schedule-image">
+                    <input type="file" id="schedule-image-file" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleScheduleImageFile(this.files); this.value='';">
+                    <div class="schedule-image-upload">
+                        <button class="btn btn-secondary" type="button" onclick="document.getElementById('schedule-image-file')?.click()"><i class="fa-solid fa-cloud-arrow-up"></i> 上傳圖片</button>
+                        <button class="btn btn-secondary" id="schedule-image-remove" type="button" onclick="removeScheduleImage()" style="display:none;"><i class="fa-solid fa-trash"></i> 移除圖片</button>
+                    </div>
+                    <div class="schedule-image-preview" id="schedule-image-preview"><i class="fa-regular fa-image"></i></div>
                 </div>
                 <div class="form-row">
                     <div class="form-group" id="stall-fee-group">
@@ -2501,6 +2510,7 @@
         let preorderProducts = [];
         let stallSchedules = [];
         let connectionSchedules = [];
+        let scheduleImageEditState = { originalUrl: '', originalPublicId: '', currentUrl: '', currentPublicId: '', pendingPublicId: '' };
         let generalLedger = [];
         let ledgerAppliedFilters = { start: '', end: '', category: '', query: '', type: '' };
         let ledgerCurrentPage = 1;
@@ -7444,6 +7454,111 @@
             renderSchedules(type);
         }
 
+        function cloudinaryPublicIdFromUrl(imageUrl = '') {
+            const safeImage = normalizeProductImageUrl(imageUrl);
+            if (!safeImage) return '';
+            try {
+                const url = new URL(safeImage, location.origin);
+                if (url.hostname !== 'res.cloudinary.com') return '';
+                const parts = url.pathname.split('/').filter(Boolean);
+                const uploadIndex = parts.findIndex((part, index) => part === 'upload' && parts[index - 1] === 'image');
+                if (uploadIndex < 0) return '';
+                const assetParts = parts.slice(uploadIndex + 1);
+                const versionIndex = assetParts.findIndex(part => /^v\d+$/.test(part));
+                if (versionIndex >= 0) assetParts.splice(0, versionIndex + 1);
+                if (!assetParts.length) return '';
+                return decodeURIComponent(assetParts.join('/')).replace(/\.[a-z0-9]+$/i, '');
+            } catch (error) {
+                return '';
+            }
+        }
+
+        function resetScheduleImageEditState(imageUrl = '') {
+            const safeImage = normalizeProductImageUrl(imageUrl);
+            const publicId = cloudinaryPublicIdFromUrl(safeImage);
+            scheduleImageEditState = {
+                originalUrl: safeImage,
+                originalPublicId: publicId,
+                currentUrl: safeImage,
+                currentPublicId: publicId,
+                pendingPublicId: ''
+            };
+            renderScheduleImagePreview();
+        }
+
+        function renderScheduleImagePreview() {
+            const input = document.getElementById('schedule-image');
+            const preview = document.getElementById('schedule-image-preview');
+            const removeButton = document.getElementById('schedule-image-remove');
+            if (input) input.value = scheduleImageEditState.currentUrl || '';
+            if (!preview) return;
+            preview.innerHTML = '';
+            if (scheduleImageEditState.currentUrl) {
+                const image = document.createElement('img');
+                image.src = scheduleImageEditState.currentUrl;
+                image.alt = '時程圖片預覽';
+                preview.appendChild(image);
+            } else {
+                const icon = document.createElement('i');
+                icon.className = 'fa-regular fa-image';
+                preview.appendChild(icon);
+            }
+            if (removeButton) removeButton.style.display = scheduleImageEditState.currentUrl ? 'inline-flex' : 'none';
+        }
+
+        async function cleanupScheduleImages(publicIds = [], failureMessage = '圖片清理失敗，請稍後再試') {
+            try {
+                await deleteCloudinaryImages(publicIds);
+                return true;
+            } catch (error) {
+                console.error('Schedule image cleanup failed:', error);
+                showToast(failureMessage, 'error');
+                return false;
+            }
+        }
+
+        async function handleScheduleImageFile(fileList) {
+            const file = Array.from(fileList || []).find(item => /^image\/(jpeg|png|webp)$/i.test(item.type));
+            if (!file) return showToast('請選擇 JPG、PNG 或 WebP 圖片', 'error');
+            const type = document.getElementById('schedule-type')?.value || 'schedule';
+            const formData = new FormData();
+            formData.append('productId', `schedule-${type}`);
+            formData.append('files', file);
+            const previousPendingPublicId = scheduleImageEditState.pendingPublicId;
+            try {
+                showLoading();
+                const response = await fetch(PRODUCT_UPLOAD_API_URL, { method: 'POST', body: formData });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(result.error || '時程圖片上傳失敗');
+                const uploaded = (result.images || [])[0];
+                const url = normalizeProductImageUrl(uploaded?.secure_url || uploaded?.url || '');
+                const publicId = String(uploaded?.public_id || uploaded?.publicId || '').trim();
+                if (!url || !publicId) throw new Error('Cloudinary 未回傳完整圖片資料');
+                scheduleImageEditState.currentUrl = url;
+                scheduleImageEditState.currentPublicId = publicId;
+                scheduleImageEditState.pendingPublicId = publicId;
+                renderScheduleImagePreview();
+                if (previousPendingPublicId && previousPendingPublicId !== publicId) {
+                    await cleanupScheduleImages([previousPendingPublicId], '新圖片已上傳，但前一張暫存圖片清理失敗');
+                }
+                showToast('圖片已上傳，請保存時程', 'success');
+            } catch (error) {
+                console.error('Schedule image upload failed:', error);
+                showToast('圖片上傳失敗，請稍後再試', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function removeScheduleImage() {
+            const pendingPublicId = scheduleImageEditState.pendingPublicId;
+            scheduleImageEditState.currentUrl = '';
+            scheduleImageEditState.currentPublicId = '';
+            scheduleImageEditState.pendingPublicId = '';
+            renderScheduleImagePreview();
+            if (pendingPublicId) await cleanupScheduleImages([pendingPublicId]);
+        }
+
         function openScheduleModal(type, id = null) {
             const modal = document.getElementById('scheduleModal');
             const item = id ? scheduleList(type).find(row => String(row.id) === String(id)) : null;
@@ -7458,7 +7573,7 @@
             document.getElementById('schedule-start-date').value = scheduleDateValue(item?.startDate || '');
             document.getElementById('schedule-end-date').value = scheduleDateValue(item?.endDate || '');
             renderStallDayRows(normalizeStallDays(item || {}));
-            document.getElementById('schedule-image').value = item?.image || '';
+            resetScheduleImageEditState(item?.image || '');
             document.getElementById('schedule-stall-fee').value = Number(item?.stallFee || 0);
             document.getElementById('schedule-flight-fee').value = Number(item?.flightFee || 0);
             document.getElementById('schedule-hotel-fee').value = Number(item?.hotelFee || 0);
@@ -7470,8 +7585,11 @@
             modal.classList.add('active');
         }
 
-        function closeScheduleModal() {
+        async function closeScheduleModal() {
             document.getElementById('scheduleModal').classList.remove('active');
+            const pendingPublicId = scheduleImageEditState.pendingPublicId;
+            scheduleImageEditState = { originalUrl: '', originalPublicId: '', currentUrl: '', currentPublicId: '', pendingPublicId: '' };
+            if (pendingPublicId) await cleanupScheduleImages([pendingPublicId]);
         }
 
         function renderStallDayRows(days = []) {
@@ -7513,6 +7631,7 @@
         async function saveSchedule() {
             const type = document.getElementById('schedule-type').value;
             const id = document.getElementById('schedule-id').value;
+            const imageState = { ...scheduleImageEditState };
             const data = {
                 id: id ? Number(id) : Date.now(),
                 period: document.getElementById('schedule-period').value.trim(),
@@ -7521,7 +7640,7 @@
                 startDate: document.getElementById('schedule-start-date').value,
                 endDate: document.getElementById('schedule-end-date').value,
                 days: type === 'stall' ? collectStallDays() : [],
-                image: normalizeProductImageUrl(document.getElementById('schedule-image').value),
+                image: imageState.currentUrl,
                 stallFee: Number(document.getElementById('schedule-stall-fee').value || 0),
                 flightFee: Number(document.getElementById('schedule-flight-fee').value || 0),
                 hotelFee: Number(document.getElementById('schedule-hotel-fee').value || 0)
@@ -7532,19 +7651,34 @@
             const next = id ? current.map(item => String(item.id) === String(id) ? data : item) : [data, ...current];
             setScheduleList(type, next);
             persistScheduleManagement();
-            closeScheduleModal();
+            document.getElementById('scheduleModal').classList.remove('active');
             renderSchedules(type);
             const result = await fetchAPI(type === 'stall' ? 'saveStallSchedule' : 'saveConnectionSchedule', data, null, true);
-            if (result) showToast('時程已儲存', 'success');
+            if (result) {
+                const replacedPublicId = imageState.originalUrl !== imageState.currentUrl ? imageState.originalPublicId : '';
+                scheduleImageEditState = { originalUrl: '', originalPublicId: '', currentUrl: '', currentPublicId: '', pendingPublicId: '' };
+                if (replacedPublicId && replacedPublicId !== imageState.currentPublicId) {
+                    await cleanupScheduleImages([replacedPublicId], '時程已儲存，但舊圖片清理失敗');
+                }
+                showToast('時程已儲存', 'success');
+            } else {
+                if (imageState.pendingPublicId) await cleanupScheduleImages([imageState.pendingPublicId], '時程儲存失敗，且新圖片清理失敗');
+                scheduleImageEditState = { originalUrl: '', originalPublicId: '', currentUrl: '', currentPublicId: '', pendingPublicId: '' };
+            }
         }
 
         async function deleteSchedule(type, id) {
             if (!confirm(`確定刪除此${scheduleTypeLabel(type)}嗎？`)) return;
+            const target = scheduleList(type).find(item => String(item.id) === String(id));
             setScheduleList(type, scheduleList(type).filter(item => String(item.id) !== String(id)));
             persistScheduleManagement();
             renderSchedules(type);
             const result = await fetchAPI(type === 'stall' ? 'deleteStallSchedule' : 'deleteConnectionSchedule', null, id, true);
-            if (result) showToast('時程已刪除', 'success');
+            if (result) {
+                const publicId = cloudinaryPublicIdFromUrl(target?.image || '');
+                if (publicId) await cleanupScheduleImages([publicId], '時程已刪除，但圖片清理失敗');
+                showToast('時程已刪除', 'success');
+            }
         }
         // --- Orders ---
         function renderVendorsOrders() {
