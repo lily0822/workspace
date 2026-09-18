@@ -960,6 +960,38 @@
                 </div>
                 <div id="community-import-batches" style="margin-top:1.25rem;"></div>
                 <div id="community-remittances" style="margin-top:1.25rem;"></div>
+                <div style="margin-top:1.25rem;">
+                    <h3 style="font-size:0.85rem;font-weight:900;color:#475569;margin-bottom:0.5rem;">出貨申請</h3>
+                    <div class="backend-member-filterbar">
+                        <div class="backend-member-filter-row">
+                            <div class="backend-member-filter-field" style="min-width:220px;">
+                                <label for="community-shipment-search">搜尋</label>
+                                <input id="community-shipment-search" type="search" placeholder="暱稱、收件人、記事本名稱" onkeydown="handleCommunityShipmentSearchKey(event)">
+                            </div>
+                            <button class="btn btn-primary" type="button" onclick="applyCommunityShipmentFilters()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
+                            <button class="btn btn-secondary" type="button" onclick="clearCommunityShipmentFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper" style="overflow-x:auto;margin-top:0.6rem;">
+                        <table class="backend-member-table">
+                            <thead>
+                                <tr>
+                                    <th>申請時間</th>
+                                    <th>暱稱</th>
+                                    <th>系列</th>
+                                    <th>商品內容</th>
+                                    <th>收件人</th>
+                                    <th>手機</th>
+                                    <th>取貨門市</th>
+                                    <th>狀態</th>
+                                </tr>
+                            </thead>
+                            <tbody id="community-shipment-tbody">
+                                <tr><td colspan="8" class="empty-state">尚未載入出貨申請</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <!-- Customer Orders Section -->
@@ -2462,7 +2494,7 @@
                 loadMemberLineNotificationSettings();
             }
             if(name === 'backend-members') loadBackendMembers();
-            if(name === 'community-orders') { loadCommunityOrders(); loadCommunityImportBatches(); loadCommunityRemittances(); }
+            if(name === 'community-orders') { loadCommunityOrders(); loadCommunityImportBatches(); loadCommunityRemittances(); loadCommunityShipmentRequests(); }
             if(name === 'customer-orders') renderCustomerOrders();
             if(name === 'stock-products') renderStockProducts();
             if(name === 'preorder-products') renderPreorderProducts();
@@ -2602,6 +2634,7 @@
         let communityOrderRequestSeq = 0;
         let communityImportRows = [];
         let communityImportFilename = '';
+        let communityShipmentFilters = { q: '' };
         let productTags = [];
         let productTagActiveType = 'ip';
         let productTagSortables = { ip: null, category: null };
@@ -7629,6 +7662,93 @@
             } catch (error) {
                 console.error(error);
                 el.innerHTML = '<div class="empty-state">匯款回報讀取失敗</div>';
+            }
+        }
+
+        const COMMUNITY_SHIPMENT_STATUS_OPTIONS = [
+            { value: 'pending', label: '待處理' },
+            { value: 'processed', label: '已處理' },
+            { value: 'cancelled', label: '已取消' }
+        ];
+
+        function readCommunityShipmentFilterInputs() {
+            return { q: document.getElementById('community-shipment-search')?.value.trim() || '' };
+        }
+
+        function writeCommunityShipmentFilterInputs(filters = communityShipmentFilters) {
+            const search = document.getElementById('community-shipment-search');
+            if (search) search.value = filters.q || '';
+        }
+
+        function applyCommunityShipmentFilters() {
+            communityShipmentFilters = readCommunityShipmentFilterInputs();
+            loadCommunityShipmentRequests();
+        }
+
+        function clearCommunityShipmentFilters() {
+            communityShipmentFilters = { q: '' };
+            writeCommunityShipmentFilterInputs();
+            loadCommunityShipmentRequests();
+        }
+
+        function handleCommunityShipmentSearchKey(event) {
+            if (event.key === 'Enter') applyCommunityShipmentFilters();
+        }
+
+        async function loadCommunityShipmentRequests() {
+            const tbody = document.getElementById('community-shipment-tbody');
+            if (!tbody) return;
+            writeCommunityShipmentFilterInputs();
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-state">出貨申請讀取中...</td></tr>';
+            try {
+                const params = new URLSearchParams();
+                if (communityShipmentFilters.q) params.set('q', communityShipmentFilters.q);
+                const qs = params.toString();
+                const response = await fetch(`/api/backend/community/shipment-requests${qs ? '?' + qs : ''}`, { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '出貨申請讀取失敗。');
+                renderCommunityShipmentRequests(Array.isArray(result.requests) ? result.requests : []);
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">出貨申請讀取失敗，請稍後再試。</td></tr>';
+            }
+        }
+
+        function renderCommunityShipmentRequests(requests) {
+            const tbody = document.getElementById('community-shipment-tbody');
+            if (!tbody) return;
+            if (!requests.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">沒有符合條件的出貨申請</td></tr>';
+                return;
+            }
+            tbody.innerHTML = requests.map(request => `
+                <tr>
+                    <td>${storefrontDateTime(request.submittedAt)}</td>
+                    <td>${escapeHtml(request.nickname)}</td>
+                    <td>${escapeHtml((request.notebookNames || []).join('、') || '—')}</td>
+                    <td>${escapeHtml((request.items || []).map(item => `${item.productName}${item.variantSpec ? '(' + item.variantSpec + ')' : ''} ×${item.quantity}`).join('、') || '—')}</td>
+                    <td>${escapeHtml(request.recipientName)}</td>
+                    <td>${escapeHtml(request.phone)}</td>
+                    <td>${escapeHtml(request.pickupStore)}</td>
+                    <td>${communityStatusSelect(COMMUNITY_SHIPMENT_STATUS_OPTIONS, request.status, `updateCommunityShipmentStatus('${escapeHtml(request.id)}', this.value)`)}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function updateCommunityShipmentStatus(id, status) {
+            try {
+                const response = await fetch(`/api/backend/community/shipment-requests/${encodeURIComponent(id)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '出貨申請狀態更新失敗。');
+                showToast('出貨申請狀態已更新', 'success');
+                await loadCommunityShipmentRequests();
+            } catch (error) {
+                console.error(error);
+                showToast('出貨申請狀態更新失敗，請稍後再試', 'error');
             }
         }
 
