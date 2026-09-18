@@ -929,6 +929,7 @@
                                 <th>記事本名稱</th>
                                 <th>社群暱稱</th>
                                 <th>下單商品</th>
+                                <th>規格</th>
                                 <th>數量</th>
                                 <th>單價</th>
                                 <th>總金額</th>
@@ -942,7 +943,7 @@
                             </tr>
                         </thead>
                         <tbody id="community-order-tbody">
-                            <tr><td colspan="13" class="empty-state">尚未載入社群訂單資料</td></tr>
+                            <tr><td colspan="14" class="empty-state">尚未載入社群訂單資料</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -958,6 +959,7 @@
                     </div>
                 </div>
                 <div id="community-import-batches" style="margin-top:1.25rem;"></div>
+                <div id="community-remittances" style="margin-top:1.25rem;"></div>
             </div>
 
             <!-- Customer Orders Section -->
@@ -1836,6 +1838,7 @@
                                 <th>記事本名稱</th>
                                 <th>暱稱</th>
                                 <th>商品名稱</th>
+                                <th>規格</th>
                                 <th>數量</th>
                                 <th>單價</th>
                             </tr>
@@ -2459,7 +2462,7 @@
                 loadMemberLineNotificationSettings();
             }
             if(name === 'backend-members') loadBackendMembers();
-            if(name === 'community-orders') { loadCommunityOrders(); loadCommunityImportBatches(); }
+            if(name === 'community-orders') { loadCommunityOrders(); loadCommunityImportBatches(); loadCommunityRemittances(); }
             if(name === 'customer-orders') renderCustomerOrders();
             if(name === 'stock-products') renderStockProducts();
             if(name === 'preorder-products') renderPreorderProducts();
@@ -7309,7 +7312,7 @@
             const tbody = document.getElementById('community-order-tbody');
             const requestSeq = ++communityOrderRequestSeq;
             writeCommunityOrderFilterInputs();
-            if (tbody) tbody.innerHTML = '<tr><td colspan="13" class="empty-state">社群訂單讀取中...</td></tr>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="14" class="empty-state">社群訂單讀取中...</td></tr>';
             try {
                 const response = await fetch(`/api/backend/community/orders${communityOrderQueryString()}`, { cache: 'no-store' });
                 const result = await response.json().catch(() => null);
@@ -7320,7 +7323,7 @@
                 renderCommunityOrders();
             } catch (error) {
                 console.error(error);
-                if (tbody) tbody.innerHTML = '<tr><td colspan="13" class="empty-state">社群訂單讀取失敗，請稍後再試。</td></tr>';
+                if (tbody) tbody.innerHTML = '<tr><td colspan="14" class="empty-state">社群訂單讀取失敗，請稍後再試。</td></tr>';
                 setCommunityOrderPagination({ page: 1, page_size: communityOrderPagination.pageSize, total: 0, total_pages: 0 });
             }
         }
@@ -7371,7 +7374,7 @@
             const tbody = document.getElementById('community-order-tbody');
             if (!tbody) return;
             if (!communityOrders.length) {
-                tbody.innerHTML = '<tr><td colspan="13" class="empty-state">沒有符合條件的社群訂單</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="14" class="empty-state">沒有符合條件的社群訂單</td></tr>';
                 return;
             }
             const groups = communityGroupRows(communityOrders);
@@ -7389,6 +7392,7 @@
                     }
                     html += `
                         <td>${escapeHtml(item.productName)}</td>
+                        <td>${escapeHtml(item.variantSpec || '—')}</td>
                         <td style="text-align:right;">${Number(item.quantity || 0).toLocaleString('zh-TW')}</td>
                         <td style="text-align:right;">${storefrontMoney(item.unitPrice)}</td>
                         <td style="text-align:right;">${storefrontMoney(item.itemSubtotal)}</td>
@@ -7477,6 +7481,7 @@
                     const notebookIdx = communityHeaderIndex(headerRow, ['記事本']);
                     const nicknameIdx = communityHeaderIndex(headerRow, ['暱稱', '訂購者', '客戶']);
                     const productIdx = communityHeaderIndex(headerRow, ['商品']);
+                    const specIdx = communityHeaderIndex(headerRow, ['規格']);
                     const qtyIdx = communityHeaderIndex(headerRow, ['數量']);
                     const priceIdx = communityHeaderIndex(headerRow, ['單價']);
 
@@ -7492,9 +7497,10 @@
                         const nickname = String(row[nicknameIdx] || '').trim();
                         const product_name = String(row[productIdx] || '').trim();
                         if (!notebook_name || !nickname || !product_name) continue;
+                        const variant_spec = specIdx !== -1 ? String(row[specIdx] || '').trim() : '';
                         const quantity = qtyIdx !== -1 ? (Number(String(row[qtyIdx] || '1').trim()) || 1) : 1;
                         const unit_price = priceIdx !== -1 ? (Number(String(row[priceIdx] || '0').replace(/[^0-9.]/g, '')) || 0) : 0;
-                        rows.push({ notebook_name, nickname, product_name, quantity, unit_price });
+                        rows.push({ notebook_name, nickname, product_name, variant_spec, quantity, unit_price });
                     }
 
                     if (!rows.length) throw new Error('沒有可匯入的資料列。');
@@ -7523,6 +7529,7 @@
                     <td>${escapeHtml(row.notebook_name)}</td>
                     <td>${escapeHtml(row.nickname)}</td>
                     <td>${escapeHtml(row.product_name)}</td>
+                    <td>${escapeHtml(row.variant_spec || '—')}</td>
                     <td style="text-align:right;">${row.quantity}</td>
                     <td style="text-align:right;">${storefrontMoney(row.unit_price)}</td>
                 </tr>
@@ -7586,6 +7593,42 @@
             } catch (error) {
                 console.error(error);
                 el.innerHTML = '<div class="empty-state">匯入紀錄讀取失敗</div>';
+            }
+        }
+
+        async function loadCommunityRemittances() {
+            const el = document.getElementById('community-remittances');
+            if (!el) return;
+            try {
+                const response = await fetch('/api/backend/community/remittances', { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '匯款回報讀取失敗。');
+                const remittances = Array.isArray(result.remittances) ? result.remittances : [];
+                if (!remittances.length) { el.innerHTML = '<h3 style="font-size:0.85rem;font-weight:900;color:#475569;margin-bottom:0.5rem;">匯款回報</h3><div class="empty-state">尚無匯款回報</div>'; return; }
+                el.innerHTML = `
+                    <h3 style="font-size:0.85rem;font-weight:900;color:#475569;margin-bottom:0.5rem;">匯款回報</h3>
+                    <div class="table-wrapper" style="overflow-x:auto;">
+                        <table class="backend-member-table">
+                            <thead><tr><th>送出時間</th><th>暱稱</th><th>記事本</th><th>銀行</th><th>後五碼</th><th>應匯金額</th><th>實際匯款</th></tr></thead>
+                            <tbody>
+                                ${remittances.map(item => `
+                                    <tr>
+                                        <td>${storefrontDateTime(item.submittedAt)}</td>
+                                        <td>${escapeHtml(item.nickname)}</td>
+                                        <td>${escapeHtml((item.notebookNames || []).join('、') || '—')}</td>
+                                        <td>${escapeHtml(item.bank)}</td>
+                                        <td>${escapeHtml(item.accountLast5)}</td>
+                                        <td style="text-align:right;">${storefrontMoney(item.expectedAmount)}</td>
+                                        <td style="text-align:right;${item.amount !== item.expectedAmount ? 'color:#b91c1c;font-weight:900;' : ''}">${storefrontMoney(item.amount)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (error) {
+                console.error(error);
+                el.innerHTML = '<div class="empty-state">匯款回報讀取失敗</div>';
             }
         }
 
