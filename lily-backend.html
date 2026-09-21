@@ -175,12 +175,13 @@
         .backend-member-address-item, .backend-member-order-item { border: 1px dashed #fbcfe8; border-radius: 0.75rem; padding: 0.55rem; background: #fff7fb; font-size: 0.8rem; font-weight: 800; color: #334155; }
         .backend-member-pagination-footer { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; padding-top: 0.8rem; color: #64748b; font-size: 0.8rem; font-weight: 900; }
         .community-member-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
-        .community-member-panel { min-width: 0; border: 1px solid #fbcfe8; border-radius: 1rem; background: #fff; padding: 1rem; }
-        .community-member-panel h3 { margin: 0 0 0.75rem; color: #9d174d; font-size: 0.95rem; font-weight: 950; }
-        .community-member-list { display: grid; gap: 0.65rem; }
-        .community-member-card { display: grid; gap: 0.35rem; border: 1px dashed #f9a8d4; border-radius: 0.85rem; background: #fff7fb; padding: 0.75rem; color: #334155; font-size: 0.8rem; font-weight: 800; }
-        .community-member-card-row { display: flex; align-items: center; justify-content: space-between; gap: 0.65rem; flex-wrap: wrap; }
-        .community-member-card-label { color: #64748b; font-size: 0.72rem; }
+        .community-member-panel { min-width: 0; }
+        .community-member-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 0.65rem; min-height: 48px; padding: 0.55rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.75rem 0.75rem 0 0; background: #f8fafc; }
+        .community-member-panel-header h3 { margin: 0; color: #2563eb; font-size: 0.875rem; font-weight: 600; white-space: nowrap; }
+        .community-member-panel .table-wrapper { border: 1px solid #e2e8f0; border-top: 0; border-radius: 0 0 0.75rem 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); overflow-x: auto; }
+        .community-member-table { min-width: 520px; }
+        .community-member-table th, .community-member-table td { padding: 0.7rem 0.75rem; white-space: nowrap; vertical-align: middle; }
+        .community-member-table input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary-color); cursor: pointer; }
         @media (max-width: 760px) { .community-member-grid { grid-template-columns: 1fr; } }
         .storefront-order-search-row { display: flex; gap: 0.5rem; align-items: center; }
         .storefront-order-search-input { flex: 1 1 360px; min-width: 220px; }
@@ -1022,15 +1023,32 @@
                 </div>
                 <div class="community-member-grid">
                     <section class="community-member-panel">
-                        <h3><i class="fa-solid fa-circle-check"></i> 已綁定名單</h3>
-                        <div id="community-approved-member-list" class="community-member-list">
-                            <div class="empty-state">尚未載入已綁定名單</div>
+                        <div class="community-member-panel-header">
+                            <h3><i class="fa-solid fa-circle-check"></i> 已綁定名單</h3>
+                            <input id="community-approved-search" class="storefront-order-search-input" style="flex:0 1 220px;min-width:150px;" type="search" placeholder="搜尋 LINE 名稱或暱稱" oninput="filterCommunityApprovedMembers(this.value)">
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="community-member-table">
+                                <thead><tr><th>LINE 名稱</th><th>申請暱稱</th><th>審核狀態</th></tr></thead>
+                                <tbody id="community-approved-member-list"><tr><td colspan="3" class="empty-state">尚未載入已綁定名單</td></tr></tbody>
+                            </table>
                         </div>
                     </section>
                     <section class="community-member-panel">
-                        <h3><i class="fa-solid fa-clock"></i> 待處理名單</h3>
-                        <div id="community-pending-member-list" class="community-member-list">
-                            <div class="empty-state">尚未載入待處理名單</div>
+                        <div class="community-member-panel-header">
+                            <h3><i class="fa-solid fa-clock"></i> 待處理名單</h3>
+                            <button id="community-bulk-approve-btn" class="btn btn-primary btn-sm" type="button" onclick="approveSelectedCommunityMembers(this)" disabled><i class="fa-solid fa-check-double"></i> 一鍵審核</button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="community-member-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:42px;text-align:center;"><input id="community-pending-select-all" type="checkbox" aria-label="全選待審核名單" onchange="toggleAllCommunityPendingMembers(this.checked)"></th>
+                                        <th>LINE 名稱</th><th>申請暱稱</th><th>審核狀態</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="community-pending-member-list"><tr><td colspan="4" class="empty-state">尚未載入待處理名單</td></tr></tbody>
+                            </table>
                         </div>
                     </section>
                 </div>
@@ -2677,6 +2695,8 @@
         let communityOrderRequestSeq = 0;
         let communityApprovedMembers = [];
         let communityPendingMembers = [];
+        let communityApprovedSearch = '';
+        let communitySelectedPendingMemberIds = new Set();
         let communityImportRows = [];
         let communityImportFilename = '';
         let communityShipmentFilters = { q: '' };
@@ -7317,33 +7337,80 @@
             const approvedList = document.getElementById('community-approved-member-list');
             const pendingList = document.getElementById('community-pending-member-list');
             if (approvedList) {
-                approvedList.innerHTML = communityApprovedMembers.length
-                    ? communityApprovedMembers.map(member => `
-                        <article class="community-member-card">
-                            <div class="community-member-card-row"><span class="community-member-card-label">LINE 名稱</span><strong>${escapeHtml(member.lineDisplayName || 'LINE 使用者')}</strong></div>
-                            <div class="community-member-card-row"><span class="community-member-card-label">社群暱稱</span><strong>${escapeHtml(member.nickname || '—')}</strong></div>
-                            <div class="community-member-card-row"><span class="community-member-card-label">審核通過時間</span><span>${escapeHtml(storefrontDateTime(member.approvedAt) || '—')}</span></div>
-                        </article>
+                const query = communityApprovedSearch.trim().toLocaleLowerCase('zh-TW');
+                const rows = query
+                    ? communityApprovedMembers.filter(member =>
+                        String(member.lineDisplayName || '').toLocaleLowerCase('zh-TW').includes(query) ||
+                        String(member.nickname || '').toLocaleLowerCase('zh-TW').includes(query)
+                    )
+                    : communityApprovedMembers;
+                approvedList.innerHTML = rows.length
+                    ? rows.map(member => `
+                        <tr>
+                            <td><strong>${escapeHtml(member.lineDisplayName || 'LINE 使用者')}</strong></td>
+                            <td>${escapeHtml(member.nickname || '—')}</td>
+                            <td><span class="backend-member-pill on">已綁定</span></td>
+                        </tr>
                     `).join('')
-                    : '<div class="empty-state">目前沒有已綁定名單</div>';
+                    : `<tr><td colspan="3" class="empty-state">${query ? '找不到符合的已綁定名單' : '目前沒有已綁定名單'}</td></tr>`;
             }
             if (pendingList) {
                 pendingList.innerHTML = communityPendingMembers.length
                     ? communityPendingMembers.map(member => {
                         const isPending = member.reviewStatus === 'pending' && member.requestedNickname;
                         return `
-                            <article class="community-member-card">
-                                <div class="community-member-card-row"><span class="community-member-card-label">LINE 名稱</span><strong>${escapeHtml(member.lineDisplayName || 'LINE 使用者')}</strong></div>
-                                <div class="community-member-card-row"><span class="community-member-card-label">申請暱稱</span><strong>${escapeHtml(member.requestedNickname || '—')}</strong></div>
-                                <div class="community-member-card-row">
+                            <tr>
+                                <td style="text-align:center;"><input type="checkbox" aria-label="選取 ${escapeHtml(member.lineDisplayName || 'LINE 使用者')}" ${isPending ? '' : 'disabled'} ${communitySelectedPendingMemberIds.has(member.id) ? 'checked' : ''} onchange="toggleCommunityPendingMember('${escapeHtml(member.id)}', this.checked)"></td>
+                                <td><strong>${escapeHtml(member.lineDisplayName || 'LINE 使用者')}</strong></td>
+                                <td>${escapeHtml(member.requestedNickname || '—')}</td>
+                                <td>
                                     <span class="backend-member-pill ${isPending ? '' : 'off'}">${isPending ? '待審核' : '未申請'}</span>
                                     ${isPending ? `<button class="btn btn-sm btn-primary" type="button" onclick="approveCommunityMember('${escapeHtml(member.id)}', this)"><i class="fa-solid fa-check"></i> 通過</button>` : ''}
-                                </div>
-                            </article>
+                                </td>
+                            </tr>
                         `;
                     }).join('')
-                    : '<div class="empty-state">目前沒有待處理名單</div>';
+                    : '<tr><td colspan="4" class="empty-state">目前沒有待處理名單</td></tr>';
             }
+            syncCommunityPendingSelectionControls();
+        }
+
+        function filterCommunityApprovedMembers(value) {
+            communityApprovedSearch = String(value || '');
+            renderCommunityMembers();
+        }
+
+        function pendingCommunityMemberIds() {
+            return communityPendingMembers
+                .filter(member => member.reviewStatus === 'pending' && member.requestedNickname)
+                .map(member => member.id);
+        }
+
+        function syncCommunityPendingSelectionControls() {
+            const availableIds = pendingCommunityMemberIds();
+            const availableSet = new Set(availableIds);
+            communitySelectedPendingMemberIds = new Set(
+                [...communitySelectedPendingMemberIds].filter(id => availableSet.has(id))
+            );
+            const selectAll = document.getElementById('community-pending-select-all');
+            if (selectAll) {
+                selectAll.disabled = availableIds.length === 0;
+                selectAll.checked = availableIds.length > 0 && availableIds.every(id => communitySelectedPendingMemberIds.has(id));
+                selectAll.indeterminate = communitySelectedPendingMemberIds.size > 0 && !selectAll.checked;
+            }
+            const bulkButton = document.getElementById('community-bulk-approve-btn');
+            if (bulkButton) bulkButton.disabled = communitySelectedPendingMemberIds.size === 0;
+        }
+
+        function toggleCommunityPendingMember(id, checked) {
+            if (checked) communitySelectedPendingMemberIds.add(id);
+            else communitySelectedPendingMemberIds.delete(id);
+            syncCommunityPendingSelectionControls();
+        }
+
+        function toggleAllCommunityPendingMembers(checked) {
+            communitySelectedPendingMemberIds = checked ? new Set(pendingCommunityMemberIds()) : new Set();
+            renderCommunityMembers();
         }
 
         async function loadCommunityMembers() {
@@ -7357,6 +7424,7 @@
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '社群名單載入失敗');
                 communityApprovedMembers = Array.isArray(result.approved) ? result.approved : [];
                 communityPendingMembers = Array.isArray(result.pending) ? result.pending : [];
+                communitySelectedPendingMemberIds.clear();
                 renderCommunityMembers();
             } catch (error) {
                 console.error(error);
@@ -7365,17 +7433,22 @@
             }
         }
 
+        async function requestCommunityMemberApproval(id) {
+            const response = await fetch('/api/backend/community/members', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            const result = await response.json().catch(() => null);
+            if (!response.ok || !result?.ok) throw new Error(result?.error || '審核失敗');
+            return result;
+        }
+
         async function approveCommunityMember(id, button) {
             if (!id || button?.disabled) return;
             if (button) button.disabled = true;
             try {
-                const response = await fetch('/api/backend/community/members', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id })
-                });
-                const result = await response.json().catch(() => null);
-                if (!response.ok || !result?.ok) throw new Error(result?.error || '審核失敗');
+                const result = await requestCommunityMemberApproval(id);
                 showToast(`已通過「${result.nickname}」的暱稱綁定`, 'success');
                 await loadCommunityMembers();
             } catch (error) {
@@ -7383,6 +7456,26 @@
                 showToast(error instanceof Error ? error.message : '審核失敗，請稍後再試', 'error');
                 if (button) button.disabled = false;
             }
+        }
+
+        async function approveSelectedCommunityMembers(button) {
+            const ids = [...communitySelectedPendingMemberIds];
+            if (!ids.length || button?.disabled) return;
+            if (button) button.disabled = true;
+            let approvedCount = 0;
+            let failedCount = 0;
+            for (const id of ids) {
+                try {
+                    await requestCommunityMemberApproval(id);
+                    approvedCount += 1;
+                } catch (error) {
+                    console.error(error);
+                    failedCount += 1;
+                }
+            }
+            await loadCommunityMembers();
+            if (failedCount) showToast(`已通過 ${approvedCount} 筆，${failedCount} 筆審核失敗`, 'error');
+            else showToast(`已通過 ${approvedCount} 筆暱稱綁定`, 'success');
         }
 
         function communityOrderQueryString() {
