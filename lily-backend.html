@@ -159,6 +159,11 @@
         .backend-member-filter-field input, .backend-member-filter-field select { min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.72rem; padding: 0.42rem 0.62rem; background: white; color: #334155; font-size: 0.82rem; font-weight: 800; outline: none; }
         .backend-member-table { min-width: 1120px; }
         .backend-member-table th, .backend-member-table td { white-space: nowrap; vertical-align: middle; padding: 0.72rem 0.8rem; }
+        #section-community-orders .backend-member-table th, #section-community-orders .backend-member-table td { text-align: center; }
+        #section-community-orders .community-order-align-left { text-align: left; }
+        .community-order-status-select { min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.72rem; padding: 0.42rem 1.7rem 0.42rem 0.62rem; background-color: white; color: #334155; font-size: 0.8rem; font-weight: 800; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url('data:image/svg+xml;utf8,<svg fill=%22%23be185d%22 height=%2220%22 viewBox=%220 0 24 24%22 width=%2220%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/></svg>'); background-repeat: no-repeat; background-position: right 0.45rem center; background-size: 1rem; }
+        .community-order-status-select:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
+        .community-order-row-actions { display: inline-flex; align-items: center; gap: 0.35rem; }
         .backend-member-pill { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0.22rem 0.55rem; font-size: 0.74rem; font-weight: 900; border: 1px solid #e2e8f0; background: #f8fafc; color: #475569; }
         .backend-member-pill.on { border-color: #bbf7d0; background: #dcfce7; color: #166534; }
         .backend-member-pill.off { border-color: #fecaca; background: #fee2e2; color: #991b1b; }
@@ -938,6 +943,7 @@
                 <div class="page-header">
                     <h2 class="page-title">社群訂單</h2>
                     <div class="toolbar">
+                        <button class="btn btn-primary" type="button" onclick="openCommunityOrderAddModal()"><i class="fa-solid fa-plus"></i> 手動新增</button>
                         <button class="btn btn-primary" onclick="document.getElementById('community-excel-upload').click()"><i class="fa-solid fa-file-excel"></i> 匯入 Excel</button>
                         <input type="file" id="community-excel-upload" accept=".xlsx, .xls" style="display:none;" onchange="handleCommunityExcelUpload(event)">
                         <button class="btn btn-secondary" onclick="loadCommunityOrders(true)"><i class="fa-solid fa-rotate"></i> 重新整理</button>
@@ -988,7 +994,9 @@
                         <button class="btn btn-primary" type="button" onclick="applyCommunityOrderFilters()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
                         <button class="btn btn-secondary" type="button" onclick="clearCommunityOrderFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
                     </div>
-                    <div class="backend-member-filter-row" style="margin-top:0.5rem;">
+                </div>
+                <div class="backend-member-filterbar" style="margin-top:0.85rem;">
+                    <div class="backend-member-filter-row">
                         <span id="community-order-selected-count" style="font-size:0.78rem;font-weight:800;color:#64748b;">已選 0 筆</span>
                         <div class="backend-member-filter-field">
                             <label for="community-batch-field">批次修改欄位</label>
@@ -1005,42 +1013,43 @@
                         </div>
                         <button class="btn btn-primary" type="button" id="community-batch-apply-btn" onclick="applyCommunityOrderBatchUpdate()" disabled><i class="fa-solid fa-check-double"></i> 套用到已選項目</button>
                     </div>
-                </div>
-                <div class="table-wrapper" style="margin-top:0.85rem; overflow-x:auto;">
-                    <table class="backend-member-table">
-                        <thead>
-                            <tr>
-                                <th style="width:42px;text-align:center;"><input id="community-order-select-all" type="checkbox" aria-label="全選社群訂單" onchange="toggleCommunityOrderSelectAll(this.checked)"></th>
-                                <th>記事本名稱</th>
-                                <th>社群暱稱</th>
-                                <th>下單商品</th>
-                                <th>規格</th>
-                                <th>數量</th>
-                                <th>單價</th>
-                                <th>總金額</th>
-                                <th>系列商品總金額</th>
-                                <th>匯款金額</th>
-                                <th>搶購狀態</th>
-                                <th>匯款狀態</th>
-                                <th>到貨狀態</th>
-                                <th>下單狀態</th>
-                                <th>備註</th>
-                            </tr>
-                        </thead>
-                        <tbody id="community-order-tbody">
-                            <tr><td colspan="15" class="empty-state">尚未載入社群訂單資料</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="backend-member-pagination-footer">
-                    <div id="community-order-result-count">共 0 筆</div>
-                    <div style="display:flex;align-items:center;gap:0.45rem;flex-wrap:wrap;">
-                        <select id="community-order-page-size" class="storefront-order-page-size-select" onchange="changeCommunityOrderPageSize(this.value)" aria-label="每頁筆數">
-                            <option value="20">20 筆</option>
-                            <option value="50">50 筆</option>
-                            <option value="100">100 筆</option>
-                        </select>
-                        <div id="community-order-pagination" class="storefront-order-pagination"></div>
+                    <div class="table-wrapper" style="overflow-x:auto;">
+                        <table class="backend-member-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:42px;text-align:center;"><input id="community-order-select-all" type="checkbox" aria-label="全選社群訂單" onchange="toggleCommunityOrderSelectAll(this.checked)"></th>
+                                    <th class="community-order-align-left">記事本名稱</th>
+                                    <th class="community-order-align-left">社群暱稱</th>
+                                    <th class="community-order-align-left">下單商品</th>
+                                    <th>規格</th>
+                                    <th>數量</th>
+                                    <th>單價</th>
+                                    <th>總金額</th>
+                                    <th>系列商品總金額</th>
+                                    <th>匯款金額</th>
+                                    <th>搶購狀態</th>
+                                    <th>匯款狀態</th>
+                                    <th>到貨狀態</th>
+                                    <th>下單狀態</th>
+                                    <th>備註</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="community-order-tbody">
+                                <tr><td colspan="16" class="empty-state">尚未載入社群訂單資料</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="backend-member-pagination-footer">
+                        <div id="community-order-result-count">共 0 筆</div>
+                        <div style="display:flex;align-items:center;gap:0.45rem;flex-wrap:wrap;">
+                            <select id="community-order-page-size" class="storefront-order-page-size-select" onchange="changeCommunityOrderPageSize(this.value)" aria-label="每頁筆數">
+                                <option value="20">20 筆</option>
+                                <option value="50">50 筆</option>
+                                <option value="100">100 筆</option>
+                            </select>
+                            <div id="community-order-pagination" class="storefront-order-pagination"></div>
+                        </div>
                     </div>
                 </div>
                 <div id="community-import-batches" style="margin-top:1.25rem;"></div>
@@ -2521,6 +2530,56 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" onclick="closeCommunityMemberEditModal()">取消</button>
                 <button class="btn btn-primary" type="button" onclick="saveCommunityMemberNickname(this)">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="communityOrderAddModal">
+        <div class="modal-content" style="max-width:560px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-plus"></i> 手動新增社群訂單</h3>
+                <button class="close-btn" type="button" onclick="closeCommunityOrderAddModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row" style="flex-wrap:wrap;">
+                    <div class="form-group" style="min-width:200px;"><label>記事本名稱</label><input id="community-order-add-notebook" type="text" maxlength="200"></div>
+                    <div class="form-group" style="min-width:200px;"><label>社群暱稱</label><input id="community-order-add-nickname" type="text" maxlength="200"></div>
+                </div>
+                <div class="form-row" style="flex-wrap:wrap;">
+                    <div class="form-group" style="min-width:200px;"><label>下單商品</label><input id="community-order-add-product" type="text" maxlength="300"></div>
+                    <div class="form-group" style="min-width:160px;"><label>規格</label><input id="community-order-add-spec" type="text" maxlength="200" placeholder="選填"></div>
+                </div>
+                <div class="form-row" style="flex-wrap:wrap;">
+                    <div class="form-group" style="min-width:120px;"><label>數量</label><input id="community-order-add-quantity" type="number" min="1" step="1" value="1"></div>
+                    <div class="form-group" style="min-width:120px;"><label>單價</label><input id="community-order-add-price" type="number" min="0" step="1" value="0"></div>
+                </div>
+                <p style="margin:0;color:#94a3b8;font-size:0.76rem;font-weight:800;">搶購／匯款／到貨／下單狀態將沿用系統預設值，不需在此設定。</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeCommunityOrderAddModal()">取消</button>
+                <button class="btn btn-primary" type="button" id="community-order-add-save-btn" onclick="saveCommunityOrderAdd(this)">新增</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="communityOrderEditModal">
+        <div class="modal-content" style="max-width:460px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-pen"></i> 編輯社群訂單</h3>
+                <button class="close-btn" type="button" onclick="closeCommunityOrderEditModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <input id="community-order-edit-order-id" type="hidden">
+                <input id="community-order-edit-item-id" type="hidden">
+                <div class="form-group"><label>匯款狀態</label><select id="community-order-edit-payment"></select></div>
+                <div class="form-group"><label>到貨狀態</label><select id="community-order-edit-arrival"></select></div>
+                <div class="form-group"><label>下單狀態</label><select id="community-order-edit-stage"></select></div>
+                <div class="form-group"><label>搶購狀態</label><select id="community-order-edit-snipe"></select></div>
+                <div class="form-group"><label>備註</label><input id="community-order-edit-notes" type="text" maxlength="2000"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeCommunityOrderEditModal()">取消</button>
+                <button class="btn btn-primary" type="button" id="community-order-edit-save-btn" onclick="saveCommunityOrderEdit(this)">儲存</button>
             </div>
         </div>
     </div>
@@ -7832,7 +7891,7 @@
             const tbody = document.getElementById('community-order-tbody');
             const requestSeq = ++communityOrderRequestSeq;
             writeCommunityOrderFilterInputs();
-            if (tbody) tbody.innerHTML = '<tr><td colspan="15" class="empty-state">社群訂單讀取中...</td></tr>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="16" class="empty-state">社群訂單讀取中...</td></tr>';
             try {
                 const response = await fetch(`/api/backend/community/orders${communityOrderQueryString()}`, { cache: 'no-store' });
                 const result = await response.json().catch(() => null);
@@ -7844,7 +7903,7 @@
                 renderCommunityOrders();
             } catch (error) {
                 console.error(error);
-                if (tbody) tbody.innerHTML = '<tr><td colspan="15" class="empty-state">社群訂單讀取失敗，請稍後再試。</td></tr>';
+                if (tbody) tbody.innerHTML = '<tr><td colspan="16" class="empty-state">社群訂單讀取失敗，請稍後再試。</td></tr>';
                 setCommunityOrderPagination({ page: 1, page_size: communityOrderPagination.pageSize, total: 0, total_pages: 0 });
             }
         }
@@ -7886,7 +7945,7 @@
         ];
 
         function communityStatusSelect(options, current, onchange) {
-            return `<select class="storefront-order-status-select" onchange="${onchange}">
+            return `<select class="community-order-status-select" onchange="${onchange}">
                 ${options.map(option => `<option value="${option.value}" ${option.value === current ? 'selected' : ''}>${option.label}</option>`).join('')}
             </select>`;
         }
@@ -7976,7 +8035,7 @@
             writeCommunityOrderStatusFilterInputs();
             const filteredRows = communityFilteredOrderRows();
             if (!filteredRows.length) {
-                tbody.innerHTML = '<tr><td colspan="15" class="empty-state">沒有符合條件的社群訂單</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="16" class="empty-state">沒有符合條件的社群訂單</td></tr>';
                 updateCommunityOrderSelectionControls();
                 return;
             }
@@ -7987,24 +8046,24 @@
                 const order = group.order;
                 group.items.forEach((item, index) => {
                     html += '<tr>';
-                    html += `<td style="text-align:center;"><input type="checkbox" class="community-order-row-checkbox" aria-label="選取此筆社群訂單項目" ${communitySelectedOrderItemIds.has(item.itemId) ? 'checked' : ''} onchange="toggleCommunityOrderRowSelect('${escapeHtml(item.itemId)}', this.checked)"></td>`;
+                    html += `<td><input type="checkbox" class="community-order-row-checkbox" aria-label="選取此筆社群訂單項目" ${communitySelectedOrderItemIds.has(item.itemId) ? 'checked' : ''} onchange="toggleCommunityOrderRowSelect('${escapeHtml(item.itemId)}', this.checked)"></td>`;
                     if (index === 0) {
                         html += `
-                            <td rowspan="${rowspan}">${escapeHtml(order.notebookName)}</td>
-                            <td rowspan="${rowspan}">${escapeHtml(order.nickname)}</td>
+                            <td class="community-order-align-left" rowspan="${rowspan}">${escapeHtml(order.notebookName)}</td>
+                            <td class="community-order-align-left" rowspan="${rowspan}">${escapeHtml(order.nickname)}</td>
                         `;
                     }
                     html += `
-                        <td>${escapeHtml(item.productName)}</td>
+                        <td class="community-order-align-left">${escapeHtml(item.productName)}</td>
                         <td>${escapeHtml(item.variantSpec || '—')}</td>
-                        <td style="text-align:right;">${Number(item.quantity || 0).toLocaleString('zh-TW')}</td>
-                        <td style="text-align:right;">${storefrontMoney(item.unitPrice)}</td>
-                        <td style="text-align:right;">${storefrontMoney(item.itemSubtotal)}</td>
+                        <td>${Number(item.quantity || 0).toLocaleString('zh-TW')}</td>
+                        <td>${storefrontMoney(item.unitPrice)}</td>
+                        <td>${storefrontMoney(item.itemSubtotal)}</td>
                     `;
                     if (index === 0) {
                         html += `
-                            <td style="text-align:right;" rowspan="${rowspan}"><strong>${storefrontMoney(order.groupTotal)}</strong></td>
-                            <td style="text-align:right;" rowspan="${rowspan}"><strong>${storefrontMoney(order.remitAmount)}</strong></td>
+                            <td rowspan="${rowspan}"><strong>${storefrontMoney(order.groupTotal)}</strong></td>
+                            <td rowspan="${rowspan}"><strong>${storefrontMoney(order.remitAmount)}</strong></td>
                         `;
                     }
                     html += `<td>${communityStatusSelect(COMMUNITY_SNIPE_STATUS_OPTIONS, item.snipeStatus, `updateCommunityOrderItemStatus('${escapeHtml(item.itemId)}', this.value)`)}</td>`;
@@ -8016,6 +8075,7 @@
                             <td rowspan="${rowspan}"><input type="text" class="community-order-notes-input" value="${escapeHtml(order.notes || '')}" placeholder="備註" onchange="updateCommunityOrder('${escapeHtml(order.orderId)}', 'notes', this.value)"></td>
                         `;
                     }
+                    html += `<td><span class="community-order-row-actions"><button class="btn btn-sm btn-action-edit" type="button" onclick="openCommunityOrderEditModal('${escapeHtml(order.orderId)}', '${escapeHtml(item.itemId)}')"><i class="fa-solid fa-pen"></i> 編輯</button></span></td>`;
                     html += '</tr>';
                 });
             });
@@ -8109,6 +8169,125 @@
                 else showToast(`批次更新完成：成功 ${successCount} 筆`, 'success');
             } finally {
                 if (applyBtn) applyBtn.disabled = communitySelectedOrderItemIds.size === 0;
+            }
+        }
+
+        async function patchCommunityOrderFields(orderId, fields) {
+            try {
+                const response = await fetch('/api/backend/community/orders', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId, ...fields })
+                });
+                const result = await response.json().catch(() => null);
+                return Boolean(response.ok && result?.ok);
+            } catch (error) {
+                console.error(error);
+                return false;
+            }
+        }
+
+        function openCommunityOrderAddModal() {
+            document.getElementById('community-order-add-notebook').value = '';
+            document.getElementById('community-order-add-nickname').value = '';
+            document.getElementById('community-order-add-product').value = '';
+            document.getElementById('community-order-add-spec').value = '';
+            document.getElementById('community-order-add-quantity').value = '1';
+            document.getElementById('community-order-add-price').value = '0';
+            document.getElementById('communityOrderAddModal')?.classList.add('active');
+            document.getElementById('community-order-add-notebook')?.focus();
+        }
+
+        function closeCommunityOrderAddModal() {
+            document.getElementById('communityOrderAddModal')?.classList.remove('active');
+        }
+
+        async function saveCommunityOrderAdd(button) {
+            const notebookName = document.getElementById('community-order-add-notebook')?.value.trim() || '';
+            const nickname = document.getElementById('community-order-add-nickname')?.value.trim() || '';
+            const productName = document.getElementById('community-order-add-product')?.value.trim() || '';
+            const variantSpec = document.getElementById('community-order-add-spec')?.value.trim() || '';
+            const quantity = Math.max(1, Math.round(Number(document.getElementById('community-order-add-quantity')?.value) || 1));
+            const unitPrice = Math.max(0, Number(document.getElementById('community-order-add-price')?.value) || 0);
+            if (!notebookName || !nickname || !productName) {
+                showToast('請填寫記事本名稱、社群暱稱與下單商品', 'error');
+                return;
+            }
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch('/api/backend/community/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: '手動新增',
+                        rows: [{
+                            notebook_name: notebookName,
+                            nickname,
+                            product_name: productName,
+                            variant_spec: variantSpec,
+                            quantity,
+                            unit_price: unitPrice
+                        }]
+                    })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '新增失敗。');
+                showToast('已新增社群訂單', 'success');
+                closeCommunityOrderAddModal();
+                await loadCommunityOrders(true);
+                await loadCommunityImportBatches();
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '新增失敗，請稍後再試', 'error');
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        function communityFillStatusSelect(select, options, current) {
+            if (!select) return;
+            select.innerHTML = options.map(option => `<option value="${option.value}" ${option.value === current ? 'selected' : ''}>${option.label}</option>`).join('');
+        }
+
+        function openCommunityOrderEditModal(orderId, itemId) {
+            const row = communityOrders.find(item => item.orderId === orderId && item.itemId === itemId);
+            if (!row) return;
+            document.getElementById('community-order-edit-order-id').value = orderId;
+            document.getElementById('community-order-edit-item-id').value = itemId;
+            communityFillStatusSelect(document.getElementById('community-order-edit-payment'), COMMUNITY_PAYMENT_STATUS_OPTIONS, row.paymentStatus);
+            communityFillStatusSelect(document.getElementById('community-order-edit-arrival'), COMMUNITY_ARRIVAL_STATUS_OPTIONS, row.arrivalStatus);
+            communityFillStatusSelect(document.getElementById('community-order-edit-stage'), COMMUNITY_ORDER_STAGE_OPTIONS, row.orderStage);
+            communityFillStatusSelect(document.getElementById('community-order-edit-snipe'), COMMUNITY_SNIPE_STATUS_OPTIONS, row.snipeStatus);
+            document.getElementById('community-order-edit-notes').value = row.notes || '';
+            document.getElementById('communityOrderEditModal')?.classList.add('active');
+        }
+
+        function closeCommunityOrderEditModal() {
+            document.getElementById('communityOrderEditModal')?.classList.remove('active');
+        }
+
+        async function saveCommunityOrderEdit(button) {
+            const orderId = document.getElementById('community-order-edit-order-id')?.value || '';
+            const itemId = document.getElementById('community-order-edit-item-id')?.value || '';
+            if (!orderId || !itemId) return;
+            const paymentStatus = document.getElementById('community-order-edit-payment')?.value || '';
+            const arrivalStatus = document.getElementById('community-order-edit-arrival')?.value || '';
+            const orderStage = document.getElementById('community-order-edit-stage')?.value || '';
+            const snipeStatus = document.getElementById('community-order-edit-snipe')?.value || '';
+            const notes = document.getElementById('community-order-edit-notes')?.value || '';
+            if (button) button.disabled = true;
+            try {
+                const orderOk = await patchCommunityOrderFields(orderId, { paymentStatus, arrivalStatus, orderStage, notes });
+                const itemOk = await patchCommunityOrderItemStatus(itemId, snipeStatus);
+                if (orderOk && itemOk) {
+                    showToast('已更新社群訂單', 'success');
+                    closeCommunityOrderEditModal();
+                    await loadCommunityOrders(true);
+                } else {
+                    showToast('部分欄位更新失敗，請重新整理後再試', 'error');
+                }
+            } finally {
+                if (button) button.disabled = false;
             }
         }
 
@@ -8239,9 +8418,9 @@
                                     <tr>
                                         <td>${storefrontDateTime(batch.createdAt)}</td>
                                         <td>${escapeHtml(batch.sourceFilename || '—')}</td>
-                                        <td style="text-align:right;">${batch.rowCount}</td>
-                                        <td style="text-align:right;">${batch.orderCount}</td>
-                                        <td style="text-align:right;">${batch.itemCount}</td>
+                                        <td>${batch.rowCount}</td>
+                                        <td>${batch.orderCount}</td>
+                                        <td>${batch.itemCount}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -8276,8 +8455,8 @@
                                         <td>${escapeHtml((item.notebookNames || []).join('、') || '—')}</td>
                                         <td>${escapeHtml(item.bank)}</td>
                                         <td>${escapeHtml(item.accountLast5)}</td>
-                                        <td style="text-align:right;">${storefrontMoney(item.expectedAmount)}</td>
-                                        <td style="text-align:right;${item.amount !== item.expectedAmount ? 'color:#b91c1c;font-weight:900;' : ''}">${storefrontMoney(item.amount)}</td>
+                                        <td>${storefrontMoney(item.expectedAmount)}</td>
+                                        <td style="${item.amount !== item.expectedAmount ? 'color:#b91c1c;font-weight:900;' : ''}">${storefrontMoney(item.amount)}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
