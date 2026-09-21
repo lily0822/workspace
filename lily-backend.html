@@ -184,6 +184,7 @@
         .community-member-table input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary-color); cursor: pointer; }
         .community-member-searches { display: flex; align-items: center; justify-content: flex-end; gap: 0.4rem; min-width: 0; }
         .community-member-searches input { width: 150px; min-width: 100px; }
+        .community-member-searches .btn { white-space: nowrap; flex-shrink: 0; }
         .community-member-actions { display: inline-flex; align-items: center; gap: 0.35rem; margin-left: 0.35rem; }
         .module-order-list { display: grid; gap: 0.75rem; }
         .module-order-group { border: 1px solid #e2e8f0; border-radius: 0.75rem; background: #f8fafc; overflow: hidden; }
@@ -1098,8 +1099,8 @@
                         </div>
                         <div class="table-wrapper">
                             <table class="community-member-table">
-                                <thead><tr><th>LINE 名稱</th><th>申請暱稱</th><th>審核狀態</th></tr></thead>
-                                <tbody id="community-approved-member-list"><tr><td colspan="3" class="empty-state">尚未載入已綁定名單</td></tr></tbody>
+                                <thead><tr><th>LINE 名稱</th><th>申請暱稱</th><th>綁定時間</th><th>最後更新時間</th><th>審核狀態</th></tr></thead>
+                                <tbody id="community-approved-member-list"><tr><td colspan="5" class="empty-state">尚未載入已綁定名單</td></tr></tbody>
                             </table>
                         </div>
                     </section>
@@ -7555,6 +7556,8 @@
                         <tr>
                             <td><strong>${escapeHtml(member.lineDisplayName || 'LINE 使用者')}</strong></td>
                             <td>${escapeHtml(member.nickname || '—')}</td>
+                            <td>${storefrontDateTime(member.createdAt)}</td>
+                            <td>${storefrontDateTime(member.updatedAt)}</td>
                             <td>
                                 <span class="backend-member-pill on">已綁定</span>
                                 <span class="community-member-actions">
@@ -7564,7 +7567,7 @@
                             </td>
                         </tr>
                     `).join('')
-                    : `<tr><td colspan="3" class="empty-state">${lineQuery || nicknameQuery ? '找不到符合的已綁定名單' : '目前沒有已綁定名單'}</td></tr>`;
+                    : `<tr><td colspan="5" class="empty-state">${lineQuery || nicknameQuery ? '找不到符合的已綁定名單' : '目前沒有已綁定名單'}</td></tr>`;
             }
             if (pendingList) {
                 pendingList.innerHTML = communityPendingMembers.length
@@ -7635,7 +7638,7 @@
         async function loadCommunityMembers() {
             const approvedList = document.getElementById('community-approved-member-list');
             const pendingList = document.getElementById('community-pending-member-list');
-            if (approvedList) approvedList.innerHTML = '<tr><td colspan="3" class="empty-state">正在載入...</td></tr>';
+            if (approvedList) approvedList.innerHTML = '<tr><td colspan="5" class="empty-state">正在載入...</td></tr>';
             if (pendingList) pendingList.innerHTML = '<tr><td colspan="4" class="empty-state">正在載入...</td></tr>';
             try {
                 const response = await fetch('/api/backend/community/members', { cache: 'no-store' });
@@ -7647,7 +7650,7 @@
                 renderCommunityMembers();
             } catch (error) {
                 console.error(error);
-                if (approvedList) approvedList.innerHTML = '<tr><td colspan="3" class="empty-state">社群名單載入失敗，請稍後再試</td></tr>';
+                if (approvedList) approvedList.innerHTML = '<tr><td colspan="5" class="empty-state">社群名單載入失敗，請稍後再試</td></tr>';
                 if (pendingList) pendingList.innerHTML = '<tr><td colspan="4" class="empty-state">社群名單載入失敗，請稍後再試</td></tr>';
             }
         }
