@@ -182,7 +182,17 @@
         .community-member-table { min-width: 520px; }
         .community-member-table th, .community-member-table td { padding: 0.7rem 0.75rem; white-space: nowrap; vertical-align: middle; }
         .community-member-table input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary-color); cursor: pointer; }
+        .community-member-searches { display: flex; align-items: center; justify-content: flex-end; gap: 0.4rem; min-width: 0; }
+        .community-member-searches input { width: 150px; min-width: 100px; }
+        .community-member-actions { display: inline-flex; align-items: center; gap: 0.35rem; margin-left: 0.35rem; }
+        .module-order-list { display: grid; gap: 0.75rem; }
+        .module-order-group { border: 1px solid #e2e8f0; border-radius: 0.75rem; background: #f8fafc; overflow: hidden; }
+        .module-order-group-header { display: flex; align-items: center; gap: 0.55rem; padding: 0.7rem 0.8rem; color: #2563eb; font-size: 0.875rem; font-weight: 700; cursor: grab; }
+        .module-order-items { display: grid; gap: 0.35rem; padding: 0 0.65rem 0.65rem; }
+        .module-order-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.65rem; border: 1px solid #e2e8f0; border-radius: 0.55rem; background: white; color: #475569; font-size: 0.82rem; font-weight: 600; cursor: grab; }
+        .module-order-ghost { opacity: 0.45; background: #fce7f3; }
         @media (max-width: 760px) { .community-member-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 1100px) { .community-member-panel-header { align-items: flex-start; flex-direction: column; } .community-member-searches { width: 100%; flex-wrap: wrap; justify-content: flex-start; } }
         .storefront-order-search-row { display: flex; gap: 0.5rem; align-items: center; }
         .storefront-order-search-input { flex: 1 1 360px; min-width: 220px; }
         .storefront-order-filter-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end; }
@@ -601,87 +611,87 @@
             <span>麗麗後台</span>
         </div>
         <div class="sidebar-menu">
-            <div class="menu-group">
+            <div class="menu-group" data-module-key="operations">
                 <div class="menu-item expanded" onclick="toggleSubmenu(this)">
                     <i class="icon fa-solid fa-briefcase"></i>
                     <span>運營管理</span>
                     <i class="chevron fa-solid fa-angle-down"></i>
                 </div>
                 <div class="submenu open">
-                    <div class="submenu-item" onclick="openTab('data-overview', '數據總覽')">數據總覽</div>
-                    <div class="submenu-item" onclick="openTab('exchange-rates', '匯率報表')">匯率報表</div>
-                    <div class="submenu-item" onclick="openTab('brand-management', '品牌管理')">品牌管理</div>
+                    <div class="submenu-item" data-module-item-key="data-overview" onclick="openTab('data-overview', '數據總覽')">數據總覽</div>
+                    <div class="submenu-item" data-module-item-key="exchange-rates" onclick="openTab('exchange-rates', '匯率報表')">匯率報表</div>
+                    <div class="submenu-item" data-module-item-key="brand-management" onclick="openTab('brand-management', '品牌管理')">品牌管理</div>
                 </div>
             </div>
-            <div class="menu-group">
+            <div class="menu-group" data-module-key="purchasing">
                 <div class="menu-item" onclick="toggleSubmenu(this)">
                     <i class="icon fa-solid fa-users-gear"></i>
                     <span>叫貨管理</span>
                     <i class="chevron fa-solid fa-angle-down"></i>
                 </div>
                 <div class="submenu">
-                    <div class="submenu-item" onclick="openTab('backend-members', '會員管理')">會員管理</div>
-                    <div class="submenu-item" onclick="openTab('vendors', '叫貨處管理')">叫貨處管理</div>
-                    <div class="submenu-item" onclick="openTab('vendors-orders', '廠商叫貨明細')">廠商叫貨明細</div>
-                    <div class="submenu-item" onclick="openTab('website-orders', '購物網站叫貨明細')">購物網站叫貨明細</div>
+                    <div class="submenu-item" data-module-item-key="backend-members" onclick="openTab('backend-members', '會員管理')">會員管理</div>
+                    <div class="submenu-item" data-module-item-key="vendors" onclick="openTab('vendors', '叫貨處管理')">叫貨處管理</div>
+                    <div class="submenu-item" data-module-item-key="vendors-orders" onclick="openTab('vendors-orders', '廠商叫貨明細')">廠商叫貨明細</div>
+                    <div class="submenu-item" data-module-item-key="website-orders" onclick="openTab('website-orders', '購物網站叫貨明細')">購物網站叫貨明細</div>
                 </div>
             </div>
-            <div class="menu-group">
+            <div class="menu-group" data-module-key="orders">
                 <div class="menu-item" onclick="toggleSubmenu(this)">
                     <i class="icon fa-solid fa-receipt"></i>
                     <span>訂單管理</span>
                     <i class="chevron fa-solid fa-angle-down"></i>
                 </div>
                 <div class="submenu">
-                    <div class="submenu-item" onclick="openTab('storefront-orders', '訂單管理')">訂單管理</div>
-                    <div class="submenu-item" onclick="openTab('customer-orders', '客戶訂單明細')">客戶訂單明細</div>
+                    <div class="submenu-item" data-module-item-key="storefront-orders" onclick="openTab('storefront-orders', '訂單管理')">訂單管理</div>
+                    <div class="submenu-item" data-module-item-key="customer-orders" onclick="openTab('customer-orders', '客戶訂單明細')">客戶訂單明細</div>
                 </div>
             </div>
-            <div class="menu-group">
+            <div class="menu-group" data-module-key="community">
                 <div class="menu-item" onclick="toggleSubmenu(this)">
                     <i class="icon fa-solid fa-user-group"></i>
                     <span>社群管理</span>
                     <i class="chevron fa-solid fa-angle-down"></i>
                 </div>
                 <div class="submenu">
-                    <div class="submenu-item" onclick="openTab('community-orders', '社群訂單')">社群訂單</div>
-                    <div class="submenu-item" onclick="openTab('community-members', '社群名單')">社群名單</div>
+                    <div class="submenu-item" data-module-item-key="community-orders" onclick="openTab('community-orders', '社群訂單')">社群訂單</div>
+                    <div class="submenu-item" data-module-item-key="community-members" onclick="openTab('community-members', '社群名單')">社群名單</div>
                 </div>
             </div>
-            <div class="menu-group">
+            <div class="menu-group" data-module-key="products">
                 <div class="menu-item" onclick="toggleSubmenu(this)">
                     <i class="icon fa-solid fa-boxes-stacked"></i>
                     <span>商品管理</span>
                     <i class="chevron fa-solid fa-angle-down"></i>
                 </div>
                 <div class="submenu">
-                    <div class="submenu-item" onclick="openTab('stock-products', '現貨商品管理')">現貨商品管理</div>
-                    <div class="submenu-item" onclick="openTab('preorder-products', '預購商品管理')">預購商品管理</div>
-                    <div class="submenu-item" onclick="openTab('product-tags', '商品標籤管理')">商品標籤管理</div>
+                    <div class="submenu-item" data-module-item-key="stock-products" onclick="openTab('stock-products', '現貨商品管理')">現貨商品管理</div>
+                    <div class="submenu-item" data-module-item-key="preorder-products" onclick="openTab('preorder-products', '預購商品管理')">預購商品管理</div>
+                    <div class="submenu-item" data-module-item-key="product-tags" onclick="openTab('product-tags', '商品標籤管理')">商品標籤管理</div>
                 </div>
             </div>
-            <div class="menu-group">
+            <div class="menu-group" data-module-key="schedules">
                 <div class="menu-item" onclick="toggleSubmenu(this)">
                     <i class="icon fa-solid fa-calendar-days"></i>
                     <span>擺攤連線管理</span>
                     <i class="chevron fa-solid fa-angle-down"></i>
                 </div>
                 <div class="submenu">
-                    <div class="submenu-item" onclick="openTab('stall-schedules', '擺攤時程')">擺攤時程</div>
-                    <div class="submenu-item" onclick="openTab('connection-schedules', '連線時程')">連線時程</div>
+                    <div class="submenu-item" data-module-item-key="stall-schedules" onclick="openTab('stall-schedules', '擺攤時程')">擺攤時程</div>
+                    <div class="submenu-item" data-module-item-key="connection-schedules" onclick="openTab('connection-schedules', '連線時程')">連線時程</div>
                 </div>
             </div>
-            <div class="menu-group">
+            <div class="menu-group" data-module-key="accounting">
                 <div class="menu-item" onclick="toggleSubmenu(this)">
                     <i class="icon fa-solid fa-chart-line"></i>
                     <span>帳表管理</span>
                     <i class="chevron fa-solid fa-angle-down"></i>
                 </div>
                 <div class="submenu">
-                    <div class="submenu-item" onclick="openTab('general-ledger', '總帳表')">總帳表</div>
-                    <div class="submenu-item" onclick="openTab('freight-accounting', '集運帳表')">集運帳表</div>
-                    <div class="submenu-item">擺攤帳表</div>
-                    <div class="submenu-item">連線帳表</div>
+                    <div class="submenu-item" data-module-item-key="general-ledger" onclick="openTab('general-ledger', '總帳表')">總帳表</div>
+                    <div class="submenu-item" data-module-item-key="freight-accounting" onclick="openTab('freight-accounting', '集運帳表')">集運帳表</div>
+                    <div class="submenu-item" data-module-item-key="stall-accounting">擺攤帳表</div>
+                    <div class="submenu-item" data-module-item-key="connection-accounting">連線帳表</div>
                 </div>
             </div>
         </div>
@@ -698,6 +708,7 @@
                 <div class="tabs-container" id="tabsContainer"></div>
             </div>
             <div class="topbar-right">
+                <button class="btn btn-secondary btn-sm" type="button" onclick="openModuleOrderModal()"><i class="fa-solid fa-arrow-down-wide-short"></i> 調整模塊順序</button>
                 <div class="topbar-icon"><i class="fa-regular fa-bell"></i></div>
                 <div class="topbar-icon"><i class="fa-solid fa-globe"></i></div>
                 <div class="user-profile">
@@ -1025,7 +1036,11 @@
                     <section class="community-member-panel">
                         <div class="community-member-panel-header">
                             <h3><i class="fa-solid fa-circle-check"></i> 已綁定名單</h3>
-                            <input id="community-approved-search" class="storefront-order-search-input" style="flex:0 1 220px;min-width:150px;" type="search" placeholder="搜尋 LINE 名稱或暱稱" oninput="filterCommunityApprovedMembers(this.value)">
+                            <div class="community-member-searches">
+                                <input id="community-approved-line-search" class="storefront-order-search-input" type="search" placeholder="LINE 名稱" onkeydown="handleCommunityApprovedSearchKey(event)">
+                                <input id="community-approved-nickname-search" class="storefront-order-search-input" type="search" placeholder="申請暱稱" onkeydown="handleCommunityApprovedSearchKey(event)">
+                                <button class="btn btn-primary btn-sm" type="button" onclick="applyCommunityApprovedSearch()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
+                            </div>
                         </div>
                         <div class="table-wrapper">
                             <table class="community-member-table">
@@ -2437,6 +2452,41 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="communityMemberEditModal">
+        <div class="modal-content" style="max-width:460px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-pen"></i> 編輯社群暱稱</h3>
+                <button class="close-btn" type="button" onclick="closeCommunityMemberEditModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <input id="community-member-edit-id" type="hidden">
+                <div class="form-group"><label>LINE 名稱</label><input id="community-member-edit-line-name" type="text" readonly></div>
+                <div class="form-group"><label>社群暱稱</label><input id="community-member-edit-nickname" type="text" maxlength="120"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeCommunityMemberEditModal()">取消</button>
+                <button class="btn btn-primary" type="button" onclick="saveCommunityMemberNickname(this)">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="moduleOrderModal">
+        <div class="modal-content" style="max-width:620px;max-height:88vh;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-arrow-down-wide-short"></i> 調整模塊順序</h3>
+                <button class="close-btn" type="button" onclick="cancelModuleOrder()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="overflow-y:auto;">
+                <p style="margin-bottom:0.8rem;color:#64748b;font-size:0.82rem;">拖曳大模塊，或拖曳同一大模塊內的小模塊。</p>
+                <div class="module-order-list" id="module-order-list"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="cancelModuleOrder()">取消</button>
+                <button class="btn btn-primary" type="button" onclick="saveModuleOrder(this)"><i class="fa-solid fa-floppy-disk"></i> 保存</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Appearance Date Time Picker Popover -->
     <div class="appearance-date-picker-popover" id="appearanceDatePickerPopover">
         <h4 id="appearance-date-picker-title">選擇日期時間</h4>
@@ -2695,8 +2745,10 @@
         let communityOrderRequestSeq = 0;
         let communityApprovedMembers = [];
         let communityPendingMembers = [];
-        let communityApprovedSearch = '';
+        let communityApprovedSearch = { lineName: '', nickname: '' };
         let communitySelectedPendingMemberIds = new Set();
+        let backendModuleOrder = [];
+        let moduleOrderSortables = [];
         let communityImportRows = [];
         let communityImportFilename = '';
         let communityShipmentFilters = { q: '' };
@@ -2886,8 +2938,11 @@
                         homepageSections = parseHomepageSections(setting.image || '');
                     } else if (setting?.type === 'site-navigation') {
                         siteNavigation = parseSiteNavigation(setting.image || '');
+                    } else if (setting?.type === 'backend-module-order') {
+                        backendModuleOrder = parseBackendModuleOrder(setting.image || '');
                     }
                 });
+                applyBackendModuleOrder(backendModuleOrder);
                 migrateCurrentBrandLogoToLibrary();
                 localStorage.setItem(SCHEDULE_DEFAULT_IMAGES_KEY, JSON.stringify(scheduleDefaultImages));
                 localStorage.setItem(BRAND_SETTINGS_KEY, JSON.stringify(brandSettings));
@@ -2922,7 +2977,8 @@
                     { id: 'site-announcements', type: 'site-announcements', image: siteAnnouncementPayload() },
                     { id: 'site-banners', type: 'site-banners', image: siteBannersPayload() },
                     { id: 'homepage-sections', type: 'homepage-sections', image: homepageSectionsPayload() },
-                    { id: 'site-navigation', type: 'site-navigation', image: siteNavigationPayload() }
+                    { id: 'site-navigation', type: 'site-navigation', image: siteNavigationPayload() },
+                    { id: 'backend-module-order', type: 'backend-module-order', image: JSON.stringify({ groups: backendModuleOrder }) }
                 ]
             };
         }
@@ -2955,6 +3011,101 @@
 
             if (mutations[action]) mutations[action]();
             cacheBackendData(currentBackendDataSnapshot());
+        }
+
+        function currentBackendModuleOrder() {
+            const menu = document.querySelector('.sidebar-menu');
+            if (!menu) return [];
+            return [...menu.querySelectorAll(':scope > .menu-group[data-module-key]')].map(group => ({
+                key: group.dataset.moduleKey,
+                items: [...group.querySelectorAll('.submenu-item[data-module-item-key]')].map(item => item.dataset.moduleItemKey)
+            }));
+        }
+
+        function parseBackendModuleOrder(value) {
+            try {
+                const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+                return Array.isArray(parsed?.groups)
+                    ? parsed.groups
+                        .filter(group => group && typeof group.key === 'string' && Array.isArray(group.items))
+                        .map(group => ({ key: group.key, items: group.items.filter(item => typeof item === 'string') }))
+                    : [];
+            } catch {
+                return [];
+            }
+        }
+
+        function applyBackendModuleOrder(order) {
+            if (!Array.isArray(order) || !order.length) return;
+            const menu = document.querySelector('.sidebar-menu');
+            if (!menu) return;
+            const groups = new Map([...menu.querySelectorAll(':scope > .menu-group[data-module-key]')].map(group => [group.dataset.moduleKey, group]));
+            order.forEach(groupOrder => {
+                const group = groups.get(groupOrder.key);
+                if (!group) return;
+                const submenu = group.querySelector('.submenu');
+                if (submenu) {
+                    const items = new Map([...submenu.querySelectorAll('.submenu-item[data-module-item-key]')].map(item => [item.dataset.moduleItemKey, item]));
+                    groupOrder.items.forEach(key => { if (items.has(key)) submenu.appendChild(items.get(key)); });
+                }
+                menu.appendChild(group);
+            });
+        }
+
+        function destroyModuleOrderSortables() {
+            moduleOrderSortables.forEach(sortable => sortable?.destroy());
+            moduleOrderSortables = [];
+        }
+
+        function openModuleOrderModal() {
+            const modal = document.getElementById('moduleOrderModal');
+            const list = document.getElementById('module-order-list');
+            if (!modal || !list) return;
+            destroyModuleOrderSortables();
+            const source = currentBackendModuleOrder();
+            const groupNodes = new Map([...document.querySelectorAll('.sidebar-menu > .menu-group[data-module-key]')].map(group => [group.dataset.moduleKey, group]));
+            list.innerHTML = source.map(group => {
+                const node = groupNodes.get(group.key);
+                const title = node?.querySelector('.menu-item span')?.textContent?.trim() || group.key;
+                const itemNodes = new Map([...(node?.querySelectorAll('.submenu-item[data-module-item-key]') || [])].map(item => [item.dataset.moduleItemKey, item]));
+                return `<section class="module-order-group" data-module-key="${escapeHtml(group.key)}">
+                    <div class="module-order-group-header"><i class="fa-solid fa-grip-vertical"></i>${escapeHtml(title)}</div>
+                    <div class="module-order-items">${group.items.map(key => `<div class="module-order-item" data-module-item-key="${escapeHtml(key)}"><i class="fa-solid fa-grip-lines"></i>${escapeHtml(itemNodes.get(key)?.textContent?.trim() || key)}</div>`).join('')}</div>
+                </section>`;
+            }).join('');
+            if (window.Sortable) {
+                moduleOrderSortables.push(new Sortable(list, { animation: 150, handle: '.module-order-group-header', ghostClass: 'module-order-ghost' }));
+                list.querySelectorAll('.module-order-items').forEach(items => {
+                    moduleOrderSortables.push(new Sortable(items, { animation: 150, ghostClass: 'module-order-ghost' }));
+                });
+            }
+            modal.classList.add('active');
+        }
+
+        function cancelModuleOrder() {
+            destroyModuleOrderSortables();
+            document.getElementById('moduleOrderModal')?.classList.remove('active');
+        }
+
+        async function saveModuleOrder(button) {
+            const list = document.getElementById('module-order-list');
+            if (!list || button?.disabled) return;
+            const nextOrder = [...list.querySelectorAll(':scope > .module-order-group')].map(group => ({
+                key: group.dataset.moduleKey,
+                items: [...group.querySelectorAll('.module-order-item')].map(item => item.dataset.moduleItemKey)
+            }));
+            if (button) button.disabled = true;
+            const saved = await fetchAPI('saveScheduleSetting', {
+                id: 'backend-module-order',
+                type: 'backend-module-order',
+                image: JSON.stringify({ groups: nextOrder })
+            }, null, true);
+            if (button) button.disabled = false;
+            if (!saved) return;
+            backendModuleOrder = nextOrder;
+            applyBackendModuleOrder(backendModuleOrder);
+            cancelModuleOrder();
+            showToast('模塊順序已保存', 'success');
         }
 
         async function fetchAPI(action, payload = null, id = null, skipRender = false) {
@@ -7337,22 +7488,27 @@
             const approvedList = document.getElementById('community-approved-member-list');
             const pendingList = document.getElementById('community-pending-member-list');
             if (approvedList) {
-                const query = communityApprovedSearch.trim().toLocaleLowerCase('zh-TW');
-                const rows = query
-                    ? communityApprovedMembers.filter(member =>
-                        String(member.lineDisplayName || '').toLocaleLowerCase('zh-TW').includes(query) ||
-                        String(member.nickname || '').toLocaleLowerCase('zh-TW').includes(query)
-                    )
-                    : communityApprovedMembers;
+                const lineQuery = communityApprovedSearch.lineName.trim().toLocaleLowerCase('zh-TW');
+                const nicknameQuery = communityApprovedSearch.nickname.trim().toLocaleLowerCase('zh-TW');
+                const rows = communityApprovedMembers.filter(member =>
+                    (!lineQuery || String(member.lineDisplayName || '').toLocaleLowerCase('zh-TW').includes(lineQuery)) &&
+                    (!nicknameQuery || String(member.nickname || '').toLocaleLowerCase('zh-TW').includes(nicknameQuery))
+                );
                 approvedList.innerHTML = rows.length
                     ? rows.map(member => `
                         <tr>
                             <td><strong>${escapeHtml(member.lineDisplayName || 'LINE 使用者')}</strong></td>
                             <td>${escapeHtml(member.nickname || '—')}</td>
-                            <td><span class="backend-member-pill on">已綁定</span></td>
+                            <td>
+                                <span class="backend-member-pill on">已綁定</span>
+                                <span class="community-member-actions">
+                                    <button class="btn btn-sm btn-action-edit" type="button" onclick="openCommunityMemberEditModal('${escapeHtml(member.id)}')"><i class="fa-solid fa-pen"></i> 編輯</button>
+                                    <button class="btn btn-sm btn-danger" type="button" onclick="unbindCommunityMember('${escapeHtml(member.id)}', this)"><i class="fa-solid fa-link-slash"></i> 刪除</button>
+                                </span>
+                            </td>
                         </tr>
                     `).join('')
-                    : `<tr><td colspan="3" class="empty-state">${query ? '找不到符合的已綁定名單' : '目前沒有已綁定名單'}</td></tr>`;
+                    : `<tr><td colspan="3" class="empty-state">${lineQuery || nicknameQuery ? '找不到符合的已綁定名單' : '目前沒有已綁定名單'}</td></tr>`;
             }
             if (pendingList) {
                 pendingList.innerHTML = communityPendingMembers.length
@@ -7375,9 +7531,16 @@
             syncCommunityPendingSelectionControls();
         }
 
-        function filterCommunityApprovedMembers(value) {
-            communityApprovedSearch = String(value || '');
+        function applyCommunityApprovedSearch() {
+            communityApprovedSearch = {
+                lineName: document.getElementById('community-approved-line-search')?.value || '',
+                nickname: document.getElementById('community-approved-nickname-search')?.value || ''
+            };
             renderCommunityMembers();
+        }
+
+        function handleCommunityApprovedSearchKey(event) {
+            if (event.key === 'Enter') applyCommunityApprovedSearch();
         }
 
         function pendingCommunityMemberIds() {
@@ -7416,8 +7579,8 @@
         async function loadCommunityMembers() {
             const approvedList = document.getElementById('community-approved-member-list');
             const pendingList = document.getElementById('community-pending-member-list');
-            if (approvedList) approvedList.innerHTML = '<div class="empty-state">正在載入...</div>';
-            if (pendingList) pendingList.innerHTML = '<div class="empty-state">正在載入...</div>';
+            if (approvedList) approvedList.innerHTML = '<tr><td colspan="3" class="empty-state">正在載入...</td></tr>';
+            if (pendingList) pendingList.innerHTML = '<tr><td colspan="4" class="empty-state">正在載入...</td></tr>';
             try {
                 const response = await fetch('/api/backend/community/members', { cache: 'no-store' });
                 const result = await response.json().catch(() => null);
@@ -7428,20 +7591,72 @@
                 renderCommunityMembers();
             } catch (error) {
                 console.error(error);
-                if (approvedList) approvedList.innerHTML = '<div class="empty-state">社群名單載入失敗，請稍後再試</div>';
-                if (pendingList) pendingList.innerHTML = '<div class="empty-state">社群名單載入失敗，請稍後再試</div>';
+                if (approvedList) approvedList.innerHTML = '<tr><td colspan="3" class="empty-state">社群名單載入失敗，請稍後再試</td></tr>';
+                if (pendingList) pendingList.innerHTML = '<tr><td colspan="4" class="empty-state">社群名單載入失敗，請稍後再試</td></tr>';
             }
         }
 
-        async function requestCommunityMemberApproval(id) {
+        async function mutateCommunityMember(id, action = 'approve', nickname = '') {
             const response = await fetch('/api/backend/community/members', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id })
+                body: JSON.stringify({ id, action, nickname })
             });
             const result = await response.json().catch(() => null);
-            if (!response.ok || !result?.ok) throw new Error(result?.error || '審核失敗');
+            if (!response.ok || !result?.ok) throw new Error(result?.error || '操作失敗');
             return result;
+        }
+
+        function requestCommunityMemberApproval(id) {
+            return mutateCommunityMember(id, 'approve');
+        }
+
+        function openCommunityMemberEditModal(id) {
+            const member = communityApprovedMembers.find(item => item.id === id);
+            if (!member) return;
+            document.getElementById('community-member-edit-id').value = member.id;
+            document.getElementById('community-member-edit-line-name').value = member.lineDisplayName || 'LINE 使用者';
+            document.getElementById('community-member-edit-nickname').value = member.nickname || '';
+            document.getElementById('communityMemberEditModal')?.classList.add('active');
+            document.getElementById('community-member-edit-nickname')?.focus();
+        }
+
+        function closeCommunityMemberEditModal() {
+            document.getElementById('communityMemberEditModal')?.classList.remove('active');
+        }
+
+        async function saveCommunityMemberNickname(button) {
+            const id = document.getElementById('community-member-edit-id')?.value || '';
+            const nickname = document.getElementById('community-member-edit-nickname')?.value.trim() || '';
+            if (!nickname) return showToast('請輸入社群暱稱', 'error');
+            if (button) button.disabled = true;
+            try {
+                await mutateCommunityMember(id, 'edit', nickname);
+                closeCommunityMemberEditModal();
+                await loadCommunityMembers();
+                showToast('社群暱稱已更新', 'success');
+            } catch (error) {
+                console.error(error);
+                showToast(error instanceof Error ? error.message : '社群暱稱更新失敗', 'error');
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        async function unbindCommunityMember(id, button) {
+            const member = communityApprovedMembers.find(item => item.id === id);
+            if (!member) return;
+            if (!confirm(`確定要解除 ${member.lineDisplayName || 'LINE 使用者'} 與 ${member.nickname || '此暱稱'} 的 LINE 綁定嗎？\n解除後，該使用者下次登入需要重新綁定社群暱稱。`)) return;
+            if (button) button.disabled = true;
+            try {
+                await mutateCommunityMember(id, 'unbind');
+                await loadCommunityMembers();
+                showToast('LINE 與社群暱稱的綁定已解除', 'success');
+            } catch (error) {
+                console.error(error);
+                showToast(error instanceof Error ? error.message : '解除綁定失敗', 'error');
+                if (button) button.disabled = false;
+            }
         }
 
         async function approveCommunityMember(id, button) {
@@ -7464,6 +7679,7 @@
             if (button) button.disabled = true;
             let approvedCount = 0;
             let failedCount = 0;
+            let firstError = '';
             for (const id of ids) {
                 try {
                     await requestCommunityMemberApproval(id);
@@ -7471,10 +7687,11 @@
                 } catch (error) {
                     console.error(error);
                     failedCount += 1;
+                    if (!firstError) firstError = error instanceof Error ? error.message : '審核失敗';
                 }
             }
             await loadCommunityMembers();
-            if (failedCount) showToast(`已通過 ${approvedCount} 筆，${failedCount} 筆審核失敗`, 'error');
+            if (failedCount) showToast(`已通過 ${approvedCount} 筆，${failedCount} 筆失敗：${firstError}`, 'error');
             else showToast(`已通過 ${approvedCount} 筆暱稱綁定`, 'success');
         }
 
