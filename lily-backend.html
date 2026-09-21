@@ -948,14 +948,68 @@
                             <label for="community-order-search">搜尋</label>
                             <input id="community-order-search" type="search" placeholder="社群暱稱、記事本名稱、商品名稱" onkeydown="handleCommunityOrderSearchKey(event)">
                         </div>
+                        <div class="backend-member-filter-field">
+                            <label for="community-order-filter-payment">匯款狀態</label>
+                            <select id="community-order-filter-payment" onchange="applyCommunityOrderStatusFilters()">
+                                <option value="">全部</option>
+                                <option value="unpaid">待匯款</option>
+                                <option value="paid">已匯款</option>
+                                <option value="in_person">面交付</option>
+                            </select>
+                        </div>
+                        <div class="backend-member-filter-field">
+                            <label for="community-order-filter-arrival">到貨狀態</label>
+                            <select id="community-order-filter-arrival" onchange="applyCommunityOrderStatusFilters()">
+                                <option value="">全部</option>
+                                <option value="not_shipped">未出貨</option>
+                                <option value="shipped_japan">日本出貨</option>
+                                <option value="shipped_korea">韓國出貨</option>
+                                <option value="arrived_taiwan">到台灣</option>
+                            </select>
+                        </div>
+                        <div class="backend-member-filter-field">
+                            <label for="community-order-filter-stage">下單狀態</label>
+                            <select id="community-order-filter-stage" onchange="applyCommunityOrderStatusFilters()">
+                                <option value="">全部</option>
+                                <option value="open">開單</option>
+                                <option value="in_person">面交</option>
+                            </select>
+                        </div>
+                        <div class="backend-member-filter-field">
+                            <label for="community-order-filter-snipe">搶購狀態</label>
+                            <select id="community-order-filter-snipe" onchange="applyCommunityOrderStatusFilters()">
+                                <option value="">全部</option>
+                                <option value="pending">未定</option>
+                                <option value="won">已搶購</option>
+                                <option value="lost">搶購失敗</option>
+                            </select>
+                        </div>
                         <button class="btn btn-primary" type="button" onclick="applyCommunityOrderFilters()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
                         <button class="btn btn-secondary" type="button" onclick="clearCommunityOrderFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
+                    </div>
+                    <div class="backend-member-filter-row" style="margin-top:0.5rem;">
+                        <span id="community-order-selected-count" style="font-size:0.78rem;font-weight:800;color:#64748b;">已選 0 筆</span>
+                        <div class="backend-member-filter-field">
+                            <label for="community-batch-field">批次修改欄位</label>
+                            <select id="community-batch-field" onchange="renderCommunityBatchValueOptions()">
+                                <option value="paymentStatus">匯款狀態</option>
+                                <option value="arrivalStatus">到貨狀態</option>
+                                <option value="orderStage">下單狀態</option>
+                                <option value="snipeStatus">搶購狀態</option>
+                            </select>
+                        </div>
+                        <div class="backend-member-filter-field">
+                            <label for="community-batch-value">修改為</label>
+                            <select id="community-batch-value"></select>
+                        </div>
+                        <button class="btn btn-primary" type="button" id="community-batch-apply-btn" onclick="applyCommunityOrderBatchUpdate()" disabled><i class="fa-solid fa-check-double"></i> 套用到已選項目</button>
                     </div>
                 </div>
                 <div class="table-wrapper" style="margin-top:0.85rem; overflow-x:auto;">
                     <table class="backend-member-table">
                         <thead>
                             <tr>
+                                <th style="width:42px;text-align:center;"><input id="community-order-select-all" type="checkbox" aria-label="全選社群訂單" onchange="toggleCommunityOrderSelectAll(this.checked)"></th>
                                 <th>記事本名稱</th>
                                 <th>社群暱稱</th>
                                 <th>下單商品</th>
@@ -973,7 +1027,7 @@
                             </tr>
                         </thead>
                         <tbody id="community-order-tbody">
-                            <tr><td colspan="14" class="empty-state">尚未載入社群訂單資料</td></tr>
+                            <tr><td colspan="15" class="empty-state">尚未載入社群訂單資料</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -2604,7 +2658,7 @@
                 loadMemberLineNotificationSettings();
             }
             if(name === 'backend-members') loadBackendMembers();
-            if(name === 'community-orders') { loadCommunityOrders(); loadCommunityImportBatches(); loadCommunityRemittances(); loadCommunityShipmentRequests(); }
+            if(name === 'community-orders') { renderCommunityBatchValueOptions(); loadCommunityOrders(); loadCommunityImportBatches(); loadCommunityRemittances(); loadCommunityShipmentRequests(); }
             if(name === 'community-members') loadCommunityMembers();
             if(name === 'customer-orders') renderCustomerOrders();
             if(name === 'stock-products') renderStockProducts();
@@ -2741,8 +2795,10 @@
         let expandedBackendMemberId = '';
         let communityOrders = [];
         let communityOrderFilters = { q: '' };
+        let communityOrderStatusFilters = { paymentStatus: '', arrivalStatus: '', orderStage: '', snipeStatus: '' };
         let communityOrderPagination = { page: 1, pageSize: 50, total: 0, totalPages: 0 };
         let communityOrderRequestSeq = 0;
+        let communitySelectedOrderItemIds = new Set();
         let communityApprovedMembers = [];
         let communityPendingMembers = [];
         let communityApprovedSearch = { lineName: '', nickname: '' };
@@ -7721,6 +7777,7 @@
 
         function clearCommunityOrderFilters() {
             communityOrderFilters = { q: '' };
+            communityOrderStatusFilters = { paymentStatus: '', arrivalStatus: '', orderStage: '', snipeStatus: '' };
             communityOrderPagination.page = 1;
             writeCommunityOrderFilterInputs();
             loadCommunityOrders(true);
@@ -7772,18 +7829,19 @@
             const tbody = document.getElementById('community-order-tbody');
             const requestSeq = ++communityOrderRequestSeq;
             writeCommunityOrderFilterInputs();
-            if (tbody) tbody.innerHTML = '<tr><td colspan="14" class="empty-state">社群訂單讀取中...</td></tr>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="15" class="empty-state">社群訂單讀取中...</td></tr>';
             try {
                 const response = await fetch(`/api/backend/community/orders${communityOrderQueryString()}`, { cache: 'no-store' });
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '社群訂單讀取失敗。');
                 if (requestSeq !== communityOrderRequestSeq) return;
                 communityOrders = Array.isArray(result.rows) ? result.rows : [];
+                communitySelectedOrderItemIds = new Set();
                 setCommunityOrderPagination(result.pagination || {});
                 renderCommunityOrders();
             } catch (error) {
                 console.error(error);
-                if (tbody) tbody.innerHTML = '<tr><td colspan="14" class="empty-state">社群訂單讀取失敗，請稍後再試。</td></tr>';
+                if (tbody) tbody.innerHTML = '<tr><td colspan="15" class="empty-state">社群訂單讀取失敗，請稍後再試。</td></tr>';
                 setCommunityOrderPagination({ page: 1, page_size: communityOrderPagination.pageSize, total: 0, total_pages: 0 });
             }
         }
@@ -7830,20 +7888,103 @@
             </select>`;
         }
 
+        function communityOrderStatusMatches(row) {
+            if (communityOrderStatusFilters.paymentStatus && row.paymentStatus !== communityOrderStatusFilters.paymentStatus) return false;
+            if (communityOrderStatusFilters.arrivalStatus && row.arrivalStatus !== communityOrderStatusFilters.arrivalStatus) return false;
+            if (communityOrderStatusFilters.orderStage && row.orderStage !== communityOrderStatusFilters.orderStage) return false;
+            if (communityOrderStatusFilters.snipeStatus && row.snipeStatus !== communityOrderStatusFilters.snipeStatus) return false;
+            return true;
+        }
+
+        function communityFilteredOrderRows() {
+            return communityOrders.filter(communityOrderStatusMatches);
+        }
+
+        function readCommunityOrderStatusFilterInputs() {
+            return {
+                paymentStatus: document.getElementById('community-order-filter-payment')?.value || '',
+                arrivalStatus: document.getElementById('community-order-filter-arrival')?.value || '',
+                orderStage: document.getElementById('community-order-filter-stage')?.value || '',
+                snipeStatus: document.getElementById('community-order-filter-snipe')?.value || '',
+            };
+        }
+
+        function writeCommunityOrderStatusFilterInputs() {
+            const paymentEl = document.getElementById('community-order-filter-payment');
+            const arrivalEl = document.getElementById('community-order-filter-arrival');
+            const stageEl = document.getElementById('community-order-filter-stage');
+            const snipeEl = document.getElementById('community-order-filter-snipe');
+            if (paymentEl) paymentEl.value = communityOrderStatusFilters.paymentStatus || '';
+            if (arrivalEl) arrivalEl.value = communityOrderStatusFilters.arrivalStatus || '';
+            if (stageEl) stageEl.value = communityOrderStatusFilters.orderStage || '';
+            if (snipeEl) snipeEl.value = communityOrderStatusFilters.snipeStatus || '';
+        }
+
+        function applyCommunityOrderStatusFilters() {
+            communityOrderStatusFilters = readCommunityOrderStatusFilterInputs();
+            renderCommunityOrders();
+        }
+
+        function toggleCommunityOrderRowSelect(itemId, checked) {
+            if (checked) communitySelectedOrderItemIds.add(itemId);
+            else communitySelectedOrderItemIds.delete(itemId);
+            updateCommunityOrderSelectionControls();
+        }
+
+        function toggleCommunityOrderSelectAll(checked) {
+            const visibleIds = communityFilteredOrderRows().map(row => row.itemId);
+            if (checked) visibleIds.forEach(id => communitySelectedOrderItemIds.add(id));
+            else visibleIds.forEach(id => communitySelectedOrderItemIds.delete(id));
+            renderCommunityOrders();
+        }
+
+        function updateCommunityOrderSelectionControls() {
+            const countEl = document.getElementById('community-order-selected-count');
+            if (countEl) countEl.textContent = `已選 ${communitySelectedOrderItemIds.size} 筆`;
+            const applyBtn = document.getElementById('community-batch-apply-btn');
+            if (applyBtn) applyBtn.disabled = communitySelectedOrderItemIds.size === 0;
+            const selectAll = document.getElementById('community-order-select-all');
+            if (selectAll) {
+                const visibleIds = communityFilteredOrderRows().map(row => row.itemId);
+                const selectedVisible = visibleIds.filter(id => communitySelectedOrderItemIds.has(id));
+                selectAll.checked = visibleIds.length > 0 && selectedVisible.length === visibleIds.length;
+                selectAll.indeterminate = selectedVisible.length > 0 && selectedVisible.length < visibleIds.length;
+            }
+        }
+
+        const COMMUNITY_BATCH_FIELD_OPTIONS = {
+            paymentStatus: COMMUNITY_PAYMENT_STATUS_OPTIONS,
+            arrivalStatus: COMMUNITY_ARRIVAL_STATUS_OPTIONS,
+            orderStage: COMMUNITY_ORDER_STAGE_OPTIONS,
+            snipeStatus: COMMUNITY_SNIPE_STATUS_OPTIONS,
+        };
+
+        function renderCommunityBatchValueOptions() {
+            const fieldSelect = document.getElementById('community-batch-field');
+            const valueSelect = document.getElementById('community-batch-value');
+            if (!fieldSelect || !valueSelect) return;
+            const options = COMMUNITY_BATCH_FIELD_OPTIONS[fieldSelect.value] || [];
+            valueSelect.innerHTML = options.map(option => `<option value="${option.value}">${option.label}</option>`).join('');
+        }
+
         function renderCommunityOrders() {
             const tbody = document.getElementById('community-order-tbody');
             if (!tbody) return;
-            if (!communityOrders.length) {
-                tbody.innerHTML = '<tr><td colspan="14" class="empty-state">沒有符合條件的社群訂單</td></tr>';
+            writeCommunityOrderStatusFilterInputs();
+            const filteredRows = communityFilteredOrderRows();
+            if (!filteredRows.length) {
+                tbody.innerHTML = '<tr><td colspan="15" class="empty-state">沒有符合條件的社群訂單</td></tr>';
+                updateCommunityOrderSelectionControls();
                 return;
             }
-            const groups = communityGroupRows(communityOrders);
+            const groups = communityGroupRows(filteredRows);
             let html = '';
             groups.forEach(group => {
                 const rowspan = group.items.length;
                 const order = group.order;
                 group.items.forEach((item, index) => {
                     html += '<tr>';
+                    html += `<td style="text-align:center;"><input type="checkbox" class="community-order-row-checkbox" aria-label="選取此筆社群訂單項目" ${communitySelectedOrderItemIds.has(item.itemId) ? 'checked' : ''} onchange="toggleCommunityOrderRowSelect('${escapeHtml(item.itemId)}', this.checked)"></td>`;
                     if (index === 0) {
                         html += `
                             <td rowspan="${rowspan}">${escapeHtml(order.notebookName)}</td>
@@ -7876,28 +8017,27 @@
                 });
             });
             tbody.innerHTML = html;
+            updateCommunityOrderSelectionControls();
         }
 
-        async function updateCommunityOrder(orderId, field, value) {
-            const payload = { orderId };
-            payload[field] = value;
+        async function patchCommunityOrder(orderId, field, value) {
             try {
+                const payload = { orderId };
+                payload[field] = value;
                 const response = await fetch('/api/backend/community/orders', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
                 const result = await response.json().catch(() => null);
-                if (!response.ok || !result?.ok) throw new Error(result?.error || '更新失敗。');
-                showToast('已更新', 'success');
-                await loadCommunityOrders(true);
+                return Boolean(response.ok && result?.ok);
             } catch (error) {
                 console.error(error);
-                showToast('更新失敗，請稍後再試', 'error');
+                return false;
             }
         }
 
-        async function updateCommunityOrderItemStatus(itemId, snipeStatus) {
+        async function patchCommunityOrderItemStatus(itemId, snipeStatus) {
             try {
                 const response = await fetch(`/api/backend/community/order-items/${encodeURIComponent(itemId)}`, {
                     method: 'PATCH',
@@ -7905,12 +8045,67 @@
                     body: JSON.stringify({ snipeStatus })
                 });
                 const result = await response.json().catch(() => null);
-                if (!response.ok || !result?.ok) throw new Error(result?.error || '搶購狀態更新失敗。');
-                showToast('搶購狀態已更新', 'success');
-                await loadCommunityOrders(true);
+                return Boolean(response.ok && result?.ok);
             } catch (error) {
                 console.error(error);
+                return false;
+            }
+        }
+
+        async function updateCommunityOrder(orderId, field, value) {
+            const ok = await patchCommunityOrder(orderId, field, value);
+            if (ok) {
+                showToast('已更新', 'success');
+                await loadCommunityOrders(true);
+            } else {
+                showToast('更新失敗，請稍後再試', 'error');
+            }
+        }
+
+        async function updateCommunityOrderItemStatus(itemId, snipeStatus) {
+            const ok = await patchCommunityOrderItemStatus(itemId, snipeStatus);
+            if (ok) {
+                showToast('搶購狀態已更新', 'success');
+                await loadCommunityOrders(true);
+            } else {
                 showToast('搶購狀態更新失敗，請稍後再試', 'error');
+            }
+        }
+
+        async function applyCommunityOrderBatchUpdate() {
+            const itemIds = [...communitySelectedOrderItemIds];
+            if (!itemIds.length) return;
+            const field = document.getElementById('community-batch-field')?.value || '';
+            const value = document.getElementById('community-batch-value')?.value || '';
+            if (!field || !value) {
+                showToast('請選擇要修改的狀態', 'error');
+                return;
+            }
+            const applyBtn = document.getElementById('community-batch-apply-btn');
+            if (applyBtn) applyBtn.disabled = true;
+            const idSet = new Set(itemIds);
+            const selectedRows = communityOrders.filter(row => idSet.has(row.itemId));
+            let successCount = 0;
+            let failedCount = 0;
+            try {
+                if (field === 'snipeStatus') {
+                    for (const row of selectedRows) {
+                        const ok = await patchCommunityOrderItemStatus(row.itemId, value);
+                        if (ok) successCount += 1; else failedCount += 1;
+                    }
+                } else {
+                    const orderIds = [...new Set(selectedRows.map(row => row.orderId))];
+                    for (const orderId of orderIds) {
+                        const ok = await patchCommunityOrder(orderId, field, value);
+                        if (ok) successCount += 1; else failedCount += 1;
+                    }
+                }
+                communitySelectedOrderItemIds = new Set();
+                await loadCommunityOrders(true);
+                if (failedCount) showToast(`批次更新完成：成功 ${successCount} 筆，失敗 ${failedCount} 筆`, 'error');
+                else showToast(`批次更新完成：成功 ${successCount} 筆`, 'success');
+            } finally {
+                if (applyBtn) applyBtn.disabled = communitySelectedOrderItemIds.size === 0;
             }
         }
 
