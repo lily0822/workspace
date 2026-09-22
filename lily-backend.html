@@ -161,6 +161,10 @@
         .backend-member-table th, .backend-member-table td { white-space: nowrap; vertical-align: middle; padding: 0.72rem 0.8rem; }
         #section-community-orders .backend-member-table th, #section-community-orders .backend-member-table td { text-align: center; }
         #section-community-orders .community-order-align-left { text-align: left; }
+        .community-payment-status { display:inline-flex;align-items:center;border-radius:999px;padding:0.28rem 0.58rem;font-size:0.72rem;font-weight:900;white-space:nowrap; }
+        .community-payment-status.pending { background:#fef3c7;color:#92400e; }
+        .community-payment-status.approved { background:#dcfce7;color:#166534; }
+        .community-payment-status.rejected { background:#fee2e2;color:#991b1b; }
         .community-order-status-select { min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.72rem; padding: 0.42rem 1.7rem 0.42rem 0.62rem; background-color: white; color: #334155; font-size: 0.8rem; font-weight: 800; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url('data:image/svg+xml;utf8,<svg fill=%22%23be185d%22 height=%2220%22 viewBox=%220 0 24 24%22 width=%2220%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/></svg>'); background-repeat: no-repeat; background-position: right 0.45rem center; background-size: 1rem; }
         .community-order-status-select:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
         .community-order-row-actions { display: inline-flex; align-items: center; gap: 0.35rem; }
@@ -8557,22 +8561,24 @@
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '匯款回報讀取失敗。');
                 const remittances = Array.isArray(result.remittances) ? result.remittances : [];
-                if (!remittances.length) { el.innerHTML = '<h3 style="font-size:0.85rem;font-weight:900;color:#475569;margin-bottom:0.5rem;">匯款回報</h3><div class="empty-state">尚無匯款回報</div>'; return; }
+                if (!remittances.length) { el.innerHTML = '<h3 style="font-size:0.85rem;font-weight:900;color:#475569;margin-bottom:0.5rem;">付款審核</h3><div class="empty-state">尚無付款資料</div>'; return; }
                 el.innerHTML = `
-                    <h3 style="font-size:0.85rem;font-weight:900;color:#475569;margin-bottom:0.5rem;">匯款回報</h3>
+                    <h3 style="font-size:0.85rem;font-weight:900;color:#475569;margin-bottom:0.5rem;">付款審核</h3>
                     <div class="table-wrapper" style="overflow-x:auto;">
                         <table class="backend-member-table">
-                            <thead><tr><th>送出時間</th><th>暱稱</th><th>記事本</th><th>銀行</th><th>後五碼</th><th>應匯金額</th><th>實際匯款</th></tr></thead>
+                            <thead><tr><th>送出時間</th><th>客人</th><th>記事本名稱</th><th>應付金額</th><th>實際匯款金額</th><th>銀行</th><th>匯款後 5 碼</th><th>狀態</th><th>操作</th></tr></thead>
                             <tbody>
                                 ${remittances.map(item => `
                                     <tr>
                                         <td>${storefrontDateTime(item.submittedAt)}</td>
                                         <td>${escapeHtml(item.nickname)}</td>
                                         <td>${escapeHtml((item.notebookNames || []).join('、') || '—')}</td>
-                                        <td>${escapeHtml(item.bank)}</td>
-                                        <td>${escapeHtml(item.accountLast5)}</td>
                                         <td>${storefrontMoney(item.expectedAmount)}</td>
                                         <td style="${item.amount !== item.expectedAmount ? 'color:#b91c1c;font-weight:900;' : ''}">${storefrontMoney(item.amount)}</td>
+                                        <td>${escapeHtml(communityPaymentBankLabel(item.bank))}</td>
+                                        <td>${escapeHtml(item.accountLast5)}</td>
+                                        <td>${communityPaymentReviewStatus(item)}</td>
+                                        <td>${item.status === 'pending' ? `<span class="community-order-row-actions"><button class="btn btn-sm btn-primary" type="button" onclick="reviewCommunityRemittance(${quoteJs(item.id)}, 'approved')">核准</button><button class="btn btn-sm btn-action-delete" type="button" onclick="reviewCommunityRemittance(${quoteJs(item.id)}, 'rejected')">審核退回</button></span>` : '—'}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -8582,6 +8588,43 @@
             } catch (error) {
                 console.error(error);
                 el.innerHTML = '<div class="empty-state">匯款回報讀取失敗</div>';
+            }
+        }
+
+        function communityPaymentBankLabel(value) {
+            return ({ ctbc: '中信', cathay: '國泰', fubon: '富邦' })[value] || value || '—';
+        }
+
+        function communityPaymentReviewStatus(item) {
+            if (item.status === 'approved') return '<span class="community-payment-status approved">已付款</span>';
+            if (item.status === 'rejected') return `<span class="community-payment-status rejected">審核退回</span>${item.rejectionReason ? `<div style="margin-top:0.3rem;font-size:0.72rem;color:#b91c1c;">${escapeHtml(item.rejectionReason)}</div>` : ''}`;
+            return '<span class="community-payment-status pending">待審核</span>';
+        }
+
+        async function reviewCommunityRemittance(submissionId, decision) {
+            let reason = '';
+            if (decision === 'approved') {
+                if (!confirm('確定核准這筆付款資料嗎？')) return;
+            } else {
+                reason = (prompt('請輸入審核退回原因：') || '').trim();
+                if (!reason) {
+                    showToast('審核退回必須填寫原因', 'error');
+                    return;
+                }
+            }
+            try {
+                const response = await fetch('/api/backend/community/remittances', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ submissionId, decision, reason })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '付款審核失敗。');
+                showToast(decision === 'approved' ? '付款已核准' : '付款已退回', 'success');
+                await Promise.all([loadCommunityRemittances(), loadCommunityOrders(true)]);
+            } catch (error) {
+                console.error(error);
+                showToast(error?.message || '付款審核失敗，請稍後再試', 'error');
             }
         }
 
