@@ -1096,18 +1096,19 @@
                         <table class="backend-member-table">
                             <thead>
                                 <tr>
+                                    <th>客人</th>
                                     <th>申請時間</th>
-                                    <th>暱稱</th>
-                                    <th>系列</th>
-                                    <th>商品內容</th>
-                                    <th>收件人</th>
-                                    <th>手機</th>
-                                    <th>取貨門市</th>
-                                    <th>狀態</th>
+                                    <th>包含記事本</th>
+                                    <th>記事本數量</th>
+                                    <th>付款狀態</th>
+                                    <th>到貨狀態</th>
+                                    <th>目前狀態</th>
+                                    <th>賣貨便</th>
+                                    <th>操作</th>
                                 </tr>
                             </thead>
                             <tbody id="community-shipment-tbody">
-                                <tr><td colspan="8" class="empty-state">尚未載入出貨申請</td></tr>
+                                <tr><td colspan="9" class="empty-state">尚未載入出貨申請</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -2894,6 +2895,7 @@
         let communityImportRows = [];
         let communityImportFilename = '';
         let communityShipmentFilters = { q: '' };
+        let communityShipmentRequests = [];
         let productTags = [];
         let productTagActiveType = 'ip';
         let productTagSortables = { ip: null, category: null };
@@ -8652,7 +8654,8 @@
 
         const COMMUNITY_SHIPMENT_STATUS_OPTIONS = [
             { value: 'pending', label: '待處理' },
-            { value: 'processed', label: '已處理' },
+            { value: 'accepted', label: '已建立寄件／已受理' },
+            { value: 'completed', label: '已完成' },
             { value: 'cancelled', label: '已取消' }
         ];
 
@@ -8684,7 +8687,7 @@
             const tbody = document.getElementById('community-shipment-tbody');
             if (!tbody) return;
             writeCommunityShipmentFilterInputs();
-            tbody.innerHTML = '<tr><td colspan="8" class="empty-state">出貨申請讀取中...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="empty-state">出貨申請讀取中...</td></tr>';
             try {
                 const params = new URLSearchParams();
                 if (communityShipmentFilters.q) params.set('q', communityShipmentFilters.q);
@@ -8695,37 +8698,47 @@
                 renderCommunityShipmentRequests(Array.isArray(result.requests) ? result.requests : []);
             } catch (error) {
                 console.error(error);
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">出貨申請讀取失敗，請稍後再試。</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">出貨申請讀取失敗，請稍後再試。</td></tr>';
             }
         }
 
         function renderCommunityShipmentRequests(requests) {
             const tbody = document.getElementById('community-shipment-tbody');
             if (!tbody) return;
+            communityShipmentRequests = Array.isArray(requests) ? requests : [];
             if (!requests.length) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">沒有符合條件的出貨申請</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">沒有符合條件的出貨申請</td></tr>';
                 return;
             }
-            tbody.innerHTML = requests.map(request => `
-                <tr>
-                    <td>${storefrontDateTime(request.submittedAt)}</td>
-                    <td>${escapeHtml(request.nickname)}</td>
-                    <td>${escapeHtml((request.notebookNames || []).join('、') || '—')}</td>
-                    <td>${escapeHtml((request.items || []).map(item => `${item.productName}${item.variantSpec ? '(' + item.variantSpec + ')' : ''} ×${item.quantity}`).join('、') || '—')}</td>
-                    <td>${escapeHtml(request.recipientName)}</td>
-                    <td>${escapeHtml(request.phone)}</td>
-                    <td>${escapeHtml(request.pickupStore)}</td>
-                    <td>${communityStatusSelect(COMMUNITY_SHIPMENT_STATUS_OPTIONS, request.status, `updateCommunityShipmentStatus('${escapeHtml(request.id)}', this.value)`)}</td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = requests.map(request => {
+                const snapshots = Array.isArray(request.notebookSnapshot) ? request.notebookSnapshot : [];
+                const allPaid = snapshots.length > 0 && snapshots.every(item => item.paymentStatus === 'paid');
+                const allArrived = snapshots.length > 0 && snapshots.every(item => item.arrivalStatus === 'arrived');
+                const marketplace = request.marketplaceUrl
+                    ? `<a href="${escapeHtml(request.marketplaceUrl)}" target="_blank" rel="noopener noreferrer">開啟連結</a>${request.marketplaceOrderRef ? `<br><small>${escapeHtml(request.marketplaceOrderRef)}</small>` : ''}`
+                    : '<span class="text-muted">建立中</span>';
+                return `
+                    <tr>
+                        <td><strong>${escapeHtml(request.nickname)}</strong><br><small>${escapeHtml(request.recipientName)}／${escapeHtml(request.phone)}<br>${escapeHtml(request.pickupStore)}</small></td>
+                        <td>${storefrontDateTime(request.submittedAt)}</td>
+                        <td>${escapeHtml((request.notebookNames || []).join('、') || '—')}</td>
+                        <td>${(request.notebookNames || []).length}</td>
+                        <td>${allPaid ? '已付款' : '尚未付款'}</td>
+                        <td>${allArrived ? '已到貨' : '尚未全數到貨'}</td>
+                        <td>${communityStatusSelect(COMMUNITY_SHIPMENT_STATUS_OPTIONS, request.status, `updateCommunityShipmentStatus('${escapeHtml(request.id)}', this.value)`)}</td>
+                        <td>${marketplace}</td>
+                        <td><button class="btn btn-secondary btn-sm" type="button" onclick="editCommunityShipmentMarketplace('${escapeHtml(request.id)}')">填寫賣貨便</button></td>
+                    </tr>
+                `;
+            }).join('');
         }
 
-        async function updateCommunityShipmentStatus(id, status) {
+        async function updateCommunityShipmentStatus(id, status, marketplaceUrl = null, marketplaceOrderRef = null) {
             try {
                 const response = await fetch(`/api/backend/community/shipment-requests/${encodeURIComponent(id)}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status })
+                    body: JSON.stringify({ status, marketplaceUrl, marketplaceOrderRef })
                 });
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '出貨申請狀態更新失敗。');
@@ -8735,6 +8748,16 @@
                 console.error(error);
                 showToast('出貨申請狀態更新失敗，請稍後再試', 'error');
             }
+        }
+
+        async function editCommunityShipmentMarketplace(id) {
+            const request = communityShipmentRequests.find(item => item.id === id);
+            if (!request) return;
+            const marketplaceUrl = window.prompt('請輸入賣貨便 HTTPS 連結', request.marketplaceUrl || '');
+            if (marketplaceUrl === null) return;
+            const marketplaceOrderRef = window.prompt('請輸入賣貨便訂單／識別資料（可留空）', request.marketplaceOrderRef || '');
+            if (marketplaceOrderRef === null) return;
+            await updateCommunityShipmentStatus(id, request.status, marketplaceUrl.trim(), marketplaceOrderRef.trim());
         }
 
         async function loadStorefrontOrders(force = false) {
