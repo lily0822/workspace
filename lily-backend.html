@@ -165,6 +165,9 @@
         .community-payment-status.pending { background:#fef3c7;color:#92400e; }
         .community-payment-status.approved { background:#dcfce7;color:#166534; }
         .community-payment-status.rejected { background:#fee2e2;color:#991b1b; }
+        .community-payment-status.topup { background:#ffedd5;color:#9a3412; }
+        .community-payment-status.overpaid { background:#dbeafe;color:#1d4ed8; }
+        .community-payment-status.refunded { background:#ede9fe;color:#6d28d9; }
         .community-order-status-select { min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.72rem; padding: 0.42rem 1.7rem 0.42rem 0.62rem; background-color: white; color: #334155; font-size: 0.8rem; font-weight: 800; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url('data:image/svg+xml;utf8,<svg fill=%22%23be185d%22 height=%2220%22 viewBox=%220 0 24 24%22 width=%2220%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/></svg>'); background-repeat: no-repeat; background-position: right 0.45rem center; background-size: 1rem; }
         .community-order-status-select:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
         .community-order-row-actions { display: inline-flex; align-items: center; gap: 0.35rem; }
@@ -8566,7 +8569,7 @@
                     <h3 style="font-size:0.85rem;font-weight:900;color:#475569;margin-bottom:0.5rem;">付款審核</h3>
                     <div class="table-wrapper" style="overflow-x:auto;">
                         <table class="backend-member-table">
-                            <thead><tr><th>送出時間</th><th>客人</th><th>記事本名稱</th><th>應付金額</th><th>實際匯款金額</th><th>銀行</th><th>匯款後 5 碼</th><th>狀態</th><th>操作</th></tr></thead>
+                            <thead><tr><th>送出時間</th><th>客人</th><th>記事本名稱</th><th>應付總額</th><th>累計已收</th><th>本次匯款</th><th>尚需補款</th><th>多匯金額</th><th>銀行</th><th>匯款後 5 碼</th><th>狀態</th><th>處理時間</th><th>操作</th></tr></thead>
                             <tbody>
                                 ${remittances.map(item => `
                                     <tr>
@@ -8574,11 +8577,15 @@
                                         <td>${escapeHtml(item.nickname)}</td>
                                         <td>${escapeHtml((item.notebookNames || []).join('、') || '—')}</td>
                                         <td>${storefrontMoney(item.expectedAmount)}</td>
-                                        <td style="${item.amount !== item.expectedAmount ? 'color:#b91c1c;font-weight:900;' : ''}">${storefrontMoney(item.amount)}</td>
+                                        <td>${storefrontMoney(item.cumulativeReceived)}</td>
+                                        <td>${storefrontMoney(item.amount)}</td>
+                                        <td>${item.remainingAmount > 0 ? storefrontMoney(item.remainingAmount) : '—'}</td>
+                                        <td>${item.overpaidAmount > 0 ? storefrontMoney(item.overpaidAmount) : '—'}</td>
                                         <td>${escapeHtml(communityPaymentBankLabel(item.bank))}</td>
                                         <td>${escapeHtml(item.accountLast5)}</td>
                                         <td>${communityPaymentReviewStatus(item)}</td>
-                                        <td>${item.status === 'pending' ? `<span class="community-order-row-actions"><button class="btn btn-sm btn-primary" type="button" onclick="reviewCommunityRemittance(${quoteJs(item.id)}, 'approved')">核准</button><button class="btn btn-sm btn-action-delete" type="button" onclick="reviewCommunityRemittance(${quoteJs(item.id)}, 'rejected')">審核退回</button></span>` : '—'}</td>
+                                        <td>${storefrontDateTime(item.refundCompletedAt || item.reviewedAt || item.submittedAt)}</td>
+                                        <td>${communityPaymentReviewActions(item)}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -8598,19 +8605,34 @@
         function communityPaymentReviewStatus(item) {
             if (item.status === 'approved') return '<span class="community-payment-status approved">已付款</span>';
             if (item.status === 'rejected') return `<span class="community-payment-status rejected">審核退回</span>${item.rejectionReason ? `<div style="margin-top:0.3rem;font-size:0.72rem;color:#b91c1c;">${escapeHtml(item.rejectionReason)}</div>` : ''}`;
+            if (item.status === 'topup_required') return '<span class="community-payment-status topup">需補款</span>';
+            if (item.status === 'overpaid_pending_refund') return '<span class="community-payment-status overpaid">多匯待退款</span>';
+            if (item.status === 'refund_completed') return `<span class="community-payment-status refunded">退款完成</span>${item.refundAmount > 0 ? `<div style="margin-top:0.3rem;font-size:0.72rem;color:#6d28d9;">${storefrontMoney(item.refundAmount)}</div>` : ''}`;
             return '<span class="community-payment-status pending">待審核</span>';
+        }
+
+        function communityPaymentReviewActions(item) {
+            if (item.status === 'pending') {
+                return `<span class="community-order-row-actions"><button class="btn btn-sm btn-primary" type="button" onclick="reviewCommunityRemittance(${quoteJs(item.id)}, 'approved')">核准</button><button class="btn btn-sm btn-action-delete" type="button" onclick="reviewCommunityRemittance(${quoteJs(item.id)}, 'rejected')">審核退回</button></span>`;
+            }
+            if (item.status === 'overpaid_pending_refund') {
+                return `<button class="btn btn-sm btn-primary" type="button" onclick="reviewCommunityRemittance(${quoteJs(item.id)}, 'refund_completed')">退款完成</button>`;
+            }
+            return '—';
         }
 
         async function reviewCommunityRemittance(submissionId, decision) {
             let reason = '';
             if (decision === 'approved') {
                 if (!confirm('確定核准這筆付款資料嗎？')) return;
-            } else {
+            } else if (decision === 'rejected') {
                 reason = (prompt('請輸入審核退回原因：') || '').trim();
                 if (!reason) {
                     showToast('審核退回必須填寫原因', 'error');
                     return;
                 }
+            } else if (!confirm('確定已完成這筆多匯退款嗎？系統會保留退款紀錄。')) {
+                return;
             }
             try {
                 const response = await fetch('/api/backend/community/remittances', {
@@ -8620,7 +8642,7 @@
                 });
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '付款審核失敗。');
-                showToast(decision === 'approved' ? '付款已核准' : '付款已退回', 'success');
+                showToast(decision === 'approved' ? '付款已核准' : decision === 'rejected' ? '付款已退回' : '退款已完成', 'success');
                 await Promise.all([loadCommunityRemittances(), loadCommunityOrders(true)]);
             } catch (error) {
                 console.error(error);
