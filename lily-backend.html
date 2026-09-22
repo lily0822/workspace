@@ -669,6 +669,7 @@
                 <div class="submenu">
                     <div class="submenu-item" data-module-item-key="community-orders" onclick="openTab('community-orders', '社群訂單')">社群訂單</div>
                     <div class="submenu-item" data-module-item-key="community-members" onclick="openTab('community-members', '社群名單')">社群名單</div>
+                    <div class="submenu-item" data-module-item-key="community-fulfillment" onclick="openTab('community-fulfillment', '面交管理')">面交管理</div>
                 </div>
             </div>
             <div class="menu-group" data-module-key="products">
@@ -1112,6 +1113,37 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+
+            <div id="section-community-fulfillment" class="section-container">
+                <div class="page-header" style="margin-bottom:0.75rem;">
+                    <h3 class="page-title" style="font-size:1rem;">面交時段</h3>
+                </div>
+                <div class="backend-member-filterbar">
+                    <div class="backend-member-filter-row">
+                        <div class="backend-member-filter-field"><label>日期</label><input id="community-meetup-date" type="date"></div>
+                        <div class="backend-member-filter-field"><label>開始</label><input id="community-meetup-start" type="time"></div>
+                        <div class="backend-member-filter-field"><label>結束</label><input id="community-meetup-end" type="time"></div>
+                        <div class="backend-member-filter-field" style="min-width:220px;"><label>地點</label><input id="community-meetup-location" type="text" placeholder="面交地點"></div>
+                        <label style="display:flex;align-items:center;gap:0.4rem;font-weight:800;"><input id="community-meetup-open" type="checkbox" checked> 開放</label>
+                        <button class="btn btn-primary" type="button" onclick="createCommunityMeetupSlot()">新增時段</button>
+                    </div>
+                </div>
+                <div class="table-wrapper" style="overflow-x:auto;margin-top:0.6rem;">
+                    <table class="backend-member-table">
+                        <thead><tr><th>日期</th><th>開始</th><th>結束</th><th>地點</th><th>開放</th><th>操作</th></tr></thead>
+                        <tbody id="community-meetup-slot-tbody"><tr><td colspan="6" class="empty-state">尚未載入面交時段</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="page-header" style="margin:1.25rem 0 0.75rem;">
+                    <h3 class="page-title" style="font-size:1rem;">面交預約</h3>
+                </div>
+                <div class="table-wrapper" style="overflow-x:auto;">
+                    <table class="backend-member-table">
+                        <thead><tr><th>客人</th><th>記事本</th><th>日期／時間</th><th>地點</th><th>付款方式</th><th>付款狀態</th><th>預約狀態</th></tr></thead>
+                        <tbody id="community-meetup-request-tbody"><tr><td colspan="7" class="empty-state">尚未載入面交預約</td></tr></tbody>
+                    </table>
                 </div>
             </div>
 
@@ -2746,6 +2778,7 @@
             }
             if(name === 'backend-members') loadBackendMembers();
             if(name === 'community-orders') { renderCommunityBatchValueOptions(); loadCommunityOrders(); loadCommunityImportBatches(); loadCommunityRemittances(); loadCommunityShipmentRequests(); }
+            if(name === 'community-fulfillment') { loadCommunityMeetupSlots(); loadCommunityMeetupRequests(); }
             if(name === 'community-members') loadCommunityMembers();
             if(name === 'customer-orders') renderCustomerOrders();
             if(name === 'stock-products') renderStockProducts();
@@ -8601,7 +8634,7 @@
         }
 
         function communityPaymentBankLabel(value) {
-            return ({ ctbc: '中信', cathay: '國泰', fubon: '富邦' })[value] || value || '—';
+            return ({ ctbc: '中信', cathay: '國泰', fubon: '富邦', meetup: '面交付款' })[value] || value || '—';
         }
 
         function communityPaymentReviewStatus(item) {
@@ -8758,6 +8791,116 @@
             const marketplaceOrderRef = window.prompt('請輸入賣貨便訂單／識別資料（可留空）', request.marketplaceOrderRef || '');
             if (marketplaceOrderRef === null) return;
             await updateCommunityShipmentStatus(id, request.status, marketplaceUrl.trim(), marketplaceOrderRef.trim());
+        }
+
+        const COMMUNITY_MEETUP_STATUS_OPTIONS = [
+            { value: 'pending', label: '待處理' },
+            { value: 'confirmed', label: '已確認' },
+            { value: 'completed', label: '已完成' },
+            { value: 'cancelled', label: '已取消' }
+        ];
+
+        async function loadCommunityMeetupSlots() {
+            const tbody = document.getElementById('community-meetup-slot-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">面交時段讀取中...</td></tr>';
+            try {
+                const response = await fetch('/api/backend/community/meetup-slots', { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '面交時段讀取失敗。');
+                renderCommunityMeetupSlots(Array.isArray(result.slots) ? result.slots : []);
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">面交時段讀取失敗</td></tr>';
+            }
+        }
+
+        function renderCommunityMeetupSlots(slots) {
+            const tbody = document.getElementById('community-meetup-slot-tbody');
+            if (!tbody) return;
+            if (!slots.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">目前沒有面交時段</td></tr>';
+                return;
+            }
+            tbody.innerHTML = slots.map(slot => `
+                <tr>
+                    <td><input id="meetup-date-${slot.id}" type="date" value="${escapeHtml(slot.date)}"></td>
+                    <td><input id="meetup-start-${slot.id}" type="time" value="${escapeHtml(slot.startTime)}"></td>
+                    <td><input id="meetup-end-${slot.id}" type="time" value="${escapeHtml(slot.endTime)}"></td>
+                    <td><input id="meetup-location-${slot.id}" type="text" value="${escapeHtml(slot.location)}"></td>
+                    <td><input id="meetup-open-${slot.id}" type="checkbox" ${slot.isOpen ? 'checked' : ''}></td>
+                    <td><button class="btn btn-primary btn-sm" type="button" onclick="saveCommunityMeetupSlot('${slot.id}')">儲存</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function communityMeetupSlotPayload(id = '') {
+            return {
+                date: document.getElementById(id ? `meetup-date-${id}` : 'community-meetup-date')?.value || '',
+                startTime: document.getElementById(id ? `meetup-start-${id}` : 'community-meetup-start')?.value || '',
+                endTime: document.getElementById(id ? `meetup-end-${id}` : 'community-meetup-end')?.value || '',
+                location: document.getElementById(id ? `meetup-location-${id}` : 'community-meetup-location')?.value.trim() || '',
+                isOpen: Boolean(document.getElementById(id ? `meetup-open-${id}` : 'community-meetup-open')?.checked)
+            };
+        }
+
+        async function createCommunityMeetupSlot() {
+            try {
+                const response = await fetch('/api/backend/community/meetup-slots', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(communityMeetupSlotPayload()) });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '面交時段建立失敗。');
+                showToast('面交時段已建立', 'success');
+                await loadCommunityMeetupSlots();
+            } catch (error) { showToast(error?.message || '面交時段建立失敗', 'error'); }
+        }
+
+        async function saveCommunityMeetupSlot(id) {
+            try {
+                const response = await fetch(`/api/backend/community/meetup-slots/${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(communityMeetupSlotPayload(id)) });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '面交時段更新失敗。');
+                showToast('面交時段已更新', 'success');
+                await loadCommunityMeetupSlots();
+            } catch (error) { showToast(error?.message || '面交時段更新失敗', 'error'); }
+        }
+
+        async function loadCommunityMeetupRequests() {
+            const tbody = document.getElementById('community-meetup-request-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">面交預約讀取中...</td></tr>';
+            try {
+                const response = await fetch('/api/backend/community/meetup-requests', { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '面交預約讀取失敗。');
+                const requests = Array.isArray(result.requests) ? result.requests : [];
+                tbody.innerHTML = requests.length ? requests.map(request => `
+                    <tr>
+                        <td>${escapeHtml(request.nickname)}</td>
+                        <td>${escapeHtml((request.notebook_names || []).join('、') || '—')}</td>
+                        <td>${escapeHtml(request.meetup_date || '')} ${escapeHtml(String(request.start_time || '').slice(0,5))}～${escapeHtml(String(request.end_time || '').slice(0,5))}</td>
+                        <td>${escapeHtml(request.location)}</td>
+                        <td>${request.payment_method === 'pay_at_meetup' ? '面交付款' : '先匯款'}</td>
+                        <td>${request.payment_status === 'paid' ? '已付款' : '未付款'}</td>
+                        <td>${communityStatusSelect(COMMUNITY_MEETUP_STATUS_OPTIONS, request.status, `updateCommunityMeetupRequest('${escapeHtml(request.id)}', this.value)`)}</td>
+                    </tr>
+                `).join('') : '<tr><td colspan="7" class="empty-state">目前沒有面交預約</td></tr>';
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">面交預約讀取失敗</td></tr>';
+            }
+        }
+
+        async function updateCommunityMeetupRequest(id, status) {
+            try {
+                const response = await fetch(`/api/backend/community/meetup-requests/${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '面交預約更新失敗。');
+                showToast('面交預約已更新', 'success');
+                await Promise.all([loadCommunityMeetupRequests(), loadCommunityOrders(true)]);
+            } catch (error) {
+                showToast(error?.message || '面交預約更新失敗', 'error');
+                await loadCommunityMeetupRequests();
+            }
         }
 
         async function loadStorefrontOrders(force = false) {
