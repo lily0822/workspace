@@ -8075,7 +8075,7 @@
                             <td rowspan="${rowspan}"><input type="text" class="community-order-notes-input" value="${escapeHtml(order.notes || '')}" placeholder="備註" onchange="updateCommunityOrder('${escapeHtml(order.orderId)}', 'notes', this.value)"></td>
                         `;
                     }
-                    html += `<td><span class="community-order-row-actions"><button class="btn btn-sm btn-action-edit" type="button" onclick="openCommunityOrderEditModal('${escapeHtml(order.orderId)}', '${escapeHtml(item.itemId)}')"><i class="fa-solid fa-pen"></i> 編輯</button>${index === 0 ? `<button class="btn btn-sm btn-action-delete" type="button" onclick="deleteCommunityOrder(${quoteJs(order.orderId)}, ${quoteJs(order.nickname)}, ${quoteJs(order.notebookName)})"><i class="fa-solid fa-trash-can"></i> 刪除</button>` : ''}</span></td>`;
+                    html += `<td><span class="community-order-row-actions"><button class="btn btn-sm btn-action-edit" type="button" onclick="openCommunityOrderEditModal('${escapeHtml(order.orderId)}', '${escapeHtml(item.itemId)}')"><i class="fa-solid fa-pen"></i> 編輯</button><button class="btn btn-sm btn-action-delete" type="button" onclick="deleteCommunityOrderItem(${quoteJs(item.itemId)}, ${quoteJs(item.productName)})"><i class="fa-solid fa-trash-can"></i> 刪除</button></span></td>`;
                     html += '</tr>';
                 });
             });
@@ -8125,22 +8125,20 @@
             }
         }
 
-        async function deleteCommunityOrder(orderId, nickname, notebookName) {
-            const label = [notebookName, nickname].filter(Boolean).join('／') || '這筆社群訂單';
-            if (!confirm(`確定要永久刪除「${label}」嗎？\n刪除後無法復原。`)) return;
+        async function deleteCommunityOrderItem(itemId, productName) {
+            const label = productName || '這項商品';
+            if (!confirm(`確定要刪除「${label}」嗎？\n若這是訂單最後一項商品，整筆訂單也會一併刪除。`)) return;
             try {
-                const response = await fetch('/api/backend/community/orders', {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderId })
+                const response = await fetch(`/api/backend/community/order-items/${encodeURIComponent(itemId)}`, {
+                    method: 'DELETE'
                 });
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '刪除失敗。');
-                showToast('社群訂單已刪除', 'success');
+                showToast('商品已刪除', 'success');
                 await loadCommunityOrders(true);
             } catch (error) {
                 console.error(error);
-                showToast(error?.message || '社群訂單刪除失敗，請稍後再試', 'error');
+                showToast(error?.message || '商品刪除失敗，請稍後再試', 'error');
             }
         }
 
