@@ -8604,13 +8604,15 @@
                     <h3 style="font-size:0.85rem;font-weight:900;color:#475569;margin-bottom:0.5rem;">付款審核</h3>
                     <div class="table-wrapper" style="overflow-x:auto;">
                         <table class="backend-member-table">
-                            <thead><tr><th>送出時間</th><th>客人</th><th>記事本名稱</th><th>應付總額</th><th>累計已收</th><th>本次匯款</th><th>尚需補款</th><th>多匯金額</th><th>銀行</th><th>匯款後 5 碼</th><th>狀態</th><th>處理時間</th><th>操作</th></tr></thead>
+                            <thead><tr><th>送出時間</th><th>客人</th><th>記事本明細</th><th>商品總額</th><th>記事本折抵</th><th>應付總額</th><th>累計已收</th><th>本次匯款</th><th>尚需補款</th><th>多匯金額</th><th>銀行</th><th>匯款後 5 碼</th><th>狀態</th><th>處理時間</th><th>操作</th></tr></thead>
                             <tbody>
                                 ${remittances.map(item => `
                                     <tr>
                                         <td>${storefrontDateTime(item.submittedAt)}</td>
                                         <td>${escapeHtml(item.nickname)}</td>
-                                        <td>${escapeHtml((item.notebookNames || []).join('、') || '—')}</td>
+                                        <td>${communityPaymentNotebookDetails(item)}</td>
+                                        <td>${storefrontMoney(item.productTotal)}</td>
+                                        <td>${item.discountTotal > 0 ? `-${storefrontMoney(item.discountTotal)}` : '—'}</td>
                                         <td>${storefrontMoney(item.expectedAmount)}</td>
                                         <td>${storefrontMoney(item.cumulativeReceived)}</td>
                                         <td>${storefrontMoney(item.amount)}</td>
@@ -8635,6 +8637,17 @@
 
         function communityPaymentBankLabel(value) {
             return ({ ctbc: '中信', cathay: '國泰', fubon: '富邦', meetup: '面交付款' })[value] || value || '—';
+        }
+
+        function communityPaymentNotebookDetails(item) {
+            const details = Array.isArray(item.notebookDetails) ? item.notebookDetails : [];
+            if (!details.length) return escapeHtml((item.notebookNames || []).join('、') || '—');
+            return `<div style="display:grid;gap:0.35rem;min-width:220px;">${details.map(detail => `
+                <div style="border-bottom:1px dashed #fed7e2;padding-bottom:0.3rem;">
+                    <strong>${escapeHtml(detail.notebookName || '—')}</strong>
+                    <div style="font-size:0.72rem;color:#64748b;">商品 ${storefrontMoney(detail.productTotal)} · 折抵 ${storefrontMoney(detail.discountAmount)} · 基準 ${storefrontMoney(detail.payableAmount)}</div>
+                </div>
+            `).join('')}</div>`;
         }
 
         function communityPaymentReviewStatus(item) {
