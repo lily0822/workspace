@@ -8706,7 +8706,6 @@
         const COMMUNITY_SHIPMENT_STATUS_OPTIONS = [
             { value: 'pending', label: '待處理' },
             { value: 'accepted', label: '已建立寄件／已受理' },
-            { value: 'completed', label: '已完成' },
             { value: 'cancelled', label: '已取消' }
         ];
 
@@ -8768,6 +8767,14 @@
                 const marketplace = request.marketplaceUrl
                     ? `<a href="${escapeHtml(request.marketplaceUrl)}" target="_blank" rel="noopener noreferrer">開啟連結</a>${request.marketplaceOrderRef ? `<br><small>${escapeHtml(request.marketplaceOrderRef)}</small>` : ''}`
                     : '<span class="text-muted">建立中</span>';
+                const statusControl = request.status === 'completed'
+                    ? '<span class="community-payment-status approved">已通知下單</span>'
+                    : communityStatusSelect(COMMUNITY_SHIPMENT_STATUS_OPTIONS, request.status, `updateCommunityShipmentStatus('${escapeHtml(request.id)}', this.value)`);
+                const actions = request.status === 'completed'
+                    ? `<span class="text-muted">${request.completedAt ? storefrontDateTime(request.completedAt) : '已通知'}</span>`
+                    : request.status === 'cancelled'
+                        ? '<span class="text-muted">已取消</span>'
+                        : `<span class="community-order-row-actions"><button class="btn btn-secondary btn-sm" type="button" onclick="editCommunityShipmentMarketplace('${escapeHtml(request.id)}')">${request.marketplaceUrl ? '修改賣貨便' : '填寫賣貨便'}</button>${request.status === 'accepted' && request.marketplaceUrl ? `<button class="btn btn-primary btn-sm" type="button" onclick="notifyCommunityShipmentOrder('${escapeHtml(request.id)}')">送出 LINE 下單通知</button>` : ''}</span>`;
                 return `
                     <tr>
                         <td><strong>${escapeHtml(request.nickname)}</strong><br><small>${escapeHtml(request.recipientName)}／${escapeHtml(request.phone)}<br>${escapeHtml(request.pickupStore)}</small></td>
@@ -8776,9 +8783,9 @@
                         <td>${(request.notebookNames || []).length}</td>
                         <td>${allPaid ? '已付款' : '尚未付款'}</td>
                         <td>${allArrived ? '已到貨' : '尚未全數到貨'}</td>
-                        <td>${communityStatusSelect(COMMUNITY_SHIPMENT_STATUS_OPTIONS, request.status, `updateCommunityShipmentStatus('${escapeHtml(request.id)}', this.value)`)}</td>
+                        <td>${statusControl}</td>
                         <td>${marketplace}</td>
-                        <td><button class="btn btn-secondary btn-sm" type="button" onclick="editCommunityShipmentMarketplace('${escapeHtml(request.id)}')">填寫賣貨便</button></td>
+                        <td>${actions}</td>
                     </tr>
                 `;
             }).join('');
@@ -8808,7 +8815,13 @@
             if (marketplaceUrl === null) return;
             const marketplaceOrderRef = window.prompt('請輸入賣貨便訂單／識別資料（可留空）', request.marketplaceOrderRef || '');
             if (marketplaceOrderRef === null) return;
-            await updateCommunityShipmentStatus(id, request.status, marketplaceUrl.trim(), marketplaceOrderRef.trim());
+            const nextStatus = request.status === 'pending' ? 'accepted' : request.status;
+            await updateCommunityShipmentStatus(id, nextStatus, marketplaceUrl.trim(), marketplaceOrderRef.trim());
+        }
+
+        async function notifyCommunityShipmentOrder(id) {
+            if (!confirm('確定已送出 LINE 下單通知嗎？完成後會移入客人的歷史訂單。')) return;
+            await updateCommunityShipmentStatus(id, 'completed');
         }
 
         const COMMUNITY_MEETUP_STATUS_OPTIONS = [
