@@ -1052,6 +1052,17 @@
                         </div>
                         <button class="btn btn-primary" type="button" id="community-batch-apply-btn" onclick="applyCommunityOrderBatchUpdate()" disabled><i class="fa-solid fa-check-double"></i> 套用到已選項目</button>
                     </div>
+                    <div class="backend-member-filter-row" style="margin-top:0.5rem;">
+                        <div class="backend-member-filter-field">
+                            <label for="community-line-notify-kind">LINE 通知類型</label>
+                            <select id="community-line-notify-kind">
+                                <option value="bought">通知付款</option>
+                                <option value="arrived">到貨提醒</option>
+                                <option value="marketplace_ready">賣貨便可下單</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" type="button" id="community-line-notify-btn" onclick="sendCommunityLineNotifications()" disabled><i class="fa-brands fa-line"></i> LINE 通知</button>
+                    </div>
                     <div class="table-wrapper" style="overflow-x:auto;">
                         <table class="backend-member-table">
                             <thead>
@@ -8093,6 +8104,8 @@
             if (countEl) countEl.textContent = `已選 ${communitySelectedOrderItemIds.size} 筆`;
             const applyBtn = document.getElementById('community-batch-apply-btn');
             if (applyBtn) applyBtn.disabled = communitySelectedOrderItemIds.size === 0;
+            const notifyBtn = document.getElementById('community-line-notify-btn');
+            if (notifyBtn) notifyBtn.disabled = communitySelectedOrderItemIds.size === 0;
             const selectAll = document.getElementById('community-order-select-all');
             if (selectAll) {
                 const visibleIds = communityFilteredOrderRows().map(row => row.itemId);
@@ -8334,6 +8347,36 @@
                 else showToast(`批次更新完成：成功 ${successCount} 筆`, 'success');
             } finally {
                 if (applyBtn) applyBtn.disabled = communitySelectedOrderItemIds.size === 0;
+            }
+        }
+
+        async function sendCommunityLineNotifications() {
+            const itemIds = [...communitySelectedOrderItemIds];
+            if (!itemIds.length) return;
+            const kind = document.getElementById('community-line-notify-kind')?.value || '';
+            const idSet = new Set(itemIds);
+            const orderIds = [...new Set(communityOrders.filter(row => idSet.has(row.itemId)).map(row => row.orderId))];
+            if (!orderIds.length) return;
+            const notifyBtn = document.getElementById('community-line-notify-btn');
+            if (notifyBtn) notifyBtn.disabled = true;
+            try {
+                const response = await fetch('/api/backend/community/line-notifications', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderIds, kind })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || 'LINE 通知發送失敗。');
+                const successCount = Number(result.successCount || 0);
+                const failedCount = Number(result.failedCount || 0);
+                if (failedCount) showToast(`LINE 通知完成：成功 ${successCount} 筆，失敗 ${failedCount} 筆`, 'error');
+                else showToast(`LINE 通知完成：成功 ${successCount} 筆`, 'success');
+                await loadCommunityLineNotifications();
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || 'LINE 通知發送失敗，請稍後再試', 'error');
+            } finally {
+                if (notifyBtn) notifyBtn.disabled = communitySelectedOrderItemIds.size === 0;
             }
         }
 
