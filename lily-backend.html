@@ -8678,8 +8678,8 @@
         }
 
         function communityLineNotificationStatusPill(status) {
-            if (status === 'sent') return '<span class="community-payment-status approved">已通知</span>';
-            if (status === 'failed') return '<span class="community-payment-status rejected">失敗</span>';
+            if (status === 'sent') return '<span class="community-payment-status approved" title="LINE API 發送請求成功">已送出</span>';
+            if (status === 'failed') return '<span class="community-payment-status rejected" title="API 發送失敗，詳見失敗原因欄">失敗</span>';
             return '<span class="community-payment-status pending">未通知</span>';
         }
 
