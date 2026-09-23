@@ -161,6 +161,10 @@
         .backend-member-table th, .backend-member-table td { white-space: nowrap; vertical-align: middle; padding: 0.72rem 0.8rem; }
         #section-community-orders .backend-member-table th, #section-community-orders .backend-member-table td { text-align: center; }
         #section-community-orders .community-order-align-left { text-align: left; }
+        .community-pending-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.65rem; margin-bottom: 0.85rem; }
+        .community-pending-summary-item { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; padding: 0.75rem 0.6rem; border: 1px solid #fce7f3; border-radius: 0.9rem; background: #fff7fb; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
+        .community-pending-summary-count { font-size: 1.6rem; font-weight: 950; color: #be185d; line-height: 1.1; }
+        .community-pending-summary-label { font-size: 0.76rem; font-weight: 900; color: #64748b; }
         .community-payment-status { display:inline-flex;align-items:center;border-radius:999px;padding:0.28rem 0.58rem;font-size:0.72rem;font-weight:900;white-space:nowrap; }
         .community-payment-status.pending { background:#fef3c7;color:#92400e; }
         .community-payment-status.approved { background:#dcfce7;color:#166534; }
@@ -969,6 +973,9 @@
                         <input type="file" id="community-excel-upload" accept=".xlsx, .xls" style="display:none;" onchange="handleCommunityExcelUpload(event)">
                         <button class="btn btn-secondary" onclick="loadCommunityOrders(true)"><i class="fa-solid fa-rotate"></i> 重新整理</button>
                     </div>
+                </div>
+                <div id="community-pending-summary" class="community-pending-summary">
+                    <div class="empty-state">待處理摘要讀取中...</div>
                 </div>
                 <div class="backend-member-filterbar" style="margin-bottom:0.85rem;">
                     <div class="page-header" style="margin-bottom:0.65rem;">
@@ -2769,8 +2776,8 @@
                 loadMemberLineNotificationSettings();
             }
             if(name === 'backend-members') loadBackendMembers();
-            if(name === 'community-orders') { renderCommunityBatchValueOptions(); loadCommunityOrders(); loadCommunityImportBatches(); loadCommunityRemittances(); loadCommunityShipmentRequests(); }
-            if(name === 'community-fulfillment') { loadCommunityMeetupSlots(); loadCommunityMeetupRequests(); }
+            if(name === 'community-orders') { renderCommunityBatchValueOptions(); loadCommunityOrders(); loadCommunityImportBatches(); loadCommunityRemittances(); loadCommunityShipmentRequests(); loadCommunityPendingSummary(); }
+            if(name === 'community-fulfillment') { loadCommunityMeetupSlots(); loadCommunityMeetupRequests(); loadCommunityPendingSummary(); }
             if(name === 'community-members') loadCommunityMembers();
             if(name === 'customer-orders') renderCustomerOrders();
             if(name === 'stock-products') renderStockProducts();
@@ -8573,6 +8580,41 @@
             } catch (error) {
                 console.error(error);
                 el.innerHTML = '<div class="empty-state">匯入紀錄讀取失敗</div>';
+            }
+        }
+
+        async function loadCommunityPendingSummary() {
+            const el = document.getElementById('community-pending-summary');
+            if (!el) return;
+            try {
+                const [remittanceResponse, shipmentResponse, meetupResponse] = await Promise.all([
+                    fetch('/api/backend/community/remittances', { cache: 'no-store' }),
+                    fetch('/api/backend/community/shipment-requests', { cache: 'no-store' }),
+                    fetch('/api/backend/community/meetup-requests', { cache: 'no-store' }),
+                ]);
+                const [remittanceResult, shipmentResult, meetupResult] = await Promise.all([
+                    remittanceResponse.json().catch(() => null),
+                    shipmentResponse.json().catch(() => null),
+                    meetupResponse.json().catch(() => null),
+                ]);
+                const remittances = Array.isArray(remittanceResult?.remittances) ? remittanceResult.remittances : [];
+                const shipmentRequests = Array.isArray(shipmentResult?.requests) ? shipmentResult.requests : [];
+                const meetupRequests = Array.isArray(meetupResult?.requests) ? meetupResult.requests : [];
+                const items = [
+                    { label: '待審核付款', count: remittances.filter(item => item.status === 'pending').length },
+                    { label: '需補款', count: remittances.filter(item => item.status === 'topup_required').length },
+                    { label: '待建立賣貨便', count: shipmentRequests.filter(item => item.status === 'pending').length },
+                    { label: '待面交確認', count: meetupRequests.filter(item => item.status === 'pending').length },
+                ];
+                el.innerHTML = items.map(item => `
+                    <div class="community-pending-summary-item">
+                        <span class="community-pending-summary-count">${item.count}</span>
+                        <span class="community-pending-summary-label">${item.label}</span>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error(error);
+                el.innerHTML = '<div class="empty-state">待處理摘要讀取失敗</div>';
             }
         }
 
