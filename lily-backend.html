@@ -979,6 +979,18 @@
                 </div>
                 <div class="backend-member-filterbar" style="margin-bottom:0.85rem;">
                     <div class="page-header" style="margin-bottom:0.65rem;">
+                        <h3 style="font-size:0.9rem;font-weight:900;color:#2563eb;margin:0;">LINE 通知紀錄</h3>
+                        <button class="btn btn-secondary" type="button" onclick="loadCommunityLineNotifications()"><i class="fa-solid fa-rotate"></i> 重新整理</button>
+                    </div>
+                    <div class="table-wrapper" style="overflow-x:auto;">
+                        <table class="backend-member-table">
+                            <thead><tr><th>類型</th><th>客人暱稱</th><th>狀態</th><th>失敗原因</th><th>時間</th></tr></thead>
+                            <tbody id="community-line-notification-tbody"><tr><td colspan="5" class="empty-state">尚未載入通知紀錄</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="backend-member-filterbar" style="margin-bottom:0.85rem;">
+                    <div class="page-header" style="margin-bottom:0.65rem;">
                         <h3 style="font-size:0.9rem;font-weight:900;color:#2563eb;margin:0;">記事本管理</h3>
                     </div>
                     <div id="community-notebook-list" class="community-notebook-list">
@@ -2776,7 +2788,7 @@
                 loadMemberLineNotificationSettings();
             }
             if(name === 'backend-members') loadBackendMembers();
-            if(name === 'community-orders') { renderCommunityBatchValueOptions(); loadCommunityOrders(); loadCommunityImportBatches(); loadCommunityRemittances(); loadCommunityShipmentRequests(); loadCommunityPendingSummary(); }
+            if(name === 'community-orders') { renderCommunityBatchValueOptions(); loadCommunityOrders(); loadCommunityImportBatches(); loadCommunityRemittances(); loadCommunityShipmentRequests(); loadCommunityPendingSummary(); loadCommunityLineNotifications(); }
             if(name === 'community-fulfillment') { loadCommunityMeetupSlots(); loadCommunityMeetupRequests(); loadCommunityPendingSummary(); }
             if(name === 'community-members') loadCommunityMembers();
             if(name === 'customer-orders') renderCustomerOrders();
@@ -8615,6 +8627,40 @@
             } catch (error) {
                 console.error(error);
                 el.innerHTML = '<div class="empty-state">待處理摘要讀取失敗</div>';
+            }
+        }
+
+        function communityLineNotificationKindLabel(kind) {
+            return ({ bought: '有買到→通知付款', arrived: '商品到貨→通知選出貨', marketplace_ready: '賣貨便連結建立→通知下單' })[kind] || kind || '—';
+        }
+
+        function communityLineNotificationStatusPill(status) {
+            if (status === 'sent') return '<span class="community-payment-status approved">已通知</span>';
+            if (status === 'failed') return '<span class="community-payment-status rejected">失敗</span>';
+            return '<span class="community-payment-status pending">未通知</span>';
+        }
+
+        async function loadCommunityLineNotifications() {
+            const tbody = document.getElementById('community-line-notification-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="5" class="empty-state">通知紀錄讀取中...</td></tr>';
+            try {
+                const response = await fetch('/api/backend/community/line-notifications', { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '通知紀錄讀取失敗。');
+                const notifications = Array.isArray(result.notifications) ? result.notifications : [];
+                tbody.innerHTML = notifications.length ? notifications.map(item => `
+                    <tr>
+                        <td>${escapeHtml(communityLineNotificationKindLabel(item.kind))}</td>
+                        <td>${escapeHtml(item.nickname || '—')}</td>
+                        <td>${communityLineNotificationStatusPill(item.status)}</td>
+                        <td>${escapeHtml(item.errorMessage || '—')}</td>
+                        <td>${storefrontDateTime(item.sentAt || item.updatedAt)}</td>
+                    </tr>
+                `).join('') : '<tr><td colspan="5" class="empty-state">尚無通知紀錄</td></tr>';
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">通知紀錄讀取失敗</td></tr>';
             }
         }
 
