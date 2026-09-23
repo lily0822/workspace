@@ -1070,7 +1070,6 @@
                             <select id="community-line-notify-kind">
                                 <option value="bought">通知付款</option>
                                 <option value="arrived">到貨提醒</option>
-                                <option value="marketplace_ready">賣貨便可下單</option>
                             </select>
                         </div>
                         <button class="btn btn-primary" type="button" id="community-line-notify-btn" onclick="sendCommunityLineNotifications()" disabled><i class="fa-brands fa-line"></i> LINE 通知</button>
@@ -9024,7 +9023,7 @@
                     ? `<span class="text-muted">${request.completedAt ? storefrontDateTime(request.completedAt) : '已通知'}</span>`
                     : request.status === 'cancelled'
                         ? '<span class="text-muted">已取消</span>'
-                        : `<span class="community-order-row-actions"><button class="btn btn-secondary btn-sm" type="button" onclick="editCommunityShipmentMarketplace('${escapeHtml(request.id)}')">${request.marketplaceUrl ? '修改賣貨便' : '填寫賣貨便'}</button>${request.status === 'accepted' && request.marketplaceUrl ? `<button class="btn btn-primary btn-sm" type="button" onclick="notifyCommunityShipmentOrder('${escapeHtml(request.id)}')">送出 LINE 下單通知</button>` : ''}</span>`;
+                        : `<span class="community-order-row-actions"><button class="btn btn-secondary btn-sm" type="button" onclick="editCommunityShipmentMarketplace('${escapeHtml(request.id)}')">${request.marketplaceUrl ? '修改賣貨便' : '填寫賣貨便'}</button>${request.marketplaceUrl ? `<button class="btn btn-secondary btn-sm" type="button" onclick="sendCommunityShipmentLineNotification('${escapeHtml(request.id)}', this)"><i class="fa-brands fa-line"></i> 發送賣貨便通知</button>` : ''}${request.status === 'accepted' && request.marketplaceUrl ? `<button class="btn btn-primary btn-sm" type="button" onclick="notifyCommunityShipmentOrder('${escapeHtml(request.id)}')">送出 LINE 下單通知</button>` : ''}</span>`;
                 return `
                     <tr>
                         <td><strong>${escapeHtml(request.lineDisplayName || 'LINE 使用者')}</strong><br><small>${escapeHtml(request.nickname)}</small></td>
@@ -9072,6 +9071,25 @@
         async function notifyCommunityShipmentOrder(id) {
             if (!confirm('確定已送出 LINE 下單通知嗎？完成後會移入客人的歷史訂單。')) return;
             await updateCommunityShipmentStatus(id, 'completed');
+        }
+
+        async function sendCommunityShipmentLineNotification(id, button) {
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch(`/api/backend/community/shipment-requests/${encodeURIComponent(id)}/notify`, {
+                    method: 'POST'
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || 'LINE 通知發送失敗。');
+                if (result.result?.status === 'sent') showToast('已送出賣貨便 LINE 通知', 'success');
+                else showToast(result.result?.errorMessage || 'LINE 通知發送失敗', 'error');
+                await loadCommunityLineNotifications();
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || 'LINE 通知發送失敗，請稍後再試', 'error');
+            } finally {
+                if (button) button.disabled = false;
+            }
         }
 
         const COMMUNITY_MEETUP_STATUS_OPTIONS = [
