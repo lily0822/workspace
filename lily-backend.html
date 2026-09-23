@@ -1079,7 +1079,6 @@
                         </div>
                     </div>
                 </div>
-                <div id="community-import-batches" style="margin-top:1.25rem;"></div>
                 <div id="community-remittances" style="margin-top:1.25rem;"></div>
                 <div style="margin-top:1.25rem;">
                     <h3 style="font-size:0.85rem;font-weight:900;color:#475569;margin-bottom:0.5rem;">出貨申請</h3>
@@ -1114,6 +1113,7 @@
                         </table>
                     </div>
                 </div>
+                <div id="community-import-batches" style="margin-top:1.25rem;"></div>
             </div>
 
             <div id="section-community-fulfillment" class="section-container">
@@ -8661,7 +8661,10 @@
 
         function communityPaymentReviewActions(item) {
             if (item.status === 'pending') {
-                return `<span class="community-order-row-actions"><button class="btn btn-sm btn-primary" type="button" onclick="reviewCommunityRemittance(${quoteJs(item.id)}, 'approved')">核准</button><button class="btn btn-sm btn-action-delete" type="button" onclick="reviewCommunityRemittance(${quoteJs(item.id)}, 'rejected')">審核退回</button></span>`;
+                const projectedReceived = Number(item.cumulativeReceived || 0) + Number(item.amount || 0);
+                const expectedAmount = Number(item.expectedAmount || 0);
+                const approvalLabel = projectedReceived < expectedAmount ? '需補款' : projectedReceived > expectedAmount ? '多匯待退款' : '核准';
+                return `<span class="community-order-row-actions"><button class="btn btn-sm btn-primary" type="button" onclick="reviewCommunityRemittance(${quoteJs(item.id)}, 'approved', ${quoteJs(approvalLabel)})">${approvalLabel}</button><button class="btn btn-sm btn-action-delete" type="button" onclick="reviewCommunityRemittance(${quoteJs(item.id)}, 'rejected', '審核退回')">審核退回</button></span>`;
             }
             if (item.status === 'overpaid_pending_refund') {
                 return `<button class="btn btn-sm btn-primary" type="button" onclick="reviewCommunityRemittance(${quoteJs(item.id)}, 'refund_completed')">退款完成</button>`;
@@ -8669,10 +8672,10 @@
             return '—';
         }
 
-        async function reviewCommunityRemittance(submissionId, decision) {
+        async function reviewCommunityRemittance(submissionId, decision, actionLabel = '') {
             let reason = '';
             if (decision === 'approved') {
-                if (!confirm('確定核准這筆付款資料嗎？')) return;
+                if (!confirm(`確定將整個付款批次標記為「${actionLabel || '核准'}」嗎？`)) return;
             } else if (decision === 'rejected') {
                 reason = (prompt('請輸入審核退回原因：') || '').trim();
                 if (!reason) {
@@ -8690,7 +8693,9 @@
                 });
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '付款審核失敗。');
-                showToast(decision === 'approved' ? '付款已核准' : decision === 'rejected' ? '付款已退回' : '退款已完成', 'success');
+                const reviewedStatus = result?.result?.status;
+                const reviewedLabel = reviewedStatus === 'topup_required' ? '需補款' : reviewedStatus === 'overpaid_pending_refund' ? '多匯待退款' : '付款已核准';
+                showToast(decision === 'approved' ? reviewedLabel : decision === 'rejected' ? '付款已退回' : '退款已完成', 'success');
                 await Promise.all([loadCommunityRemittances(), loadCommunityOrders(true)]);
             } catch (error) {
                 console.error(error);
