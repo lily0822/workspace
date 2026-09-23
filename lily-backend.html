@@ -165,6 +165,10 @@
         .community-pending-summary-item { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; padding: 0.75rem 0.6rem; border: 1px solid #fce7f3; border-radius: 0.9rem; background: #fff7fb; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
         .community-pending-summary-count { font-size: 1.6rem; font-weight: 950; color: #be185d; line-height: 1.1; }
         .community-pending-summary-label { font-size: 0.76rem; font-weight: 900; color: #64748b; }
+        .community-line-template-list { display: grid; gap: 0.5rem; }
+        .community-line-template-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.65rem 0.85rem; border: 1px solid #fce7f3; border-radius: 0.85rem; background: #fff7fb; }
+        .community-line-template-row-label { font-size: 0.85rem; font-weight: 900; color: #334155; }
+        .community-line-template-row-preview { margin-top: 0.15rem; font-size: 0.74rem; font-weight: 700; color: #94a3b8; max-width: 480px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .community-payment-status { display:inline-flex;align-items:center;border-radius:999px;padding:0.28rem 0.58rem;font-size:0.72rem;font-weight:900;white-space:nowrap; }
         .community-payment-status.pending { background:#fef3c7;color:#92400e; }
         .community-payment-status.approved { background:#dcfce7;color:#166534; }
@@ -976,6 +980,14 @@
                 </div>
                 <div id="community-pending-summary" class="community-pending-summary">
                     <div class="empty-state">待處理摘要讀取中...</div>
+                </div>
+                <div class="backend-member-filterbar" style="margin-bottom:0.85rem;">
+                    <div class="page-header" style="margin-bottom:0.65rem;">
+                        <h3 style="font-size:0.9rem;font-weight:900;color:#2563eb;margin:0;">LINE 通知文案設定</h3>
+                    </div>
+                    <div id="community-line-template-list" class="community-line-template-list">
+                        <div class="empty-state">尚未載入文案設定</div>
+                    </div>
                 </div>
                 <div class="backend-member-filterbar" style="margin-bottom:0.85rem;">
                     <div class="page-header" style="margin-bottom:0.65rem;">
@@ -2665,6 +2677,33 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="communityLineTemplateModal">
+        <div class="modal-content" style="max-width:560px;">
+            <div class="modal-header">
+                <h3><i class="fa-brands fa-line"></i> 編輯訊息 - <span id="community-line-template-modal-title">通知付款</span></h3>
+                <button class="close-btn" type="button" onclick="closeCommunityLineTemplateModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <input id="community-line-template-kind" type="hidden">
+                <div class="form-group">
+                    <label>訊息內容</label>
+                    <textarea id="community-line-template-text" rows="10"></textarea>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem;">
+                    <button class="btn btn-sm btn-secondary" type="button" onclick="insertCommunityLineTemplateVariable('{{商品清單}}')">插入 {{商品清單}}</button>
+                    <button class="btn btn-sm btn-secondary" type="button" onclick="insertCommunityLineTemplateVariable('{{社群訂單連結}}')">插入 {{社群訂單連結}}</button>
+                    <button class="btn btn-sm btn-secondary" type="button" onclick="insertCommunityLineTemplateVariable('{{賣貨便連結}}')">插入 {{賣貨便連結}}</button>
+                </div>
+                <p style="margin:0.6rem 0 0;color:#94a3b8;font-size:0.76rem;font-weight:800;">商品清單格式：系列名稱｜商品名稱 ×數量（每項一行）</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="resetCommunityLineTemplateToDefault()">恢復預設文案</button>
+                <button class="btn btn-secondary" type="button" onclick="closeCommunityLineTemplateModal()">取消</button>
+                <button class="btn btn-primary" type="button" id="community-line-template-save-btn" onclick="saveCommunityLineTemplateEdit(this)">儲存</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="moduleOrderModal">
         <div class="modal-content" style="max-width:620px;max-height:88vh;">
             <div class="modal-header">
@@ -2799,7 +2838,7 @@
                 loadMemberLineNotificationSettings();
             }
             if(name === 'backend-members') loadBackendMembers();
-            if(name === 'community-orders') { renderCommunityBatchValueOptions(); loadCommunityOrders(); loadCommunityImportBatches(); loadCommunityRemittances(); loadCommunityShipmentRequests(); loadCommunityPendingSummary(); loadCommunityLineNotifications(); }
+            if(name === 'community-orders') { renderCommunityBatchValueOptions(); loadCommunityOrders(); loadCommunityImportBatches(); loadCommunityRemittances(); loadCommunityShipmentRequests(); loadCommunityPendingSummary(); loadCommunityLineTemplates(); loadCommunityLineNotifications(); }
             if(name === 'community-fulfillment') { loadCommunityMeetupSlots(); loadCommunityMeetupRequests(); loadCommunityPendingSummary(); }
             if(name === 'community-members') loadCommunityMembers();
             if(name === 'customer-orders') renderCustomerOrders();
@@ -8704,6 +8743,101 @@
             } catch (error) {
                 console.error(error);
                 tbody.innerHTML = '<tr><td colspan="5" class="empty-state">通知紀錄讀取失敗</td></tr>';
+            }
+        }
+
+        let communityLineTemplates = {};
+        let communityLineTemplateDefaults = {};
+
+        function communityLineTemplateKindLabel(kind) {
+            return ({ bought: '通知付款', arrived: '到貨提醒', marketplace_ready: '賣貨便可下單' })[kind] || kind || '—';
+        }
+
+        function renderCommunityLineTemplateList() {
+            const el = document.getElementById('community-line-template-list');
+            if (!el) return;
+            const kinds = ['bought', 'arrived', 'marketplace_ready'];
+            el.innerHTML = kinds.map(kind => {
+                const text = communityLineTemplates[kind] || '';
+                const preview = text.replace(/\s+/g, ' ').trim();
+                return `
+                    <div class="community-line-template-row">
+                        <div style="min-width:0;">
+                            <div class="community-line-template-row-label">${escapeHtml(communityLineTemplateKindLabel(kind))}</div>
+                            <div class="community-line-template-row-preview">${escapeHtml(preview)}</div>
+                        </div>
+                        <button class="btn btn-sm btn-action-edit" type="button" onclick="openCommunityLineTemplateModal('${kind}')"><i class="fa-solid fa-pen"></i> 編輯訊息</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadCommunityLineTemplates() {
+            const el = document.getElementById('community-line-template-list');
+            if (!el) return;
+            try {
+                const response = await fetch('/api/backend/community/line-notification-templates', { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '文案設定讀取失敗。');
+                communityLineTemplates = result.templates || {};
+                communityLineTemplateDefaults = result.defaults || {};
+                renderCommunityLineTemplateList();
+            } catch (error) {
+                console.error(error);
+                el.innerHTML = '<div class="empty-state">文案設定讀取失敗</div>';
+            }
+        }
+
+        function openCommunityLineTemplateModal(kind) {
+            document.getElementById('community-line-template-kind').value = kind;
+            document.getElementById('community-line-template-modal-title').textContent = communityLineTemplateKindLabel(kind);
+            document.getElementById('community-line-template-text').value = communityLineTemplates[kind] || '';
+            document.getElementById('communityLineTemplateModal')?.classList.add('active');
+        }
+
+        function closeCommunityLineTemplateModal() {
+            document.getElementById('communityLineTemplateModal')?.classList.remove('active');
+        }
+
+        function insertCommunityLineTemplateVariable(token) {
+            const textarea = document.getElementById('community-line-template-text');
+            if (!textarea) return;
+            const start = textarea.selectionStart ?? textarea.value.length;
+            const end = textarea.selectionEnd ?? textarea.value.length;
+            textarea.value = textarea.value.slice(0, start) + token + textarea.value.slice(end);
+            const cursor = start + token.length;
+            textarea.focus();
+            textarea.setSelectionRange(cursor, cursor);
+        }
+
+        function resetCommunityLineTemplateToDefault() {
+            const kind = document.getElementById('community-line-template-kind')?.value || '';
+            const textarea = document.getElementById('community-line-template-text');
+            if (textarea) textarea.value = communityLineTemplateDefaults[kind] || '';
+        }
+
+        async function saveCommunityLineTemplateEdit(button) {
+            const kind = document.getElementById('community-line-template-kind')?.value || '';
+            const text = document.getElementById('community-line-template-text')?.value.trim() || '';
+            if (!text) { showToast('請輸入訊息內容', 'error'); return; }
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch('/api/backend/community/line-notification-templates', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ kind, text })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '文案儲存失敗。');
+                communityLineTemplates = result.templates || communityLineTemplates;
+                renderCommunityLineTemplateList();
+                closeCommunityLineTemplateModal();
+                showToast('文案已儲存', 'success');
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '文案儲存失敗，請稍後再試', 'error');
+            } finally {
+                if (button) button.disabled = false;
             }
         }
 
