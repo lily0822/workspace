@@ -8286,6 +8286,11 @@
         function renderCommunityNotebooks() {
             const list = document.getElementById('community-notebook-list');
             if (!list) return;
+            const openNotebookNames = new Set(
+                Array.from(list.querySelectorAll('details.community-notebook-accordion[open]'))
+                    .map(el => el.dataset.notebookName)
+                    .filter(Boolean)
+            );
             const notebooks = [];
             const byName = new Map();
             communityOrders.forEach(row => {
@@ -8307,7 +8312,7 @@
                 const boughtCount = notebook.rows.reduce((sum, row) => sum + (row.purchaseStatus === 'bought' ? Number(row.quantity || 0) : 0), 0);
                 const notBoughtCount = notebook.rows.reduce((sum, row) => sum + (row.purchaseStatus === 'not_bought' ? Number(row.quantity || 0) : 0), 0);
                 return `
-                    <details class="community-notebook-accordion">
+                    <details class="community-notebook-accordion" data-notebook-name="${escapeHtml(notebook.name)}" ${openNotebookNames.has(notebook.name) ? 'open' : ''}>
                         <summary>${escapeHtml(notebook.name)}</summary>
                         <div class="community-notebook-body">
                             <div class="community-notebook-summary">
