@@ -156,9 +156,57 @@
         .member-line-settings-status { min-height: 18px; color: #64748b; font-size: 0.76rem; font-weight: 900; }
         .backend-member-filterbar { display: grid; gap: 0.55rem; padding: 0.75rem 0.85rem; border: 1px solid #fce7f3; border-radius: 0.9rem; background: #fff7fb; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
         .backend-member-filter-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end; }
-        .backend-member-filter-field { display: grid; gap: 0.22rem; min-width: 130px; }
+        .backend-member-filter-field { display: grid; gap: 0.22rem; min-width: 130px; position: relative; }
         .backend-member-filter-field label { color: #64748b; font-size: 0.72rem; font-weight: 900; }
         .backend-member-filter-field input, .backend-member-filter-field select { min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.72rem; padding: 0.42rem 0.62rem; background: white; color: #334155; font-size: 0.82rem; font-weight: 800; outline: none; }
+        /* Unified search/filter control style across all backend search/filter bars.
+           .backend-member-filter-field / .storefront-order-filter-field above are the
+           existing baseline (already identical) — these selectors bring the other,
+           previously-divergent filter systems (plain filter-bar/product-filter-card/
+           schedule search rows) up to the same height/radius/padding/border/type scale. */
+        .filter-bar .form-group input,
+        .filter-bar .form-group select,
+        .product-filter-card .form-group input,
+        .product-filter-card .form-group select,
+        .schedule-filter-card .form-group input,
+        .tag-select-button {
+            min-height: 34px;
+            border: 1px solid #fbcfe8;
+            border-radius: 0.72rem;
+            padding: 0.42rem 0.62rem;
+            background: white;
+            color: #334155;
+            font-size: 0.82rem;
+            font-weight: 800;
+            outline: none;
+        }
+        .filter-bar .form-group input:focus,
+        .filter-bar .form-group select:focus,
+        .product-filter-card .form-group input:focus,
+        .product-filter-card .form-group select:focus,
+        .schedule-filter-card .form-group input:focus,
+        .tag-select-button:focus {
+            border-color: #f472b6;
+            box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12);
+        }
+        .filter-bar .form-group,
+        .product-filter-card .form-group,
+        .schedule-filter-card .form-group {
+            position: relative;
+        }
+        .admin-filter-hint {
+            position: absolute;
+            left: 0.62rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 0.82rem;
+            font-weight: 700;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        input[type="date"].admin-hint-empty, input[type="month"].admin-hint-empty { color: transparent; }
+        input::placeholder { color: #94a3b8; opacity: 1; }
         .backend-member-table { min-width: 1120px; }
         .backend-member-table th, .backend-member-table td { white-space: nowrap; vertical-align: middle; padding: 0.72rem 0.8rem; }
         #section-community-orders .backend-member-table th, #section-community-orders .backend-member-table td { text-align: center; }
@@ -246,7 +294,7 @@
         .storefront-order-search-row { display: flex; gap: 0.5rem; align-items: center; }
         .storefront-order-search-input { flex: 1 1 360px; min-width: 220px; }
         .storefront-order-filter-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end; }
-        .storefront-order-filter-field { display: grid; gap: 0.22rem; min-width: 112px; }
+        .storefront-order-filter-field { display: grid; gap: 0.22rem; min-width: 112px; position: relative; }
         .storefront-order-filter-field label { color: #64748b; font-size: 0.72rem; font-weight: 900; }
         .storefront-order-filter-field input, .storefront-order-filter-field select, .storefront-order-search-input { min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.72rem; padding: 0.42rem 0.62rem; background: white; color: #334155; font-size: 0.82rem; font-weight: 800; outline: none; }
         .storefront-order-filter-field input { width: 138px; }
@@ -826,22 +874,20 @@
                     <h2 class="page-title" style="flex: 1 1 100%;">廠商叫貨明細</h2>
                     <div class="filter-bar" style="display: flex; gap: 1rem; align-items: flex-end; background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; flex: 1;">
                         <div class="form-group" style="flex: initial; min-width: 150px;">
-                            <label>廠商</label>
-                            <select id="filter-v-vendor">
-                                <option value="">全部</option>
+                            <select id="filter-v-vendor" aria-label="廠商">
+                                <option value="">全部廠商</option>
                             </select>
                         </div>
                         <div class="form-group" style="flex: initial; width: 140px;">
-                            <label>商品名稱</label>
-                            <input type="text" id="filter-v-item-name" placeholder="輸入關鍵字...">
+                            <input type="text" id="filter-v-item-name" placeholder="商品名稱" aria-label="商品名稱">
                         </div>
                         <div class="form-group" style="flex: initial; width: 140px;">
-                            <label>開始日期</label>
-                            <input type="date" id="filter-v-date-start">
+                            <input type="date" id="filter-v-date-start" aria-label="開始日期">
+                            <span class="admin-filter-hint">開始日期</span>
                         </div>
                         <div class="form-group" style="flex: initial; width: 140px;">
-                            <label>結束日期</label>
-                            <input type="date" id="filter-v-date-end">
+                            <input type="date" id="filter-v-date-end" aria-label="結束日期">
+                            <span class="admin-filter-hint">結束日期</span>
                         </div>
                         <button class="btn btn-primary" style="height: 38px; margin-bottom: 2px;" onclick="renderVendorsOrders()"><i class="fa-solid fa-magnifying-glass"></i> 搜索</button>
                         <button class="btn btn-secondary" style="height: 38px; margin-bottom: 2px;" onclick="clearVendorOrderFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
@@ -862,27 +908,24 @@
                     <h2 class="page-title" style="flex: 1 1 100%;">購物網站叫貨明細</h2>
                     <div class="filter-bar" style="display: flex; gap: 1rem; align-items: flex-end; background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; flex: 1;">
                         <div class="form-group" style="flex: initial; min-width: 150px;">
-                            <label>購物網站</label>
-                            <select id="filter-w-vendor">
-                                <option value="">全部</option>
+                            <select id="filter-w-vendor" aria-label="購物網站">
+                                <option value="">全部購物網站</option>
                             </select>
                         </div>
                         <div class="form-group" style="flex: initial; width: 140px;">
-                            <label>商品名稱</label>
-                            <input type="text" id="filter-w-item-name" placeholder="輸入關鍵字...">
+                            <input type="text" id="filter-w-item-name" placeholder="商品名稱" aria-label="商品名稱">
                         </div>
                         <div class="form-group" style="flex: initial; width: 140px;">
-                            <label>開始日期</label>
-                            <input type="date" id="filter-w-date-start">
+                            <input type="date" id="filter-w-date-start" aria-label="開始日期">
+                            <span class="admin-filter-hint">開始日期</span>
                         </div>
                         <div class="form-group" style="flex: initial; width: 140px;">
-                            <label>結束日期</label>
-                            <input type="date" id="filter-w-date-end">
+                            <input type="date" id="filter-w-date-end" aria-label="結束日期">
+                            <span class="admin-filter-hint">結束日期</span>
                         </div>
                         <div class="form-group" style="flex: initial; width: 120px;">
-                            <label>出貨狀態</label>
-                            <select id="filter-w-shipped-status">
-                                <option value="">全部</option>
+                            <select id="filter-w-shipped-status" aria-label="出貨狀態">
+                                <option value="">全部出貨狀態</option>
                                 <option value="未出貨">未出貨</option>
                                 <option value="已出貨">已出貨</option>
                             </select>
@@ -926,21 +969,18 @@
                 <div class="backend-member-filterbar">
                     <div class="backend-member-filter-row">
                         <div class="backend-member-filter-field" style="min-width:260px;">
-                            <label for="backend-member-search">搜尋</label>
-                            <input id="backend-member-search" type="search" placeholder="Email、顯示名稱、電話" onkeydown="handleBackendMemberSearchKey(event)">
+                            <input id="backend-member-search" type="search" placeholder="Email、顯示名稱、電話" aria-label="搜尋" onkeydown="handleBackendMemberSearchKey(event)">
                         </div>
                         <div class="backend-member-filter-field">
-                            <label for="backend-member-line-filter">LINE 狀態</label>
-                            <select id="backend-member-line-filter">
-                                <option value="all">全部</option>
+                            <select id="backend-member-line-filter" aria-label="LINE 狀態">
+                                <option value="all">全部 LINE 狀態</option>
                                 <option value="linked">已綁定</option>
                                 <option value="unlinked">未綁定</option>
                             </select>
                         </div>
                         <div class="backend-member-filter-field">
-                            <label for="backend-member-status-filter">會員狀態</label>
-                            <select id="backend-member-status-filter">
-                                <option value="all">全部</option>
+                            <select id="backend-member-status-filter" aria-label="會員狀態">
+                                <option value="all">全部會員狀態</option>
                                 <option value="active">啟用</option>
                                 <option value="disabled">停用</option>
                             </select>
@@ -1006,16 +1046,15 @@
                     </div>
                     <div class="backend-member-filter-row" style="margin-bottom:0.6rem;">
                         <div class="backend-member-filter-field" style="min-width:200px;">
-                            <label for="community-notebook-filter-q">記事本名稱</label>
-                            <input id="community-notebook-filter-q" type="search" placeholder="關鍵字" oninput="applyCommunityNotebookFilters()">
+                            <input id="community-notebook-filter-q" type="search" placeholder="記事本名稱關鍵字" aria-label="記事本名稱" oninput="applyCommunityNotebookFilters()">
                         </div>
                         <div class="backend-member-filter-field">
-                            <label for="community-notebook-filter-ordered-month">下單月份</label>
-                            <input id="community-notebook-filter-ordered-month" type="month" onchange="applyCommunityNotebookFilters()">
+                            <input id="community-notebook-filter-ordered-month" type="month" aria-label="下單月份" onchange="applyCommunityNotebookFilters()">
+                            <span class="admin-filter-hint">下單月份</span>
                         </div>
                         <div class="backend-member-filter-field">
-                            <label for="community-notebook-filter-expected-month">預計出貨月份</label>
-                            <input id="community-notebook-filter-expected-month" type="month" onchange="applyCommunityNotebookFilters()">
+                            <input id="community-notebook-filter-expected-month" type="month" aria-label="預計出貨月份" onchange="applyCommunityNotebookFilters()">
+                            <span class="admin-filter-hint">預計出貨月份</span>
                         </div>
                         <button class="btn btn-secondary" type="button" onclick="clearCommunityNotebookFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
                     </div>
@@ -1044,7 +1083,7 @@
                         </div>
                         <div class="backend-member-filter-field">
                             <select id="community-order-filter-payment" aria-label="匯款狀態" onchange="applyCommunityOrderStatusFilters()">
-                                <option value="">全部</option>
+                                <option value="">全部匯款狀態</option>
                                 <option value="unpaid">待匯款</option>
                                 <option value="paid">已匯款</option>
                                 <option value="in_person">面交付</option>
@@ -1052,7 +1091,7 @@
                         </div>
                         <div class="backend-member-filter-field">
                             <select id="community-order-filter-arrival" aria-label="到貨狀態" onchange="applyCommunityOrderStatusFilters()">
-                                <option value="">全部</option>
+                                <option value="">全部到貨狀態</option>
                                 <option value="not_shipped">未出貨</option>
                                 <option value="shipped_japan">日本出貨</option>
                                 <option value="shipped_korea">韓國出貨</option>
@@ -1061,7 +1100,7 @@
                         </div>
                         <div class="backend-member-filter-field">
                             <select id="community-order-filter-stage" aria-label="下單狀態" onchange="applyCommunityOrderStatusFilters()">
-                                <option value="">全部</option>
+                                <option value="">全部下單狀態</option>
                                 <option value="open">開單</option>
                                 <option value="in_person">面交</option>
                             </select>
@@ -1144,8 +1183,7 @@
                     </div>
                     <div class="backend-member-filter-row">
                         <div class="backend-member-filter-field" style="min-width:220px;">
-                            <label for="community-shipment-search">搜尋</label>
-                            <input id="community-shipment-search" type="search" placeholder="社群暱稱、記事本名稱" onkeydown="handleCommunityShipmentSearchKey(event)">
+                            <input id="community-shipment-search" type="search" placeholder="社群暱稱、記事本名稱" aria-label="搜尋" onkeydown="handleCommunityShipmentSearchKey(event)">
                         </div>
                         <button class="btn btn-primary" type="button" onclick="applyCommunityShipmentFilters()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
                         <button class="btn btn-secondary" type="button" onclick="clearCommunityShipmentFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
@@ -1232,8 +1270,8 @@
                         <div class="community-member-panel-header">
                             <h3><i class="fa-solid fa-circle-check"></i> 已綁定名單</h3>
                             <div class="community-member-searches">
-                                <input id="community-approved-line-search" class="storefront-order-search-input" type="search" placeholder="LINE 名稱" onkeydown="handleCommunityApprovedSearchKey(event)">
-                                <input id="community-approved-nickname-search" class="storefront-order-search-input" type="search" placeholder="申請暱稱" onkeydown="handleCommunityApprovedSearchKey(event)">
+                                <input id="community-approved-line-search" class="storefront-order-search-input" type="search" placeholder="LINE 名稱" aria-label="LINE 名稱" onkeydown="handleCommunityApprovedSearchKey(event)">
+                                <input id="community-approved-nickname-search" class="storefront-order-search-input" type="search" placeholder="申請暱稱" aria-label="申請暱稱" onkeydown="handleCommunityApprovedSearchKey(event)">
                                 <button class="btn btn-primary btn-sm" type="button" onclick="applyCommunityApprovedSearch()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
                             </div>
                         </div>
@@ -1290,30 +1328,28 @@
                 </div>
                 <div class="storefront-order-filterbar">
                     <div class="storefront-order-search-row">
-                        <input id="storefront-order-search" class="storefront-order-search-input" type="search" placeholder="搜尋訂單編號、姓名、手機、Email" onkeydown="handleStorefrontOrderSearchKey(event)">
+                        <input id="storefront-order-search" class="storefront-order-search-input" type="search" placeholder="搜尋訂單編號、姓名、手機、Email" aria-label="搜尋" onkeydown="handleStorefrontOrderSearchKey(event)">
                         <button class="btn btn-primary" type="button" onclick="applyStorefrontOrderFilters()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
                     </div>
                     <div class="storefront-order-filter-row">
                         <div class="storefront-order-filter-field">
-                            <label for="storefront-order-date-from">開始日期</label>
-                            <input id="storefront-order-date-from" type="date">
+                            <input id="storefront-order-date-from" type="date" aria-label="開始日期">
+                            <span class="admin-filter-hint">開始日期</span>
                         </div>
                         <div class="storefront-order-filter-field">
-                            <label for="storefront-order-date-to">結束日期</label>
-                            <input id="storefront-order-date-to" type="date">
+                            <input id="storefront-order-date-to" type="date" aria-label="結束日期">
+                            <span class="admin-filter-hint">結束日期</span>
                         </div>
                         <div class="storefront-order-filter-field">
-                            <label for="storefront-order-type-filter">訂單類型</label>
-                            <select id="storefront-order-type-filter">
-                                <option value="all">全部</option>
+                            <select id="storefront-order-type-filter" aria-label="訂單類型">
+                                <option value="all">全部訂單類型</option>
                                 <option value="stock">現貨</option>
                                 <option value="preorder">預購</option>
                             </select>
                         </div>
                         <div class="storefront-order-filter-field">
-                            <label for="storefront-order-status-filter">訂單狀態</label>
-                            <select id="storefront-order-status-filter">
-                                <option value="all">全部</option>
+                            <select id="storefront-order-status-filter" aria-label="訂單狀態">
+                                <option value="all">全部訂單狀態</option>
                                 <option value="pending">待處理</option>
                                 <option value="processing">處理中</option>
                                 <option value="completed">已完成</option>
@@ -1321,9 +1357,8 @@
                             </select>
                         </div>
                         <div class="storefront-order-filter-field">
-                            <label for="storefront-order-payment-filter">付款狀態</label>
-                            <select id="storefront-order-payment-filter">
-                                <option value="all">全部</option>
+                            <select id="storefront-order-payment-filter" aria-label="付款狀態">
+                                <option value="all">全部付款狀態</option>
                                 <option value="pending">待付款</option>
                                 <option value="paid">已付款</option>
                                 <option value="failed">付款失敗</option>
@@ -1331,9 +1366,8 @@
                             </select>
                         </div>
                         <div class="storefront-order-filter-field">
-                            <label for="storefront-order-shipping-filter">配送狀態</label>
-                            <select id="storefront-order-shipping-filter">
-                                <option value="all">全部</option>
+                            <select id="storefront-order-shipping-filter" aria-label="配送狀態">
+                                <option value="all">全部配送狀態</option>
                                 <option value="pending">待處理</option>
                                 <option value="preparing">備貨中</option>
                                 <option value="shipped">已出貨</option>
@@ -1391,21 +1425,19 @@
                     <h2 class="page-title" style="flex: 1 1 100%;">客戶訂單明細</h2>
                     <div class="filter-bar" style="display: flex; gap: 1rem; align-items: flex-end; background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; flex: 1;">
                         <div class="form-group" style="flex: initial; width: 160px;">
-                            <label>商品 / 客戶關鍵字</label>
-                            <input type="text" id="filter-c-item-name" placeholder="商品、姓名、手機...">
+                            <input type="text" id="filter-c-item-name" placeholder="商品、姓名、手機..." aria-label="商品 / 客戶關鍵字">
                         </div>
                         <div class="form-group" style="flex: initial; width: 140px;">
-                            <label>開始日期</label>
-                            <input type="date" id="filter-c-date-start">
+                            <input type="date" id="filter-c-date-start" aria-label="開始日期">
+                            <span class="admin-filter-hint">開始日期</span>
                         </div>
                         <div class="form-group" style="flex: initial; width: 140px;">
-                            <label>結束日期</label>
-                            <input type="date" id="filter-c-date-end">
+                            <input type="date" id="filter-c-date-end" aria-label="結束日期">
+                            <span class="admin-filter-hint">結束日期</span>
                         </div>
                         <div class="form-group" style="flex: initial; width: 120px;">
-                            <label>出貨狀態</label>
-                            <select id="filter-c-shipped-status">
-                                <option value="">全部</option>
+                            <select id="filter-c-shipped-status" aria-label="出貨狀態">
+                                <option value="">全部出貨狀態</option>
                                 <option value="未出貨">未出貨</option>
                                 <option value="已出貨">已出貨</option>
                             </select>
@@ -1451,16 +1483,13 @@
                 <div class="table-wrapper product-filter-card" style="padding: 1.25rem;">
                     <div class="form-row" style="flex-wrap: wrap; align-items: flex-end;">
                         <div class="form-group" style="max-width: 260px;">
-                            <label>商品名稱</label>
-                            <input type="text" id="stock-product-search" placeholder="搜尋商品名稱">
+                            <input type="text" id="stock-product-search" placeholder="搜尋商品名稱" aria-label="商品名稱">
                         </div>
                         <div class="form-group" style="max-width: 240px;">
-                            <label>IP / 商品類別</label>
                             <div class="tag-select-menu" id="stock-product-tag-filter"></div>
                         </div>
                         <div class="form-group" style="max-width: 180px;">
-                            <label>狀態</label>
-                            <select id="stock-product-status-filter">
+                            <select id="stock-product-status-filter" aria-label="狀態">
                                 <option value="">全部狀態</option>
                                 <option value="active">上架</option>
                                 <option value="inactive">下架</option>
@@ -1510,16 +1539,13 @@
                 <div class="table-wrapper product-filter-card" style="padding: 1.25rem;">
                     <div class="form-row" style="flex-wrap: wrap; align-items: flex-end;">
                         <div class="form-group" style="max-width: 260px;">
-                            <label>商品名稱</label>
-                            <input type="text" id="preorder-product-search" placeholder="搜尋商品名稱">
+                            <input type="text" id="preorder-product-search" placeholder="搜尋商品名稱" aria-label="商品名稱">
                         </div>
                         <div class="form-group" style="max-width: 240px;">
-                            <label>IP / 商品類別</label>
                             <div class="tag-select-menu" id="preorder-product-tag-filter"></div>
                         </div>
                         <div class="form-group" style="max-width: 180px;">
-                            <label>狀態</label>
-                            <select id="preorder-product-status-filter">
+                            <select id="preorder-product-status-filter" aria-label="狀態">
                                 <option value="">全部狀態</option>
                                 <option value="active">上架</option>
                                 <option value="inactive">下架</option>
@@ -1593,15 +1619,13 @@
                     <h2 class="page-title">擺攤時程</h2>
                     <button class="btn btn-primary" onclick="openScheduleModal('stall')"><i class="fa-solid fa-plus"></i> 新增擺攤時程</button>
                 </div>
-                <div class="table-wrapper" style="padding: 1.25rem;">
+                <div class="table-wrapper schedule-filter-card" style="padding: 1.25rem;">
                     <div class="form-row" style="flex-wrap: wrap; align-items: flex-end;">
                         <div class="form-group" style="max-width: 260px;">
-                            <label>地點</label>
-                            <input type="text" id="stall-schedule-location-search" placeholder="搜尋地點">
+                            <input type="text" id="stall-schedule-location-search" placeholder="搜尋地點" aria-label="地點">
                         </div>
                         <div class="form-group" style="max-width: 260px;">
-                            <label>時間</label>
-                            <input type="text" id="stall-schedule-time-search" placeholder="搜尋時間或日期">
+                            <input type="text" id="stall-schedule-time-search" placeholder="搜尋時間或日期" aria-label="時間">
                         </div>
                         <button class="btn btn-primary" onclick="renderSchedules('stall')"><i class="fa-solid fa-magnifying-glass"></i> 搜索</button>
                         <button class="btn btn-secondary" onclick="clearScheduleSearch('stall')"><i class="fa-solid fa-eraser"></i> 清除</button>
@@ -1638,15 +1662,13 @@
                     <h2 class="page-title">連線時程</h2>
                     <button class="btn btn-primary" onclick="openScheduleModal('connection')"><i class="fa-solid fa-plus"></i> 新增連線時程</button>
                 </div>
-                <div class="table-wrapper" style="padding: 1.25rem;">
+                <div class="table-wrapper schedule-filter-card" style="padding: 1.25rem;">
                     <div class="form-row" style="flex-wrap: wrap; align-items: flex-end;">
                         <div class="form-group" style="max-width: 260px;">
-                            <label>地點</label>
-                            <input type="text" id="connection-schedule-location-search" placeholder="搜尋地點">
+                            <input type="text" id="connection-schedule-location-search" placeholder="搜尋地點" aria-label="地點">
                         </div>
                         <div class="form-group" style="max-width: 260px;">
-                            <label>時間</label>
-                            <input type="text" id="connection-schedule-time-search" placeholder="搜尋時間或日期">
+                            <input type="text" id="connection-schedule-time-search" placeholder="搜尋時間或日期" aria-label="時間">
                         </div>
                         <button class="btn btn-primary" onclick="renderSchedules('connection')"><i class="fa-solid fa-magnifying-glass"></i> 搜索</button>
                         <button class="btn btn-secondary" onclick="clearScheduleSearch('connection')"><i class="fa-solid fa-eraser"></i> 清除</button>
@@ -1930,8 +1952,9 @@
                 .ledger-summary-item span { display: block; color: #64748b; font-size: 0.72rem; font-weight: 800; }
                 .ledger-summary-item strong { display: block; margin-top: 0.2rem; color: #1e293b; font-size: 0.95rem; }
                 .ledger-filter-card { display: grid; grid-template-columns: 150px 150px 150px minmax(220px, 1fr) 150px auto auto; gap: 0.75rem; align-items: end; }
-                .ledger-filter-card label { display: block; margin-bottom: 0.4rem; color: #64748b; font-size: 0.78rem; font-weight: 700; }
-                .ledger-filter-card input, .ledger-filter-card select { width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 0.375rem; padding: 0 0.75rem; color: #334155; background: white; }
+                .ledger-filter-card > div { position: relative; }
+                .ledger-filter-card input, .ledger-filter-card select { width: 100%; min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.72rem; padding: 0.42rem 0.62rem; color: #334155; font-size: 0.82rem; font-weight: 800; background: white; outline: none; }
+                .ledger-filter-card input:focus, .ledger-filter-card select:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
                 .ledger-check-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
                 .ledger-check-option { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 36px; padding: 0.45rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; color: #334155; font-size: 0.85rem; font-weight: 700; cursor: pointer; background: #fff; }
                 .ledger-check-option input { width: 15px; height: 15px; min-width: 15px; margin: 0; accent-color: var(--primary-color); }
@@ -1962,17 +1985,16 @@
                     </div>
                     <div class="ledger-filter-card">
                         <div>
-                            <label for="ledger-date-start">開始日期</label>
-                            <input type="date" id="ledger-date-start">
+                            <input type="date" id="ledger-date-start" aria-label="開始日期">
+                            <span class="admin-filter-hint">開始日期</span>
                         </div>
                         <div>
-                            <label for="ledger-date-end">結束日期</label>
-                            <input type="date" id="ledger-date-end">
+                            <input type="date" id="ledger-date-end" aria-label="結束日期">
+                            <span class="admin-filter-hint">結束日期</span>
                         </div>
                         <div>
-                            <label for="ledger-category-filter">內容分類</label>
-                            <select id="ledger-category-filter">
-                                <option value="">全部</option>
+                            <select id="ledger-category-filter" aria-label="內容分類">
+                                <option value="">全部分類</option>
                                 <option value="集運">集運</option>
                                 <option value="訂貨">訂貨</option>
                                 <option value="連線">連線</option>
@@ -1983,13 +2005,11 @@
                             </select>
                         </div>
                         <div>
-                            <label for="ledger-content-search">內容搜索</label>
-                            <input type="search" id="ledger-content-search" placeholder="輸入關鍵字模糊搜索">
+                            <input type="search" id="ledger-content-search" placeholder="輸入關鍵字模糊搜索" aria-label="內容搜索">
                         </div>
                         <div>
-                            <label for="ledger-type-filter">支出/收入</label>
-                            <select id="ledger-type-filter">
-                                <option value="">全部</option>
+                            <select id="ledger-type-filter" aria-label="支出/收入">
+                                <option value="">全部收支類型</option>
                                 <option value="expense">支出</option>
                                 <option value="income">收入</option>
                             </select>
@@ -2046,8 +2066,8 @@
                     
                     <!-- Top Full Width Dropdown -->
                     <div style="width: 100%; margin-bottom: 0.5rem;">
-                        <select id="freight-company-filter" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; background-color: white; font-size: 1rem; color: var(--text-dark); appearance: none; cursor: pointer; background-image: url('data:image/svg+xml;utf8,<svg fill=%22%23475569%22 height=%2224%22 viewBox=%220 0 24 24%22 width=%2224%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/></svg>'); background-repeat: no-repeat; background-position: right 1rem center;">
-                            <option value="全部">全部</option>
+                        <select id="freight-company-filter" aria-label="集運公司" style="width: 100%; min-height: 34px; padding: 0.42rem 0.75rem; border: 1px solid #fbcfe8; border-radius: 0.72rem; background-color: white; font-size: 1rem; color: var(--text-dark); appearance: none; cursor: pointer; background-image: url('data:image/svg+xml;utf8,<svg fill=%22%23475569%22 height=%2224%22 viewBox=%220 0 24 24%22 width=%2224%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/></svg>'); background-repeat: no-repeat; background-position: right 1rem center;">
+                            <option value="全部">全部集運公司</option>
                             <option value="Howgowin">Howgowin</option>
                             <option value="大陸集運">大陸集運</option>
                         </select>
@@ -3550,7 +3570,7 @@
             
             if(vSelectNormal) {
                 const currentValN = vSelectNormal.value;
-                let optionsN = '<option value="">全部</option>';
+                let optionsN = '<option value="">全部廠商</option>';
                 vendors.forEach(v => optionsN += `<option value="${v.id}">${v.name}</option>`);
                 vSelectNormal.innerHTML = optionsN;
                 if(currentValN) vSelectNormal.value = currentValN;
@@ -3558,7 +3578,7 @@
 
             if(vSelectWebsite) {
                 const currentValW = vSelectWebsite.value;
-                let optionsW = '<option value="">全部</option>';
+                let optionsW = '<option value="">全部購物網站</option>';
                 websites.forEach(w => optionsW += `<option value="${w.id}">${w.name}</option>`);
                 vSelectWebsite.innerHTML = optionsW;
                 if(currentValW) vSelectWebsite.value = currentValW;
@@ -4173,6 +4193,28 @@
         function sameId(a, b) {
             return String(a) === String(b);
         }
+
+        /**
+         * Native <input type="date"/"month"> can't show custom placeholder text
+         * (browsers ignore the placeholder attribute on these types), so instead
+         * we overlay a light-gray hint span (".admin-filter-hint", a sibling of
+         * the input inside a position:relative wrapper) and hide the input's own
+         * empty-state text via a CSS class so the two don't show at once. Only
+         * applies to inputs that actually have a ".admin-filter-hint" sibling
+         * (the search/filter bars this round) — every other date/month input in
+         * the admin (modals, create/edit forms, etc.) is untouched, since giving
+         * it the "hide text while empty" class with no hint span to replace it
+         * would just make it look blank.
+         */
+        function syncAdminDateHint(el) {
+            if (!el || !el.matches || !el.matches('input[type="date"], input[type="month"]')) return;
+            const hint = el.parentElement && el.parentElement.querySelector('.admin-filter-hint');
+            if (!hint) return;
+            el.classList.toggle('admin-hint-empty', !el.value);
+        }
+        document.addEventListener('input', (e) => syncAdminDateHint(e.target));
+        document.addEventListener('change', (e) => syncAdminDateHint(e.target));
+        document.querySelectorAll('.admin-filter-hint').forEach(hint => syncAdminDateHint(hint.previousElementSibling));
 
         function normalizeProductImageUrl(value = '') {
             const raw = String(value || '').trim();
