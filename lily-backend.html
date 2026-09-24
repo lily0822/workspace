@@ -183,6 +183,7 @@
         .community-status-yellow { background: #fef3c7; }
         .community-status-neutral { background: #f1f5f9; }
         .community-order-notes-input { width: 150px; height: 34px; border: 1px solid #fbcfe8; border-radius: 999px; padding: 0.38rem 0.75rem; color: #111827; font-size: 0.78rem; font-weight: 700; line-height: 1; vertical-align: middle; }
+        .community-shipment-marketplace-input { min-width: 200px; flex: 1; height: 34px; border: 1px solid #fbcfe8; border-radius: 0.72rem; padding: 0.38rem 0.65rem; color: #111827; font-size: 0.78rem; font-weight: 700; }
         .community-notebook-list { display: grid; gap: 0.55rem; }
         .community-notebook-accordion { overflow: hidden; border: 1px solid #fbcfe8; border-radius: 0.9rem; background: white; }
         .community-notebook-accordion summary { display: flex; align-items: center; gap: 0.55rem; padding: 0.7rem 0.85rem; color: #2563eb; font-size: 0.86rem; font-weight: 900; cursor: pointer; list-style: none; }
@@ -1137,7 +1138,7 @@
                                     <th>付款狀態</th>
                                     <th>到貨狀態</th>
                                     <th>目前狀態</th>
-                                    <th>賣貨便</th>
+                                    <th>賣貨便連結</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
@@ -9018,9 +9019,14 @@
                 const snapshots = Array.isArray(request.notebookSnapshot) ? request.notebookSnapshot : [];
                 const allPaid = snapshots.length > 0 && snapshots.every(item => item.paymentStatus === 'paid');
                 const allArrived = snapshots.length > 0 && snapshots.every(item => item.arrivalStatus === 'arrived');
-                const marketplace = request.marketplaceUrl
-                    ? `<a href="${escapeHtml(request.marketplaceUrl)}" target="_blank" rel="noopener noreferrer">開啟連結</a>${request.marketplaceOrderRef ? `<br><small>${escapeHtml(request.marketplaceOrderRef)}</small>` : ''}`
-                    : '<span class="text-muted">建立中</span>';
+                const marketplace = request.status === 'completed' || request.status === 'cancelled'
+                    ? (request.marketplaceUrl
+                        ? `<a href="${escapeHtml(request.marketplaceUrl)}" target="_blank" rel="noopener noreferrer">開啟連結</a>${request.marketplaceOrderRef ? `<br><small>${escapeHtml(request.marketplaceOrderRef)}</small>` : ''}`
+                        : '<span class="text-muted">—</span>')
+                    : `<div style="display:flex;gap:0.35rem;align-items:center;flex-wrap:wrap;">
+                        <input type="text" id="community-shipment-marketplace-input-${escapeHtml(request.id)}" class="community-shipment-marketplace-input" value="${escapeHtml(request.marketplaceUrl || '')}" placeholder="https://...">
+                        <button class="btn btn-sm btn-primary" type="button" onclick="saveCommunityShipmentMarketplaceUrl('${escapeHtml(request.id)}', this)">保存</button>
+                    </div>${request.marketplaceOrderRef ? `<div style="margin-top:0.25rem;font-size:0.72rem;color:#94a3b8;">${escapeHtml(request.marketplaceOrderRef)}</div>` : ''}`;
                 const statusControl = request.status === 'completed'
                     ? '<span class="community-payment-status approved">已通知下單</span>'
                     : communityStatusSelect(COMMUNITY_SHIPMENT_STATUS_OPTIONS, request.status, `updateCommunityShipmentStatus('${escapeHtml(request.id)}', this.value)`);
@@ -9028,7 +9034,7 @@
                     ? `<span class="text-muted">${request.completedAt ? storefrontDateTime(request.completedAt) : '已通知'}</span>`
                     : request.status === 'cancelled'
                         ? '<span class="text-muted">已取消</span>'
-                        : `<span class="community-order-row-actions"><button class="btn btn-secondary btn-sm" type="button" onclick="editCommunityShipmentMarketplace('${escapeHtml(request.id)}')">${request.marketplaceUrl ? '修改賣貨便' : '填寫賣貨便'}</button>${request.marketplaceUrl ? `<button class="btn btn-secondary btn-sm" type="button" onclick="sendCommunityShipmentLineNotification('${escapeHtml(request.id)}', this)"><i class="fa-brands fa-line"></i> 發送賣貨便通知</button>` : ''}${request.status === 'accepted' && request.marketplaceUrl ? `<button class="btn btn-primary btn-sm" type="button" onclick="notifyCommunityShipmentOrder('${escapeHtml(request.id)}')">送出 LINE 下單通知</button>` : ''}</span>`;
+                        : `<span class="community-order-row-actions">${request.marketplaceUrl ? `<button class="btn btn-secondary btn-sm" type="button" onclick="sendCommunityShipmentLineNotification('${escapeHtml(request.id)}', this)"><i class="fa-brands fa-line"></i> 發送賣貨便通知</button>` : ''}${request.status === 'accepted' && request.marketplaceUrl ? `<button class="btn btn-primary btn-sm" type="button" onclick="notifyCommunityShipmentOrder('${escapeHtml(request.id)}')">送出 LINE 下單通知</button>` : ''}</span>`;
                 return `
                     <tr>
                         <td><strong>${escapeHtml(request.lineDisplayName || 'LINE 使用者')}</strong><br><small>${escapeHtml(request.nickname)}</small></td>
@@ -9062,15 +9068,22 @@
             }
         }
 
-        async function editCommunityShipmentMarketplace(id) {
+        async function saveCommunityShipmentMarketplaceUrl(id, button) {
+            const input = document.getElementById(`community-shipment-marketplace-input-${id}`);
+            if (!input) return;
+            const marketplaceUrl = input.value.trim();
+            if (marketplaceUrl && !/^https:\/\//i.test(marketplaceUrl)) {
+                showToast('賣貨便連結必須使用 HTTPS', 'error');
+                return;
+            }
             const request = communityShipmentRequests.find(item => item.id === id);
-            if (!request) return;
-            const marketplaceUrl = window.prompt('請輸入賣貨便 HTTPS 連結', request.marketplaceUrl || '');
-            if (marketplaceUrl === null) return;
-            const marketplaceOrderRef = window.prompt('請輸入賣貨便訂單／識別資料（可留空）', request.marketplaceOrderRef || '');
-            if (marketplaceOrderRef === null) return;
-            const nextStatus = request.status === 'pending' ? 'accepted' : request.status;
-            await updateCommunityShipmentStatus(id, nextStatus, marketplaceUrl.trim(), marketplaceOrderRef.trim());
+            const nextStatus = request?.status === 'pending' ? 'accepted' : (request?.status || 'accepted');
+            if (button) button.disabled = true;
+            try {
+                await updateCommunityShipmentStatus(id, nextStatus, marketplaceUrl, request?.marketplaceOrderRef || '');
+            } finally {
+                if (button) button.disabled = false;
+            }
         }
 
         async function notifyCommunityShipmentOrder(id) {
