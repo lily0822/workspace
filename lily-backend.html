@@ -242,6 +242,7 @@
         .community-shipment-detail-row { display: none; }
         .community-shipment-detail-row.open { display: table-row; }
         .community-shipment-detail-row td { padding: 0.7rem; background: #fff7fb; border-top: 1px dashed #f9a8d4; }
+        #section-community-orders .backend-member-table .community-shipment-detail-row td { text-align: left; }
         .community-shipment-notebook-group { margin-bottom: 0.6rem; }
         .community-shipment-notebook-group:last-child { margin-bottom: 0; }
         .community-shipment-notebook-group h4 { margin: 0 0 0.3rem; font-size: 0.8rem; font-weight: 900; color: #be185d; }
@@ -1107,7 +1108,7 @@
                         </div>
                         <button class="btn btn-primary" type="button" onclick="applyCommunityOrderFilters()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
                         <button class="btn btn-secondary" type="button" onclick="clearCommunityOrderFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
-                        <span id="community-order-selected-count" style="font-size:0.78rem;font-weight:800;color:#64748b;">已選 0 筆</span>
+                        <span id="community-order-selected-count" style="font-size:0.78rem;font-weight:800;color:#64748b;margin-left:auto;">已選 0 筆</span>
                         <div class="backend-member-filter-field">
                             <label for="community-batch-field">批次修改欄位</label>
                             <select id="community-batch-field" onchange="renderCommunityBatchValueOptions()">
@@ -1122,7 +1123,7 @@
                         </div>
                         <button class="btn btn-primary" type="button" id="community-batch-apply-btn" onclick="applyCommunityOrderBatchUpdate()" disabled><i class="fa-solid fa-check-double"></i> 套用到已選項目</button>
                     </div>
-                    <div class="backend-member-filter-row" style="margin-top:0.5rem;">
+                    <div class="backend-member-filter-row" style="margin-top:0.5rem;justify-content:flex-end;">
                         <div class="backend-member-filter-field">
                             <select id="community-line-notify-kind" aria-label="LINE 通知類型">
                                 <option value="bought">通知付款</option>
@@ -1210,7 +1211,7 @@
                     </div>
                 </div>
                 <div class="backend-member-filterbar">
-                    <div class="page-header" style="margin-bottom:0.65rem;">
+                    <div class="page-header" style="margin-bottom:0.65rem;border-bottom:none;padding-bottom:0;">
                         <h3 style="font-size:1.05rem;font-weight:900;color:#2563eb;margin:0;">LINE 通知紀錄</h3>
                         <button class="btn btn-secondary" type="button" onclick="loadCommunityLineNotifications()"><i class="fa-solid fa-rotate"></i> 重新整理</button>
                     </div>
