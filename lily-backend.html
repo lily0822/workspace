@@ -199,14 +199,15 @@
         .community-shipment-notebook-group:last-child { margin-bottom: 0; }
         .community-shipment-notebook-group h4 { margin: 0 0 0.3rem; font-size: 0.8rem; font-weight: 900; color: #be185d; }
         .community-shipment-item-row { display: flex; gap: 0.35rem; padding: 0.25rem 0; font-size: 0.78rem; font-weight: 700; color: #475569; }
-        .community-notebook-list { display: grid; gap: 0.55rem; }
-        .community-notebook-accordion { overflow: hidden; border: 1px solid #fbcfe8; border-radius: 0.9rem; background: white; }
-        .community-notebook-accordion summary { display: flex; align-items: center; gap: 0.55rem; padding: 0.7rem 0.85rem; color: #2563eb; font-size: 0.86rem; font-weight: 900; cursor: pointer; list-style: none; }
-        .community-notebook-accordion summary::-webkit-details-marker { display: none; }
-        .community-notebook-accordion summary::before { content: '▶'; color: #ec4899; font-size: 0.68rem; transition: transform .18s ease; }
-        .community-notebook-accordion[open] summary::before { transform: rotate(90deg); }
-        .community-notebook-body { border-top: 1px dashed #f9a8d4; padding: 0.7rem; }
-        .community-notebook-summary { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.55rem; color: #64748b; font-size: 0.75rem; font-weight: 800; }
+        .community-notebook-table td, .community-notebook-table th { white-space: nowrap; }
+        .community-notebook-table td.community-notebook-name-cell { white-space: normal; }
+        .community-notebook-toggle-row td { padding: 0.4rem 0.6rem; }
+        .community-notebook-toggle-btn { background: none; border: none; cursor: pointer; color: #ec4899; font-size: 0.75rem; padding: 0.2rem; transition: transform .18s ease; }
+        .community-notebook-toggle-btn.open { transform: rotate(180deg); }
+        .community-notebook-detail-row { display: none; }
+        .community-notebook-detail-row.open { display: table-row; }
+        .community-notebook-detail-row td { padding: 0.7rem; background: #fff7fb; border-top: 1px dashed #f9a8d4; }
+        .community-notebook-detail-summary { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.55rem; color: #64748b; font-size: 0.75rem; font-weight: 800; }
         .community-order-row-actions { display: inline-flex; align-items: center; gap: 0.35rem; }
         .backend-member-pill { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0.22rem 0.55rem; font-size: 0.74rem; font-weight: 900; border: 1px solid #e2e8f0; background: #f8fafc; color: #475569; }
         .backend-member-pill.on { border-color: #bbf7d0; background: #dcfce7; color: #166534; }
@@ -1002,22 +1003,38 @@
                 </div>
                 <div class="backend-member-filterbar" style="margin-bottom:0.85rem;">
                     <div class="page-header" style="margin-bottom:0.65rem;">
-                        <h3 style="font-size:0.9rem;font-weight:900;color:#2563eb;margin:0;">LINE 通知紀錄</h3>
-                        <button class="btn btn-secondary" type="button" onclick="loadCommunityLineNotifications()"><i class="fa-solid fa-rotate"></i> 重新整理</button>
-                    </div>
-                    <div class="table-wrapper" style="overflow-x:auto;">
-                        <table class="backend-member-table">
-                            <thead><tr><th>類型</th><th>客人暱稱</th><th>狀態</th><th>失敗原因</th><th>時間</th></tr></thead>
-                            <tbody id="community-line-notification-tbody"><tr><td colspan="5" class="empty-state">尚未載入通知紀錄</td></tr></tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="backend-member-filterbar" style="margin-bottom:0.85rem;">
-                    <div class="page-header" style="margin-bottom:0.65rem;">
                         <h3 style="font-size:0.9rem;font-weight:900;color:#2563eb;margin:0;">記事本管理</h3>
                     </div>
-                    <div id="community-notebook-list" class="community-notebook-list">
-                        <div class="empty-state">尚未載入記事本資料</div>
+                    <div class="backend-member-filter-row" style="margin-bottom:0.6rem;">
+                        <div class="backend-member-filter-field" style="min-width:200px;">
+                            <label for="community-notebook-filter-q">記事本名稱</label>
+                            <input id="community-notebook-filter-q" type="search" placeholder="關鍵字" oninput="applyCommunityNotebookFilters()">
+                        </div>
+                        <div class="backend-member-filter-field">
+                            <label for="community-notebook-filter-ordered-month">下單月份</label>
+                            <input id="community-notebook-filter-ordered-month" type="month" onchange="applyCommunityNotebookFilters()">
+                        </div>
+                        <div class="backend-member-filter-field">
+                            <label for="community-notebook-filter-expected-month">預計出貨月份</label>
+                            <input id="community-notebook-filter-expected-month" type="month" onchange="applyCommunityNotebookFilters()">
+                        </div>
+                        <button class="btn btn-secondary" type="button" onclick="clearCommunityNotebookFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
+                    </div>
+                    <div class="table-wrapper" style="overflow-x:auto;">
+                        <table class="backend-member-table community-notebook-table">
+                            <thead>
+                                <tr>
+                                    <th class="community-order-align-left">記事本名稱</th>
+                                    <th>訂購日期</th>
+                                    <th>預計出貨</th>
+                                    <th>編輯</th>
+                                    <th>明細</th>
+                                </tr>
+                            </thead>
+                            <tbody id="community-notebook-tbody">
+                                <tr><td colspan="5" class="empty-state">尚未載入記事本資料</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
                 <div class="backend-member-filterbar">
@@ -1136,6 +1153,18 @@
                     </div>
                     <div id="community-shipment-list" class="community-shipment-list" style="margin-top:0.6rem;">
                         <div class="empty-state">尚未載入出貨申請</div>
+                    </div>
+                </div>
+                <div class="backend-member-filterbar" style="margin-top:1.25rem;">
+                    <div class="page-header" style="margin-bottom:0.65rem;">
+                        <h3 style="font-size:0.9rem;font-weight:900;color:#2563eb;margin:0;">LINE 通知紀錄</h3>
+                        <button class="btn btn-secondary" type="button" onclick="loadCommunityLineNotifications()"><i class="fa-solid fa-rotate"></i> 重新整理</button>
+                    </div>
+                    <div class="table-wrapper" style="overflow-x:auto;">
+                        <table class="backend-member-table">
+                            <thead><tr><th>類型</th><th>客人暱稱</th><th>狀態</th><th>失敗原因</th><th>時間</th></tr></thead>
+                            <tbody id="community-line-notification-tbody"><tr><td colspan="5" class="empty-state">尚未載入通知紀錄</td></tr></tbody>
+                        </table>
                     </div>
                 </div>
                 <div class="backend-member-filterbar" style="margin-top:1.25rem;">
@@ -2676,11 +2705,49 @@
                 <button class="close-btn" type="button" onclick="closeCommunityShipmentBatchLinkModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body" style="overflow-y:auto;">
-                <div id="community-shipment-batch-link-list" style="display:grid;gap:0.75rem;"></div>
+                <div id="community-shipment-batch-link-list" style="display:grid;gap:0.4rem;"></div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" onclick="closeCommunityShipmentBatchLinkModal()">取消</button>
                 <button class="btn btn-primary" type="button" id="community-shipment-batch-link-save-btn" onclick="saveCommunityShipmentBatchLinks(this)">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="communityNotebookMetaModal">
+        <div class="modal-content" style="max-width:420px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-calendar-days"></i> 記事本時間設定 - <span id="community-notebook-meta-modal-name"></span></h3>
+                <button class="close-btn" type="button" onclick="closeCommunityNotebookMetaModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="display:grid;gap:0.75rem;">
+                <div class="form-group">
+                    <label for="community-notebook-meta-ordered-date">訂購日期</label>
+                    <input type="date" id="community-notebook-meta-ordered-date">
+                </div>
+                <div class="form-group">
+                    <label for="community-notebook-meta-precision">預計出貨時間描述</label>
+                    <select id="community-notebook-meta-precision" onchange="toggleCommunityNotebookMetaFields()">
+                        <option value="unknown">未定</option>
+                        <option value="early">上旬</option>
+                        <option value="mid">中旬</option>
+                        <option value="late">下旬</option>
+                        <option value="end_of_month">月底</option>
+                        <option value="exact">日期確定</option>
+                    </select>
+                </div>
+                <div class="form-group" id="community-notebook-meta-month-field">
+                    <label for="community-notebook-meta-month">預計出貨月份</label>
+                    <input type="month" id="community-notebook-meta-month">
+                </div>
+                <div class="form-group" id="community-notebook-meta-date-field" style="display:none;">
+                    <label for="community-notebook-meta-date">實際出貨日期</label>
+                    <input type="date" id="community-notebook-meta-date">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeCommunityNotebookMetaModal()">取消</button>
+                <button class="btn btn-primary" type="button" onclick="saveCommunityNotebookMeta(this)">儲存</button>
             </div>
         </div>
     </div>
@@ -2863,7 +2930,7 @@
                 loadMemberLineNotificationSettings();
             }
             if(name === 'backend-members') loadBackendMembers();
-            if(name === 'community-orders') { renderCommunityBatchValueOptions(); loadCommunityOrders(); loadCommunityImportBatches(); loadCommunityRemittances(); loadCommunityShipmentRequests(); loadCommunityPendingSummary(); loadCommunityLineTemplates(); loadCommunityLineNotifications(); }
+            if(name === 'community-orders') { renderCommunityBatchValueOptions(); loadCommunityOrders(); loadCommunityNotebookMeta(); loadCommunityImportBatches(); loadCommunityRemittances(); loadCommunityShipmentRequests(); loadCommunityPendingSummary(); loadCommunityLineTemplates(); loadCommunityLineNotifications(); }
             if(name === 'community-fulfillment') { loadCommunityMeetupSlots(); loadCommunityMeetupRequests(); loadCommunityPendingSummary(); }
             if(name === 'community-members') loadCommunityMembers();
             if(name === 'customer-orders') renderCustomerOrders();
@@ -8309,12 +8376,79 @@
             }
         }
 
+        let communityNotebookMeta = new Map();
+        const communityNotebookFilters = { q: '', orderedMonth: '', expectedMonth: '' };
+        const COMMUNITY_NOTEBOOK_SHIPMENT_PRECISION_SUFFIX = {
+            early: '上旬', mid: '中旬', late: '下旬', end_of_month: '底'
+        };
+
+        async function loadCommunityNotebookMeta() {
+            try {
+                const response = await fetch('/api/backend/community/notebooks', { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '記事本時間資料讀取失敗。');
+                communityNotebookMeta = new Map((result.notebooks || []).map(nb => [nb.notebookName, nb]));
+            } catch (error) {
+                console.error(error);
+            }
+            renderCommunityNotebooks();
+        }
+
+        function formatCommunityNotebookExpectedShipment(meta) {
+            if (!meta) return '未定';
+            if (meta.expectedShipmentPrecision === 'exact' && meta.expectedShipmentDate) {
+                const d = new Date(`${meta.expectedShipmentDate}T00:00:00`);
+                if (!Number.isNaN(d.getTime())) return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+            }
+            if (meta.expectedShipmentPrecision === 'unknown' || !meta.expectedShipmentMonth) return '未定';
+            const [year, month] = meta.expectedShipmentMonth.split('-');
+            const suffix = COMMUNITY_NOTEBOOK_SHIPMENT_PRECISION_SUFFIX[meta.expectedShipmentPrecision] || '';
+            return `${year} 年 ${Number(month)} 月${suffix}`;
+        }
+
+        function writeCommunityNotebookFilterInputs() {
+            const qEl = document.getElementById('community-notebook-filter-q');
+            const orderedEl = document.getElementById('community-notebook-filter-ordered-month');
+            const expectedEl = document.getElementById('community-notebook-filter-expected-month');
+            if (qEl) communityNotebookFilters.q = qEl.value.trim();
+            if (orderedEl) communityNotebookFilters.orderedMonth = orderedEl.value;
+            if (expectedEl) communityNotebookFilters.expectedMonth = expectedEl.value;
+        }
+
+        function applyCommunityNotebookFilters() {
+            writeCommunityNotebookFilterInputs();
+            renderCommunityNotebooks();
+        }
+
+        function clearCommunityNotebookFilters() {
+            communityNotebookFilters.q = '';
+            communityNotebookFilters.orderedMonth = '';
+            communityNotebookFilters.expectedMonth = '';
+            const qEl = document.getElementById('community-notebook-filter-q');
+            const orderedEl = document.getElementById('community-notebook-filter-ordered-month');
+            const expectedEl = document.getElementById('community-notebook-filter-expected-month');
+            if (qEl) qEl.value = '';
+            if (orderedEl) orderedEl.value = '';
+            if (expectedEl) expectedEl.value = '';
+            renderCommunityNotebooks();
+        }
+
+        function toggleCommunityNotebookDetail(name) {
+            const id = communityNotebookRowId(name);
+            document.getElementById(`community-notebook-detail-${id}`)?.classList.toggle('open');
+            document.getElementById(`community-notebook-toggle-${id}`)?.classList.toggle('open');
+        }
+
+        function communityNotebookRowId(name) {
+            return name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 40) || 'x' + Math.abs([...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0));
+        }
+
         function renderCommunityNotebooks() {
-            const list = document.getElementById('community-notebook-list');
-            if (!list) return;
-            const openNotebookNames = new Set(
-                Array.from(list.querySelectorAll('details.community-notebook-accordion[open]'))
-                    .map(el => el.dataset.notebookName)
+            const tbody = document.getElementById('community-notebook-tbody');
+            if (!tbody) return;
+            const openIds = new Set(
+                Array.from(tbody.querySelectorAll('.community-notebook-detail-row.open'))
+                    .map(el => el.dataset.rowId)
                     .filter(Boolean)
             );
             const notebooks = [];
@@ -8330,18 +8464,39 @@
                 notebook.rows.push(row);
                 notebook.orderIds.add(row.orderId);
             });
-            if (!notebooks.length) {
-                list.innerHTML = '<div class="empty-state">目前沒有記事本資料</div>';
+            const q = communityNotebookFilters.q.toLocaleLowerCase();
+            const filtered = notebooks.filter(notebook => {
+                if (q && !notebook.name.toLocaleLowerCase().includes(q)) return false;
+                const meta = communityNotebookMeta.get(notebook.name);
+                if (communityNotebookFilters.orderedMonth) {
+                    if (!meta?.orderedDate || !meta.orderedDate.startsWith(communityNotebookFilters.orderedMonth)) return false;
+                }
+                if (communityNotebookFilters.expectedMonth) {
+                    if (!meta?.expectedShipmentMonth || meta.expectedShipmentMonth !== communityNotebookFilters.expectedMonth) return false;
+                }
+                return true;
+            });
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">沒有符合條件的記事本</td></tr>';
                 return;
             }
-            list.innerHTML = notebooks.map(notebook => {
+            tbody.innerHTML = filtered.map(notebook => {
+                const rowId = communityNotebookRowId(notebook.name);
+                const meta = communityNotebookMeta.get(notebook.name);
+                const isOpen = openIds.has(rowId);
                 const boughtCount = notebook.rows.reduce((sum, row) => sum + (row.purchaseStatus === 'bought' ? Number(row.quantity || 0) : 0), 0);
                 const notBoughtCount = notebook.rows.reduce((sum, row) => sum + (row.purchaseStatus === 'not_bought' ? Number(row.quantity || 0) : 0), 0);
                 return `
-                    <details class="community-notebook-accordion" data-notebook-name="${escapeHtml(notebook.name)}" ${openNotebookNames.has(notebook.name) ? 'open' : ''}>
-                        <summary>${escapeHtml(notebook.name)}</summary>
-                        <div class="community-notebook-body">
-                            <div class="community-notebook-summary">
+                    <tr class="community-notebook-toggle-row">
+                        <td class="community-order-align-left community-notebook-name-cell">${escapeHtml(notebook.name)}</td>
+                        <td>${meta?.orderedDate ? escapeHtml(meta.orderedDate) : '<span class="text-muted">未設定</span>'}</td>
+                        <td>${escapeHtml(formatCommunityNotebookExpectedShipment(meta))}</td>
+                        <td><button class="btn btn-sm btn-secondary" type="button" onclick="openCommunityNotebookMetaModal(${quoteJs(notebook.name)})"><i class="fa-solid fa-pen"></i></button></td>
+                        <td><button class="community-notebook-toggle-btn ${isOpen ? 'open' : ''}" type="button" id="community-notebook-toggle-${rowId}" onclick="toggleCommunityNotebookDetail(${quoteJs(notebook.name)})" aria-label="展開明細"><i class="fa-solid fa-chevron-down"></i></button></td>
+                    </tr>
+                    <tr class="community-notebook-detail-row ${isOpen ? 'open' : ''}" id="community-notebook-detail-${rowId}" data-row-id="${rowId}">
+                        <td colspan="5">
+                            <div class="community-notebook-detail-summary">
                                 <span>客人 ${notebook.orderIds.size}・商品 ${notebook.rows.length}・有買到 ${boughtCount}・沒買到 ${notBoughtCount}</span>
                                 <button class="btn btn-sm btn-primary" type="button" onclick="markCommunityNotebookArrived(${quoteJs(notebook.name)})">整本設為已到貨</button>
                             </div>
@@ -8365,10 +8520,70 @@
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
-                    </details>
+                        </td>
+                    </tr>
                 `;
             }).join('');
+        }
+
+        let communityNotebookMetaEditingName = '';
+
+        function openCommunityNotebookMetaModal(notebookName) {
+            communityNotebookMetaEditingName = notebookName;
+            const meta = communityNotebookMeta.get(notebookName) || {};
+            const nameEl = document.getElementById('community-notebook-meta-modal-name');
+            if (nameEl) nameEl.textContent = notebookName;
+            document.getElementById('community-notebook-meta-ordered-date').value = meta.orderedDate || '';
+            document.getElementById('community-notebook-meta-precision').value = meta.expectedShipmentPrecision || 'unknown';
+            document.getElementById('community-notebook-meta-month').value = meta.expectedShipmentMonth || '';
+            document.getElementById('community-notebook-meta-date').value = meta.expectedShipmentDate || '';
+            toggleCommunityNotebookMetaFields();
+            document.getElementById('communityNotebookMetaModal')?.classList.add('active');
+        }
+
+        function closeCommunityNotebookMetaModal() {
+            document.getElementById('communityNotebookMetaModal')?.classList.remove('active');
+        }
+
+        function toggleCommunityNotebookMetaFields() {
+            const precision = document.getElementById('community-notebook-meta-precision')?.value || 'unknown';
+            const monthField = document.getElementById('community-notebook-meta-month-field');
+            const dateField = document.getElementById('community-notebook-meta-date-field');
+            if (monthField) monthField.style.display = precision === 'exact' ? 'none' : '';
+            if (dateField) dateField.style.display = precision === 'exact' ? '' : 'none';
+        }
+
+        async function saveCommunityNotebookMeta(button) {
+            const notebookName = communityNotebookMetaEditingName;
+            if (!notebookName) return;
+            const orderedDate = document.getElementById('community-notebook-meta-ordered-date').value || null;
+            const precision = document.getElementById('community-notebook-meta-precision').value || 'unknown';
+            const month = document.getElementById('community-notebook-meta-month').value || null;
+            const exactDate = document.getElementById('community-notebook-meta-date').value || null;
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch('/api/backend/community/notebooks', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        notebookName,
+                        orderedDate,
+                        expectedShipmentPrecision: precision,
+                        expectedShipmentMonth: month,
+                        expectedShipmentDate: exactDate
+                    })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '記事本時間設定儲存失敗。');
+                showToast('已儲存記事本時間設定', 'success');
+                closeCommunityNotebookMetaModal();
+                await loadCommunityNotebookMeta();
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '記事本時間設定儲存失敗，請稍後再試', 'error');
+            } finally {
+                if (button) button.disabled = false;
+            }
         }
 
         async function markCommunityNotebookArrived(notebookName) {
@@ -9235,16 +9450,9 @@
             if (container) {
                 container.innerHTML = groups.map(group => `
                     <div class="community-shipment-card">
-                        <div style="padding:0.75rem 0.85rem;">
-                            <div style="font-weight:900;color:#334155;">${escapeHtml(group.lineDisplayName || 'LINE 使用者')}（${escapeHtml(group.nickname)}）</div>
-                            <div style="font-size:0.76rem;color:#64748b;margin-top:0.25rem;">包含記事本：${escapeHtml([...group.notebookNames].join('、') || '—')}</div>
-                            <div style="font-size:0.76rem;color:#64748b;margin-top:0.35rem;">
-                                ${group.items.length ? group.items.map(item => `<div>${escapeHtml(item.notebookName)}｜${escapeHtml(item.productName)} ×${Number(item.quantity || 0).toLocaleString('zh-TW')}</div>`).join('') : '（無商品明細）'}
-                            </div>
-                            <label style="display:block;margin-top:0.55rem;">
-                                <span style="font-size:0.72rem;font-weight:900;color:#94a3b8;">賣貨便連結</span>
-                                <input type="text" class="community-shipment-batch-link-input" data-request-ids="${group.requestIds.join(',')}" data-order-ref="${escapeHtml(group.existingOrderRef)}" value="${escapeHtml(group.existingUrl)}" placeholder="https://..." style="width:100%;margin-top:0.25rem;">
-                            </label>
+                        <div style="padding:0.55rem 0.75rem;">
+                            <div style="font-size:0.8rem;font-weight:900;color:#334155;">${escapeHtml(group.nickname)} / ${escapeHtml(group.lineDisplayName || 'LINE 使用者')} / ${escapeHtml([...group.notebookNames].join('、') || '—')}</div>
+                            <input type="text" class="community-shipment-batch-link-input" data-request-ids="${group.requestIds.join(',')}" data-order-ref="${escapeHtml(group.existingOrderRef)}" value="${escapeHtml(group.existingUrl)}" placeholder="賣貨便連結 https://..." style="width:100%;margin-top:0.35rem;">
                         </div>
                     </div>
                 `).join('');
