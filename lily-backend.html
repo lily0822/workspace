@@ -94,6 +94,8 @@
         .btn-success:hover { background-color: #059669; }
         .btn-danger { background-color: #ef4444; color: white; }
         .btn-danger:hover { background-color: #dc2626; }
+        .btn-line { background-color: #06C755; color: white; }
+        .btn-line:hover { background-color: #05a648; }
         .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
         .btn-icon { background: none; border: none; font-size: 1rem; cursor: pointer; color: #94a3b8; transition: color 0.2s; }
         .btn-icon:hover { color: var(--primary-color); }
@@ -184,6 +186,19 @@
         .community-status-neutral { background: #f1f5f9; }
         .community-order-notes-input { width: 150px; height: 34px; border: 1px solid #fbcfe8; border-radius: 999px; padding: 0.38rem 0.75rem; color: #111827; font-size: 0.78rem; font-weight: 700; line-height: 1; vertical-align: middle; }
         .community-shipment-marketplace-input { min-width: 200px; flex: 1; height: 34px; border: 1px solid #fbcfe8; border-radius: 0.72rem; padding: 0.38rem 0.65rem; color: #111827; font-size: 0.78rem; font-weight: 700; }
+        .community-shipment-list { display: grid; gap: 0.65rem; }
+        .community-shipment-card { border: 1px solid #fce7f3; border-radius: 0.9rem; background: #fff7fb; overflow: hidden; }
+        .community-shipment-card-summary { display: flex; flex-wrap: wrap; gap: 0.85rem; align-items: flex-start; padding: 0.75rem 0.85rem; }
+        .community-shipment-field { display: grid; gap: 0.2rem; min-width: 110px; }
+        .community-shipment-field label { font-size: 0.7rem; font-weight: 900; color: #94a3b8; }
+        .community-shipment-field .value { font-size: 0.8rem; font-weight: 800; color: #334155; }
+        .community-shipment-toggle { margin-left: auto; }
+        .community-shipment-card-body { display: none; padding: 0 0.85rem 0.85rem; border-top: 1px dashed #f9a8d4; }
+        .community-shipment-card-body.open { display: block; padding-top: 0.65rem; }
+        .community-shipment-notebook-group { margin-bottom: 0.6rem; }
+        .community-shipment-notebook-group:last-child { margin-bottom: 0; }
+        .community-shipment-notebook-group h4 { margin: 0 0 0.3rem; font-size: 0.8rem; font-weight: 900; color: #be185d; }
+        .community-shipment-item-row { display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.25rem 0; font-size: 0.78rem; font-weight: 700; color: #475569; }
         .community-notebook-list { display: grid; gap: 0.55rem; }
         .community-notebook-accordion { overflow: hidden; border: 1px solid #fbcfe8; border-radius: 0.9rem; background: white; }
         .community-notebook-accordion summary { display: flex; align-items: center; gap: 0.55rem; padding: 0.7rem 0.85rem; color: #2563eb; font-size: 0.86rem; font-weight: 900; cursor: pointer; list-style: none; }
@@ -976,19 +991,12 @@
                         <button class="btn btn-primary" type="button" onclick="openCommunityOrderAddModal()"><i class="fa-solid fa-plus"></i> 手動新增</button>
                         <button class="btn btn-primary" onclick="document.getElementById('community-excel-upload').click()"><i class="fa-solid fa-file-excel"></i> 匯入 Excel</button>
                         <input type="file" id="community-excel-upload" accept=".xlsx, .xls" style="display:none;" onchange="handleCommunityExcelUpload(event)">
+                        <button class="btn btn-line" type="button" onclick="openCommunityLineTemplateSettingsModal()"><i class="fa-brands fa-line"></i> LINE 通知文案設定</button>
                         <button class="btn btn-secondary" onclick="loadCommunityOrders(true)"><i class="fa-solid fa-rotate"></i> 重新整理</button>
                     </div>
                 </div>
                 <div id="community-pending-summary" class="community-pending-summary">
                     <div class="empty-state">待處理摘要讀取中...</div>
-                </div>
-                <div class="backend-member-filterbar" style="margin-bottom:0.85rem;">
-                    <div class="page-header" style="margin-bottom:0.65rem;">
-                        <h3 style="font-size:0.9rem;font-weight:900;color:#2563eb;margin:0;">LINE 通知文案設定</h3>
-                    </div>
-                    <div id="community-line-template-list" class="community-line-template-list">
-                        <div class="empty-state">尚未載入文案設定</div>
-                    </div>
                 </div>
                 <div class="backend-member-filterbar" style="margin-bottom:0.85rem;">
                     <div class="page-header" style="margin-bottom:0.65rem;">
@@ -1116,7 +1124,13 @@
                 </div>
                 <div id="community-remittances" style="margin-top:1.25rem;"></div>
                 <div style="margin-top:1.25rem;">
-                    <h3 style="font-size:0.85rem;font-weight:900;color:#475569;margin-bottom:0.5rem;">出貨申請</h3>
+                    <div class="page-header" style="margin-bottom:0.5rem;">
+                        <h3 style="font-size:0.85rem;font-weight:900;color:#475569;margin:0;">出貨申請</h3>
+                        <div class="toolbar" style="align-items:center;gap:0.6rem;">
+                            <span id="community-shipment-selected-count" style="font-size:0.78rem;font-weight:800;color:#64748b;">已選 0 筆</span>
+                            <button class="btn btn-secondary btn-sm" type="button" id="community-shipment-batch-edit-btn" onclick="openCommunityShipmentBatchLinkModal()" disabled><i class="fa-solid fa-link"></i> 一鍵編輯連結</button>
+                        </div>
+                    </div>
                     <div class="backend-member-filterbar">
                         <div class="backend-member-filter-row">
                             <div class="backend-member-filter-field" style="min-width:220px;">
@@ -1127,25 +1141,8 @@
                             <button class="btn btn-secondary" type="button" onclick="clearCommunityShipmentFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
                         </div>
                     </div>
-                    <div class="table-wrapper" style="overflow-x:auto;margin-top:0.6rem;">
-                        <table class="backend-member-table">
-                            <thead>
-                                <tr>
-                                    <th>客人</th>
-                                    <th>申請時間</th>
-                                    <th>包含記事本</th>
-                                    <th>記事本數量</th>
-                                    <th>付款狀態</th>
-                                    <th>到貨狀態</th>
-                                    <th>目前狀態</th>
-                                    <th>賣貨便連結</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="community-shipment-tbody">
-                                <tr><td colspan="9" class="empty-state">尚未載入出貨申請</td></tr>
-                            </tbody>
-                        </table>
+                    <div id="community-shipment-list" class="community-shipment-list" style="margin-top:0.6rem;">
+                        <div class="empty-state">尚未載入出貨申請</div>
                     </div>
                 </div>
                 <div id="community-import-batches" style="margin-top:1.25rem;"></div>
@@ -2673,6 +2670,39 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" onclick="closeCommunityOrderEditModal()">取消</button>
                 <button class="btn btn-primary" type="button" id="community-order-edit-save-btn" onclick="saveCommunityOrderEdit(this)">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="communityShipmentBatchLinkModal">
+        <div class="modal-content" style="max-width:700px;max-height:88vh;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-link"></i> 一鍵編輯賣貨便連結</h3>
+                <button class="close-btn" type="button" onclick="closeCommunityShipmentBatchLinkModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="overflow-y:auto;">
+                <div id="community-shipment-batch-link-list" style="display:grid;gap:0.75rem;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeCommunityShipmentBatchLinkModal()">取消</button>
+                <button class="btn btn-primary" type="button" id="community-shipment-batch-link-save-btn" onclick="saveCommunityShipmentBatchLinks(this)">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="communityLineTemplateSettingsModal">
+        <div class="modal-content" style="max-width:640px;">
+            <div class="modal-header">
+                <h3><i class="fa-brands fa-line"></i> LINE 通知文案設定</h3>
+                <button class="close-btn" type="button" onclick="closeCommunityLineTemplateSettingsModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="community-line-template-list" class="community-line-template-list">
+                    <div class="empty-state">尚未載入文案設定</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeCommunityLineTemplateSettingsModal()">關閉</button>
             </div>
         </div>
     </div>
@@ -8793,6 +8823,15 @@
             }
         }
 
+        function openCommunityLineTemplateSettingsModal() {
+            document.getElementById('communityLineTemplateSettingsModal')?.classList.add('active');
+            loadCommunityLineTemplates();
+        }
+
+        function closeCommunityLineTemplateSettingsModal() {
+            document.getElementById('communityLineTemplateSettingsModal')?.classList.remove('active');
+        }
+
         function openCommunityLineTemplateModal(kind) {
             document.getElementById('community-line-template-kind').value = kind;
             document.getElementById('community-line-template-modal-title').textContent = communityLineTemplateKindLabel(kind);
@@ -8988,11 +9027,30 @@
             if (event.key === 'Enter') applyCommunityShipmentFilters();
         }
 
+        let communitySelectedShipmentIds = new Set();
+
+        function updateCommunityShipmentSelectionControls() {
+            const countEl = document.getElementById('community-shipment-selected-count');
+            if (countEl) countEl.textContent = `已選 ${communitySelectedShipmentIds.size} 筆`;
+            const batchBtn = document.getElementById('community-shipment-batch-edit-btn');
+            if (batchBtn) batchBtn.disabled = communitySelectedShipmentIds.size === 0;
+        }
+
+        function toggleCommunityShipmentSelect(id, checked) {
+            if (checked) communitySelectedShipmentIds.add(id);
+            else communitySelectedShipmentIds.delete(id);
+            updateCommunityShipmentSelectionControls();
+        }
+
+        function toggleCommunityShipmentCardBody(id) {
+            document.getElementById(`community-shipment-body-${id}`)?.classList.toggle('open');
+        }
+
         async function loadCommunityShipmentRequests() {
-            const tbody = document.getElementById('community-shipment-tbody');
-            if (!tbody) return;
+            const list = document.getElementById('community-shipment-list');
+            if (!list) return;
             writeCommunityShipmentFilterInputs();
-            tbody.innerHTML = '<tr><td colspan="9" class="empty-state">出貨申請讀取中...</td></tr>';
+            list.innerHTML = '<div class="empty-state">出貨申請讀取中...</div>';
             try {
                 const params = new URLSearchParams();
                 if (communityShipmentFilters.q) params.set('q', communityShipmentFilters.q);
@@ -9003,52 +9061,107 @@
                 renderCommunityShipmentRequests(Array.isArray(result.requests) ? result.requests : []);
             } catch (error) {
                 console.error(error);
-                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">出貨申請讀取失敗，請稍後再試。</td></tr>';
+                list.innerHTML = '<div class="empty-state">出貨申請讀取失敗，請稍後再試。</div>';
             }
         }
 
         function renderCommunityShipmentRequests(requests) {
-            const tbody = document.getElementById('community-shipment-tbody');
-            if (!tbody) return;
+            const list = document.getElementById('community-shipment-list');
+            if (!list) return;
+            const openIds = new Set(
+                Array.from(list.querySelectorAll('.community-shipment-card-body.open'))
+                    .map(el => el.dataset.requestId)
+                    .filter(Boolean)
+            );
             communityShipmentRequests = Array.isArray(requests) ? requests : [];
-            if (!requests.length) {
-                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">沒有符合條件的出貨申請</td></tr>';
+            const availableIds = new Set(communityShipmentRequests.map(r => r.id));
+            communitySelectedShipmentIds = new Set([...communitySelectedShipmentIds].filter(id => availableIds.has(id)));
+            if (!communityShipmentRequests.length) {
+                list.innerHTML = '<div class="empty-state">沒有符合條件的出貨申請</div>';
+                updateCommunityShipmentSelectionControls();
                 return;
             }
-            tbody.innerHTML = requests.map(request => {
+            list.innerHTML = communityShipmentRequests.map(request => {
+                const id = escapeHtml(request.id);
                 const snapshots = Array.isArray(request.notebookSnapshot) ? request.notebookSnapshot : [];
                 const allPaid = snapshots.length > 0 && snapshots.every(item => item.paymentStatus === 'paid');
                 const allArrived = snapshots.length > 0 && snapshots.every(item => item.arrivalStatus === 'arrived');
-                const marketplace = request.status === 'completed' || request.status === 'cancelled'
+                const isFinal = request.status === 'completed' || request.status === 'cancelled';
+                const marketplaceField = isFinal
                     ? (request.marketplaceUrl
                         ? `<a href="${escapeHtml(request.marketplaceUrl)}" target="_blank" rel="noopener noreferrer">開啟連結</a>${request.marketplaceOrderRef ? `<br><small>${escapeHtml(request.marketplaceOrderRef)}</small>` : ''}`
                         : '<span class="text-muted">—</span>')
                     : `<div style="display:flex;gap:0.35rem;align-items:center;flex-wrap:wrap;">
-                        <input type="text" id="community-shipment-marketplace-input-${escapeHtml(request.id)}" class="community-shipment-marketplace-input" value="${escapeHtml(request.marketplaceUrl || '')}" placeholder="https://...">
-                        <button class="btn btn-sm btn-primary" type="button" onclick="saveCommunityShipmentMarketplaceUrl('${escapeHtml(request.id)}', this)">保存</button>
+                        <input type="text" id="community-shipment-marketplace-input-${id}" class="community-shipment-marketplace-input" value="${escapeHtml(request.marketplaceUrl || '')}" placeholder="https://...">
+                        <button class="btn btn-sm btn-primary" type="button" onclick="saveCommunityShipmentMarketplaceUrl('${id}', this)">保存</button>
                     </div>${request.marketplaceOrderRef ? `<div style="margin-top:0.25rem;font-size:0.72rem;color:#94a3b8;">${escapeHtml(request.marketplaceOrderRef)}</div>` : ''}`;
                 const statusControl = request.status === 'completed'
-                    ? '<span class="community-payment-status approved">已通知下單</span>'
-                    : communityStatusSelect(COMMUNITY_SHIPMENT_STATUS_OPTIONS, request.status, `updateCommunityShipmentStatus('${escapeHtml(request.id)}', this.value)`);
-                const actions = request.status === 'completed'
-                    ? `<span class="text-muted">${request.completedAt ? storefrontDateTime(request.completedAt) : '已通知'}</span>`
+                    ? '<span class="community-payment-status approved">已完成</span>'
+                    : communityStatusSelect(COMMUNITY_SHIPMENT_STATUS_OPTIONS, request.status, `updateCommunityShipmentStatus('${id}', this.value)`);
+                const actionButtons = request.status === 'completed'
+                    ? `<span class="text-muted">${request.completedAt ? storefrontDateTime(request.completedAt) : '已完成'}</span>`
                     : request.status === 'cancelled'
                         ? '<span class="text-muted">已取消</span>'
-                        : `<span class="community-order-row-actions">${request.marketplaceUrl ? `<button class="btn btn-secondary btn-sm" type="button" onclick="sendCommunityShipmentLineNotification('${escapeHtml(request.id)}', this)"><i class="fa-brands fa-line"></i> 發送賣貨便通知</button>` : ''}${request.status === 'accepted' && request.marketplaceUrl ? `<button class="btn btn-primary btn-sm" type="button" onclick="notifyCommunityShipmentOrder('${escapeHtml(request.id)}')">送出 LINE 下單通知</button>` : ''}</span>`;
+                        : (request.marketplaceUrl ? `<button class="btn btn-secondary btn-sm" type="button" onclick="sendCommunityShipmentLineNotification('${id}', this)"><i class="fa-brands fa-line"></i> 發送賣貨便通知</button>` : '<span class="text-muted">尚無連結</span>');
+                const notebookGroups = Array.isArray(request.notebookGroups) ? request.notebookGroups : [];
+                const bodyHtml = notebookGroups.length
+                    ? notebookGroups.map(group => `
+                        <div class="community-shipment-notebook-group">
+                            <h4>${escapeHtml(group.notebookName)}</h4>
+                            ${(group.items || []).map(item => `
+                                <div class="community-shipment-item-row">
+                                    <span>${escapeHtml(item.productName)}${item.variantSpec ? `（${escapeHtml(item.variantSpec)}）` : ''}</span>
+                                    <span>×${Number(item.quantity || 0).toLocaleString('zh-TW')}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `).join('')
+                    : '<div class="empty-state">尚無商品明細</div>';
                 return `
-                    <tr>
-                        <td><strong>${escapeHtml(request.lineDisplayName || 'LINE 使用者')}</strong><br><small>${escapeHtml(request.nickname)}</small></td>
-                        <td>${storefrontDateTime(request.submittedAt)}</td>
-                        <td>${escapeHtml((request.notebookNames || []).join('、') || '—')}</td>
-                        <td>${(request.notebookNames || []).length}</td>
-                        <td>${allPaid ? '已付款' : '尚未付款'}</td>
-                        <td>${allArrived ? '已到貨' : '尚未全數到貨'}</td>
-                        <td>${statusControl}</td>
-                        <td>${marketplace}</td>
-                        <td>${actions}</td>
-                    </tr>
+                    <div class="community-shipment-card">
+                        <div class="community-shipment-card-summary">
+                            <input type="checkbox" style="margin-top:0.35rem;" ${communitySelectedShipmentIds.has(request.id) ? 'checked' : ''} onchange="toggleCommunityShipmentSelect('${id}', this.checked)">
+                            <div class="community-shipment-field">
+                                <label>客人</label>
+                                <div class="value">${escapeHtml(request.lineDisplayName || 'LINE 使用者')}<br><small>${escapeHtml(request.nickname)}</small></div>
+                            </div>
+                            <div class="community-shipment-field">
+                                <label>申請時間</label>
+                                <div class="value">${storefrontDateTime(request.submittedAt)}</div>
+                            </div>
+                            <div class="community-shipment-field" style="min-width:160px;">
+                                <label>包含記事本</label>
+                                <div class="value">${escapeHtml((request.notebookNames || []).join('、') || '—')}</div>
+                            </div>
+                            <div class="community-shipment-field">
+                                <label>付款狀態</label>
+                                <div class="value">${allPaid ? '已付款' : '尚未付款'}</div>
+                            </div>
+                            <div class="community-shipment-field">
+                                <label>到貨狀態</label>
+                                <div class="value">${allArrived ? '已到貨' : '尚未全數到貨'}</div>
+                            </div>
+                            <div class="community-shipment-field">
+                                <label>目前狀態</label>
+                                <div class="value">${statusControl}</div>
+                            </div>
+                            <div class="community-shipment-field" style="min-width:220px;">
+                                <label>賣貨便連結</label>
+                                <div class="value">${marketplaceField}</div>
+                            </div>
+                            <div class="community-shipment-field">
+                                <label>操作</label>
+                                <div class="value">${actionButtons}</div>
+                            </div>
+                            <button class="btn btn-secondary btn-sm community-shipment-toggle" type="button" onclick="toggleCommunityShipmentCardBody('${id}')"><i class="fa-solid fa-chevron-down"></i> 商品明細</button>
+                        </div>
+                        <div class="community-shipment-card-body ${openIds.has(request.id) ? 'open' : ''}" id="community-shipment-body-${id}" data-request-id="${id}">
+                            ${bodyHtml}
+                        </div>
+                    </div>
                 `;
             }).join('');
+            updateCommunityShipmentSelectionControls();
         }
 
         async function updateCommunityShipmentStatus(id, status, marketplaceUrl = null, marketplaceOrderRef = null) {
@@ -9086,9 +9199,107 @@
             }
         }
 
-        async function notifyCommunityShipmentOrder(id) {
-            if (!confirm('確定已送出 LINE 下單通知嗎？完成後會移入客人的歷史訂單。')) return;
-            await updateCommunityShipmentStatus(id, 'completed');
+        async function patchCommunityShipmentMarketplace(id, status, marketplaceUrl, marketplaceOrderRef) {
+            try {
+                const response = await fetch(`/api/backend/community/shipment-requests/${encodeURIComponent(id)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status, marketplaceUrl, marketplaceOrderRef })
+                });
+                const result = await response.json().catch(() => null);
+                return Boolean(response.ok && result?.ok);
+            } catch (error) {
+                console.error(error);
+                return false;
+            }
+        }
+
+        function communityShipmentBuyerGroups() {
+            const ids = [...communitySelectedShipmentIds];
+            const selected = communityShipmentRequests.filter(r => ids.includes(r.id));
+            const groups = new Map();
+            for (const request of selected) {
+                const key = request.nickname;
+                let group = groups.get(key);
+                if (!group) {
+                    group = { nickname: request.nickname, lineDisplayName: request.lineDisplayName, requestIds: [], notebookNames: new Set(), items: [], existingUrl: '', existingOrderRef: '' };
+                    groups.set(key, group);
+                }
+                group.requestIds.push(request.id);
+                (request.notebookNames || []).forEach(name => group.notebookNames.add(name));
+                (request.notebookGroups || []).forEach(ng => {
+                    (ng.items || []).forEach(item => group.items.push({ notebookName: ng.notebookName, ...item }));
+                });
+                if (!group.existingUrl && request.marketplaceUrl) {
+                    group.existingUrl = request.marketplaceUrl;
+                    group.existingOrderRef = request.marketplaceOrderRef || '';
+                }
+            }
+            return [...groups.values()];
+        }
+
+        function openCommunityShipmentBatchLinkModal() {
+            const groups = communityShipmentBuyerGroups();
+            if (!groups.length) return;
+            const container = document.getElementById('community-shipment-batch-link-list');
+            if (container) {
+                container.innerHTML = groups.map(group => `
+                    <div class="community-shipment-card">
+                        <div style="padding:0.75rem 0.85rem;">
+                            <div style="font-weight:900;color:#334155;">${escapeHtml(group.lineDisplayName || 'LINE 使用者')}（${escapeHtml(group.nickname)}）</div>
+                            <div style="font-size:0.76rem;color:#64748b;margin-top:0.25rem;">包含記事本：${escapeHtml([...group.notebookNames].join('、') || '—')}</div>
+                            <div style="font-size:0.76rem;color:#64748b;margin-top:0.35rem;">
+                                ${group.items.length ? group.items.map(item => `<div>${escapeHtml(item.notebookName)}｜${escapeHtml(item.productName)} ×${Number(item.quantity || 0).toLocaleString('zh-TW')}</div>`).join('') : '（無商品明細）'}
+                            </div>
+                            <label style="display:block;margin-top:0.55rem;">
+                                <span style="font-size:0.72rem;font-weight:900;color:#94a3b8;">賣貨便連結</span>
+                                <input type="text" class="community-shipment-batch-link-input" data-request-ids="${group.requestIds.join(',')}" data-order-ref="${escapeHtml(group.existingOrderRef)}" value="${escapeHtml(group.existingUrl)}" placeholder="https://..." style="width:100%;margin-top:0.25rem;">
+                            </label>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            document.getElementById('communityShipmentBatchLinkModal')?.classList.add('active');
+        }
+
+        function closeCommunityShipmentBatchLinkModal() {
+            document.getElementById('communityShipmentBatchLinkModal')?.classList.remove('active');
+        }
+
+        async function saveCommunityShipmentBatchLinks(button) {
+            const inputs = Array.from(document.querySelectorAll('.community-shipment-batch-link-input'));
+            if (!inputs.length) return;
+            for (const input of inputs) {
+                const url = input.value.trim();
+                if (url && !/^https:\/\//i.test(url)) {
+                    showToast('賣貨便連結必須使用 HTTPS', 'error');
+                    input.focus();
+                    return;
+                }
+            }
+            if (button) button.disabled = true;
+            try {
+                const tasks = [];
+                for (const input of inputs) {
+                    const requestIds = (input.dataset.requestIds || '').split(',').filter(Boolean);
+                    const url = input.value.trim();
+                    const orderRef = input.dataset.orderRef || '';
+                    for (const id of requestIds) {
+                        const request = communityShipmentRequests.find(r => r.id === id);
+                        const nextStatus = request?.status === 'pending' ? 'accepted' : (request?.status || 'accepted');
+                        tasks.push(patchCommunityShipmentMarketplace(id, nextStatus, url, orderRef));
+                    }
+                }
+                const results = await Promise.all(tasks);
+                const successCount = results.filter(Boolean).length;
+                const failedCount = results.length - successCount;
+                closeCommunityShipmentBatchLinkModal();
+                await loadCommunityShipmentRequests();
+                if (failedCount) showToast(`已更新 ${successCount} 筆，失敗 ${failedCount} 筆`, 'error');
+                else showToast(`已更新 ${successCount} 筆賣貨便連結`, 'success');
+            } finally {
+                if (button) button.disabled = false;
+            }
         }
 
         async function sendCommunityShipmentLineNotification(id, button) {
