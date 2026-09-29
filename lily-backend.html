@@ -247,6 +247,28 @@
         .community-shipment-notebook-group:last-child { margin-bottom: 0; }
         .community-shipment-notebook-group h4 { margin: 0 0 0.3rem; font-size: 0.8rem; font-weight: 900; color: #be185d; }
         .community-shipment-item-row { display: flex; gap: 0.35rem; padding: 0.25rem 0; font-size: 0.78rem; font-weight: 700; color: #475569; }
+        .community-livestream-quick-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; }
+        .community-livestream-filter-btn { border: 1px solid #fbcfe8; border-radius: 999px; background: white; color: #475569; font-size: 0.76rem; font-weight: 800; padding: 0.4rem 0.85rem; cursor: pointer; transition: all .15s ease; }
+        .community-livestream-filter-btn:hover { border-color: #f472b6; }
+        .community-livestream-filter-btn.active { background: #ec4899; border-color: #ec4899; color: white; }
+        .community-livestream-list { display: grid; gap: 0.75rem; margin-top: 0.6rem; }
+        .community-livestream-card { display: grid; gap: 0.6rem; border: 1px solid #fbcfe8; border-radius: 1rem; background: white; padding: 0.85rem; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
+        .community-livestream-card-top { display: flex; gap: 0.75rem; align-items: flex-start; }
+        .community-livestream-thumb { width: 64px; height: 64px; border-radius: 0.7rem; object-fit: cover; border: 1px solid #fbcfe8; background: #fff7fb; flex-shrink: 0; }
+        .community-livestream-thumb-placeholder { width: 64px; height: 64px; border-radius: 0.7rem; border: 1px dashed #fbcfe8; background: #fff7fb; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #f9a8d4; font-size: 1.2rem; }
+        .community-livestream-customer { font-size: 0.8rem; font-weight: 900; color: #334155; }
+        .community-livestream-customer small { display: block; margin-top: 0.1rem; font-size: 0.72rem; font-weight: 700; color: #94a3b8; }
+        .community-livestream-product-input { width: 100%; min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.35rem 0.6rem; font-size: 0.82rem; font-weight: 800; color: #334155; outline: none; }
+        .community-livestream-product-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
+        .community-livestream-unrecognized { color: #dc2626; font-size: 0.7rem; font-weight: 900; margin-top: 0.2rem; }
+        .community-livestream-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+        .community-livestream-field { display: grid; gap: 0.2rem; }
+        .community-livestream-field label { font-size: 0.68rem; font-weight: 900; color: #94a3b8; }
+        .community-livestream-field input[type="number"] { width: 100%; min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.35rem 0.5rem; font-size: 0.82rem; font-weight: 800; color: #334155; outline: none; }
+        .community-livestream-total { font-size: 0.9rem; font-weight: 950; color: #be185d; }
+        .community-livestream-status-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        .community-livestream-notes-input { width: 100%; min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.35rem 0.6rem; font-size: 0.8rem; font-weight: 700; color: #334155; outline: none; }
+        @media (min-width: 720px) { .community-livestream-card-top { align-items: center; } }
         .community-notebook-table td, .community-notebook-table th { white-space: nowrap; }
         .community-notebook-table td.community-notebook-name-cell { white-space: normal; }
         .community-notebook-toggle-row td { padding: 0.4rem 0.6rem; }
@@ -756,6 +778,7 @@
                     <div class="submenu-item" data-module-item-key="community-orders" onclick="openTab('community-orders', '社群訂單')">社群訂單</div>
                     <div class="submenu-item" data-module-item-key="community-members" onclick="openTab('community-members', '社群名單')">社群名單</div>
                     <div class="submenu-item" data-module-item-key="community-fulfillment" onclick="openTab('community-fulfillment', '面交管理')">面交管理</div>
+                    <div class="submenu-item" data-module-item-key="community-livestream-orders" onclick="openTab('community-livestream-orders', '社群連線訂單')">社群連線訂單</div>
                 </div>
             </div>
             <div class="menu-group" data-module-key="products">
@@ -1300,6 +1323,41 @@
                             </table>
                         </div>
                     </section>
+                </div>
+            </div>
+
+            <!-- Community Livestream Orders Section (LINE 圖片下單，全新獨立功能) -->
+            <div id="section-community-livestream-orders" class="section-container">
+                <div class="page-header">
+                    <h2 class="page-title">社群連線訂單</h2>
+                    <div class="toolbar">
+                        <button class="btn btn-secondary" type="button" onclick="document.getElementById('community-livestream-excel-upload').click()"><i class="fa-solid fa-file-excel"></i> 匯入 Excel</button>
+                        <input type="file" id="community-livestream-excel-upload" accept=".xlsx, .xls" style="display:none;" onchange="handleCommunityLivestreamExcelUpload(event)">
+                        <button class="btn btn-secondary" type="button" onclick="exportCommunityLivestreamOrders()"><i class="fa-solid fa-file-arrow-down"></i> 匯出 Excel</button>
+                        <button class="btn btn-secondary" type="button" onclick="loadCommunityLivestreamOrders()"><i class="fa-solid fa-rotate"></i> 重新整理</button>
+                    </div>
+                </div>
+                <div class="backend-member-filterbar">
+                    <div class="backend-member-filter-row">
+                        <div class="backend-member-filter-field" style="min-width:220px;">
+                            <input id="community-livestream-search" type="search" placeholder="LINE 名稱、社群暱稱、商品名" aria-label="搜尋" onkeydown="handleCommunityLivestreamSearchKey(event)">
+                        </div>
+                        <button class="btn btn-primary" type="button" onclick="applyCommunityLivestreamFilters()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
+                        <button class="btn btn-secondary" type="button" onclick="clearCommunityLivestreamFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
+                    </div>
+                    <div class="community-livestream-quick-filters">
+                        <button type="button" class="community-livestream-filter-btn" data-filter="purchaseStatus:not_bought" onclick="toggleCommunityLivestreamQuickFilter('purchaseStatus', 'not_bought')">未購買</button>
+                        <button type="button" class="community-livestream-filter-btn" data-filter="purchaseStatus:confirming" onclick="toggleCommunityLivestreamQuickFilter('purchaseStatus', 'confirming')">購買確認中</button>
+                        <button type="button" class="community-livestream-filter-btn" data-filter="purchaseStatus:bought" onclick="toggleCommunityLivestreamQuickFilter('purchaseStatus', 'bought')">已購買</button>
+                        <button type="button" class="community-livestream-filter-btn" data-filter="paymentStatus:unpaid" onclick="toggleCommunityLivestreamQuickFilter('paymentStatus', 'unpaid')">未付款</button>
+                        <button type="button" class="community-livestream-filter-btn" data-filter="paymentStatus:confirming" onclick="toggleCommunityLivestreamQuickFilter('paymentStatus', 'confirming')">匯款確認中</button>
+                        <button type="button" class="community-livestream-filter-btn" data-filter="paymentStatus:paid" onclick="toggleCommunityLivestreamQuickFilter('paymentStatus', 'paid')">已付款</button>
+                        <button type="button" class="community-livestream-filter-btn" data-filter="unrecognizedOnly:1" onclick="toggleCommunityLivestreamQuickFilter('unrecognizedOnly', '1')">無法辨識價格</button>
+                    </div>
+                </div>
+                <div id="community-livestream-result-count" style="margin:0.6rem 0 0.3rem;font-size:0.78rem;font-weight:800;color:#64748b;">共 0 筆</div>
+                <div id="community-livestream-list" class="community-livestream-list">
+                    <div class="empty-state">尚未載入社群連線訂單</div>
                 </div>
             </div>
 
@@ -2970,6 +3028,7 @@
             if(name === 'community-orders') { renderCommunityBatchValueOptions(); loadCommunityOrders(); loadCommunityNotebookMeta(); loadCommunityImportBatches(); loadCommunityRemittances(); loadCommunityShipmentRequests(); loadCommunityPendingSummary(); loadCommunityLineTemplates(); loadCommunityLineNotifications(); }
             if(name === 'community-fulfillment') { loadCommunityMeetupSlots(); loadCommunityMeetupRequests(); loadCommunityPendingSummary(); }
             if(name === 'community-members') loadCommunityMembers();
+            if(name === 'community-livestream-orders') loadCommunityLivestreamOrders();
             if(name === 'customer-orders') renderCustomerOrders();
             if(name === 'stock-products') renderStockProducts();
             if(name === 'preorder-products') renderPreorderProducts();
@@ -8084,6 +8143,263 @@
             await loadCommunityMembers();
             if (failedCount) showToast(`已通過 ${approvedCount} 筆，${failedCount} 筆失敗：${firstError}`, 'error');
             else showToast(`已通過 ${approvedCount} 筆暱稱綁定`, 'success');
+        }
+
+        // ===== 社群連線訂單 (LINE 圖片下單) — 全新獨立功能，不共用 communityOrders 資料 =====
+        let communityLivestreamOrders = [];
+        const communityLivestreamFilters = { q: '', purchaseStatus: '', paymentStatus: '', unrecognizedOnly: false };
+        let communityLivestreamImportRows = [];
+        const COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS = [
+            { value: 'not_bought', label: '未購買' },
+            { value: 'confirming', label: '確認中' },
+            { value: 'bought', label: '已購買' }
+        ];
+        const COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS = [
+            { value: 'unpaid', label: '未付款' },
+            { value: 'confirming', label: '確認中' },
+            { value: 'paid', label: '已付款' }
+        ];
+
+        function communityLivestreamStatusTone(value) {
+            if (['bought', 'paid'].includes(value)) return 'community-status-green';
+            if (['not_bought', 'unpaid'].includes(value)) return 'community-status-red';
+            return 'community-status-yellow';
+        }
+
+        function communityLivestreamStatusSelect(options, current, onchange) {
+            return `<select class="community-order-status-select ${communityLivestreamStatusTone(current)}" onchange="${onchange}; this.className='community-order-status-select ' + communityLivestreamStatusTone(this.value)">
+                ${options.map(option => `<option value="${option.value}" ${option.value === current ? 'selected' : ''}>${option.label}</option>`).join('')}
+            </select>`;
+        }
+
+        function communityLivestreamQueryString() {
+            const params = new URLSearchParams();
+            if (communityLivestreamFilters.q) params.set('q', communityLivestreamFilters.q);
+            if (communityLivestreamFilters.purchaseStatus) params.set('purchaseStatus', communityLivestreamFilters.purchaseStatus);
+            if (communityLivestreamFilters.paymentStatus) params.set('paymentStatus', communityLivestreamFilters.paymentStatus);
+            if (communityLivestreamFilters.unrecognizedOnly) params.set('unrecognizedOnly', '1');
+            const qs = params.toString();
+            return qs ? `?${qs}` : '';
+        }
+
+        function writeCommunityLivestreamFilterInputs() {
+            const search = document.getElementById('community-livestream-search');
+            if (search) search.value = communityLivestreamFilters.q || '';
+            document.querySelectorAll('.community-livestream-filter-btn').forEach(btn => {
+                const [field, value] = (btn.dataset.filter || '').split(':');
+                const active = field === 'unrecognizedOnly'
+                    ? Boolean(communityLivestreamFilters.unrecognizedOnly)
+                    : communityLivestreamFilters[field] === value;
+                btn.classList.toggle('active', active);
+            });
+        }
+
+        async function loadCommunityLivestreamOrders() {
+            const list = document.getElementById('community-livestream-list');
+            if (!list) return;
+            writeCommunityLivestreamFilterInputs();
+            list.innerHTML = '<div class="empty-state">社群連線訂單讀取中...</div>';
+            try {
+                const response = await fetch(`/api/backend/community/livestream-orders${communityLivestreamQueryString()}`, { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '社群連線訂單讀取失敗。');
+                communityLivestreamOrders = Array.isArray(result.orders) ? result.orders : [];
+                renderCommunityLivestreamOrders();
+            } catch (error) {
+                console.error(error);
+                list.innerHTML = '<div class="empty-state">社群連線訂單讀取失敗，請稍後再試。</div>';
+            }
+        }
+
+        function renderCommunityLivestreamOrders() {
+            const list = document.getElementById('community-livestream-list');
+            const countEl = document.getElementById('community-livestream-result-count');
+            if (!list) return;
+            if (countEl) countEl.textContent = `共 ${communityLivestreamOrders.length} 筆`;
+            if (!communityLivestreamOrders.length) {
+                list.innerHTML = '<div class="empty-state">沒有符合條件的社群連線訂單</div>';
+                return;
+            }
+            list.innerHTML = communityLivestreamOrders.map(order => {
+                const id = escapeHtml(order.id);
+                const thumb = order.photoUrl
+                    ? `<img class="community-livestream-thumb" src="${escapeHtml(order.photoUrl)}" alt="商品照片" loading="lazy">`
+                    : `<div class="community-livestream-thumb-placeholder"><i class="fa-regular fa-image"></i></div>`;
+                return `
+                    <div class="community-livestream-card">
+                        <div class="community-livestream-card-top">
+                            ${thumb}
+                            <div style="flex:1;min-width:0;">
+                                <div class="community-livestream-customer">
+                                    ${escapeHtml(order.nickname || '—')}
+                                    <small>${escapeHtml(order.lineDisplayName || 'LINE 使用者')}</small>
+                                </div>
+                                <input type="text" class="community-livestream-product-input" style="margin-top:0.4rem;" value="${escapeHtml(order.productName || '')}" placeholder="下單商品" onchange="patchCommunityLivestreamOrder('${id}', { productName: this.value })">
+                                ${order.unitPrice === null ? '<div class="community-livestream-unrecognized">⚠ 無法辨識價格，請手動輸入</div>' : ''}
+                            </div>
+                        </div>
+                        <div class="community-livestream-grid">
+                            <div class="community-livestream-field">
+                                <label>數量</label>
+                                <input type="number" min="1" step="1" value="${Number(order.quantity || 1)}" onchange="patchCommunityLivestreamOrder('${id}', { quantity: Number(this.value) || 1 })">
+                            </div>
+                            <div class="community-livestream-field">
+                                <label>單價</label>
+                                <input type="number" min="0" step="1" value="${order.unitPrice === null ? '' : Number(order.unitPrice)}" placeholder="未辨識" onchange="patchCommunityLivestreamOrder('${id}', { unitPrice: this.value === '' ? null : Number(this.value) })">
+                            </div>
+                            <div class="community-livestream-field">
+                                <label>總價</label>
+                                <div class="community-livestream-total">${order.totalPrice === null ? '—' : storefrontMoney(order.totalPrice)}</div>
+                            </div>
+                        </div>
+                        <div class="community-livestream-status-row">
+                            ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought', `patchCommunityLivestreamOrder('${id}', { purchaseStatus: this.value })`)}
+                            ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', `patchCommunityLivestreamOrder('${id}', { paymentStatus: this.value })`)}
+                        </div>
+                        <input type="text" class="community-livestream-notes-input" value="${escapeHtml(order.notes || '')}" placeholder="備註" onchange="patchCommunityLivestreamOrder('${id}', { notes: this.value })">
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function patchCommunityLivestreamOrder(id, patch) {
+            try {
+                const response = await fetch(`/api/backend/community/livestream-orders/${encodeURIComponent(id)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(patch)
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '更新失敗。');
+                showToast(result.notified ? '已更新，並已通知客人訂單確認' : '已更新', 'success');
+                await loadCommunityLivestreamOrders();
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '更新失敗，請稍後再試', 'error');
+                await loadCommunityLivestreamOrders();
+            }
+        }
+
+        function handleCommunityLivestreamSearchKey(event) {
+            if (event.key === 'Enter') applyCommunityLivestreamFilters();
+        }
+
+        function applyCommunityLivestreamFilters() {
+            communityLivestreamFilters.q = document.getElementById('community-livestream-search')?.value.trim() || '';
+            loadCommunityLivestreamOrders();
+        }
+
+        function clearCommunityLivestreamFilters() {
+            communityLivestreamFilters.q = '';
+            communityLivestreamFilters.purchaseStatus = '';
+            communityLivestreamFilters.paymentStatus = '';
+            communityLivestreamFilters.unrecognizedOnly = false;
+            loadCommunityLivestreamOrders();
+        }
+
+        function toggleCommunityLivestreamQuickFilter(field, value) {
+            if (field === 'unrecognizedOnly') {
+                communityLivestreamFilters.unrecognizedOnly = !communityLivestreamFilters.unrecognizedOnly;
+            } else {
+                communityLivestreamFilters[field] = communityLivestreamFilters[field] === value ? '' : value;
+            }
+            loadCommunityLivestreamOrders();
+        }
+
+        function handleCommunityLivestreamExcelUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+                    if (!jsonData.length) throw new Error('Excel 沒有資料。');
+
+                    const headerRow = jsonData[0];
+                    const nicknameIdx = communityHeaderIndex(headerRow, ['暱稱', '訂購者', '客戶']);
+                    const productIdx = communityHeaderIndex(headerRow, ['商品']);
+                    const lineNameIdx = communityHeaderIndex(headerRow, ['LINE 名稱', 'LINE名稱']);
+                    const qtyIdx = communityHeaderIndex(headerRow, ['數量']);
+                    const priceIdx = communityHeaderIndex(headerRow, ['單價']);
+                    const notesIdx = communityHeaderIndex(headerRow, ['備註']);
+
+                    if (nicknameIdx === -1 || productIdx === -1) {
+                        throw new Error('找不到「暱稱」或「商品」欄位，請確認 Excel 標題列。');
+                    }
+
+                    const rows = [];
+                    for (let r = 1; r < jsonData.length; r++) {
+                        const row = jsonData[r];
+                        if (!row || !row.length) continue;
+                        const nickname = String(row[nicknameIdx] || '').trim();
+                        const product_name = String(row[productIdx] || '').trim();
+                        if (!nickname || !product_name) continue;
+                        const line_display_name = lineNameIdx !== -1 ? String(row[lineNameIdx] || '').trim() : '';
+                        const quantity = qtyIdx !== -1 ? (Number(String(row[qtyIdx] || '1').trim()) || 1) : 1;
+                        const priceRaw = priceIdx !== -1 ? String(row[priceIdx] || '').trim() : '';
+                        const unit_price = priceRaw === '' ? '' : (Number(priceRaw.replace(/[^0-9.]/g, '')) || 0);
+                        const notes = notesIdx !== -1 ? String(row[notesIdx] || '').trim() : '';
+                        rows.push({ nickname, product_name, line_display_name, quantity, unit_price, notes });
+                    }
+
+                    if (!rows.length) throw new Error('沒有可匯入的資料列。');
+                    communityLivestreamImportRows = rows;
+                    if (!confirm(`確定要匯入 ${rows.length} 筆社群連線訂單嗎？`)) return;
+                    submitCommunityLivestreamImport();
+                } catch (error) {
+                    console.error(error);
+                    showToast(error.message || 'Excel 讀取失敗，請確認檔案格式。', 'error');
+                } finally {
+                    document.getElementById('community-livestream-excel-upload').value = '';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function submitCommunityLivestreamImport() {
+            try {
+                const response = await fetch('/api/backend/community/livestream-orders/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rows: communityLivestreamImportRows })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '匯入失敗。');
+                showToast(`已匯入 ${result.importedCount} 筆社群連線訂單`, 'success');
+                await loadCommunityLivestreamOrders();
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '匯入失敗，請稍後再試', 'error');
+            }
+        }
+
+        function exportCommunityLivestreamOrders() {
+            if (!communityLivestreamOrders.length) {
+                showToast('目前沒有可匯出的資料', 'error');
+                return;
+            }
+            const purchaseLabel = { not_bought: '未購買', confirming: '確認中', bought: '已購買' };
+            const paymentLabel = { unpaid: '未付款', confirming: '確認中', paid: '已付款' };
+            const rows = communityLivestreamOrders.map(order => ({
+                'LINE 名稱': order.lineDisplayName || '',
+                '社群暱稱': order.nickname || '',
+                '下單商品': order.productName || '',
+                '數量': order.quantity || 1,
+                '單價': order.unitPrice === null ? '' : order.unitPrice,
+                '總價': order.totalPrice === null ? '' : order.totalPrice,
+                '購買狀態': purchaseLabel[order.purchaseStatus] || order.purchaseStatus,
+                '匯款狀態': paymentLabel[order.paymentStatus] || order.paymentStatus,
+                '備註': order.notes || ''
+            }));
+            const worksheet = XLSX.utils.json_to_sheet(rows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, '社群連線訂單');
+            const filename = `社群連線訂單_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            XLSX.writeFile(workbook, filename);
         }
 
         function communityOrderQueryString() {
