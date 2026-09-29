@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>麗麗後台 | Portal</title>
+    <!-- 後台 PWA 化第一階段：只做「可加入主畫面」，不做版面/快取改動。
+         manifest/service worker 都放在 /backend 底下，scope 限定不影響
+         前台/會員/購物網站頁面；icons 目前是佔位素材，之後會換正式設計。 -->
+    <link rel="manifest" href="/backend/manifest.json">
+    <meta name="theme-color" content="#ec4899">
+    <link rel="apple-touch-icon" href="/backend/icons/apple-touch-icon-180.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Pinkkkuin 後台">
+    <script>
+        if ('serviceWorker' in navigator && location.pathname === '/backend') {
+            navigator.serviceWorker.register('/backend/sw.js').catch(function () {});
+        }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
