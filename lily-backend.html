@@ -254,8 +254,8 @@
         .community-livestream-list { display: grid; gap: 0.75rem; margin-top: 0.6rem; }
         .community-livestream-card { display: grid; gap: 0.6rem; border: 1px solid #fbcfe8; border-radius: 1rem; background: white; padding: 0.85rem; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
         .community-livestream-card-top { display: flex; gap: 0.75rem; align-items: flex-start; }
-        .community-livestream-thumb { width: 64px; height: 64px; border-radius: 0.7rem; object-fit: cover; border: 1px solid #fbcfe8; background: #fff7fb; flex-shrink: 0; }
-        .community-livestream-thumb-placeholder { width: 64px; height: 64px; border-radius: 0.7rem; border: 1px dashed #fbcfe8; background: #fff7fb; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #f9a8d4; font-size: 1.2rem; }
+        .community-livestream-thumb { width: 40px; height: 40px; border-radius: 0.6rem; object-fit: cover; border: 1px solid #fbcfe8; background: #fff7fb; flex-shrink: 0; }
+        .community-livestream-thumb-placeholder { width: 40px; height: 40px; border-radius: 0.6rem; border: 1px dashed #fbcfe8; background: #fff7fb; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #f9a8d4; font-size: 0.9rem; }
         .community-livestream-customer { font-size: 0.8rem; font-weight: 900; color: #334155; }
         .community-livestream-customer small { display: block; margin-top: 0.1rem; font-size: 0.72rem; font-weight: 700; color: #94a3b8; }
         .community-livestream-product-input { width: 100%; min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.35rem 0.6rem; font-size: 0.82rem; font-weight: 800; color: #334155; outline: none; }
@@ -276,6 +276,18 @@
         .community-livestream-batch-group { display: flex; align-items: center; gap: 0.4rem; }
         .community-livestream-batch-group label { font-size: 0.76rem; font-weight: 800; color: #64748b; }
         .community-livestream-batch-group select { min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.3rem 0.5rem; font-size: 0.8rem; font-weight: 800; color: #334155; }
+        .community-livestream-card-actions { display: flex; gap: 0.35rem; margin-left: auto; flex-shrink: 0; }
+        .community-livestream-icon-btn { width: 30px; height: 30px; border-radius: 0.55rem; border: 1px solid #fbcfe8; background: #fff; color: #64748b; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; }
+        .community-livestream-icon-btn:hover { border-color: #f472b6; color: #be185d; }
+        .community-livestream-icon-btn.danger:hover { border-color: #fca5a5; color: #dc2626; }
+        .community-livestream-summary { display: grid; gap: 0.3rem; }
+        .community-livestream-summary-product { font-size: 0.82rem; font-weight: 800; color: #334155; }
+        .community-livestream-summary-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 800; color: #334155; }
+        .community-livestream-summary-notes { font-size: 0.74rem; font-weight: 700; color: #94a3b8; }
+        .community-livestream-mini-pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.16rem 0.55rem; font-size: 0.68rem; font-weight: 900; color: #111827; }
+        .community-livestream-full { display: none; }
+        .community-livestream-card.expanded .community-livestream-full { display: grid; gap: 0.6rem; margin-top: 0.1rem; }
+        .community-livestream-card.expanded .community-livestream-summary { display: none; }
         .community-notebook-table td, .community-notebook-table th { white-space: nowrap; }
         .community-notebook-table td.community-notebook-name-cell { white-space: normal; }
         .community-notebook-toggle-row td { padding: 0.4rem 0.6rem; }
@@ -436,6 +448,22 @@
                （這個 media query 之外）維持完全不變，所有模塊照常顯示。
                目前沒有「切換回完整版」的逃生門。 */
             .sidebar-menu > .menu-group:not([data-module-key="community"]) { display: none; }
+            /* topbar 再精簡：漢堡選單保留（手機版切換頁籤還是需要它），
+               「回到主選單」文字連結、「調整模塊順序」按鈕、目前開啟中的
+               分頁標籤列都在窄螢幕下沒有用處（手機版一次只顯示一頁，
+               page-title 本身就已經告訴使用者現在在哪一頁），一併隱藏。
+               純顯示層級隱藏，DOM/邏輯不變，桌面版完全不受影響。 */
+            .topbar-home-link { display: none; }
+            .topbar-module-order-btn { display: none; }
+            #tabsContainer { display: none; }
+            /* 搜尋列再精簡：.backend-member-filter-row 系列頁面（會員管理/
+               記事本管理/訂單明細/出貨申請/社群連線訂單等）的搜尋框在窄
+               螢幕下不再強制 220~260px 最小寬度（inline style 設的，用
+               !important 蓋過），改為可自由縮小，避免把後面的搜尋/清除
+               按鈕擠到換行。搜尋/清除按鈕文字改用 .btn-label 包起來隱藏，
+               只留圖示——文字仍留在 DOM 裡，螢幕閱讀器讀得到，不是整個拿掉。 */
+            .backend-member-filter-field { min-width: 0 !important; flex: 1 1 120px; }
+            .backend-member-filter-row .btn-label { display: none; }
             .storefront-order-search-row { align-items: stretch; flex-direction: column; }
             .storefront-order-search-input { flex-basis: auto; width: 100%; }
             .storefront-order-filter-field, .storefront-order-filter-field input, .storefront-order-filter-field select { width: 100%; min-width: 0; }
@@ -852,12 +880,12 @@
             <div class="topbar-left">
                 <div style="display: flex; align-items: center; gap: 1rem; height: 100%;">
                     <i class="fa-solid fa-bars menu-toggle" id="menuToggle"></i>
-                    <a href="index.html" style="text-decoration: none; color: #475569; font-size: 0.9rem;"><i class="fa-solid fa-house"></i> 回到主選單</a>
+                    <a href="index.html" class="topbar-home-link" style="text-decoration: none; color: #475569; font-size: 0.9rem;"><i class="fa-solid fa-house"></i> 回到主選單</a>
                 </div>
                 <div class="tabs-container" id="tabsContainer"></div>
             </div>
             <div class="topbar-right">
-                <button class="btn btn-secondary btn-sm" type="button" onclick="openModuleOrderModal()"><i class="fa-solid fa-arrow-down-wide-short"></i> 調整模塊順序</button>
+                <button class="btn btn-secondary btn-sm topbar-module-order-btn" type="button" onclick="openModuleOrderModal()"><i class="fa-solid fa-arrow-down-wide-short"></i> 調整模塊順序</button>
                 <div class="topbar-icon"><i class="fa-regular fa-bell"></i></div>
                 <div class="topbar-icon"><i class="fa-solid fa-globe"></i></div>
                 <div class="user-profile">
@@ -1035,8 +1063,8 @@
                                 <option value="disabled">停用</option>
                             </select>
                         </div>
-                        <button class="btn btn-primary" type="button" onclick="applyBackendMemberFilters()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
-                        <button class="btn btn-secondary" type="button" onclick="clearBackendMemberFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
+                        <button class="btn btn-primary" type="button" onclick="applyBackendMemberFilters()"><i class="fa-solid fa-magnifying-glass"></i><span class="btn-label"> 搜尋</span></button>
+                        <button class="btn btn-secondary" type="button" onclick="clearBackendMemberFilters()"><i class="fa-solid fa-eraser"></i><span class="btn-label"> 清除</span></button>
                     </div>
                 </div>
                 <div class="table-wrapper" style="margin-top:0.85rem; overflow-x:auto;">
@@ -1106,7 +1134,7 @@
                             <input id="community-notebook-filter-expected-month" type="month" aria-label="預計出貨月份" onchange="applyCommunityNotebookFilters()">
                             <span class="admin-filter-hint">預計出貨月份</span>
                         </div>
-                        <button class="btn btn-secondary" type="button" onclick="clearCommunityNotebookFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
+                        <button class="btn btn-secondary" type="button" onclick="clearCommunityNotebookFilters()"><i class="fa-solid fa-eraser"></i><span class="btn-label"> 清除</span></button>
                     </div>
                     <div class="table-wrapper" style="overflow-x:auto;">
                         <table class="backend-member-table community-notebook-table">
@@ -1155,8 +1183,8 @@
                                 <option value="in_person">面交</option>
                             </select>
                         </div>
-                        <button class="btn btn-primary" type="button" onclick="applyCommunityOrderFilters()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
-                        <button class="btn btn-secondary" type="button" onclick="clearCommunityOrderFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
+                        <button class="btn btn-primary" type="button" onclick="applyCommunityOrderFilters()"><i class="fa-solid fa-magnifying-glass"></i><span class="btn-label"> 搜尋</span></button>
+                        <button class="btn btn-secondary" type="button" onclick="clearCommunityOrderFilters()"><i class="fa-solid fa-eraser"></i><span class="btn-label"> 清除</span></button>
                         <span id="community-order-selected-count" style="font-size:0.78rem;font-weight:800;color:#64748b;margin-left:auto;">已選 0 筆</span>
                         <div class="backend-member-filter-field">
                             <label for="community-batch-field">批次修改欄位</label>
@@ -1235,8 +1263,8 @@
                         <div class="backend-member-filter-field" style="min-width:220px;">
                             <input id="community-shipment-search" type="search" placeholder="社群暱稱、記事本名稱" aria-label="搜尋" onkeydown="handleCommunityShipmentSearchKey(event)">
                         </div>
-                        <button class="btn btn-primary" type="button" onclick="applyCommunityShipmentFilters()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
-                        <button class="btn btn-secondary" type="button" onclick="clearCommunityShipmentFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
+                        <button class="btn btn-primary" type="button" onclick="applyCommunityShipmentFilters()"><i class="fa-solid fa-magnifying-glass"></i><span class="btn-label"> 搜尋</span></button>
+                        <button class="btn btn-secondary" type="button" onclick="clearCommunityShipmentFilters()"><i class="fa-solid fa-eraser"></i><span class="btn-label"> 清除</span></button>
                     </div>
                     <div class="table-wrapper" style="overflow-x:auto;margin-top:0.6rem;">
                         <table class="backend-member-table">
@@ -1369,8 +1397,8 @@
                         <div class="backend-member-filter-field" style="min-width:220px;">
                             <input id="community-livestream-search" type="search" placeholder="LINE 名稱、社群暱稱、商品名" aria-label="搜尋" onkeydown="handleCommunityLivestreamSearchKey(event)">
                         </div>
-                        <button class="btn btn-primary" type="button" onclick="applyCommunityLivestreamFilters()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
-                        <button class="btn btn-secondary" type="button" onclick="clearCommunityLivestreamFilters()"><i class="fa-solid fa-eraser"></i> 清除</button>
+                        <button class="btn btn-primary" type="button" onclick="applyCommunityLivestreamFilters()"><i class="fa-solid fa-magnifying-glass"></i><span class="btn-label"> 搜尋</span></button>
+                        <button class="btn btn-secondary" type="button" onclick="clearCommunityLivestreamFilters()"><i class="fa-solid fa-eraser"></i><span class="btn-label"> 清除</span></button>
                     </div>
                     <div class="community-livestream-quick-filters">
                         <button type="button" class="community-livestream-filter-btn" data-filter="purchaseStatus:not_bought" onclick="toggleCommunityLivestreamQuickFilter('purchaseStatus', 'not_bought')">未購買</button>
@@ -8278,11 +8306,28 @@
             }
         }
 
+        function communityLivestreamStatusLabel(options, value) {
+            return (options.find(option => option.value === value) || {}).label || value;
+        }
+
+        function communityLivestreamMiniPill(options, value) {
+            return `<span class="community-livestream-mini-pill ${communityLivestreamStatusTone(value)}">${escapeHtml(communityLivestreamStatusLabel(options, value))}</span>`;
+        }
+
+        function toggleCommunityLivestreamCard(id) {
+            document.getElementById(`community-livestream-card-${id}`)?.classList.toggle('expanded');
+        }
+
         function renderCommunityLivestreamOrders() {
             const list = document.getElementById('community-livestream-list');
             const countEl = document.getElementById('community-livestream-result-count');
             if (!list) return;
             if (countEl) countEl.textContent = `共 ${communityLivestreamOrders.length} 筆`;
+            const openIds = new Set(
+                Array.from(list.querySelectorAll('.community-livestream-card.expanded'))
+                    .map(el => el.dataset.rowId)
+                    .filter(Boolean)
+            );
             if (!communityLivestreamOrders.length) {
                 list.innerHTML = '<div class="empty-state">沒有符合條件的社群連線訂單</div>';
                 updateCommunityLivestreamSelectionControls();
@@ -8290,6 +8335,7 @@
             }
             list.innerHTML = communityLivestreamOrders.map(order => {
                 const id = escapeHtml(order.id);
+                const isOpen = openIds.has(order.id);
                 const thumb = order.photoUrl
                     ? `<img class="community-livestream-thumb" src="${escapeHtml(order.photoUrl)}" alt="商品照片" loading="lazy">`
                     : `<div class="community-livestream-thumb-placeholder"><i class="fa-regular fa-image"></i></div>`;
@@ -8297,46 +8343,78 @@
                 const remittanceInfo = order.paymentStatus === 'confirming' && (order.remittanceLast5 || order.remittanceAmount !== null)
                     ? `<div class="community-livestream-remittance-info"><span><i class="fa-solid fa-money-check-dollar"></i> 客人回報後 5 碼：${escapeHtml(order.remittanceLast5 || '—')}</span><span>申報金額：${order.remittanceAmount === null ? '—' : storefrontMoney(order.remittanceAmount)}</span></div>`
                     : '';
+                const qty = Number(order.quantity || 1);
+                const priceText = order.unitPrice === null ? '未輸入' : `NT$${order.unitPrice}`;
+                const totalText = order.totalPrice === null ? '—' : storefrontMoney(order.totalPrice);
                 return `
-                    <div class="community-livestream-card">
+                    <div class="community-livestream-card ${isOpen ? 'expanded' : ''}" id="community-livestream-card-${id}" data-row-id="${id}">
                         <div class="community-livestream-card-top">
                             <div class="community-livestream-thumb-wrap">
                                 <input type="checkbox" class="community-livestream-select-checkbox" aria-label="選取此筆社群連線訂單" ${checked} onchange="toggleCommunityLivestreamRowSelect('${id}', this.checked)">
                                 ${thumb}
                             </div>
-                            <div style="flex:1;min-width:0;">
-                                <div class="community-livestream-customer">
-                                    ${escapeHtml(order.nickname || '—')}
-                                    <small>${escapeHtml(order.lineDisplayName || 'LINE 使用者')}</small>
-                                </div>
-                                <input type="text" class="community-livestream-product-input" style="margin-top:0.4rem;" value="${escapeHtml(order.productName || '')}" placeholder="下單商品" onchange="patchCommunityLivestreamOrder('${id}', { productName: this.value })">
-                                ${order.unitPrice === null ? '<div class="community-livestream-unrecognized">⚠ 無法辨識價格，請手動輸入</div>' : ''}
+                            <div class="community-livestream-customer" style="flex:1;min-width:0;">
+                                ${escapeHtml(order.nickname || '—')}
+                                <small>${escapeHtml(order.lineDisplayName || 'LINE 使用者')}</small>
                             </div>
-                        </div>
-                        <div class="community-livestream-grid">
-                            <div class="community-livestream-field">
-                                <label>數量</label>
-                                <input type="number" min="1" step="1" value="${Number(order.quantity || 1)}" onchange="patchCommunityLivestreamOrder('${id}', { quantity: Number(this.value) || 1 })">
+                            <div class="community-livestream-card-actions">
+                                <button class="community-livestream-icon-btn" type="button" onclick="toggleCommunityLivestreamCard('${id}')" aria-label="編輯"><i class="fa-solid fa-pen"></i></button>
+                                <button class="community-livestream-icon-btn danger" type="button" onclick="deleteCommunityLivestreamOrder(${quoteJs(order.id)}, ${quoteJs(order.productName || '')})" aria-label="刪除"><i class="fa-solid fa-trash"></i></button>
                             </div>
-                            <div class="community-livestream-field">
-                                <label>單價</label>
-                                <input type="number" min="0" step="1" value="${order.unitPrice === null ? '' : Number(order.unitPrice)}" placeholder="未辨識" onchange="patchCommunityLivestreamOrder('${id}', { unitPrice: this.value === '' ? null : Number(this.value) })">
-                            </div>
-                            <div class="community-livestream-field">
-                                <label>總價</label>
-                                <div class="community-livestream-total">${order.totalPrice === null ? '—' : storefrontMoney(order.totalPrice)}</div>
-                            </div>
-                        </div>
-                        <div class="community-livestream-status-row">
-                            ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought', `patchCommunityLivestreamOrder('${id}', { purchaseStatus: this.value })`)}
-                            ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', `patchCommunityLivestreamOrder('${id}', { paymentStatus: this.value })`)}
                         </div>
                         ${remittanceInfo}
-                        <input type="text" class="community-livestream-notes-input" value="${escapeHtml(order.notes || '')}" placeholder="備註" onchange="patchCommunityLivestreamOrder('${id}', { notes: this.value })">
+                        <div class="community-livestream-summary">
+                            <div class="community-livestream-summary-product">${order.productName ? escapeHtml(order.productName) : '<span class="community-livestream-unrecognized">⚠ 未辨識</span>'}</div>
+                            <div class="community-livestream-summary-line">
+                                <span>${qty} × ${priceText} = ${totalText}</span>
+                                ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought')}
+                                ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid')}
+                            </div>
+                            ${order.notes ? `<div class="community-livestream-summary-notes">備註：${escapeHtml(order.notes)}</div>` : ''}
+                        </div>
+                        <div class="community-livestream-full">
+                            <input type="text" class="community-livestream-product-input" value="${escapeHtml(order.productName || '')}" placeholder="下單商品" onchange="patchCommunityLivestreamOrder('${id}', { productName: this.value })">
+                            ${order.unitPrice === null ? '<div class="community-livestream-unrecognized">⚠ 無法辨識價格，請手動輸入</div>' : ''}
+                            <div class="community-livestream-grid">
+                                <div class="community-livestream-field">
+                                    <label>數量</label>
+                                    <input type="number" min="1" step="1" value="${qty}" onchange="patchCommunityLivestreamOrder('${id}', { quantity: Number(this.value) || 1 })">
+                                </div>
+                                <div class="community-livestream-field">
+                                    <label>單價</label>
+                                    <input type="number" min="0" step="1" value="${order.unitPrice === null ? '' : Number(order.unitPrice)}" placeholder="未辨識" onchange="patchCommunityLivestreamOrder('${id}', { unitPrice: this.value === '' ? null : Number(this.value) })">
+                                </div>
+                                <div class="community-livestream-field">
+                                    <label>總價</label>
+                                    <div class="community-livestream-total">${totalText}</div>
+                                </div>
+                            </div>
+                            <div class="community-livestream-status-row">
+                                ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought', `patchCommunityLivestreamOrder('${id}', { purchaseStatus: this.value })`)}
+                                ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', `patchCommunityLivestreamOrder('${id}', { paymentStatus: this.value })`)}
+                            </div>
+                            <input type="text" class="community-livestream-notes-input" value="${escapeHtml(order.notes || '')}" placeholder="備註" onchange="patchCommunityLivestreamOrder('${id}', { notes: this.value })">
+                        </div>
                     </div>
                 `;
             }).join('');
             updateCommunityLivestreamSelectionControls();
+        }
+
+        async function deleteCommunityLivestreamOrder(id, productName) {
+            const label = productName || '這項商品';
+            if (!confirm(`確定要刪除「${label}」嗎？此操作無法復原。`)) return;
+            try {
+                const response = await fetch(`/api/backend/community/livestream-orders/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '刪除失敗。');
+                communitySelectedLivestreamIds.delete(id);
+                showToast('已刪除', 'success');
+                await loadCommunityLivestreamOrders();
+            } catch (error) {
+                console.error(error);
+                showToast(error?.message || '刪除失敗，請稍後再試', 'error');
+            }
         }
 
         function toggleCommunityLivestreamRowSelect(id, checked) {
