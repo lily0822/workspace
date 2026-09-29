@@ -269,6 +269,13 @@
         .community-livestream-status-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
         .community-livestream-notes-input { width: 100%; min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.35rem 0.6rem; font-size: 0.8rem; font-weight: 700; color: #334155; outline: none; }
         @media (min-width: 720px) { .community-livestream-card-top { align-items: center; } }
+        .community-livestream-thumb-wrap { position: relative; flex-shrink: 0; }
+        .community-livestream-select-checkbox { position: absolute; top: -6px; left: -6px; width: 20px; height: 20px; z-index: 1; cursor: pointer; accent-color: #ec4899; box-shadow: 0 0 0 2px white; border-radius: 0.3rem; }
+        .community-livestream-remittance-info { border: 1px solid #fde68a; background: #fffbeb; color: #92400e; border-radius: 0.6rem; padding: 0.5rem 0.65rem; font-size: 0.76rem; font-weight: 800; display: flex; flex-wrap: wrap; gap: 0.3rem 0.75rem; }
+        .community-livestream-batch-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px dashed #fbcfe8; }
+        .community-livestream-batch-group { display: flex; align-items: center; gap: 0.4rem; }
+        .community-livestream-batch-group label { font-size: 0.76rem; font-weight: 800; color: #64748b; }
+        .community-livestream-batch-group select { min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.3rem 0.5rem; font-size: 0.8rem; font-weight: 800; color: #334155; }
         .community-notebook-table td, .community-notebook-table th { white-space: nowrap; }
         .community-notebook-table td.community-notebook-name-cell { white-space: normal; }
         .community-notebook-toggle-row td { padding: 0.4rem 0.6rem; }
@@ -423,6 +430,12 @@
                在窄螢幕上會蓋住捲動到底部的內容，這裡只加內容區的底部留白，
                不動浮動按鈕本身的定位。 */
             .content { padding: 1rem 1rem 80px; }
+            /* 手機版導覽收斂：窄螢幕下側邊選單只顯示「社群管理」整組
+               （社群訂單/社群名單/面交管理/社群連線訂單），其餘模塊完全
+               不出現在選單裡。純顯示層級收斂，不動資料/API/權限；桌面版
+               （這個 media query 之外）維持完全不變，所有模塊照常顯示。
+               目前沒有「切換回完整版」的逃生門。 */
+            .sidebar-menu > .menu-group:not([data-module-key="community"]) { display: none; }
             .storefront-order-search-row { align-items: stretch; flex-direction: column; }
             .storefront-order-search-input { flex-basis: auto; width: 100%; }
             .storefront-order-filter-field, .storefront-order-filter-field input, .storefront-order-filter-field select { width: 100%; min-width: 0; }
@@ -1344,6 +1357,7 @@
                 <div class="page-header">
                     <h2 class="page-title">社群連線訂單</h2>
                     <div class="toolbar">
+                        <button class="btn btn-secondary" type="button" onclick="openCommunityLivestreamBankInfoModal()"><i class="fa-solid fa-building-columns"></i> 收款帳號設定</button>
                         <button class="btn btn-secondary" type="button" onclick="document.getElementById('community-livestream-excel-upload').click()"><i class="fa-solid fa-file-excel"></i> 匯入 Excel</button>
                         <input type="file" id="community-livestream-excel-upload" accept=".xlsx, .xls" style="display:none;" onchange="handleCommunityLivestreamExcelUpload(event)">
                         <button class="btn btn-secondary" type="button" onclick="exportCommunityLivestreamOrders()"><i class="fa-solid fa-file-arrow-down"></i> 匯出 Excel</button>
@@ -1360,12 +1374,31 @@
                     </div>
                     <div class="community-livestream-quick-filters">
                         <button type="button" class="community-livestream-filter-btn" data-filter="purchaseStatus:not_bought" onclick="toggleCommunityLivestreamQuickFilter('purchaseStatus', 'not_bought')">未購買</button>
-                        <button type="button" class="community-livestream-filter-btn" data-filter="purchaseStatus:confirming" onclick="toggleCommunityLivestreamQuickFilter('purchaseStatus', 'confirming')">購買確認中</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="purchaseStatus:bought" onclick="toggleCommunityLivestreamQuickFilter('purchaseStatus', 'bought')">已購買</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="paymentStatus:unpaid" onclick="toggleCommunityLivestreamQuickFilter('paymentStatus', 'unpaid')">未付款</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="paymentStatus:confirming" onclick="toggleCommunityLivestreamQuickFilter('paymentStatus', 'confirming')">匯款確認中</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="paymentStatus:paid" onclick="toggleCommunityLivestreamQuickFilter('paymentStatus', 'paid')">已付款</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="unrecognizedOnly:1" onclick="toggleCommunityLivestreamQuickFilter('unrecognizedOnly', '1')">無法辨識價格</button>
+                    </div>
+                    <div class="community-livestream-batch-bar">
+                        <span id="community-livestream-selected-count" style="font-size:0.78rem;font-weight:800;color:#64748b;">已選 0 筆</span>
+                        <div class="community-livestream-batch-group">
+                            <label for="community-livestream-batch-purchase-value">購買狀態改為</label>
+                            <select id="community-livestream-batch-purchase-value">
+                                <option value="not_bought">未購買</option>
+                                <option value="bought">已購買</option>
+                            </select>
+                            <button class="btn btn-sm btn-primary" type="button" id="community-livestream-batch-purchase-btn" onclick="applyCommunityLivestreamBatchPurchaseStatus()" disabled><i class="fa-solid fa-check-double"></i> 套用到已選項目</button>
+                        </div>
+                        <div class="community-livestream-batch-group">
+                            <label for="community-livestream-batch-payment-value">匯款狀態改為</label>
+                            <select id="community-livestream-batch-payment-value">
+                                <option value="unpaid">未付款</option>
+                                <option value="confirming">確認中</option>
+                                <option value="paid">已付款</option>
+                            </select>
+                            <button class="btn btn-sm btn-primary" type="button" id="community-livestream-batch-payment-btn" onclick="applyCommunityLivestreamBatchPaymentStatus()" disabled><i class="fa-solid fa-check-double"></i> 套用到已選項目</button>
+                        </div>
                     </div>
                 </div>
                 <div id="community-livestream-result-count" style="margin:0.6rem 0 0.3rem;font-size:0.78rem;font-weight:800;color:#64748b;">共 0 筆</div>
@@ -2900,6 +2933,25 @@
                 <button class="btn btn-secondary" type="button" onclick="resetCommunityLineTemplateToDefault()">恢復預設文案</button>
                 <button class="btn btn-secondary" type="button" onclick="closeCommunityLineTemplateModal()">取消</button>
                 <button class="btn btn-primary" type="button" id="community-line-template-save-btn" onclick="saveCommunityLineTemplateEdit(this)">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="communityLivestreamBankInfoModal">
+        <div class="modal-content" style="max-width:520px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-building-columns"></i> 收款帳號設定</h3>
+                <button class="close-btn" type="button" onclick="closeCommunityLivestreamBankInfoModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>收款帳號資訊（自由格式，客人「我要匯款」時會附在訊息裡）</label>
+                    <textarea id="community-livestream-bank-info-text" rows="8" placeholder="例如：&#10;銀行：中國信託 (822)&#10;戶名：○○○&#10;帳號：1234-5678-9012"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeCommunityLivestreamBankInfoModal()">取消</button>
+                <button class="btn btn-primary" type="button" id="community-livestream-bank-info-save-btn" onclick="saveCommunityLivestreamBankInfo(this)">儲存</button>
             </div>
         </div>
     </div>
@@ -8162,9 +8214,11 @@
         let communityLivestreamOrders = [];
         const communityLivestreamFilters = { q: '', purchaseStatus: '', paymentStatus: '', unrecognizedOnly: false };
         let communityLivestreamImportRows = [];
+        let communitySelectedLivestreamIds = new Set();
+        // 購買狀態這輪簡化為兩態（拿掉「確認中」），匯款狀態維持三態——
+        // 自助匯款申報流程會把付款中的訂單設成 confirming。
         const COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS = [
             { value: 'not_bought', label: '未購買' },
-            { value: 'confirming', label: '確認中' },
             { value: 'bought', label: '已購買' }
         ];
         const COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS = [
@@ -8231,6 +8285,7 @@
             if (countEl) countEl.textContent = `共 ${communityLivestreamOrders.length} 筆`;
             if (!communityLivestreamOrders.length) {
                 list.innerHTML = '<div class="empty-state">沒有符合條件的社群連線訂單</div>';
+                updateCommunityLivestreamSelectionControls();
                 return;
             }
             list.innerHTML = communityLivestreamOrders.map(order => {
@@ -8238,10 +8293,17 @@
                 const thumb = order.photoUrl
                     ? `<img class="community-livestream-thumb" src="${escapeHtml(order.photoUrl)}" alt="商品照片" loading="lazy">`
                     : `<div class="community-livestream-thumb-placeholder"><i class="fa-regular fa-image"></i></div>`;
+                const checked = communitySelectedLivestreamIds.has(order.id) ? 'checked' : '';
+                const remittanceInfo = order.paymentStatus === 'confirming' && (order.remittanceLast5 || order.remittanceAmount !== null)
+                    ? `<div class="community-livestream-remittance-info"><span><i class="fa-solid fa-money-check-dollar"></i> 客人回報後 5 碼：${escapeHtml(order.remittanceLast5 || '—')}</span><span>申報金額：${order.remittanceAmount === null ? '—' : storefrontMoney(order.remittanceAmount)}</span></div>`
+                    : '';
                 return `
                     <div class="community-livestream-card">
                         <div class="community-livestream-card-top">
-                            ${thumb}
+                            <div class="community-livestream-thumb-wrap">
+                                <input type="checkbox" class="community-livestream-select-checkbox" aria-label="選取此筆社群連線訂單" ${checked} onchange="toggleCommunityLivestreamRowSelect('${id}', this.checked)">
+                                ${thumb}
+                            </div>
                             <div style="flex:1;min-width:0;">
                                 <div class="community-livestream-customer">
                                     ${escapeHtml(order.nickname || '—')}
@@ -8269,10 +8331,68 @@
                             ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought', `patchCommunityLivestreamOrder('${id}', { purchaseStatus: this.value })`)}
                             ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', `patchCommunityLivestreamOrder('${id}', { paymentStatus: this.value })`)}
                         </div>
+                        ${remittanceInfo}
                         <input type="text" class="community-livestream-notes-input" value="${escapeHtml(order.notes || '')}" placeholder="備註" onchange="patchCommunityLivestreamOrder('${id}', { notes: this.value })">
                     </div>
                 `;
             }).join('');
+            updateCommunityLivestreamSelectionControls();
+        }
+
+        function toggleCommunityLivestreamRowSelect(id, checked) {
+            if (checked) communitySelectedLivestreamIds.add(id);
+            else communitySelectedLivestreamIds.delete(id);
+            updateCommunityLivestreamSelectionControls();
+        }
+
+        function updateCommunityLivestreamSelectionControls() {
+            const countEl = document.getElementById('community-livestream-selected-count');
+            if (countEl) countEl.textContent = `已選 ${communitySelectedLivestreamIds.size} 筆`;
+            const purchaseBtn = document.getElementById('community-livestream-batch-purchase-btn');
+            if (purchaseBtn) purchaseBtn.disabled = communitySelectedLivestreamIds.size === 0;
+            const paymentBtn = document.getElementById('community-livestream-batch-payment-btn');
+            if (paymentBtn) paymentBtn.disabled = communitySelectedLivestreamIds.size === 0;
+        }
+
+        async function applyCommunityLivestreamBatchStatus(field, value, button) {
+            const ids = [...communitySelectedLivestreamIds];
+            if (!ids.length) return;
+            if (button) button.disabled = true;
+            try {
+                const patch = {};
+                patch[field] = value;
+                const results = await Promise.all(ids.map(async id => {
+                    try {
+                        const response = await fetch(`/api/backend/community/livestream-orders/${encodeURIComponent(id)}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(patch)
+                        });
+                        const result = await response.json().catch(() => null);
+                        return Boolean(response.ok && result?.ok);
+                    } catch {
+                        return false;
+                    }
+                }));
+                const successCount = results.filter(Boolean).length;
+                const failedCount = results.length - successCount;
+                communitySelectedLivestreamIds = new Set();
+                await loadCommunityLivestreamOrders();
+                if (failedCount) showToast(`批次更新完成：成功 ${successCount} 筆，失敗 ${failedCount} 筆`, 'error');
+                else showToast(`批次更新完成：成功 ${successCount} 筆`, 'success');
+            } finally {
+                if (button) button.disabled = communitySelectedLivestreamIds.size === 0;
+            }
+        }
+
+        function applyCommunityLivestreamBatchPurchaseStatus() {
+            const value = document.getElementById('community-livestream-batch-purchase-value')?.value || 'not_bought';
+            applyCommunityLivestreamBatchStatus('purchaseStatus', value, document.getElementById('community-livestream-batch-purchase-btn'));
+        }
+
+        function applyCommunityLivestreamBatchPaymentStatus() {
+            const value = document.getElementById('community-livestream-batch-payment-value')?.value || 'unpaid';
+            applyCommunityLivestreamBatchStatus('paymentStatus', value, document.getElementById('community-livestream-batch-payment-btn'));
         }
 
         async function patchCommunityLivestreamOrder(id, patch) {
@@ -8395,7 +8515,7 @@
                 showToast('目前沒有可匯出的資料', 'error');
                 return;
             }
-            const purchaseLabel = { not_bought: '未購買', confirming: '確認中', bought: '已購買' };
+            const purchaseLabel = { not_bought: '未購買', bought: '已購買' };
             const paymentLabel = { unpaid: '未付款', confirming: '確認中', paid: '已付款' };
             const rows = communityLivestreamOrders.map(order => ({
                 'LINE 名稱': order.lineDisplayName || '',
@@ -8413,6 +8533,48 @@
             XLSX.utils.book_append_sheet(workbook, worksheet, '社群連線訂單');
             const filename = `社群連線訂單_${new Date().toISOString().slice(0, 10)}.xlsx`;
             XLSX.writeFile(workbook, filename);
+        }
+
+        // ===== 社群連線訂單：店家收款帳號設定 (自助匯款流程用，schedule_settings 通用 KV) =====
+        async function openCommunityLivestreamBankInfoModal() {
+            document.getElementById('communityLivestreamBankInfoModal')?.classList.add('active');
+            const textarea = document.getElementById('community-livestream-bank-info-text');
+            if (textarea) textarea.value = '讀取中...';
+            try {
+                const response = await fetch('/api/backend/community/livestream-bank-info', { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '讀取失敗。');
+                if (textarea) textarea.value = result.text || '';
+            } catch (error) {
+                console.error(error);
+                if (textarea) textarea.value = '';
+                showToast('收款帳號設定讀取失敗，請稍後再試', 'error');
+            }
+        }
+
+        function closeCommunityLivestreamBankInfoModal() {
+            document.getElementById('communityLivestreamBankInfoModal')?.classList.remove('active');
+        }
+
+        async function saveCommunityLivestreamBankInfo(button) {
+            const text = document.getElementById('community-livestream-bank-info-text')?.value || '';
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch('/api/backend/community/livestream-bank-info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '儲存失敗。');
+                showToast('已儲存收款帳號設定', 'success');
+                closeCommunityLivestreamBankInfoModal();
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '儲存失敗，請稍後再試', 'error');
+            } finally {
+                if (button) button.disabled = false;
+            }
         }
 
         function communityOrderQueryString() {
