@@ -3034,6 +3034,10 @@
                     <label>數量確認觸發詞（客人用這些字確認並鎖定「好了」列出的數量）</label>
                     <textarea id="community-livestream-keyword-quantity_confirm" rows="2" placeholder="數量正確"></textarea>
                 </div>
+                <div class="form-group">
+                    <label>修改暱稱觸發詞（客人用這些字隨時重新申請/修改社群暱稱）</label>
+                    <textarea id="community-livestream-keyword-edit_nickname" rows="2" placeholder="修改暱稱"></textarea>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" onclick="closeCommunityLivestreamKeywordModal()">取消</button>
@@ -8775,7 +8779,7 @@
         }
 
         // ===== 社群連線訂單：四組觸發關鍵字設定 (schedule_settings 通用 KV，比照收款帳號設定) =====
-        const COMMUNITY_LIVESTREAM_KEYWORD_GROUP_LABELS = { order: '下單', done: '完成', remittance: '匯款', cancel: '取消', quantity_confirm: '數量確認' };
+        const COMMUNITY_LIVESTREAM_KEYWORD_GROUP_LABELS = { order: '下單', done: '完成', remittance: '匯款', cancel: '取消', quantity_confirm: '數量確認', edit_nickname: '修改暱稱' };
 
         function communityLivestreamKeywordTextareaId(group) {
             return `community-livestream-keyword-${group}`;
