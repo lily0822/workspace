@@ -1394,6 +1394,7 @@
                 <div class="page-header">
                     <h2 class="page-title">社群連線訂單</h2>
                     <div class="toolbar community-livestream-toolbar">
+                        <button class="btn btn-secondary" type="button" onclick="openCommunityLivestreamKeywordModal()"><i class="fa-solid fa-key"></i><span class="btn-label"> 關鍵字設定</span></button>
                         <button class="btn btn-secondary" type="button" onclick="openCommunityLivestreamBankInfoModal()"><i class="fa-solid fa-building-columns"></i><span class="btn-label"> 收款帳號設定</span></button>
                         <button class="btn btn-secondary" type="button" onclick="document.getElementById('community-livestream-excel-upload').click()"><i class="fa-solid fa-file-excel"></i><span class="btn-label"> 匯入 Excel</span></button>
                         <input type="file" id="community-livestream-excel-upload" accept=".xlsx, .xls" style="display:none;" onchange="handleCommunityLivestreamExcelUpload(event)">
@@ -2988,6 +2989,38 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" onclick="closeCommunityLivestreamBankInfoModal()">取消</button>
                 <button class="btn btn-primary" type="button" id="community-livestream-bank-info-save-btn" onclick="saveCommunityLivestreamBankInfo(this)">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="communityLivestreamKeywordModal">
+        <div class="modal-content" style="max-width:560px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-key"></i> 關鍵字設定</h3>
+                <button class="close-btn" type="button" onclick="closeCommunityLivestreamKeywordModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin:0 0 0.75rem;color:#94a3b8;font-size:0.76rem;font-weight:800;">每組關鍵字用逗號或換行分隔多個詞，留空會自動改用預設值。</p>
+                <div class="form-group">
+                    <label>下單觸發詞（客人傳這些字會開啟圖片下單）</label>
+                    <textarea id="community-livestream-keyword-order" rows="2" placeholder="我要下單, 下單, 開始下單"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>完成觸發詞（客人傳完照片後用這些字結束一輪）</label>
+                    <textarea id="community-livestream-keyword-done" rows="2" placeholder="好了, 傳完了, 完成"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>匯款觸發詞（客人用這些字開始自助匯款申報）</label>
+                    <textarea id="community-livestream-keyword-remittance" rows="2" placeholder="我要匯款, 匯款申報"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>取消觸發詞（客人用這些字開始自助取消訂單）</label>
+                    <textarea id="community-livestream-keyword-cancel" rows="2" placeholder="取消訂單, 我要取消"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeCommunityLivestreamKeywordModal()">取消</button>
+                <button class="btn btn-primary" type="button" id="community-livestream-keyword-save-btn" onclick="saveCommunityLivestreamKeywords(this)">儲存</button>
             </div>
         </div>
     </div>
@@ -8655,6 +8688,87 @@
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '儲存失敗。');
                 showToast('已儲存收款帳號設定', 'success');
                 closeCommunityLivestreamBankInfoModal();
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '儲存失敗，請稍後再試', 'error');
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        // ===== 社群連線訂單：四組觸發關鍵字設定 (schedule_settings 通用 KV，比照收款帳號設定) =====
+        const COMMUNITY_LIVESTREAM_KEYWORD_GROUP_LABELS = { order: '下單', done: '完成', remittance: '匯款', cancel: '取消' };
+
+        function communityLivestreamKeywordTextareaId(group) {
+            return `community-livestream-keyword-${group}`;
+        }
+
+        function parseCommunityLivestreamKeywordInput(text) {
+            return String(text || '')
+                .split(/[,，\n]+/)
+                .map(item => item.trim())
+                .filter(Boolean);
+        }
+
+        async function openCommunityLivestreamKeywordModal() {
+            document.getElementById('communityLivestreamKeywordModal')?.classList.add('active');
+            Object.keys(COMMUNITY_LIVESTREAM_KEYWORD_GROUP_LABELS).forEach(group => {
+                const el = document.getElementById(communityLivestreamKeywordTextareaId(group));
+                if (el) el.value = '讀取中...';
+            });
+            try {
+                const response = await fetch('/api/backend/community/livestream-keywords', { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '讀取失敗。');
+                Object.keys(COMMUNITY_LIVESTREAM_KEYWORD_GROUP_LABELS).forEach(group => {
+                    const el = document.getElementById(communityLivestreamKeywordTextareaId(group));
+                    if (el) el.value = (result.keywords?.[group] || []).join(', ');
+                });
+            } catch (error) {
+                console.error(error);
+                Object.keys(COMMUNITY_LIVESTREAM_KEYWORD_GROUP_LABELS).forEach(group => {
+                    const el = document.getElementById(communityLivestreamKeywordTextareaId(group));
+                    if (el) el.value = '';
+                });
+                showToast('關鍵字設定讀取失敗，請稍後再試', 'error');
+            }
+        }
+
+        function closeCommunityLivestreamKeywordModal() {
+            document.getElementById('communityLivestreamKeywordModal')?.classList.remove('active');
+        }
+
+        async function saveCommunityLivestreamKeywords(button, force) {
+            const keywords = {};
+            Object.keys(COMMUNITY_LIVESTREAM_KEYWORD_GROUP_LABELS).forEach(group => {
+                const el = document.getElementById(communityLivestreamKeywordTextareaId(group));
+                keywords[group] = parseCommunityLivestreamKeywordInput(el?.value);
+            });
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch('/api/backend/community/livestream-keywords', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keywords, force: Boolean(force) })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) {
+                    if (result?.needsConfirm) {
+                        const lines = (result.duplicates || []).map(dup => {
+                            const groupNames = (dup.groups || []).map(g => COMMUNITY_LIVESTREAM_KEYWORD_GROUP_LABELS[g] || g).join('、');
+                            return `「${dup.keyword}」同時出現在：${groupNames}`;
+                        });
+                        const message = `偵測到重複的關鍵字，可能會導致其中一組永遠不會被觸發：\n${lines.join('\n')}\n\n確定要照這樣儲存嗎？`;
+                        if (confirm(message)) {
+                            await saveCommunityLivestreamKeywords(button, true);
+                            return;
+                        }
+                        return;
+                    }
+                    throw new Error(result?.error || '儲存失敗。');
+                }
+                showToast('已儲存關鍵字設定', 'success');
+                closeCommunityLivestreamKeywordModal();
             } catch (error) {
                 console.error(error);
                 showToast(error.message || '儲存失敗，請稍後再試', 'error');
