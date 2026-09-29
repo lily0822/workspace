@@ -8386,7 +8386,7 @@
                     : '';
                 const qty = Number(order.quantity || 1);
                 const totalText = order.totalPrice === null ? '—' : storefrontMoney(order.totalPrice);
-                const summaryPriceInput = `<input type="number" min="0" step="1" class="community-livestream-summary-price-input" value="${order.unitPrice === null ? '' : Number(order.unitPrice)}" placeholder="未輸入" onchange="patchCommunityLivestreamOrder('${id}', { unitPrice: this.value === '' ? null : Number(this.value) })">`;
+                const summaryPriceInput = `<input type="number" min="0" step="1" class="community-livestream-summary-price-input" value="${order.unitPrice === null ? '' : Number(order.unitPrice)}" placeholder="未輸入" onchange="patchCommunityLivestreamUnitPrice('${id}', this.value)">`;
                 return `
                     <div class="community-livestream-card ${isOpen ? 'expanded' : ''}" id="community-livestream-card-${id}" data-row-id="${id}">
                         <div class="community-livestream-card-top">
@@ -8405,9 +8405,9 @@
                         </div>
                         ${remittanceInfo}
                         <div class="community-livestream-summary">
-                            <div class="community-livestream-summary-product">${order.productName ? escapeHtml(order.productName) : '<span class="community-livestream-unrecognized">⚠ 未辨識</span>'}</div>
+                            <div class="community-livestream-summary-product">${escapeHtml(order.productName || '')}</div>
                             <div class="community-livestream-summary-line">
-                                <span>${qty} ×</span>${summaryPriceInput}<span>= ${totalText}</span>
+                                <span>${qty} ×</span>${summaryPriceInput}<span class="community-livestream-summary-total">= ${totalText}</span>
                                 ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought')}
                                 ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid')}
                             </div>
@@ -8415,7 +8415,7 @@
                         </div>
                         <div class="community-livestream-full">
                             <input type="text" class="community-livestream-product-input" value="${escapeHtml(order.productName || '')}" placeholder="下單商品" onchange="patchCommunityLivestreamOrder('${id}', { productName: this.value })">
-                            ${order.unitPrice === null ? '<div class="community-livestream-unrecognized">⚠ 無法辨識價格，請手動輸入</div>' : ''}
+                            ${order.unitPrice === null ? '<div class="community-livestream-unrecognized community-livestream-price-warning">⚠ 無法辨識價格，請手動輸入</div>' : ''}
                             <div class="community-livestream-grid">
                                 <div class="community-livestream-field">
                                     <label>數量</label>
@@ -8423,7 +8423,7 @@
                                 </div>
                                 <div class="community-livestream-field">
                                     <label>單價</label>
-                                    <input type="number" min="0" step="1" value="${order.unitPrice === null ? '' : Number(order.unitPrice)}" placeholder="未辨識" onchange="patchCommunityLivestreamOrder('${id}', { unitPrice: this.value === '' ? null : Number(this.value) })">
+                                    <input type="number" min="0" step="1" class="community-livestream-full-price-input" value="${order.unitPrice === null ? '' : Number(order.unitPrice)}" placeholder="未辨識" onchange="patchCommunityLivestreamUnitPrice('${id}', this.value)">
                                 </div>
                                 <div class="community-livestream-field">
                                     <label>總價</label>
@@ -8529,6 +8529,67 @@
                 console.error(error);
                 showToast(error.message || '更新失敗，請稍後再試', 'error');
                 await loadCommunityLivestreamOrders();
+            }
+        }
+
+        // 單價是使用者主動指出體感最差的欄位（常常要手動校正），存檔後不
+        // 整份重新拉取/重新 render（會造成游標跳掉、畫面閃一下、捲動位置
+        // 跑掉）——只更新記憶體裡這筆訂單物件 + 這張卡片裡顯示總價的文字
+        // 跟另一個單價輸入框（摘要/展開表單各有一個，同一個欄位要互相同步）。
+        // 其餘欄位（狀態/商品名稱/備註/數量）維持原本整份重新載入的做法。
+        async function patchCommunityLivestreamUnitPrice(id, rawValue) {
+            const value = rawValue === '' ? null : Number(rawValue);
+            try {
+                const response = await fetch(`/api/backend/community/livestream-orders/${encodeURIComponent(id)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ unitPrice: value })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '更新失敗。');
+
+                const order = communityLivestreamOrders.find(o => o.id === id);
+                const wasNull = order ? order.unitPrice === null : false;
+                if (order) {
+                    order.unitPrice = value;
+                    order.totalPrice = value === null ? null : value * Number(order.quantity || 1);
+                }
+
+                // 例外：目前正套用「無法辨識價格」快篩，而且這筆原本單價是
+                // null、這次被填上數字了——存檔後這筆理論上不該再出現在
+                // 目前畫面上，直接從畫面/記憶體陣列移除，不用整份重抓。
+                if (communityLivestreamFilters.unrecognizedOnly && wasNull && value !== null) {
+                    communityLivestreamOrders = communityLivestreamOrders.filter(o => o.id !== id);
+                    communitySelectedLivestreamIds.delete(id);
+                    document.getElementById(`community-livestream-card-${id}`)?.remove();
+                    const countEl = document.getElementById('community-livestream-total-count-text');
+                    if (countEl) countEl.textContent = `共 ${communityLivestreamOrders.length} 筆`;
+                    if (!communityLivestreamOrders.length) {
+                        const list = document.getElementById('community-livestream-list');
+                        if (list) list.innerHTML = '<div class="empty-state">沒有符合條件的社群連線訂單</div>';
+                    }
+                    updateCommunityLivestreamSelectionControls();
+                    showToast('已更新', 'success');
+                    return;
+                }
+
+                const totalText = order && order.totalPrice !== null ? storefrontMoney(order.totalPrice) : '—';
+                const card = document.getElementById(`community-livestream-card-${id}`);
+                if (card) {
+                    const summaryTotal = card.querySelector('.community-livestream-summary-total');
+                    if (summaryTotal) summaryTotal.textContent = `= ${totalText}`;
+                    const fullTotal = card.querySelector('.community-livestream-total');
+                    if (fullTotal) fullTotal.textContent = totalText;
+                    const priceText = value === null ? '' : String(value);
+                    card.querySelectorAll('.community-livestream-summary-price-input, .community-livestream-full-price-input').forEach(input => {
+                        if (input.value !== priceText) input.value = priceText;
+                    });
+                    if (value !== null) card.querySelector('.community-livestream-price-warning')?.remove();
+                }
+                showToast('已更新', 'success');
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '更新失敗，請稍後再試', 'error');
             }
         }
 
