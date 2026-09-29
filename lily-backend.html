@@ -247,11 +247,12 @@
         .community-shipment-notebook-group:last-child { margin-bottom: 0; }
         .community-shipment-notebook-group h4 { margin: 0 0 0.3rem; font-size: 0.8rem; font-weight: 900; color: #be185d; }
         .community-shipment-item-row { display: flex; gap: 0.35rem; padding: 0.25rem 0; font-size: 0.78rem; font-weight: 700; color: #475569; }
-        .community-livestream-quick-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; }
+        .community-livestream-filterbar { gap: 0.4rem; }
+        .community-livestream-quick-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
         .community-livestream-filter-btn { border: 1px solid #fbcfe8; border-radius: 999px; background: white; color: #475569; font-size: 0.76rem; font-weight: 800; padding: 0.4rem 0.85rem; cursor: pointer; transition: all .15s ease; }
         .community-livestream-filter-btn:hover { border-color: #f472b6; }
         .community-livestream-filter-btn.active { background: #ec4899; border-color: #ec4899; color: white; }
-        .community-livestream-list { display: grid; gap: 0.75rem; margin-top: 0.6rem; }
+        .community-livestream-list { display: grid; gap: 0.75rem; margin-top: 0.35rem; }
         .community-livestream-card { display: grid; gap: 0.6rem; border: 1px solid #fbcfe8; border-radius: 1rem; background: white; padding: 0.85rem; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
         .community-livestream-card-top { display: flex; gap: 0.75rem; align-items: flex-start; }
         .community-livestream-thumb { width: 40px; height: 40px; border-radius: 0.6rem; object-fit: cover; border: 1px solid #fbcfe8; background: #fff7fb; flex-shrink: 0; }
@@ -272,17 +273,21 @@
         .community-livestream-thumb-wrap { position: relative; flex-shrink: 0; }
         .community-livestream-select-checkbox { position: absolute; top: -6px; left: -6px; width: 20px; height: 20px; z-index: 1; cursor: pointer; accent-color: #ec4899; box-shadow: 0 0 0 2px white; border-radius: 0.3rem; }
         .community-livestream-remittance-info { border: 1px solid #fde68a; background: #fffbeb; color: #92400e; border-radius: 0.6rem; padding: 0.5rem 0.65rem; font-size: 0.76rem; font-weight: 800; display: flex; flex-wrap: wrap; gap: 0.3rem 0.75rem; }
-        .community-livestream-batch-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px dashed #fbcfe8; }
-        .community-livestream-batch-group { display: flex; align-items: center; gap: 0.4rem; }
+        .community-livestream-batch-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-top: 0.45rem; padding-top: 0.45rem; border-top: 1px dashed #fbcfe8; }
+        .community-livestream-batch-group { display: flex; align-items: center; gap: 0.35rem; }
         .community-livestream-batch-group label { font-size: 0.76rem; font-weight: 800; color: #64748b; }
-        .community-livestream-batch-group select { min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.3rem 0.5rem; font-size: 0.8rem; font-weight: 800; color: #334155; }
+        .community-livestream-batch-group select { min-height: 32px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.25rem 0.4rem; font-size: 0.78rem; font-weight: 800; color: #334155; }
+        .community-livestream-batch-group .btn { min-width: 32px; padding: 0.3rem 0.5rem; }
+        .community-livestream-count-line { margin: 0.35rem 0; font-size: 0.78rem; font-weight: 800; color: #64748b; }
         .community-livestream-card-actions { display: flex; gap: 0.35rem; margin-left: auto; flex-shrink: 0; }
         .community-livestream-icon-btn { width: 30px; height: 30px; border-radius: 0.55rem; border: 1px solid #fbcfe8; background: #fff; color: #64748b; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; }
         .community-livestream-icon-btn:hover { border-color: #f472b6; color: #be185d; }
         .community-livestream-icon-btn.danger:hover { border-color: #fca5a5; color: #dc2626; }
         .community-livestream-summary { display: grid; gap: 0.3rem; }
         .community-livestream-summary-product { font-size: 0.82rem; font-weight: 800; color: #334155; }
-        .community-livestream-summary-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 800; color: #334155; }
+        .community-livestream-summary-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; font-size: 0.8rem; font-weight: 800; color: #334155; }
+        .community-livestream-summary-price-input { width: 64px; min-height: 28px; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.15rem 0.35rem; font-size: 0.8rem; font-weight: 800; color: #334155; outline: none; text-align: center; }
+        .community-livestream-summary-price-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
         .community-livestream-summary-notes { font-size: 0.74rem; font-weight: 700; color: #94a3b8; }
         .community-livestream-mini-pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.16rem 0.55rem; font-size: 0.68rem; font-weight: 900; color: #111827; }
         .community-livestream-full { display: none; }
@@ -464,6 +469,10 @@
                只留圖示——文字仍留在 DOM 裡，螢幕閱讀器讀得到，不是整個拿掉。 */
             .backend-member-filter-field { min-width: 0 !important; flex: 1 1 120px; }
             .backend-member-filter-row .btn-label { display: none; }
+            /* 社群連線訂單頂部工具列（收款帳號設定/匯入/匯出/重新整理）：
+               窄螢幕下只留圖示，讓 4 顆按鈕能排在同一行，不再換行成兩排。
+               文字一樣包在 .btn-label 裡隱藏，不是整個拿掉。 */
+            .community-livestream-toolbar .btn-label { display: none; }
             .storefront-order-search-row { align-items: stretch; flex-direction: column; }
             .storefront-order-search-input { flex-basis: auto; width: 100%; }
             .storefront-order-filter-field, .storefront-order-filter-field input, .storefront-order-filter-field select { width: 100%; min-width: 0; }
@@ -1384,15 +1393,15 @@
             <div id="section-community-livestream-orders" class="section-container">
                 <div class="page-header">
                     <h2 class="page-title">社群連線訂單</h2>
-                    <div class="toolbar">
-                        <button class="btn btn-secondary" type="button" onclick="openCommunityLivestreamBankInfoModal()"><i class="fa-solid fa-building-columns"></i> 收款帳號設定</button>
-                        <button class="btn btn-secondary" type="button" onclick="document.getElementById('community-livestream-excel-upload').click()"><i class="fa-solid fa-file-excel"></i> 匯入 Excel</button>
+                    <div class="toolbar community-livestream-toolbar">
+                        <button class="btn btn-secondary" type="button" onclick="openCommunityLivestreamBankInfoModal()"><i class="fa-solid fa-building-columns"></i><span class="btn-label"> 收款帳號設定</span></button>
+                        <button class="btn btn-secondary" type="button" onclick="document.getElementById('community-livestream-excel-upload').click()"><i class="fa-solid fa-file-excel"></i><span class="btn-label"> 匯入 Excel</span></button>
                         <input type="file" id="community-livestream-excel-upload" accept=".xlsx, .xls" style="display:none;" onchange="handleCommunityLivestreamExcelUpload(event)">
-                        <button class="btn btn-secondary" type="button" onclick="exportCommunityLivestreamOrders()"><i class="fa-solid fa-file-arrow-down"></i> 匯出 Excel</button>
-                        <button class="btn btn-secondary" type="button" onclick="loadCommunityLivestreamOrders()"><i class="fa-solid fa-rotate"></i> 重新整理</button>
+                        <button class="btn btn-secondary" type="button" onclick="exportCommunityLivestreamOrders()"><i class="fa-solid fa-file-arrow-down"></i><span class="btn-label"> 匯出 Excel</span></button>
+                        <button class="btn btn-secondary" type="button" onclick="loadCommunityLivestreamOrders()"><i class="fa-solid fa-rotate"></i><span class="btn-label"> 重新整理</span></button>
                     </div>
                 </div>
-                <div class="backend-member-filterbar">
+                <div class="backend-member-filterbar community-livestream-filterbar">
                     <div class="backend-member-filter-row">
                         <div class="backend-member-filter-field" style="min-width:220px;">
                             <input id="community-livestream-search" type="search" placeholder="LINE 名稱、社群暱稱、商品名" aria-label="搜尋" onkeydown="handleCommunityLivestreamSearchKey(event)">
@@ -1409,27 +1418,26 @@
                         <button type="button" class="community-livestream-filter-btn" data-filter="unrecognizedOnly:1" onclick="toggleCommunityLivestreamQuickFilter('unrecognizedOnly', '1')">無法辨識價格</button>
                     </div>
                     <div class="community-livestream-batch-bar">
-                        <span id="community-livestream-selected-count" style="font-size:0.78rem;font-weight:800;color:#64748b;">已選 0 筆</span>
                         <div class="community-livestream-batch-group">
-                            <label for="community-livestream-batch-purchase-value">購買狀態改為</label>
+                            <label for="community-livestream-batch-purchase-value">購買</label>
                             <select id="community-livestream-batch-purchase-value">
                                 <option value="not_bought">未購買</option>
                                 <option value="bought">已購買</option>
                             </select>
-                            <button class="btn btn-sm btn-primary" type="button" id="community-livestream-batch-purchase-btn" onclick="applyCommunityLivestreamBatchPurchaseStatus()" disabled><i class="fa-solid fa-check-double"></i> 套用到已選項目</button>
+                            <button class="btn btn-sm btn-primary" type="button" id="community-livestream-batch-purchase-btn" onclick="applyCommunityLivestreamBatchPurchaseStatus()" disabled aria-label="套用購買狀態到已選項目"><i class="fa-solid fa-check"></i></button>
                         </div>
                         <div class="community-livestream-batch-group">
-                            <label for="community-livestream-batch-payment-value">匯款狀態改為</label>
+                            <label for="community-livestream-batch-payment-value">匯款</label>
                             <select id="community-livestream-batch-payment-value">
                                 <option value="unpaid">未付款</option>
                                 <option value="confirming">確認中</option>
                                 <option value="paid">已付款</option>
                             </select>
-                            <button class="btn btn-sm btn-primary" type="button" id="community-livestream-batch-payment-btn" onclick="applyCommunityLivestreamBatchPaymentStatus()" disabled><i class="fa-solid fa-check-double"></i> 套用到已選項目</button>
+                            <button class="btn btn-sm btn-primary" type="button" id="community-livestream-batch-payment-btn" onclick="applyCommunityLivestreamBatchPaymentStatus()" disabled aria-label="套用匯款狀態到已選項目"><i class="fa-solid fa-check"></i></button>
                         </div>
                     </div>
                 </div>
-                <div id="community-livestream-result-count" style="margin:0.6rem 0 0.3rem;font-size:0.78rem;font-weight:800;color:#64748b;">共 0 筆</div>
+                <div id="community-livestream-result-count" class="community-livestream-count-line"><span id="community-livestream-total-count-text">共 0 筆</span>・<span id="community-livestream-selected-count">已選 0 筆</span></div>
                 <div id="community-livestream-list" class="community-livestream-list">
                     <div class="empty-state">尚未載入社群連線訂單</div>
                 </div>
@@ -8320,7 +8328,7 @@
 
         function renderCommunityLivestreamOrders() {
             const list = document.getElementById('community-livestream-list');
-            const countEl = document.getElementById('community-livestream-result-count');
+            const countEl = document.getElementById('community-livestream-total-count-text');
             if (!list) return;
             if (countEl) countEl.textContent = `共 ${communityLivestreamOrders.length} 筆`;
             const openIds = new Set(
@@ -8344,8 +8352,8 @@
                     ? `<div class="community-livestream-remittance-info"><span><i class="fa-solid fa-money-check-dollar"></i> 客人回報後 5 碼：${escapeHtml(order.remittanceLast5 || '—')}</span><span>申報金額：${order.remittanceAmount === null ? '—' : storefrontMoney(order.remittanceAmount)}</span></div>`
                     : '';
                 const qty = Number(order.quantity || 1);
-                const priceText = order.unitPrice === null ? '未輸入' : `NT$${order.unitPrice}`;
                 const totalText = order.totalPrice === null ? '—' : storefrontMoney(order.totalPrice);
+                const summaryPriceInput = `<input type="number" min="0" step="1" class="community-livestream-summary-price-input" value="${order.unitPrice === null ? '' : Number(order.unitPrice)}" placeholder="未輸入" onchange="patchCommunityLivestreamOrder('${id}', { unitPrice: this.value === '' ? null : Number(this.value) })">`;
                 return `
                     <div class="community-livestream-card ${isOpen ? 'expanded' : ''}" id="community-livestream-card-${id}" data-row-id="${id}">
                         <div class="community-livestream-card-top">
@@ -8366,7 +8374,7 @@
                         <div class="community-livestream-summary">
                             <div class="community-livestream-summary-product">${order.productName ? escapeHtml(order.productName) : '<span class="community-livestream-unrecognized">⚠ 未辨識</span>'}</div>
                             <div class="community-livestream-summary-line">
-                                <span>${qty} × ${priceText} = ${totalText}</span>
+                                <span>${qty} ×</span>${summaryPriceInput}<span>= ${totalText}</span>
                                 ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought')}
                                 ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid')}
                             </div>
