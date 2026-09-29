@@ -8404,7 +8404,7 @@
                 });
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '更新失敗。');
-                showToast(result.notified ? '已更新，並已通知客人訂單確認' : '已更新', 'success');
+                showToast('已更新', 'success');
                 await loadCommunityLivestreamOrders();
             } catch (error) {
                 console.error(error);
