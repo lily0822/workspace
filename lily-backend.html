@@ -466,6 +466,17 @@
                （這個 media query 之外）維持完全不變，所有模塊照常顯示。
                目前沒有「切換回完整版」的逃生門。 */
             .sidebar-menu > .menu-group:not([data-module-key="community"]) { display: none; }
+            /* 手機版側邊選單：預設關閉（桌面版沿用原本 260px 固定寬度不變，
+               這條規則只在這個 mobile media query 內生效）。開啟時的寬度
+               也不再是桌面版那個固定 260px，改由 JS 動態設成 max-content
+               （剛好容納最長那個模塊文字、不換行即可），max-width 只是
+               避免萬一哪天有更長的文字把選單撐到不合理的寬度。實際的
+               「預設關閉」還需要搭配下面 #menuToggle 那段 JS 在頁面載入時
+               主動把 inline style 設成 0px——單靠這條 CSS 預設值，
+               #menuToggle 現有的字串比對邏輯（判斷 sb.style.width 是否為
+               '0px'）在第一次點擊時會抓不到目前其實是關閉的，需要點兩次
+               才會真的展開。 */
+            .sidebar { width: 0; max-width: 80vw; }
             /* topbar 再精簡：漢堡選單保留（手機版切換頁籤還是需要它），
                「回到主選單」文字連結、「調整模塊順序」按鈕、目前開啟中的
                分頁標籤列都在窄螢幕下沒有用處（手機版一次只顯示一頁，
@@ -3273,10 +3284,41 @@
 
         // --- Sidebar ---
         function toggleSubmenu(el) { el.classList.toggle('expanded'); el.nextElementSibling.classList.toggle('open'); }
+
+        // 手機版（<=720px）：選單預設關閉、開啟寬度用 max-content（剛好
+        // 容納最長的模塊文字，不用桌面版固定的 260px）、點選單以外的地方
+        // 自動收合。桌面版完全不受影響：isMobileSidebarLayout() 為 false
+        // 時，開啟寬度照舊是 260px，也沒有外部點擊監聽這件事。
+        function isMobileSidebarLayout() {
+            return window.matchMedia('(max-width: 720px)').matches;
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').style.width = '0px';
+        }
+        function openSidebar() {
+            document.getElementById('sidebar').style.width = isMobileSidebarLayout() ? 'max-content' : '260px';
+        }
         document.getElementById('menuToggle').addEventListener('click', () => {
             const sb = document.getElementById('sidebar');
-            sb.style.width = sb.style.width === '0px' ? '260px' : '0px';
+            if (sb.style.width === '0px') openSidebar(); else closeSidebar();
         });
+        // 點選單以外的地方自動收合——只在手機版生效，且排除 #sidebar 本身
+        // 跟 #menuToggle（不排除的話，點漢堡按鈕「開啟」的那次點擊，冒泡
+        // 到 document 時會被這裡誤判成「點了選單外面」又立刻收合掉）。
+        document.addEventListener('click', (event) => {
+            if (!isMobileSidebarLayout()) return;
+            const sb = document.getElementById('sidebar');
+            if (sb.style.width === '0px') return;
+            const toggle = document.getElementById('menuToggle');
+            if (sb.contains(event.target) || event.target === toggle) return;
+            closeSidebar();
+        });
+        // 手機版一開始要是關閉狀態——單靠 CSS 預設值 (.sidebar { width: 0 })
+        // 沒辦法讓上面 #menuToggle 的「判斷目前是否為 0px」邏輯在第一次
+        // 點擊時正確運作（inline style 一開始是空字串，不是字面上的
+        // '0px'），所以載入時就直接呼叫 closeSidebar() 把 inline style
+        // 設好。桌面版不受影響，維持原本繼承 CSS 260px 預設寬度的行為。
+        if (isMobileSidebarLayout()) closeSidebar();
 
         // --- Data & API ---
         const PRODUCTION_BACKEND_API_URL = 'https://script.google.com/macros/s/AKfycbyC48NPyP1ookWXtJAiV9TAUO05rLcroNAF_Bd9GrNDHWCaTF4YrbKmKzT-mHpI-a7Fgw/exec';
