@@ -409,7 +409,20 @@
             .storefront-order-mini-section:nth-child(2n + 1) { padding-left: 0; }
         }
         @media (max-width: 720px) {
-            .content { padding: 1rem; }
+            /* 全後台共用：標題列在窄螢幕下改直向堆疊，避免跟右上角固定的
+               環境徽章 (.environment-badge) 或彼此擠壓成一團。範圍限定在
+               這個既有 mobile media query 內，不影響桌面版。 */
+            .page-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+            .toolbar { flex-wrap: wrap; }
+            /* 右上角固定的 STAGING/環境徽章：桌面版沿用原本 top:0.75rem 貼齊
+               topbar 中線；窄螢幕上 topbar 本身沒有響應式收合（.topbar-right
+               的「調整模塊順序」等按鈕會被擠在同一個右上角），徽章往下移到
+               topbar（60px 高）下方，避免兩者互相蓋住。 */
+            .environment-badge { top: 64px; right: 0.75rem; }
+            /* 右下角固定的帳號操作按鈕（修改密碼／登出，src/app/backend/route.ts）
+               在窄螢幕上會蓋住捲動到底部的內容，這裡只加內容區的底部留白，
+               不動浮動按鈕本身的定位。 */
+            .content { padding: 1rem 1rem 80px; }
             .storefront-order-search-row { align-items: stretch; flex-direction: column; }
             .storefront-order-search-input { flex-basis: auto; width: 100%; }
             .storefront-order-filter-field, .storefront-order-filter-field input, .storefront-order-filter-field select { width: 100%; min-width: 0; }
