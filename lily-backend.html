@@ -1384,22 +1384,6 @@
                 <div class="community-member-grid">
                     <section class="community-member-panel">
                         <div class="community-member-panel-header">
-                            <h3><i class="fa-solid fa-circle-check"></i> 已綁定名單</h3>
-                            <div class="community-member-searches">
-                                <input id="community-approved-line-search" class="storefront-order-search-input" type="search" placeholder="LINE 名稱" aria-label="LINE 名稱" onkeydown="handleCommunityApprovedSearchKey(event)">
-                                <input id="community-approved-nickname-search" class="storefront-order-search-input" type="search" placeholder="申請暱稱" aria-label="申請暱稱" onkeydown="handleCommunityApprovedSearchKey(event)">
-                                <button class="btn btn-primary btn-sm" type="button" onclick="applyCommunityApprovedSearch()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
-                            </div>
-                        </div>
-                        <div class="table-wrapper">
-                            <table class="community-member-table">
-                                <thead><tr><th>LINE 名稱</th><th>申請暱稱</th><th>綁定時間</th><th>最後更新時間</th><th>審核狀態</th></tr></thead>
-                                <tbody id="community-approved-member-list"><tr><td colspan="5" class="empty-state">尚未載入已綁定名單</td></tr></tbody>
-                            </table>
-                        </div>
-                    </section>
-                    <section class="community-member-panel">
-                        <div class="community-member-panel-header">
                             <h3><i class="fa-solid fa-clock"></i> 待處理名單</h3>
                             <button id="community-bulk-approve-btn" class="btn btn-primary btn-sm" type="button" onclick="approveSelectedCommunityMembers(this)" disabled><i class="fa-solid fa-check-double"></i> 一鍵審核</button>
                         </div>
@@ -1412,6 +1396,22 @@
                                     </tr>
                                 </thead>
                                 <tbody id="community-pending-member-list"><tr><td colspan="4" class="empty-state">尚未載入待處理名單</td></tr></tbody>
+                            </table>
+                        </div>
+                    </section>
+                    <section class="community-member-panel">
+                        <div class="community-member-panel-header">
+                            <h3><i class="fa-solid fa-circle-check"></i> 已綁定名單</h3>
+                            <div class="community-member-searches">
+                                <input id="community-approved-line-search" class="storefront-order-search-input" type="search" placeholder="LINE 名稱" aria-label="LINE 名稱" onkeydown="handleCommunityApprovedSearchKey(event)">
+                                <input id="community-approved-nickname-search" class="storefront-order-search-input" type="search" placeholder="申請暱稱" aria-label="申請暱稱" onkeydown="handleCommunityApprovedSearchKey(event)">
+                                <button class="btn btn-primary btn-sm" type="button" onclick="applyCommunityApprovedSearch()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
+                            </div>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="community-member-table">
+                                <thead><tr><th>LINE 名稱</th><th>申請暱稱</th><th>綁定時間</th><th>最後更新時間</th><th>審核狀態</th></tr></thead>
+                                <tbody id="community-approved-member-list"><tr><td colspan="5" class="empty-state">尚未載入已綁定名單</td></tr></tbody>
                             </table>
                         </div>
                     </section>
