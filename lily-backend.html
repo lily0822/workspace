@@ -272,6 +272,8 @@
         .community-livestream-thumb-placeholder { width: 40px; height: 40px; border-radius: 0.6rem; border: 1px dashed #fbcfe8; background: #fff7fb; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #f9a8d4; font-size: 0.9rem; }
         .community-livestream-customer { font-size: 0.8rem; font-weight: 900; color: #334155; }
         .community-livestream-customer small { display: block; margin-top: 0.1rem; font-size: 0.72rem; font-weight: 700; color: #94a3b8; }
+        .community-livestream-customer-row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+        .community-livestream-customer-time { flex-shrink: 0; font-size: 0.68rem; font-weight: 700; color: #94a3b8; }
         .community-livestream-product-input { width: 100%; min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.35rem 0.6rem; font-size: 0.82rem; font-weight: 800; color: #334155; outline: none; }
         .community-livestream-product-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
         .community-livestream-unrecognized { color: #dc2626; font-size: 0.7rem; font-weight: 900; margin-top: 0.2rem; }
@@ -292,6 +294,8 @@
         .community-livestream-batch-group select { min-height: 32px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.25rem 0.4rem; font-size: 0.78rem; font-weight: 800; color: #334155; }
         .community-livestream-batch-group .btn { min-width: 32px; padding: 0.3rem 0.5rem; }
         .community-livestream-count-line { margin: 0.35rem 0; font-size: 0.78rem; font-weight: 800; color: #64748b; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
+        .community-livestream-count-controls { display: inline-flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+        .community-livestream-count-controls select { min-height: 30px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.2rem 0.4rem; font-size: 0.76rem; font-weight: 800; color: #334155; }
         .community-livestream-select-all { display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer; color: #334155; user-select: none; }
         .community-livestream-card-actions { display: flex; gap: 0.35rem; margin-left: auto; flex-shrink: 0; }
         .community-livestream-icon-btn { width: 30px; height: 30px; border-radius: 0.55rem; border: 1px solid #fbcfe8; background: #fff; color: #64748b; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; }
@@ -1466,10 +1470,16 @@
                 </div>
                 <div id="community-livestream-result-count" class="community-livestream-count-line">
                     <span><span id="community-livestream-total-count-text">共 0 筆</span>・<span id="community-livestream-selected-count">已選 0 筆</span></span>
-                    <label class="community-livestream-select-all">
-                        <input type="checkbox" id="community-livestream-select-all-checkbox" aria-label="全選目前顯示的社群連線訂單" onchange="toggleCommunityLivestreamSelectAll(this.checked)">
-                        全選
-                    </label>
+                    <span class="community-livestream-count-controls">
+                        <select id="community-livestream-sort-order" aria-label="排序方式" onchange="setCommunityLivestreamSortOrder(this.value)">
+                            <option value="desc">下單時間：最新在前</option>
+                            <option value="asc">下單時間：最舊在前</option>
+                        </select>
+                        <label class="community-livestream-select-all">
+                            <input type="checkbox" id="community-livestream-select-all-checkbox" aria-label="全選目前顯示的社群連線訂單" onchange="toggleCommunityLivestreamSelectAll(this.checked)">
+                            全選
+                        </label>
+                    </span>
                 </div>
                 <div id="community-livestream-list" class="community-livestream-list">
                     <div class="empty-state">尚未載入社群連線訂單</div>
@@ -8395,6 +8405,27 @@
         const communityLivestreamFilters = { q: '', purchaseStatus: '', paymentStatus: '', unrecognizedOnly: false };
         let communityLivestreamImportRows = [];
         let communitySelectedLivestreamIds = new Set();
+        // 依下單時間排序，純前端排序（不改 API/不加 query 參數）——'desc'
+        // 最新在前是預設值，跟後端 GET .../livestream-orders 原本就用的
+        // order('created_at', { ascending: false }) 一致，所以第一次載入
+        // 不用額外排序就已經是對的；只有客人切到「最舊在前」才需要真的
+        // 重新排一次。搜尋/篩選之後套用同一份排序，因為排序是
+        // renderCommunityLivestreamOrders() 每次重繪都會做，不是只在
+        // 載入當下做一次。
+        let communityLivestreamSortOrder = 'desc';
+
+        function sortCommunityLivestreamOrders() {
+            communityLivestreamOrders.sort((a, b) => {
+                const ta = new Date(a.createdAt || 0).getTime();
+                const tb = new Date(b.createdAt || 0).getTime();
+                return communityLivestreamSortOrder === 'asc' ? ta - tb : tb - ta;
+            });
+        }
+
+        function setCommunityLivestreamSortOrder(value) {
+            communityLivestreamSortOrder = value === 'asc' ? 'asc' : 'desc';
+            renderCommunityLivestreamOrders();
+        }
         // 購買狀態這輪簡化為兩態（拿掉「確認中」），匯款狀態維持三態——
         // 自助匯款申報流程會把付款中的訂單設成 confirming。
         const COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS = [
@@ -8471,6 +8502,7 @@
         }
 
         function renderCommunityLivestreamOrders() {
+            sortCommunityLivestreamOrders();
             const list = document.getElementById('community-livestream-list');
             const countEl = document.getElementById('community-livestream-total-count-text');
             if (!list) return;
@@ -8506,7 +8538,10 @@
                                 ${thumb}
                             </div>
                             <div class="community-livestream-customer" style="flex:1;min-width:0;">
-                                ${escapeHtml(order.nickname || '—')}
+                                <div class="community-livestream-customer-row">
+                                    <span>${escapeHtml(order.nickname || '—')}</span>
+                                    <span class="community-livestream-customer-time">${storefrontDateTime(order.createdAt)}</span>
+                                </div>
                                 <small>${escapeHtml(order.lineDisplayName || 'LINE 使用者')}</small>
                             </div>
                             <div class="community-livestream-card-actions">
