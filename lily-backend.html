@@ -291,7 +291,8 @@
         .community-livestream-batch-group label { font-size: 0.76rem; font-weight: 800; color: #64748b; }
         .community-livestream-batch-group select { min-height: 32px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.25rem 0.4rem; font-size: 0.78rem; font-weight: 800; color: #334155; }
         .community-livestream-batch-group .btn { min-width: 32px; padding: 0.3rem 0.5rem; }
-        .community-livestream-count-line { margin: 0.35rem 0; font-size: 0.78rem; font-weight: 800; color: #64748b; }
+        .community-livestream-count-line { margin: 0.35rem 0; font-size: 0.78rem; font-weight: 800; color: #64748b; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
+        .community-livestream-select-all { display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer; color: #334155; user-select: none; }
         .community-livestream-card-actions { display: flex; gap: 0.35rem; margin-left: auto; flex-shrink: 0; }
         .community-livestream-icon-btn { width: 30px; height: 30px; border-radius: 0.55rem; border: 1px solid #fbcfe8; background: #fff; color: #64748b; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; }
         .community-livestream-icon-btn:hover { border-color: #f472b6; color: #be185d; }
@@ -1463,7 +1464,13 @@
                         </div>
                     </div>
                 </div>
-                <div id="community-livestream-result-count" class="community-livestream-count-line"><span id="community-livestream-total-count-text">共 0 筆</span>・<span id="community-livestream-selected-count">已選 0 筆</span></div>
+                <div id="community-livestream-result-count" class="community-livestream-count-line">
+                    <span><span id="community-livestream-total-count-text">共 0 筆</span>・<span id="community-livestream-selected-count">已選 0 筆</span></span>
+                    <label class="community-livestream-select-all">
+                        <input type="checkbox" id="community-livestream-select-all-checkbox" aria-label="全選目前顯示的社群連線訂單" onchange="toggleCommunityLivestreamSelectAll(this.checked)">
+                        全選
+                    </label>
+                </div>
                 <div id="community-livestream-list" class="community-livestream-list">
                     <div class="empty-state">尚未載入社群連線訂單</div>
                 </div>
@@ -8568,6 +8575,27 @@
             updateCommunityLivestreamSelectionControls();
         }
 
+        // 全選：只作用在目前畫面上（篩選/搜尋後）的 communityLivestreamOrders，
+        // 不會選到被篩選掉、畫面上看不到的其他訂單。直接重用
+        // communitySelectedLivestreamIds 這個既有的選取狀態集合，勾選/取消勾選
+        // 都只是往同一個 Set 加或刪 id，再靠 renderCommunityLivestreamOrders()
+        // 既有的「checked = communitySelectedLivestreamIds.has(order.id)」邏輯
+        // 重繪每張卡片的 checkbox，不用另外寫一套。
+        function toggleCommunityLivestreamSelectAll(checked) {
+            if (checked) communityLivestreamOrders.forEach(order => communitySelectedLivestreamIds.add(order.id));
+            else communityLivestreamOrders.forEach(order => communitySelectedLivestreamIds.delete(order.id));
+            renderCommunityLivestreamOrders();
+        }
+
+        function updateCommunityLivestreamSelectAllState() {
+            const el = document.getElementById('community-livestream-select-all-checkbox');
+            if (!el) return;
+            const total = communityLivestreamOrders.length;
+            const selectedCount = communityLivestreamOrders.filter(order => communitySelectedLivestreamIds.has(order.id)).length;
+            el.checked = total > 0 && selectedCount === total;
+            el.indeterminate = selectedCount > 0 && selectedCount < total;
+        }
+
         function updateCommunityLivestreamSelectionControls() {
             const countEl = document.getElementById('community-livestream-selected-count');
             if (countEl) countEl.textContent = `已選 ${communitySelectedLivestreamIds.size} 筆`;
@@ -8575,6 +8603,7 @@
             if (purchaseBtn) purchaseBtn.disabled = communitySelectedLivestreamIds.size === 0;
             const paymentBtn = document.getElementById('community-livestream-batch-payment-btn');
             if (paymentBtn) paymentBtn.disabled = communitySelectedLivestreamIds.size === 0;
+            updateCommunityLivestreamSelectAllState();
         }
 
         async function applyCommunityLivestreamBatchStatus(field, value, button) {
