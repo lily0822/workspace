@@ -1469,6 +1469,7 @@
                             </select>
                             <button class="btn btn-sm btn-primary" type="button" id="community-livestream-batch-payment-btn" onclick="applyCommunityLivestreamBatchPaymentStatus()" disabled aria-label="套用匯款狀態到已選項目"><i class="fa-solid fa-check"></i></button>
                         </div>
+                        <button class="btn btn-sm btn-danger" type="button" id="community-livestream-batch-delete-btn" onclick="applyCommunityLivestreamBatchDelete(this)" disabled aria-label="刪除已選項目"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
                 <div id="community-livestream-result-count" class="community-livestream-count-line">
@@ -8662,6 +8663,8 @@
             if (purchaseBtn) purchaseBtn.disabled = communitySelectedLivestreamIds.size === 0;
             const paymentBtn = document.getElementById('community-livestream-batch-payment-btn');
             if (paymentBtn) paymentBtn.disabled = communitySelectedLivestreamIds.size === 0;
+            const deleteBtn = document.getElementById('community-livestream-batch-delete-btn');
+            if (deleteBtn) deleteBtn.disabled = communitySelectedLivestreamIds.size === 0;
             updateCommunityLivestreamSelectAllState();
         }
 
@@ -8704,6 +8707,37 @@
         function applyCommunityLivestreamBatchPaymentStatus() {
             const value = document.getElementById('community-livestream-batch-payment-value')?.value || 'unpaid';
             applyCommunityLivestreamBatchStatus('paymentStatus', value, document.getElementById('community-livestream-batch-payment-btn'));
+        }
+
+        // 批次刪除——沿用現有單筆刪除的 DELETE /api/backend/community/
+        // livestream-orders/[id] 端點，不另外做一支批次刪除的新 API，邏輯
+        // 跟 applyCommunityLivestreamBatchStatus（批次改狀態）幾乎一樣，
+        // 只是 DELETE 不是 PATCH、而且刪除是不可逆動作，前面多一道
+        // confirm() 擋一下，文字講清楚這次會刪掉幾筆。
+        async function applyCommunityLivestreamBatchDelete(button) {
+            const ids = [...communitySelectedLivestreamIds];
+            if (!ids.length) return;
+            if (!confirm(`確定要刪除已選取的 ${ids.length} 筆社群連線訂單嗎？此操作無法復原。`)) return;
+            if (button) button.disabled = true;
+            try {
+                const results = await Promise.all(ids.map(async id => {
+                    try {
+                        const response = await fetch(`/api/backend/community/livestream-orders/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                        const result = await response.json().catch(() => null);
+                        return Boolean(response.ok && result?.ok);
+                    } catch {
+                        return false;
+                    }
+                }));
+                const successCount = results.filter(Boolean).length;
+                const failedCount = results.length - successCount;
+                communitySelectedLivestreamIds = new Set();
+                await loadCommunityLivestreamOrders();
+                if (failedCount) showToast(`批次刪除完成：成功 ${successCount} 筆，失敗 ${failedCount} 筆`, 'error');
+                else showToast(`批次刪除完成：成功 ${successCount} 筆`, 'success');
+            } finally {
+                if (button) button.disabled = communitySelectedLivestreamIds.size === 0;
+            }
         }
 
         async function patchCommunityLivestreamOrder(id, patch) {
