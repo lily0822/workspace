@@ -289,6 +289,7 @@
         .community-livestream-thumb-wrap { position: relative; flex-shrink: 0; }
         .community-livestream-select-checkbox { position: absolute; top: 0.4rem; left: 0.4rem; width: 20px; height: 20px; z-index: 1; cursor: pointer; accent-color: #ec4899; box-shadow: 0 0 0 2px white; border-radius: 0.3rem; }
         .community-livestream-remittance-info { border: 1px solid #fde68a; background: #fffbeb; color: #92400e; border-radius: 0.6rem; padding: 0.5rem 0.65rem; font-size: 0.76rem; font-weight: 800; display: flex; flex-wrap: wrap; gap: 0.3rem 0.75rem; }
+        .community-livestream-dispute-info { border: 1px solid #fca5a5; background: #fef2f2; color: #b91c1c; border-radius: 0.6rem; padding: 0.5rem 0.65rem; font-size: 0.76rem; font-weight: 800; display: flex; flex-wrap: wrap; gap: 0.3rem 0.75rem; }
         .community-livestream-batch-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-top: 0.45rem; padding-top: 0.45rem; border-top: 1px dashed #fbcfe8; }
         .community-livestream-batch-group { display: flex; align-items: center; gap: 0.35rem; }
         .community-livestream-batch-group label { font-size: 0.76rem; font-weight: 800; color: #64748b; }
@@ -1448,6 +1449,7 @@
                         <button type="button" class="community-livestream-filter-btn" data-filter="paymentStatus:confirming" onclick="toggleCommunityLivestreamQuickFilter('paymentStatus', 'confirming')">匯款確認中</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="paymentStatus:paid" onclick="toggleCommunityLivestreamQuickFilter('paymentStatus', 'paid')">已付款</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="unrecognizedOnly:1" onclick="toggleCommunityLivestreamQuickFilter('unrecognizedOnly', '1')">無法辨識價格</button>
+                        <button type="button" class="community-livestream-filter-btn" data-filter="priceDisputedOnly:1" onclick="toggleCommunityLivestreamQuickFilter('priceDisputedOnly', '1')">價格異常</button>
                     </div>
                     <div class="community-livestream-batch-bar">
                         <div class="community-livestream-batch-group">
@@ -8415,7 +8417,7 @@
 
         // ===== 社群連線訂單 (LINE 圖片下單) — 全新獨立功能，不共用 communityOrders 資料 =====
         let communityLivestreamOrders = [];
-        const communityLivestreamFilters = { q: '', purchaseStatus: '', paymentStatus: '', unrecognizedOnly: false };
+        const communityLivestreamFilters = { q: '', purchaseStatus: '', paymentStatus: '', unrecognizedOnly: false, priceDisputedOnly: false };
         let communityLivestreamImportRows = [];
         let communitySelectedLivestreamIds = new Set();
         // 依下單時間排序，純前端排序（不改 API/不加 query 參數）——'desc'
@@ -8469,6 +8471,7 @@
             if (communityLivestreamFilters.purchaseStatus) params.set('purchaseStatus', communityLivestreamFilters.purchaseStatus);
             if (communityLivestreamFilters.paymentStatus) params.set('paymentStatus', communityLivestreamFilters.paymentStatus);
             if (communityLivestreamFilters.unrecognizedOnly) params.set('unrecognizedOnly', '1');
+            if (communityLivestreamFilters.priceDisputedOnly) params.set('priceDisputedOnly', '1');
             const qs = params.toString();
             return qs ? `?${qs}` : '';
         }
@@ -8478,8 +8481,8 @@
             if (search) search.value = communityLivestreamFilters.q || '';
             document.querySelectorAll('.community-livestream-filter-btn').forEach(btn => {
                 const [field, value] = (btn.dataset.filter || '').split(':');
-                const active = field === 'unrecognizedOnly'
-                    ? Boolean(communityLivestreamFilters.unrecognizedOnly)
+                const active = (field === 'unrecognizedOnly' || field === 'priceDisputedOnly')
+                    ? Boolean(communityLivestreamFilters[field])
                     : communityLivestreamFilters[field] === value;
                 btn.classList.toggle('active', active);
             });
@@ -8540,6 +8543,9 @@
                 const remittanceInfo = order.paymentStatus === 'confirming' && (order.remittanceLast5 || order.remittanceAmount !== null)
                     ? `<div class="community-livestream-remittance-info"><span><i class="fa-solid fa-money-check-dollar"></i> 客人回報後 5 碼：${escapeHtml(order.remittanceLast5 || '—')}</span><span>申報金額：${order.remittanceAmount === null ? '—' : storefrontMoney(order.remittanceAmount)}</span></div>`
                     : '';
+                const priceDisputeInfo = order.priceDisputedAt
+                    ? `<div class="community-livestream-dispute-info"><span><i class="fa-solid fa-triangle-exclamation"></i> 客人回報：建議 ${order.priceDisputeSuggestedPrice === null ? '—' : storefrontMoney(order.priceDisputeSuggestedPrice)}</span></div>`
+                    : '';
                 const qty = Number(order.quantity || 1);
                 const totalText = order.totalPrice === null ? '—' : storefrontMoney(order.totalPrice);
                 const summaryPriceInput = `<input type="number" min="0" step="1" class="community-livestream-summary-price-input" value="${order.unitPrice === null ? '' : Number(order.unitPrice)}" placeholder="未輸入" onchange="patchCommunityLivestreamUnitPrice('${id}', this.value)">`;
@@ -8565,6 +8571,7 @@
                                     </div>
                                 </div>
                                 ${remittanceInfo}
+                                ${priceDisputeInfo}
                                 <div class="community-livestream-summary">
                                     <div class="community-livestream-summary-product">${escapeHtml(order.productName || '')}</div>
                                     <div class="community-livestream-summary-line">
@@ -8792,12 +8799,13 @@
             communityLivestreamFilters.purchaseStatus = '';
             communityLivestreamFilters.paymentStatus = '';
             communityLivestreamFilters.unrecognizedOnly = false;
+            communityLivestreamFilters.priceDisputedOnly = false;
             loadCommunityLivestreamOrders();
         }
 
         function toggleCommunityLivestreamQuickFilter(field, value) {
-            if (field === 'unrecognizedOnly') {
-                communityLivestreamFilters.unrecognizedOnly = !communityLivestreamFilters.unrecognizedOnly;
+            if (field === 'unrecognizedOnly' || field === 'priceDisputedOnly') {
+                communityLivestreamFilters[field] = !communityLivestreamFilters[field];
             } else {
                 communityLivestreamFilters[field] = communityLivestreamFilters[field] === value ? '' : value;
             }
@@ -10099,6 +10107,7 @@
             { label: '數量', keys: ['quantity_updated', 'quantity_ask_number', 'quantity_invalid_number', 'quantity_locked', 'quantity_confirmed', 'quantity_confirm_empty'] },
             { label: '取消訂單', keys: ['cancel_empty', 'cancel_intro_all', 'cancel_intro_partial', 'cancel_blocked_bought', 'cancel_blocked_paying', 'cancel_success'] },
             { label: '匯款', keys: ['remittance_empty', 'remittance_unresolved', 'remittance_summary', 'remittance_success'] },
+            { label: '價格有誤回報', keys: ['price_dispute_ask_amount', 'price_dispute_invalid_amount', 'price_dispute_received'] },
         ];
         const COMMUNITY_LIVESTREAM_REPLY_TEMPLATE_LABELS = {
             nickname_ask: '請輸入暱稱', nickname_submitted: '暱稱送出成功', nickname_taken: '暱稱已被使用',
@@ -10109,6 +10118,7 @@
             cancel_empty: '沒有可取消的商品', cancel_intro_all: '可取消清單開頭（全部可取消）', cancel_intro_partial: '可取消清單開頭（部分不可取消）',
             cancel_blocked_bought: '取消失敗：已購買', cancel_blocked_paying: '取消失敗：已在匯款流程', cancel_success: '取消成功',
             remittance_empty: '沒有待匯款訂單', remittance_unresolved: '尚有商品未確認金額', remittance_summary: '應付總額與匯款說明', remittance_success: '匯款回報已收到',
+            price_dispute_ask_amount: '詢問正確金額', price_dispute_invalid_amount: '金額格式錯誤', price_dispute_received: '已收到回報金額',
         };
         const COMMUNITY_LIVESTREAM_REPLY_TEMPLATE_VARS = {
             nickname_submitted: ['暱稱'], nickname_taken: ['暱稱'], nickname_pending: ['暱稱'], not_bound_yet: ['功能名稱'],
