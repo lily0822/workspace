@@ -267,9 +267,11 @@
         .community-livestream-filter-btn.active { background: #ec4899; border-color: #ec4899; color: white; }
         .community-livestream-list { display: grid; gap: 0.75rem; margin-top: 0.35rem; }
         .community-livestream-card { display: grid; gap: 0.6rem; border: 1px solid #fbcfe8; border-radius: 1rem; background: white; padding: 0.85rem; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
-        .community-livestream-card-top { display: flex; gap: 0.75rem; align-items: flex-start; }
-        .community-livestream-thumb { width: 40px; height: 40px; border-radius: 0.6rem; object-fit: cover; border: 1px solid #fbcfe8; background: #fff7fb; flex-shrink: 0; }
-        .community-livestream-thumb-placeholder { width: 40px; height: 40px; border-radius: 0.6rem; border: 1px dashed #fbcfe8; background: #fff7fb; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #f9a8d4; font-size: 0.9rem; }
+        .community-livestream-card-top { display: grid; grid-template-columns: 110px 1fr; gap: 0.75rem; align-items: stretch; }
+        .community-livestream-card-main { display: grid; gap: 0.5rem; min-width: 0; }
+        .community-livestream-card-header { display: flex; gap: 0.5rem; align-items: flex-start; }
+        .community-livestream-thumb { display: block; width: 100%; height: 100%; min-height: 100px; border-radius: 0.75rem; object-fit: cover; border: 1px solid #fbcfe8; background: #fff7fb; cursor: pointer; }
+        .community-livestream-thumb-placeholder { width: 100%; height: 100%; min-height: 100px; border-radius: 0.75rem; border: 1px dashed #fbcfe8; background: #fff7fb; display: flex; align-items: center; justify-content: center; color: #f9a8d4; font-size: 1.8rem; }
         .community-livestream-customer { font-size: 0.8rem; font-weight: 900; color: #334155; }
         .community-livestream-customer small { display: block; margin-top: 0.1rem; font-size: 0.72rem; font-weight: 700; color: #94a3b8; }
         .community-livestream-customer-row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
@@ -284,9 +286,8 @@
         .community-livestream-total { font-size: 0.9rem; font-weight: 950; color: #be185d; }
         .community-livestream-status-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
         .community-livestream-notes-input { width: 100%; min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.35rem 0.6rem; font-size: 0.8rem; font-weight: 700; color: #334155; outline: none; }
-        @media (min-width: 720px) { .community-livestream-card-top { align-items: center; } }
         .community-livestream-thumb-wrap { position: relative; flex-shrink: 0; }
-        .community-livestream-select-checkbox { position: absolute; top: -6px; left: -6px; width: 20px; height: 20px; z-index: 1; cursor: pointer; accent-color: #ec4899; box-shadow: 0 0 0 2px white; border-radius: 0.3rem; }
+        .community-livestream-select-checkbox { position: absolute; top: 0.4rem; left: 0.4rem; width: 20px; height: 20px; z-index: 1; cursor: pointer; accent-color: #ec4899; box-shadow: 0 0 0 2px white; border-radius: 0.3rem; }
         .community-livestream-remittance-info { border: 1px solid #fde68a; background: #fffbeb; color: #92400e; border-radius: 0.6rem; padding: 0.5rem 0.65rem; font-size: 0.76rem; font-weight: 800; display: flex; flex-wrap: wrap; gap: 0.3rem 0.75rem; }
         .community-livestream-batch-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-top: 0.45rem; padding-top: 0.45rem; border-top: 1px dashed #fbcfe8; }
         .community-livestream-batch-group { display: flex; align-items: center; gap: 0.35rem; }
@@ -3111,6 +3112,18 @@
                 <button class="btn btn-secondary" type="button" onclick="resetCommunityLivestreamReplyTemplateToDefault()">恢復預設文案</button>
                 <button class="btn btn-secondary" type="button" onclick="closeCommunityLivestreamReplyTemplateModal()">取消</button>
                 <button class="btn btn-primary" type="button" id="community-livestream-reply-template-save-btn" onclick="saveCommunityLivestreamReplyTemplateEdit(this)">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="communityLivestreamPhotoPreviewModal" onclick="if (event.target === this) closeCommunityLivestreamPhotoPreview()">
+        <div class="modal-content" style="max-width:640px;">
+            <div class="modal-header">
+                <h3><i class="fa-regular fa-image"></i> 商品照片</h3>
+                <button class="close-btn" type="button" onclick="closeCommunityLivestreamPhotoPreview()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="align-items:center;">
+                <img id="community-livestream-photo-preview-img" src="" alt="商品照片預覽" style="max-width:100%;max-height:75vh;border-radius:0.75rem;object-fit:contain;">
             </div>
         </div>
     </div>
@@ -8521,7 +8534,7 @@
                 const id = escapeHtml(order.id);
                 const isOpen = openIds.has(order.id);
                 const thumb = order.photoUrl
-                    ? `<img class="community-livestream-thumb" src="${escapeHtml(order.photoUrl)}" alt="商品照片" loading="lazy">`
+                    ? `<img class="community-livestream-thumb" src="${escapeHtml(order.photoUrl)}" alt="商品照片" loading="lazy" onclick="openCommunityLivestreamPhotoPreview(${quoteJs(order.photoUrl)})">`
                     : `<div class="community-livestream-thumb-placeholder"><i class="fa-regular fa-image"></i></div>`;
                 const checked = communitySelectedLivestreamIds.has(order.id) ? 'checked' : '';
                 const remittanceInfo = order.paymentStatus === 'confirming' && (order.remittanceLast5 || order.remittanceAmount !== null)
@@ -8537,50 +8550,54 @@
                                 <input type="checkbox" class="community-livestream-select-checkbox" aria-label="選取此筆社群連線訂單" ${checked} onchange="toggleCommunityLivestreamRowSelect('${id}', this.checked)">
                                 ${thumb}
                             </div>
-                            <div class="community-livestream-customer" style="flex:1;min-width:0;">
-                                <div class="community-livestream-customer-row">
-                                    <span>${escapeHtml(order.nickname || '—')}</span>
-                                    <span class="community-livestream-customer-time">${storefrontDateTime(order.createdAt)}</span>
+                            <div class="community-livestream-card-main">
+                                <div class="community-livestream-card-header">
+                                    <div class="community-livestream-customer" style="flex:1;min-width:0;">
+                                        <div class="community-livestream-customer-row">
+                                            <span>${escapeHtml(order.nickname || '—')}</span>
+                                            <span class="community-livestream-customer-time">${storefrontDateTime(order.createdAt)}</span>
+                                        </div>
+                                        <small>${escapeHtml(order.lineDisplayName || 'LINE 使用者')}</small>
+                                    </div>
+                                    <div class="community-livestream-card-actions">
+                                        <button class="community-livestream-icon-btn" type="button" onclick="toggleCommunityLivestreamCard('${id}')" aria-label="編輯"><i class="fa-solid fa-pen"></i></button>
+                                        <button class="community-livestream-icon-btn danger" type="button" onclick="deleteCommunityLivestreamOrder(${quoteJs(order.id)}, ${quoteJs(order.productName || '')})" aria-label="刪除"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
                                 </div>
-                                <small>${escapeHtml(order.lineDisplayName || 'LINE 使用者')}</small>
-                            </div>
-                            <div class="community-livestream-card-actions">
-                                <button class="community-livestream-icon-btn" type="button" onclick="toggleCommunityLivestreamCard('${id}')" aria-label="編輯"><i class="fa-solid fa-pen"></i></button>
-                                <button class="community-livestream-icon-btn danger" type="button" onclick="deleteCommunityLivestreamOrder(${quoteJs(order.id)}, ${quoteJs(order.productName || '')})" aria-label="刪除"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        </div>
-                        ${remittanceInfo}
-                        <div class="community-livestream-summary">
-                            <div class="community-livestream-summary-product">${escapeHtml(order.productName || '')}</div>
-                            <div class="community-livestream-summary-line">
-                                <span>${qty} ×</span>${summaryPriceInput}<span class="community-livestream-summary-total">= ${totalText}</span>
-                                ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought')}
-                                ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid')}
-                            </div>
-                            ${order.notes ? `<div class="community-livestream-summary-notes">備註：${escapeHtml(order.notes)}</div>` : ''}
-                        </div>
-                        <div class="community-livestream-full">
-                            <input type="text" class="community-livestream-product-input" value="${escapeHtml(order.productName || '')}" placeholder="下單商品" onchange="patchCommunityLivestreamOrder('${id}', { productName: this.value })">
-                            ${order.unitPrice === null ? '<div class="community-livestream-unrecognized community-livestream-price-warning">⚠ 無法辨識價格，請手動輸入</div>' : ''}
-                            <div class="community-livestream-grid">
-                                <div class="community-livestream-field">
-                                    <label>數量</label>
-                                    <input type="number" min="1" step="1" value="${qty}" onchange="patchCommunityLivestreamOrder('${id}', { quantity: Number(this.value) || 1 })">
+                                ${remittanceInfo}
+                                <div class="community-livestream-summary">
+                                    <div class="community-livestream-summary-product">${escapeHtml(order.productName || '')}</div>
+                                    <div class="community-livestream-summary-line">
+                                        <span>${qty} ×</span>${summaryPriceInput}<span class="community-livestream-summary-total">= ${totalText}</span>
+                                        ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought')}
+                                        ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid')}
+                                    </div>
+                                    ${order.notes ? `<div class="community-livestream-summary-notes">備註：${escapeHtml(order.notes)}</div>` : ''}
                                 </div>
-                                <div class="community-livestream-field">
-                                    <label>單價</label>
-                                    <input type="number" min="0" step="1" class="community-livestream-full-price-input" value="${order.unitPrice === null ? '' : Number(order.unitPrice)}" placeholder="未辨識" onchange="patchCommunityLivestreamUnitPrice('${id}', this.value)">
-                                </div>
-                                <div class="community-livestream-field">
-                                    <label>總價</label>
-                                    <div class="community-livestream-total">${totalText}</div>
+                                <div class="community-livestream-full">
+                                    <input type="text" class="community-livestream-product-input" value="${escapeHtml(order.productName || '')}" placeholder="下單商品" onchange="patchCommunityLivestreamOrder('${id}', { productName: this.value })">
+                                    ${order.unitPrice === null ? '<div class="community-livestream-unrecognized community-livestream-price-warning">⚠ 無法辨識價格，請手動輸入</div>' : ''}
+                                    <div class="community-livestream-grid">
+                                        <div class="community-livestream-field">
+                                            <label>數量</label>
+                                            <input type="number" min="1" step="1" value="${qty}" onchange="patchCommunityLivestreamOrder('${id}', { quantity: Number(this.value) || 1 })">
+                                        </div>
+                                        <div class="community-livestream-field">
+                                            <label>單價</label>
+                                            <input type="number" min="0" step="1" class="community-livestream-full-price-input" value="${order.unitPrice === null ? '' : Number(order.unitPrice)}" placeholder="未辨識" onchange="patchCommunityLivestreamUnitPrice('${id}', this.value)">
+                                        </div>
+                                        <div class="community-livestream-field">
+                                            <label>總價</label>
+                                            <div class="community-livestream-total">${totalText}</div>
+                                        </div>
+                                    </div>
+                                    <div class="community-livestream-status-row">
+                                        ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought', `patchCommunityLivestreamOrder('${id}', { purchaseStatus: this.value })`)}
+                                        ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', `patchCommunityLivestreamOrder('${id}', { paymentStatus: this.value })`)}
+                                    </div>
+                                    <input type="text" class="community-livestream-notes-input" value="${escapeHtml(order.notes || '')}" placeholder="備註" onchange="patchCommunityLivestreamOrder('${id}', { notes: this.value })">
                                 </div>
                             </div>
-                            <div class="community-livestream-status-row">
-                                ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought', `patchCommunityLivestreamOrder('${id}', { purchaseStatus: this.value })`)}
-                                ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', `patchCommunityLivestreamOrder('${id}', { paymentStatus: this.value })`)}
-                            </div>
-                            <input type="text" class="community-livestream-notes-input" value="${escapeHtml(order.notes || '')}" placeholder="備註" onchange="patchCommunityLivestreamOrder('${id}', { notes: this.value })">
                         </div>
                     </div>
                 `;
@@ -10206,6 +10223,23 @@
             } finally {
                 if (button) button.disabled = false;
             }
+        }
+
+        // 點卡片上的放大圖開預覽——比照既有 modal 的開關機制
+        // （.modal-overlay.active），不用另外做一套彈窗元件。多加一個
+        // 「點背景關閉」：既有其他 modal 都只能點叉叉關，這裡額外加這個
+        // 行為是圖片預覽這種用途常見的慣例，只套用在這個新的預覽彈窗，
+        // 不影響其他既有 modal。
+        function openCommunityLivestreamPhotoPreview(url) {
+            const img = document.getElementById('community-livestream-photo-preview-img');
+            if (img) img.src = url;
+            document.getElementById('communityLivestreamPhotoPreviewModal')?.classList.add('active');
+        }
+
+        function closeCommunityLivestreamPhotoPreview() {
+            document.getElementById('communityLivestreamPhotoPreviewModal')?.classList.remove('active');
+            const img = document.getElementById('community-livestream-photo-preview-img');
+            if (img) img.src = '';
         }
 
         async function loadCommunityRemittances() {
