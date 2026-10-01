@@ -268,10 +268,10 @@
         .community-livestream-list { display: grid; gap: 0.75rem; margin-top: 0.35rem; }
         .community-livestream-card { display: grid; gap: 0.6rem; border: 1px solid #fbcfe8; border-radius: 1rem; background: white; padding: 0.85rem; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
         .community-livestream-card-top { display: grid; grid-template-columns: 110px 1fr; gap: 0.75rem; align-items: stretch; }
-        .community-livestream-card-main { display: grid; gap: 0.5rem; min-width: 0; }
+        .community-livestream-card-main { display: grid; gap: 0.4rem; min-width: 0; }
         .community-livestream-card-header { display: flex; gap: 0.5rem; align-items: flex-start; }
-        .community-livestream-thumb { display: block; width: 100%; height: 100%; min-height: 100px; border-radius: 0.75rem; object-fit: cover; border: 1px solid #fbcfe8; background: #fff7fb; cursor: pointer; }
-        .community-livestream-thumb-placeholder { width: 100%; height: 100%; min-height: 100px; border-radius: 0.75rem; border: 1px dashed #fbcfe8; background: #fff7fb; display: flex; align-items: center; justify-content: center; color: #f9a8d4; font-size: 1.8rem; }
+        .community-livestream-thumb { display: block; width: 100%; aspect-ratio: 1 / 1; border-radius: 0.75rem; object-fit: cover; border: 1px solid #fbcfe8; background: #fff7fb; cursor: pointer; }
+        .community-livestream-thumb-placeholder { width: 100%; aspect-ratio: 1 / 1; border-radius: 0.75rem; border: 1px dashed #fbcfe8; background: #fff7fb; display: flex; align-items: center; justify-content: center; color: #f9a8d4; font-size: 1.8rem; }
         .community-livestream-customer { font-size: 0.8rem; font-weight: 900; color: #334155; }
         .community-livestream-customer small { display: block; margin-top: 0.1rem; font-size: 0.72rem; font-weight: 700; color: #94a3b8; }
         .community-livestream-customer-row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
@@ -286,7 +286,7 @@
         .community-livestream-total { font-size: 0.9rem; font-weight: 950; color: #be185d; }
         .community-livestream-status-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
         .community-livestream-notes-input { width: 100%; min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.35rem 0.6rem; font-size: 0.8rem; font-weight: 700; color: #334155; outline: none; }
-        .community-livestream-thumb-wrap { position: relative; flex-shrink: 0; }
+        .community-livestream-thumb-wrap { position: relative; flex-shrink: 0; align-self: start; }
         .community-livestream-select-checkbox { position: absolute; top: 0.4rem; left: 0.4rem; width: 20px; height: 20px; z-index: 1; cursor: pointer; accent-color: #ec4899; box-shadow: 0 0 0 2px white; border-radius: 0.3rem; }
         .community-livestream-remittance-info { border: 1px solid #fde68a; background: #fffbeb; color: #92400e; border-radius: 0.6rem; padding: 0.5rem 0.65rem; font-size: 0.76rem; font-weight: 800; display: flex; flex-wrap: wrap; gap: 0.3rem 0.75rem; }
         .community-livestream-dispute-info { border: 1px solid #fca5a5; background: #fef2f2; color: #b91c1c; border-radius: 0.6rem; padding: 0.5rem 0.65rem; font-size: 0.76rem; font-weight: 800; display: flex; flex-wrap: wrap; gap: 0.3rem 0.75rem; }
@@ -10108,6 +10108,7 @@
             { label: '取消訂單', keys: ['cancel_empty', 'cancel_intro_all', 'cancel_intro_partial', 'cancel_blocked_bought', 'cancel_blocked_paying', 'cancel_success'] },
             { label: '匯款', keys: ['remittance_empty', 'remittance_unresolved', 'remittance_summary', 'remittance_success'] },
             { label: '價格有誤回報', keys: ['price_dispute_ask_amount', 'price_dispute_invalid_amount', 'price_dispute_received'] },
+            { label: '客人自助刪除', keys: ['pending_delete_locked', 'pending_delete_success_with_list', 'pending_delete_success_empty'] },
         ];
         const COMMUNITY_LIVESTREAM_REPLY_TEMPLATE_LABELS = {
             nickname_ask: '請輸入暱稱', nickname_submitted: '暱稱送出成功', nickname_taken: '暱稱已被使用',
@@ -10119,10 +10120,12 @@
             cancel_blocked_bought: '取消失敗：已購買', cancel_blocked_paying: '取消失敗：已在匯款流程', cancel_success: '取消成功',
             remittance_empty: '沒有待匯款訂單', remittance_unresolved: '尚有商品未確認金額', remittance_summary: '應付總額與匯款說明', remittance_success: '匯款回報已收到',
             price_dispute_ask_amount: '詢問正確金額', price_dispute_invalid_amount: '金額格式錯誤', price_dispute_received: '已收到回報金額',
+            pending_delete_locked: '刪除失敗：已鎖定', pending_delete_success_with_list: '刪除成功（還有其他商品）', pending_delete_success_empty: '刪除成功（沒有其他商品）',
         };
         const COMMUNITY_LIVESTREAM_REPLY_TEMPLATE_VARS = {
             nickname_submitted: ['暱稱'], nickname_taken: ['暱稱'], nickname_pending: ['暱稱'], not_bound_yet: ['功能名稱'],
             quantity_updated: ['商品名稱', '數量'], cancel_intro_partial: ['數量'], cancel_success: ['商品名稱'],
+            pending_delete_success_with_list: ['商品名稱'], pending_delete_success_empty: ['商品名稱'],
             remittance_unresolved: ['數量'], remittance_summary: ['總額', '收款資訊'],
         };
 
