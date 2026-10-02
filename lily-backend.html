@@ -269,13 +269,16 @@
         .community-livestream-card { display: grid; gap: 0.6rem; border: 1px solid #fbcfe8; border-radius: 1rem; background: white; padding: 0.85rem; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
         .community-livestream-card-top { display: grid; grid-template-columns: 110px 1fr; gap: 0.75rem; align-items: stretch; }
         .community-livestream-card-main { display: grid; gap: 0.4rem; min-width: 0; }
-        .community-livestream-card-header { display: flex; gap: 0.5rem; align-items: flex-start; }
+        .community-livestream-card-header { display: flex; gap: 0.5rem; align-items: flex-start; flex-wrap: wrap; }
         .community-livestream-thumb { display: block; width: 100%; aspect-ratio: 1 / 1; border-radius: 0.75rem; object-fit: cover; border: 1px solid #fbcfe8; background: #fff7fb; cursor: pointer; }
         .community-livestream-thumb-placeholder { width: 100%; aspect-ratio: 1 / 1; border-radius: 0.75rem; border: 1px dashed #fbcfe8; background: #fff7fb; display: flex; align-items: center; justify-content: center; color: #f9a8d4; font-size: 1.8rem; }
-        .community-livestream-customer { font-size: 0.8rem; font-weight: 900; color: #334155; }
-        .community-livestream-customer small { display: block; margin-top: 0.1rem; font-size: 0.72rem; font-weight: 700; color: #94a3b8; }
-        .community-livestream-customer-row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
-        .community-livestream-customer-time { flex-shrink: 0; font-size: 0.68rem; font-weight: 700; color: #94a3b8; }
+        /* 社群暱稱這輪拿掉不顯示（純展示用的客人身份只留 LINE 顯示
+           名稱），時間移到照片下方——header 現在只剩這一行文字 +
+           右側的購買勾勾按鈕，不再是「暱稱＋時間」那兩層結構，所以
+           舊的 .community-livestream-customer/-row/-time 三條規則整組
+           換成下面這條單一文字樣式。 */
+        .community-livestream-customer-name { flex: 1; min-width: 0; font-size: 0.78rem; font-weight: 800; color: #475569; overflow-wrap: break-word; }
+        .community-livestream-thumb-time { display: block; margin-top: 0.3rem; font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-align: center; }
         .community-livestream-product-input { width: 100%; min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.35rem 0.6rem; font-size: 0.82rem; font-weight: 800; color: #334155; outline: none; }
         .community-livestream-product-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
         .community-livestream-unrecognized { color: #dc2626; font-size: 0.7rem; font-weight: 900; margin-top: 0.2rem; }
@@ -299,7 +302,7 @@
         .community-livestream-count-controls select { min-height: 30px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.2rem 0.4rem; font-size: 0.76rem; font-weight: 800; color: #334155; }
         .community-livestream-select-all { display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer; color: #334155; user-select: none; }
         .community-livestream-card-actions { display: flex; gap: 0.35rem; margin-left: auto; flex-shrink: 0; }
-        .community-livestream-icon-btn { width: 30px; height: 30px; border-radius: 0.55rem; border: 1px solid #fbcfe8; background: #fff; color: #64748b; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; }
+        .community-livestream-icon-btn { width: 30px; height: 30px; border-radius: 0.55rem; border: 1px solid #fbcfe8; background: #fff; color: #64748b; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; flex-shrink: 0; }
         .community-livestream-icon-btn:hover { border-color: #f472b6; color: #be185d; }
         .community-livestream-icon-btn.active { background: #ecfdf5; border-color: #86efac; color: #16a34a; }
         .community-livestream-icon-btn.danger:hover { border-color: #fca5a5; color: #dc2626; }
@@ -316,6 +319,14 @@
            還是會蓋掉原本粉色邊框，不需要 !important。 */
         .community-livestream-field-dirty { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15); }
         .community-livestream-summary-notes { font-size: 0.74rem; font-weight: 700; color: #94a3b8; }
+        /* 總金額那行（數量×單價=總價）這輪拆出去獨立一行，不跟狀態小
+           圓點擠在同一行——這條新的「第二行」左邊放兩個小圓點、右邊
+           靠 .community-livestream-card-actions 既有的 margin-left:auto
+           把編輯/刪除兩顆按鈕推到最右邊（直接重用同一顆 class，不用
+           另外寫一份按鈕群組樣式）。flex-wrap 避免窄螢幕擠不下時整行
+           被撐出卡片外框，而是自然換行。 */
+        .community-livestream-summary-status-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .community-livestream-summary-pills { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; min-width: 0; }
         .community-livestream-mini-pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.16rem 0.55rem; font-size: 0.68rem; font-weight: 900; color: #111827; }
         .community-livestream-full { display: none; }
         .community-livestream-card.expanded .community-livestream-full { display: grid; gap: 0.6rem; margin-top: 0.1rem; }
@@ -8667,20 +8678,13 @@
                             <div class="community-livestream-thumb-wrap">
                                 <input type="checkbox" class="community-livestream-select-checkbox" aria-label="選取此筆社群連線訂單" ${checked} onchange="toggleCommunityLivestreamRowSelect('${id}', this.checked)">
                                 ${thumb}
+                                <span class="community-livestream-thumb-time">${storefrontDateTime(order.createdAt)}</span>
                             </div>
                             <div class="community-livestream-card-main">
                                 <div class="community-livestream-card-header">
-                                    <div class="community-livestream-customer" style="flex:1;min-width:0;">
-                                        <div class="community-livestream-customer-row">
-                                            <span>${escapeHtml(order.nickname || '—')}</span>
-                                            <span class="community-livestream-customer-time">${storefrontDateTime(order.createdAt)}</span>
-                                        </div>
-                                        <small>${escapeHtml(order.lineDisplayName || 'LINE 使用者')}</small>
-                                    </div>
+                                    <div class="community-livestream-customer-name">${escapeHtml(order.lineDisplayName || 'LINE 使用者')}</div>
                                     <div class="community-livestream-card-actions">
                                         <button class="community-livestream-icon-btn community-livestream-purchase-toggle-btn${purchased ? ' active' : ''}" type="button" onclick="toggleCommunityLivestreamPurchased('${id}')" aria-label="${purchased ? '取消已購買' : '標記已購買'}" title="${purchased ? '取消已購買' : '標記已購買'}"><i class="fa-solid fa-check"></i></button>
-                                        <button class="community-livestream-icon-btn" type="button" onclick="toggleCommunityLivestreamCard('${id}')" aria-label="編輯"><i class="fa-solid fa-pen"></i></button>
-                                        <button class="community-livestream-icon-btn danger" type="button" onclick="deleteCommunityLivestreamOrder(${quoteJs(order.id)}, ${quoteJs(order.productName || '')})" aria-label="刪除"><i class="fa-solid fa-trash"></i></button>
                                     </div>
                                 </div>
                                 ${remittanceInfo}
@@ -8688,8 +8692,16 @@
                                     <div class="community-livestream-summary-product">${escapeHtml(order.productName || '')}</div>
                                     <div class="community-livestream-summary-line">
                                         ${summaryQtyInput}<span>×</span>${summaryPriceInput}<span class="community-livestream-summary-total">= ${totalText}</span>
-                                        ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought', 'community-livestream-mini-pill-purchase')}
-                                        ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', 'community-livestream-mini-pill-payment')}
+                                    </div>
+                                    <div class="community-livestream-summary-status-row">
+                                        <div class="community-livestream-summary-pills">
+                                            ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought', 'community-livestream-mini-pill-purchase')}
+                                            ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', 'community-livestream-mini-pill-payment')}
+                                        </div>
+                                        <div class="community-livestream-card-actions">
+                                            <button class="community-livestream-icon-btn" type="button" onclick="toggleCommunityLivestreamCard('${id}')" aria-label="編輯"><i class="fa-solid fa-pen"></i></button>
+                                            <button class="community-livestream-icon-btn danger" type="button" onclick="deleteCommunityLivestreamOrder(${quoteJs(order.id)}, ${quoteJs(order.productName || '')})" aria-label="刪除"><i class="fa-solid fa-trash"></i></button>
+                                        </div>
                                     </div>
                                     ${order.notes ? `<div class="community-livestream-summary-notes">備註：${escapeHtml(order.notes)}</div>` : ''}
                                 </div>
