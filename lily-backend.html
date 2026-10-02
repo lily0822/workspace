@@ -301,6 +301,7 @@
         .community-livestream-card-actions { display: flex; gap: 0.35rem; margin-left: auto; flex-shrink: 0; }
         .community-livestream-icon-btn { width: 30px; height: 30px; border-radius: 0.55rem; border: 1px solid #fbcfe8; background: #fff; color: #64748b; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; }
         .community-livestream-icon-btn:hover { border-color: #f472b6; color: #be185d; }
+        .community-livestream-icon-btn.active { background: #ecfdf5; border-color: #86efac; color: #16a34a; }
         .community-livestream-icon-btn.danger:hover { border-color: #fca5a5; color: #dc2626; }
         .community-livestream-summary { display: grid; gap: 0.3rem; }
         .community-livestream-summary-product { font-size: 0.82rem; font-weight: 800; color: #334155; }
@@ -8549,8 +8550,14 @@
             return 'community-status-yellow';
         }
 
-        function communityLivestreamStatusSelect(options, current, onchange) {
-            return `<select class="community-order-status-select ${communityLivestreamStatusTone(current)}" onchange="${onchange}; this.className='community-order-status-select ' + communityLivestreamStatusTone(this.value)">
+        // fieldClass 是 'community-livestream-status-select-purchase'/'-payment'，
+        // 給 applyCommunityLivestreamStatusToCard() 之後用來精準抓到這個
+        // <select>（不靠 DOM 順序/index，這張卡片裡有兩個同樣結構的
+        // select）。重新上色改成完全交給 patchCommunityLivestreamStatus
+        // 統一處理（成功才真的改、失敗要復原），onchange 不再像以前那樣
+        // 自己 inline 立即改 className。
+        function communityLivestreamStatusSelect(options, current, onchange, fieldClass) {
+            return `<select class="community-order-status-select ${fieldClass} ${communityLivestreamStatusTone(current)}" onchange="${onchange}">
                 ${options.map(option => `<option value="${option.value}" ${option.value === current ? 'selected' : ''}>${option.label}</option>`).join('')}
             </select>`;
         }
@@ -8598,8 +8605,10 @@
             return (options.find(option => option.value === value) || {}).label || value;
         }
 
-        function communityLivestreamMiniPill(options, value) {
-            return `<span class="community-livestream-mini-pill ${communityLivestreamStatusTone(value)}">${escapeHtml(communityLivestreamStatusLabel(options, value))}</span>`;
+        // fieldClass 同上，給免刷新局部更新用來精準抓到這個小圓點
+        // （這張卡片裡購買狀態/付款狀態各有自己的一個）。
+        function communityLivestreamMiniPill(options, value, fieldClass) {
+            return `<span class="community-livestream-mini-pill ${fieldClass} ${communityLivestreamStatusTone(value)}">${escapeHtml(communityLivestreamStatusLabel(options, value))}</span>`;
         }
 
         function toggleCommunityLivestreamCard(id) {
@@ -8630,6 +8639,7 @@
                     ? `<img class="community-livestream-thumb" src="${escapeHtml(order.photoUrl)}" alt="商品照片" loading="lazy" onclick="openCommunityLivestreamPhotoPreview(${quoteJs(order.photoUrl)})">`
                     : `<div class="community-livestream-thumb-placeholder"><i class="fa-regular fa-image"></i></div>`;
                 const checked = communitySelectedLivestreamIds.has(order.id) ? 'checked' : '';
+                const purchased = (order.purchaseStatus || 'not_bought') === 'bought';
                 const remittanceInfo = order.paymentStatus === 'confirming' && (order.remittanceBankName || order.remittanceLast5 || order.remittanceAmount !== null)
                     ? `<div class="community-livestream-remittance-info"><span><i class="fa-solid fa-money-check-dollar"></i> 客人回報：${escapeHtml(order.remittanceBankName || '—')}／${order.remittanceAmount === null ? '—' : storefrontMoney(order.remittanceAmount)}／末五碼${escapeHtml(order.remittanceLast5 || '—')}</span></div>`
                     : '';
@@ -8668,6 +8678,7 @@
                                         <small>${escapeHtml(order.lineDisplayName || 'LINE 使用者')}</small>
                                     </div>
                                     <div class="community-livestream-card-actions">
+                                        <button class="community-livestream-icon-btn community-livestream-purchase-toggle-btn${purchased ? ' active' : ''}" type="button" onclick="toggleCommunityLivestreamPurchased('${id}')" aria-label="${purchased ? '取消已購買' : '標記已購買'}" title="${purchased ? '取消已購買' : '標記已購買'}"><i class="fa-solid fa-check"></i></button>
                                         <button class="community-livestream-icon-btn" type="button" onclick="toggleCommunityLivestreamCard('${id}')" aria-label="編輯"><i class="fa-solid fa-pen"></i></button>
                                         <button class="community-livestream-icon-btn danger" type="button" onclick="deleteCommunityLivestreamOrder(${quoteJs(order.id)}, ${quoteJs(order.productName || '')})" aria-label="刪除"><i class="fa-solid fa-trash"></i></button>
                                     </div>
@@ -8677,8 +8688,8 @@
                                     <div class="community-livestream-summary-product">${escapeHtml(order.productName || '')}</div>
                                     <div class="community-livestream-summary-line">
                                         ${summaryQtyInput}<span>×</span>${summaryPriceInput}<span class="community-livestream-summary-total">= ${totalText}</span>
-                                        ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought')}
-                                        ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid')}
+                                        ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought', 'community-livestream-mini-pill-purchase')}
+                                        ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', 'community-livestream-mini-pill-payment')}
                                     </div>
                                     ${order.notes ? `<div class="community-livestream-summary-notes">備註：${escapeHtml(order.notes)}</div>` : ''}
                                 </div>
@@ -8700,8 +8711,8 @@
                                         </div>
                                     </div>
                                     <div class="community-livestream-status-row">
-                                        ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought', `patchCommunityLivestreamOrder('${id}', { purchaseStatus: this.value })`)}
-                                        ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', `patchCommunityLivestreamOrder('${id}', { paymentStatus: this.value })`)}
+                                        ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought', `patchCommunityLivestreamStatus('${id}', 'purchaseStatus', this.value)`, 'community-livestream-status-select-purchase')}
+                                        ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', `patchCommunityLivestreamStatus('${id}', 'paymentStatus', this.value)`, 'community-livestream-status-select-payment')}
                                     </div>
                                     <input type="text" class="community-livestream-notes-input" value="${escapeHtml(order.notes || '')}" placeholder="備註" onchange="patchCommunityLivestreamOrder('${id}', { notes: this.value })">
                                 </div>
@@ -8957,6 +8968,83 @@
                 console.error(error);
                 showToast(error.message || '更新失敗，請稍後再試', 'error');
             }
+        }
+
+        // 把 purchaseStatus/paymentStatus 其中一個欄位的新值套到這張卡片的
+        // 三個會顯示該狀態的地方：摘要行小圓點、展開表單的 <select>、
+        // （僅 purchaseStatus）卡片右上角的打勾切換按鈕。純操作 DOM，不碰
+        // communityLivestreamOrders 陣列本身——陣列只在 PATCH 真的成功後
+        // 才更新，失敗時重新呼叫這支函式、傳回原本的值，等於把畫面復原，
+        // 陣列從頭到尾都沒被錯誤地改過。
+        function applyCommunityLivestreamStatusToCard(id, field, value) {
+            const card = document.getElementById(`community-livestream-card-${id}`);
+            if (!card) return;
+            const options = field === 'purchaseStatus' ? COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS : COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS;
+            const pillClass = field === 'purchaseStatus' ? 'community-livestream-mini-pill-purchase' : 'community-livestream-mini-pill-payment';
+            const selectClass = field === 'purchaseStatus' ? 'community-livestream-status-select-purchase' : 'community-livestream-status-select-payment';
+            const tone = communityLivestreamStatusTone(value);
+
+            const pill = card.querySelector(`.${pillClass}`);
+            if (pill) {
+                pill.className = `community-livestream-mini-pill ${pillClass} ${tone}`;
+                pill.textContent = communityLivestreamStatusLabel(options, value);
+            }
+            const select = card.querySelector(`.${selectClass}`);
+            if (select) {
+                select.value = value;
+                select.className = `community-order-status-select ${selectClass} ${tone}`;
+            }
+            if (field === 'purchaseStatus') {
+                const toggleBtn = card.querySelector('.community-livestream-purchase-toggle-btn');
+                if (toggleBtn) {
+                    const bought = value === 'bought';
+                    const label = bought ? '取消已購買' : '標記已購買';
+                    toggleBtn.classList.toggle('active', bought);
+                    toggleBtn.setAttribute('aria-label', label);
+                    toggleBtn.setAttribute('title', label);
+                }
+            }
+        }
+
+        // 購買狀態／付款狀態改成跟上面單價/數量一樣的局部更新模式，不再
+        // 呼叫 patchCommunityLivestreamOrder() 那支會整份
+        // loadCommunityLivestreamOrders() 重新拉取+重繪的通用函式——範圍
+        // 只限這兩個欄位，商品名稱/備註維持原本整份刷新的做法不變。
+        // 先樂觀套用新值（點下去就立刻看到變化），PATCH 失敗再呼叫同一支
+        // apply 函式、傳回呼叫前的舊值復原，不會讓畫面停在「看起來存了但
+        // 其實沒存檔成功」的不一致狀態。批次編輯模式不處理這兩個欄位
+        // （目前批次編輯只管數量/單價），所以這裡沒有分支判斷
+        // communityLivestreamBulkEditEnabled。
+        async function patchCommunityLivestreamStatus(id, field, value) {
+            const order = communityLivestreamOrders.find(o => o.id === id);
+            const fallback = field === 'purchaseStatus' ? 'not_bought' : 'unpaid';
+            const previousValue = order ? (order[field] || fallback) : fallback;
+
+            applyCommunityLivestreamStatusToCard(id, field, value);
+            try {
+                const patch = {};
+                patch[field] = value;
+                const response = await fetch(`/api/backend/community/livestream-orders/${encodeURIComponent(id)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(patch)
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '更新失敗。');
+
+                if (order) order[field] = value;
+                showToast('已更新', 'success');
+            } catch (error) {
+                console.error(error);
+                applyCommunityLivestreamStatusToCard(id, field, previousValue);
+                showToast(error.message || '更新失敗，請稍後再試', 'error');
+            }
+        }
+
+        function toggleCommunityLivestreamPurchased(id) {
+            const order = communityLivestreamOrders.find(o => o.id === id);
+            const current = order ? (order.purchaseStatus || 'not_bought') : 'not_bought';
+            patchCommunityLivestreamStatus(id, 'purchaseStatus', current === 'bought' ? 'not_bought' : 'bought');
         }
 
         // ===== 批次編輯模式：數量/單價先暫存、最後一次送出 =====
