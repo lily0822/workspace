@@ -331,6 +331,17 @@
         .community-livestream-full { display: none; }
         .community-livestream-card.expanded .community-livestream-full { display: grid; gap: 0.6rem; margin-top: 0.1rem; }
         .community-livestream-card.expanded .community-livestream-summary { display: none; }
+        /* 「依客人統計」手風琴——每個客人一個區塊，標頭永遠顯示、預設
+           收合，點了才展開看到底下的訂單卡片（直接重用上面的
+           .community-livestream-card，長得一模一樣）。 */
+        .community-livestream-customer-group { border: 1px solid #fbcfe8; border-radius: 1rem; background: white; overflow: hidden; }
+        .community-livestream-customer-group-header { width: 100%; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding: 0.75rem 0.85rem; border: none; background: none; cursor: pointer; text-align: left; font-family: inherit; }
+        .community-livestream-customer-group-name { font-size: 0.84rem; font-weight: 900; color: #334155; flex-shrink: 0; }
+        .community-livestream-customer-group-amounts { display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; font-size: 0.74rem; font-weight: 800; color: #64748b; flex: 1; min-width: 0; }
+        .community-livestream-customer-group-chevron { margin-left: auto; flex-shrink: 0; color: #94a3b8; transition: transform .15s ease; }
+        .community-livestream-customer-group-chevron.open { transform: rotate(180deg); }
+        .community-livestream-customer-group-body { display: none; padding: 0 0.85rem 0.85rem; }
+        .community-livestream-customer-group-body.open { display: block; }
         /* 匯款紀錄頁籤——獨立於上面的社群連線訂單一套 class，視覺風格
            刻意比照（粉色系卡片/快篩按鈕），但不共用同一批 class，避免
            兩個功能的樣式調整互相牽動（這份卡片沒有照片，版面比訂單卡片
@@ -342,26 +353,45 @@
         .community-remittances-filter-btn.active { background: #ec4899; border-color: #ec4899; color: white; }
         .community-remittances-count-line { margin: 0.35rem 0; font-size: 0.78rem; font-weight: 800; color: #64748b; }
         .community-remittances-list { display: grid; gap: 0.75rem; margin-top: 0.35rem; }
-        .community-remittances-card { display: grid; gap: 0.6rem; border: 1px solid #fbcfe8; border-radius: 1rem; background: white; padding: 0.85rem; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
-        .community-remittances-card-header { display: flex; gap: 0.5rem; align-items: flex-start; }
-        .community-remittances-customer { font-size: 0.8rem; font-weight: 900; color: #334155; flex: 1; min-width: 0; }
-        .community-remittances-customer small { display: block; margin-top: 0.1rem; font-size: 0.72rem; font-weight: 700; color: #94a3b8; }
-        .community-remittances-customer-row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
-        .community-remittances-customer-time { flex-shrink: 0; font-size: 0.68rem; font-weight: 700; color: #94a3b8; }
-        .community-remittances-card-actions { display: flex; gap: 0.35rem; margin-left: auto; flex-shrink: 0; }
-        .community-remittances-icon-btn { width: 30px; height: 30px; border-radius: 0.55rem; border: 1px solid #fbcfe8; background: #fff; color: #64748b; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; }
+        .community-remittances-icon-btn { width: 30px; height: 30px; border-radius: 0.55rem; border: 1px solid #fbcfe8; background: #fff; color: #64748b; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; flex-shrink: 0; }
         .community-remittances-icon-btn:hover { border-color: #f472b6; color: #be185d; }
         .community-remittances-icon-btn.active { background: #ecfdf5; border-color: #86efac; color: #16a34a; }
         .community-remittances-icon-btn.danger:hover { border-color: #fca5a5; color: #dc2626; }
-        .community-remittances-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
-        .community-remittances-field { display: grid; gap: 0.2rem; }
-        .community-remittances-field label { font-size: 0.68rem; font-weight: 900; color: #94a3b8; }
-        .community-remittances-field input { width: 100%; min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.35rem 0.5rem; font-size: 0.82rem; font-weight: 800; color: #334155; outline: none; }
-        .community-remittances-field input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
-        .community-remittances-summary-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.35rem; font-size: 0.78rem; font-weight: 800; color: #64748b; }
-        .community-remittances-mini-pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.16rem 0.55rem; font-size: 0.68rem; font-weight: 900; color: #111827; }
+        .community-remittances-mini-pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.16rem 0.55rem; font-size: 0.68rem; font-weight: 900; color: #111827; flex-shrink: 0; }
         .community-remittances-tone-gray { background: #e2e8f0; color: #334155; }
         .community-remittances-tone-green { background: #bbf7d0; color: #166534; }
+        /* 「人名 → 匯款紀錄」雙層結構——人名這一層永遠展開（不是手風琴），
+           每一筆匯款紀錄由上往下直接列出，單筆紀錄本身才是可收合的
+           （展開看商品明細）。「未匯款」固定排在這個人紀錄的最後一行，
+           跟真正的匯款紀錄共用同一套 .community-remittances-row 外觀，
+           只是多一個 modifier class 做顏色區分。 */
+        .community-remittances-customer-block { border: 1px solid #fbcfe8; border-radius: 1rem; background: white; padding: 0.75rem 0.85rem; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
+        .community-remittances-customer-header { margin-bottom: 0.5rem; }
+        .community-remittances-customer-name { font-size: 0.84rem; font-weight: 900; color: #334155; }
+        .community-remittances-customer-body { display: grid; gap: 0.5rem; }
+        .community-remittances-row { border-top: 1px dashed #fbcfe8; padding-top: 0.5rem; }
+        .community-remittances-customer-body > .community-remittances-row:first-child { border-top: none; padding-top: 0; }
+        .community-remittances-row-main { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .community-remittances-row-toggle { width: 26px; height: 26px; border-radius: 0.5rem; border: 1px solid #fbcfe8; background: #fff7fb; color: #be185d; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.72rem; flex-shrink: 0; }
+        .community-remittances-bank-select { min-height: 32px; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.2rem 0.4rem; font-size: 0.78rem; font-weight: 800; color: #334155; }
+        .community-remittances-last5-input { width: 72px; min-height: 32px; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.2rem 0.4rem; font-size: 0.78rem; font-weight: 800; color: #334155; outline: none; text-align: center; }
+        .community-remittances-bank-select:focus, .community-remittances-last5-input:focus, .community-remittances-amount-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
+        .community-remittances-row-time { font-size: 0.7rem; font-weight: 700; color: #94a3b8; flex-shrink: 0; }
+        .community-remittances-row-amounts { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; font-size: 0.76rem; font-weight: 800; color: #64748b; }
+        .community-remittances-amount-input { width: 76px; min-height: 32px; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.2rem 0.4rem; font-size: 0.78rem; font-weight: 800; color: #334155; outline: none; text-align: center; }
+        .community-remittances-mismatch-badge { margin-left: 0.2rem; color: #d97706; }
+        .community-remittances-row-actions { display: flex; gap: 0.35rem; margin-left: auto; flex-shrink: 0; }
+        .community-remittances-row-orders { display: none; margin-top: 0.5rem; padding-left: 1.9rem; gap: 0.4rem; }
+        .community-remittances-row-orders.open { display: grid; }
+        .community-remittances-unpaid-row { background: #fff7fb; border-radius: 0.6rem; padding: 0.4rem 0.5rem; border-top: none; margin-top: 0.2rem; }
+        .community-remittances-unpaid-label { font-size: 0.78rem; font-weight: 900; color: #be185d; flex-shrink: 0; }
+        .community-remittances-order-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.76rem; font-weight: 700; color: #475569; }
+        .community-remittances-order-thumb, .community-remittances-order-thumb-placeholder { width: 40px; height: 40px; border-radius: 0.5rem; object-fit: cover; flex-shrink: 0; border: 1px solid #fbcfe8; background: #fff7fb; }
+        .community-remittances-order-thumb-placeholder { display: flex; align-items: center; justify-content: center; color: #f9a8d4; }
+        .community-remittances-order-name { flex: 1; min-width: 0; font-weight: 800; color: #334155; }
+        .community-remittances-order-qty { flex-shrink: 0; }
+        .community-remittances-order-total { flex-shrink: 0; font-weight: 900; color: #be185d; }
+        .community-remittances-empty-row { font-size: 0.78rem; font-weight: 700; color: #94a3b8; }
         .community-notebook-table td, .community-notebook-table th { white-space: nowrap; }
         .community-notebook-table td.community-notebook-name-cell { white-space: normal; }
         .community-notebook-toggle-row td { padding: 0.4rem 0.6rem; }
@@ -1484,6 +1514,7 @@
                         <button class="btn btn-secondary" type="button" onclick="loadCommunityLivestreamOrders()"><i class="fa-solid fa-rotate"></i><span class="btn-label"> 重新整理</span></button>
                         <button class="btn btn-secondary" type="button" id="community-livestream-bulk-edit-toggle-btn" onclick="toggleCommunityLivestreamBulkEdit()"><i class="fa-solid fa-list-check"></i><span class="btn-label"> 批次編輯</span></button>
                         <button class="btn btn-primary" type="button" id="community-livestream-bulk-edit-save-btn" onclick="saveCommunityLivestreamBulkEditChanges(this)" style="display:none;" disabled><i class="fa-solid fa-floppy-disk"></i><span class="btn-label"> 保存全部修改</span></button>
+                        <button class="btn btn-secondary" type="button" id="community-livestream-customer-view-toggle-btn" onclick="toggleCommunityLivestreamCustomerView()"><i class="fa-solid fa-users"></i><span class="btn-label"> 依客人統計</span></button>
                     </div>
                 </div>
                 <div class="backend-member-filterbar community-livestream-filterbar">
@@ -1557,13 +1588,10 @@
                         <button class="btn btn-primary" type="button" onclick="applyCommunityRemittancesFilters()"><i class="fa-solid fa-magnifying-glass"></i><span class="btn-label"> 搜尋</span></button>
                         <button class="btn btn-secondary" type="button" onclick="clearCommunityRemittancesFilters()"><i class="fa-solid fa-eraser"></i><span class="btn-label"> 清除</span></button>
                     </div>
-                    <div class="community-remittances-quick-filters">
-                        <button type="button" class="community-remittances-filter-btn" data-filter="reviewed:0" onclick="toggleCommunityRemittancesQuickFilter('0')">未核對</button>
-                        <button type="button" class="community-remittances-filter-btn" data-filter="reviewed:1" onclick="toggleCommunityRemittancesQuickFilter('1')">已核對</button>
-                    </div>
+                    <div class="community-remittances-quick-filters" id="community-remittances-bank-filters"></div>
                 </div>
                 <div id="community-remittances-count-line" class="community-remittances-count-line">
-                    <span id="community-remittances-total-count-text">共 0 筆</span>
+                    <span id="community-remittances-total-count-text">共 0 人</span>
                 </div>
                 <div id="community-remittances-list" class="community-remittances-list">
                     <div class="empty-state">尚未載入匯款紀錄</div>
@@ -8522,6 +8550,15 @@
         // .community-livestream-field-dirty 標示哪些欄位還沒存檔。
         let communityLivestreamBulkEditEnabled = false;
         const communityLivestreamBulkEditChanges = new Map();
+        // 「依客人統計」檢視：純前端把已載入的 communityLivestreamOrders
+        // 依 lineUserId 分組顯示，另外打一支新端點拿每人的 4 個金額
+        // （訂單總額/已核對/未確認/差額）當手風琴標頭。展開哪些客人
+        // 用這個 Set 記住，整份重繪也不會跑掉（跟 openIds 的 DOM-scrape
+        // 寫法不同，這裡本來就有獨立的狀態來源，不需要每次重繪前去
+        // DOM 裡反查）。
+        let communityLivestreamCustomerViewEnabled = false;
+        let communityLivestreamCustomerSummaries = [];
+        const communityLivestreamExpandedCustomerIds = new Set();
         // 依下單時間排序，純前端排序（不改 API/不加 query 參數）——'desc'
         // 最新在前是預設值，跟後端 GET .../livestream-orders 原本就用的
         // order('created_at', { ascending: false }) 一致，所以第一次載入
@@ -8605,6 +8642,14 @@
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '社群連線訂單讀取失敗。');
                 communityLivestreamOrders = Array.isArray(result.orders) ? result.orders : [];
+                // 依客人統計模式下，任何觸發整份重新載入的動作（重新整理、
+                // 搜尋/篩選、商品名稱/備註存檔、刪除...）順便把 4 個金額
+                // 也重新抓一次，避免手風琴標頭的數字跟剛剛的編輯脫鉤——
+                // 單價/數量/狀態那三支局部更新函式不會走到這裡（它們刻意
+                // 不整份重載，見各自的註解），所以那幾個欄位編輯後標頭
+                // 金額要等下一次真正整份重載才會同步，這是已知、刻意接受
+                // 的取捨，不是這裡漏寫。
+                if (communityLivestreamCustomerViewEnabled) await loadCommunityLivestreamCustomerSummaries();
                 renderCommunityLivestreamOrders();
             } catch (error) {
                 console.error(error);
@@ -8626,6 +8671,169 @@
             document.getElementById(`community-livestream-card-${id}`)?.classList.toggle('expanded');
         }
 
+        // 單筆訂單卡片的 HTML——抽成獨立函式，讓「依客人統計」手風琴分組
+        // 跟原本依時間排序的平鋪列表共用同一份卡片樣板，不要維護兩份。
+        // openIds 由呼叫端（renderCommunityLivestreamOrders）統一算好傳進
+        // 來，不管卡片最後是平鋪還是巢狀在客人分組底下，都用同一個
+        // Set 判斷展開狀態。
+        function buildCommunityLivestreamOrderCardHtml(order, openIds) {
+            const id = escapeHtml(order.id);
+            const isOpen = openIds.has(order.id);
+            const thumb = order.photoUrl
+                ? `<img class="community-livestream-thumb" src="${escapeHtml(order.photoUrl)}" alt="商品照片" loading="lazy" onclick="openCommunityLivestreamPhotoPreview(${quoteJs(order.photoUrl)})">`
+                : `<div class="community-livestream-thumb-placeholder"><i class="fa-regular fa-image"></i></div>`;
+            const checked = communitySelectedLivestreamIds.has(order.id) ? 'checked' : '';
+            const purchased = (order.purchaseStatus || 'not_bought') === 'bought';
+            const remittanceInfo = order.paymentStatus === 'confirming' && (order.remittanceBankName || order.remittanceLast5 || order.remittanceAmount !== null)
+                ? `<div class="community-livestream-remittance-info"><span><i class="fa-solid fa-money-check-dollar"></i> 客人回報：${escapeHtml(order.remittanceBankName || '—')}／${order.remittanceAmount === null ? '—' : storefrontMoney(order.remittanceAmount)}／末五碼${escapeHtml(order.remittanceLast5 || '—')}</span></div>`
+                : '';
+            // 批次編輯模式下，數量/單價顯示的是「尚未送出的暫存值」
+            // (communityLivestreamBulkEditChanges)，不是 order 物件本身
+            // 的值——避免存檔前整份重繪（搜尋/篩選/其他欄位觸發的
+            // 一般 reload）把使用者還沒按「保存全部修改」的輸入蓋掉。
+            const pendingEdit = communityLivestreamBulkEditEnabled ? communityLivestreamBulkEditChanges.get(order.id) : null;
+            const qtyDirty = Boolean(pendingEdit && pendingEdit.quantity !== undefined);
+            const priceDirty = Boolean(pendingEdit && pendingEdit.unitPrice !== undefined);
+            const qty = qtyDirty ? pendingEdit.quantity : Number(order.quantity || 1);
+            const unitPrice = priceDirty ? pendingEdit.unitPrice : order.unitPrice;
+            const totalText = unitPrice === null ? '—' : storefrontMoney(unitPrice * qty);
+            const qtyOnChange = communityLivestreamBulkEditEnabled
+                ? `stageCommunityLivestreamFieldChange('${id}', 'quantity', this.value)`
+                : `patchCommunityLivestreamQuantity('${id}', this.value)`;
+            const priceOnChange = communityLivestreamBulkEditEnabled
+                ? `stageCommunityLivestreamFieldChange('${id}', 'unitPrice', this.value)`
+                : `patchCommunityLivestreamUnitPrice('${id}', this.value)`;
+            const summaryQtyInput = `<input type="number" min="1" step="1" class="community-livestream-summary-qty-input${qtyDirty ? ' community-livestream-field-dirty' : ''}" value="${qty}" onchange="${qtyOnChange}">`;
+            const summaryPriceInput = `<input type="number" min="0" step="1" class="community-livestream-summary-price-input${priceDirty ? ' community-livestream-field-dirty' : ''}" value="${unitPrice === null ? '' : Number(unitPrice)}" placeholder="未輸入" onchange="${priceOnChange}">`;
+            return `
+                <div class="community-livestream-card ${isOpen ? 'expanded' : ''}" id="community-livestream-card-${id}" data-row-id="${id}">
+                    <div class="community-livestream-card-top">
+                        <div class="community-livestream-thumb-wrap">
+                            <input type="checkbox" class="community-livestream-select-checkbox" aria-label="選取此筆社群連線訂單" ${checked} onchange="toggleCommunityLivestreamRowSelect('${id}', this.checked)">
+                            ${thumb}
+                            <span class="community-livestream-thumb-time">${storefrontDateTime(order.createdAt)}</span>
+                        </div>
+                        <div class="community-livestream-card-main">
+                            <div class="community-livestream-card-header">
+                                <div class="community-livestream-customer-name">${escapeHtml(order.lineDisplayName || 'LINE 使用者')}</div>
+                                <div class="community-livestream-card-actions">
+                                    <button class="community-livestream-icon-btn community-livestream-purchase-toggle-btn${purchased ? ' active' : ''}" type="button" onclick="toggleCommunityLivestreamPurchased('${id}')" aria-label="${purchased ? '取消已購買' : '標記已購買'}" title="${purchased ? '取消已購買' : '標記已購買'}"><i class="fa-solid fa-check"></i></button>
+                                </div>
+                            </div>
+                            ${remittanceInfo}
+                            <div class="community-livestream-summary">
+                                <div class="community-livestream-summary-product">${escapeHtml(order.productName || '')}</div>
+                                <div class="community-livestream-summary-line">
+                                    ${summaryQtyInput}<span>×</span>${summaryPriceInput}<span class="community-livestream-summary-total">= ${totalText}</span>
+                                </div>
+                                <div class="community-livestream-summary-status-row">
+                                    <div class="community-livestream-summary-pills">
+                                        ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought', 'community-livestream-mini-pill-purchase')}
+                                        ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', 'community-livestream-mini-pill-payment')}
+                                    </div>
+                                    <div class="community-livestream-card-actions">
+                                        <button class="community-livestream-icon-btn" type="button" onclick="toggleCommunityLivestreamCard('${id}')" aria-label="編輯"><i class="fa-solid fa-pen"></i></button>
+                                        <button class="community-livestream-icon-btn danger" type="button" onclick="deleteCommunityLivestreamOrder(${quoteJs(order.id)}, ${quoteJs(order.productName || '')})" aria-label="刪除"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                </div>
+                                ${order.notes ? `<div class="community-livestream-summary-notes">備註：${escapeHtml(order.notes)}</div>` : ''}
+                            </div>
+                            <div class="community-livestream-full">
+                                <input type="text" class="community-livestream-product-input" value="${escapeHtml(order.productName || '')}" placeholder="下單商品" onchange="patchCommunityLivestreamOrder('${id}', { productName: this.value })">
+                                ${unitPrice === null ? '<div class="community-livestream-unrecognized community-livestream-price-warning">⚠ 無法辨識價格，請手動輸入</div>' : ''}
+                                <div class="community-livestream-grid">
+                                    <div class="community-livestream-field">
+                                        <label>數量</label>
+                                        <input type="number" min="1" step="1" class="community-livestream-full-qty-input${qtyDirty ? ' community-livestream-field-dirty' : ''}" value="${qty}" onchange="${qtyOnChange}">
+                                    </div>
+                                    <div class="community-livestream-field">
+                                        <label>單價</label>
+                                        <input type="number" min="0" step="1" class="community-livestream-full-price-input${priceDirty ? ' community-livestream-field-dirty' : ''}" value="${unitPrice === null ? '' : Number(unitPrice)}" placeholder="未辨識" onchange="${priceOnChange}">
+                                    </div>
+                                    <div class="community-livestream-field">
+                                        <label>總價</label>
+                                        <div class="community-livestream-total">${totalText}</div>
+                                    </div>
+                                </div>
+                                <div class="community-livestream-status-row">
+                                    ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought', `patchCommunityLivestreamStatus('${id}', 'purchaseStatus', this.value)`, 'community-livestream-status-select-purchase')}
+                                    ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', `patchCommunityLivestreamStatus('${id}', 'paymentStatus', this.value)`, 'community-livestream-status-select-payment')}
+                                </div>
+                                <input type="text" class="community-livestream-notes-input" value="${escapeHtml(order.notes || '')}" placeholder="備註" onchange="patchCommunityLivestreamOrder('${id}', { notes: this.value })">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 「依客人統計」模式：把目前已載入的 communityLivestreamOrders 依
+        // lineUserId 分組，每組是一個預設收合的手風琴，標頭顯示
+        // loadCommunityLivestreamCustomerSummaries() 查回來的 4 個金額。
+        // 展開後的卡片直接重用 buildCommunityLivestreamOrderCardHtml，跟
+        // 平鋪列表長得一模一樣、互動也完全一樣（數量/單價/狀態照常可編輯），
+        // 這支函式本身不碰那幾支 patch 函式。
+        function renderCommunityLivestreamCustomerGroupsHtml(openIds) {
+            const groups = new Map();
+            communityLivestreamOrders.forEach(order => {
+                const key = order.lineUserId || `__no-line-user-id__${order.id}`;
+                if (!groups.has(key)) groups.set(key, { lineUserId: key, lineDisplayName: order.lineDisplayName || 'LINE 使用者', orders: [] });
+                groups.get(key).orders.push(order);
+            });
+            const summaryByUserId = new Map(communityLivestreamCustomerSummaries.map(c => [c.lineUserId, c]));
+            const groupList = [...groups.values()].sort((a, b) => a.lineDisplayName.localeCompare(b.lineDisplayName, 'zh-Hant'));
+
+            return groupList.map(group => {
+                const summary = summaryByUserId.get(group.lineUserId) || { totalAmount: 0, confirmedRemittanceAmount: 0, pendingRemittanceAmount: 0, diffAmount: 0 };
+                const expanded = communityLivestreamExpandedCustomerIds.has(group.lineUserId);
+                const cardsHtml = group.orders.map(order => buildCommunityLivestreamOrderCardHtml(order, openIds)).join('');
+                return `
+                    <div class="community-livestream-customer-group">
+                        <button type="button" class="community-livestream-customer-group-header" onclick="toggleCommunityLivestreamCustomerGroup(${quoteJs(group.lineUserId)})">
+                            <span class="community-livestream-customer-group-name">${escapeHtml(group.lineDisplayName)}</span>
+                            <span class="community-livestream-customer-group-amounts">
+                                <span>訂單總額 ${storefrontMoney(summary.totalAmount)}</span>
+                                <span>已核對 ${storefrontMoney(summary.confirmedRemittanceAmount)}</span>
+                                <span>未確認 ${storefrontMoney(summary.pendingRemittanceAmount)}</span>
+                                <span>差額 ${storefrontMoney(summary.diffAmount)}</span>
+                            </span>
+                            <i class="fa-solid fa-angle-down community-livestream-customer-group-chevron${expanded ? ' open' : ''}"></i>
+                        </button>
+                        <div class="community-livestream-customer-group-body${expanded ? ' open' : ''}">
+                            <div class="community-livestream-list">${cardsHtml}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleCommunityLivestreamCustomerGroup(lineUserId) {
+            if (communityLivestreamExpandedCustomerIds.has(lineUserId)) communityLivestreamExpandedCustomerIds.delete(lineUserId);
+            else communityLivestreamExpandedCustomerIds.add(lineUserId);
+            renderCommunityLivestreamOrders();
+        }
+
+        async function loadCommunityLivestreamCustomerSummaries() {
+            try {
+                const response = await fetch('/api/backend/community/livestream-customer-summary', { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '依客人統計讀取失敗。');
+                communityLivestreamCustomerSummaries = Array.isArray(result.customers) ? result.customers : [];
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '依客人統計讀取失敗，請稍後再試', 'error');
+                communityLivestreamCustomerSummaries = [];
+            }
+        }
+
+        async function toggleCommunityLivestreamCustomerView() {
+            communityLivestreamCustomerViewEnabled = !communityLivestreamCustomerViewEnabled;
+            const toggleBtn = document.getElementById('community-livestream-customer-view-toggle-btn');
+            if (toggleBtn) toggleBtn.className = communityLivestreamCustomerViewEnabled ? 'btn btn-primary' : 'btn btn-secondary';
+            if (communityLivestreamCustomerViewEnabled) await loadCommunityLivestreamCustomerSummaries();
+            renderCommunityLivestreamOrders();
+        }
+
         function renderCommunityLivestreamOrders() {
             sortCommunityLivestreamOrders();
             const list = document.getElementById('community-livestream-list');
@@ -8643,96 +8851,9 @@
                 updateCommunityLivestreamBulkEditControls();
                 return;
             }
-            list.innerHTML = communityLivestreamOrders.map(order => {
-                const id = escapeHtml(order.id);
-                const isOpen = openIds.has(order.id);
-                const thumb = order.photoUrl
-                    ? `<img class="community-livestream-thumb" src="${escapeHtml(order.photoUrl)}" alt="商品照片" loading="lazy" onclick="openCommunityLivestreamPhotoPreview(${quoteJs(order.photoUrl)})">`
-                    : `<div class="community-livestream-thumb-placeholder"><i class="fa-regular fa-image"></i></div>`;
-                const checked = communitySelectedLivestreamIds.has(order.id) ? 'checked' : '';
-                const purchased = (order.purchaseStatus || 'not_bought') === 'bought';
-                const remittanceInfo = order.paymentStatus === 'confirming' && (order.remittanceBankName || order.remittanceLast5 || order.remittanceAmount !== null)
-                    ? `<div class="community-livestream-remittance-info"><span><i class="fa-solid fa-money-check-dollar"></i> 客人回報：${escapeHtml(order.remittanceBankName || '—')}／${order.remittanceAmount === null ? '—' : storefrontMoney(order.remittanceAmount)}／末五碼${escapeHtml(order.remittanceLast5 || '—')}</span></div>`
-                    : '';
-                // 批次編輯模式下，數量/單價顯示的是「尚未送出的暫存值」
-                // (communityLivestreamBulkEditChanges)，不是 order 物件本身
-                // 的值——避免存檔前整份重繪（搜尋/篩選/其他欄位觸發的
-                // 一般 reload）把使用者還沒按「保存全部修改」的輸入蓋掉。
-                const pendingEdit = communityLivestreamBulkEditEnabled ? communityLivestreamBulkEditChanges.get(order.id) : null;
-                const qtyDirty = Boolean(pendingEdit && pendingEdit.quantity !== undefined);
-                const priceDirty = Boolean(pendingEdit && pendingEdit.unitPrice !== undefined);
-                const qty = qtyDirty ? pendingEdit.quantity : Number(order.quantity || 1);
-                const unitPrice = priceDirty ? pendingEdit.unitPrice : order.unitPrice;
-                const totalText = unitPrice === null ? '—' : storefrontMoney(unitPrice * qty);
-                const qtyOnChange = communityLivestreamBulkEditEnabled
-                    ? `stageCommunityLivestreamFieldChange('${id}', 'quantity', this.value)`
-                    : `patchCommunityLivestreamQuantity('${id}', this.value)`;
-                const priceOnChange = communityLivestreamBulkEditEnabled
-                    ? `stageCommunityLivestreamFieldChange('${id}', 'unitPrice', this.value)`
-                    : `patchCommunityLivestreamUnitPrice('${id}', this.value)`;
-                const summaryQtyInput = `<input type="number" min="1" step="1" class="community-livestream-summary-qty-input${qtyDirty ? ' community-livestream-field-dirty' : ''}" value="${qty}" onchange="${qtyOnChange}">`;
-                const summaryPriceInput = `<input type="number" min="0" step="1" class="community-livestream-summary-price-input${priceDirty ? ' community-livestream-field-dirty' : ''}" value="${unitPrice === null ? '' : Number(unitPrice)}" placeholder="未輸入" onchange="${priceOnChange}">`;
-                return `
-                    <div class="community-livestream-card ${isOpen ? 'expanded' : ''}" id="community-livestream-card-${id}" data-row-id="${id}">
-                        <div class="community-livestream-card-top">
-                            <div class="community-livestream-thumb-wrap">
-                                <input type="checkbox" class="community-livestream-select-checkbox" aria-label="選取此筆社群連線訂單" ${checked} onchange="toggleCommunityLivestreamRowSelect('${id}', this.checked)">
-                                ${thumb}
-                                <span class="community-livestream-thumb-time">${storefrontDateTime(order.createdAt)}</span>
-                            </div>
-                            <div class="community-livestream-card-main">
-                                <div class="community-livestream-card-header">
-                                    <div class="community-livestream-customer-name">${escapeHtml(order.lineDisplayName || 'LINE 使用者')}</div>
-                                    <div class="community-livestream-card-actions">
-                                        <button class="community-livestream-icon-btn community-livestream-purchase-toggle-btn${purchased ? ' active' : ''}" type="button" onclick="toggleCommunityLivestreamPurchased('${id}')" aria-label="${purchased ? '取消已購買' : '標記已購買'}" title="${purchased ? '取消已購買' : '標記已購買'}"><i class="fa-solid fa-check"></i></button>
-                                    </div>
-                                </div>
-                                ${remittanceInfo}
-                                <div class="community-livestream-summary">
-                                    <div class="community-livestream-summary-product">${escapeHtml(order.productName || '')}</div>
-                                    <div class="community-livestream-summary-line">
-                                        ${summaryQtyInput}<span>×</span>${summaryPriceInput}<span class="community-livestream-summary-total">= ${totalText}</span>
-                                    </div>
-                                    <div class="community-livestream-summary-status-row">
-                                        <div class="community-livestream-summary-pills">
-                                            ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought', 'community-livestream-mini-pill-purchase')}
-                                            ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', 'community-livestream-mini-pill-payment')}
-                                        </div>
-                                        <div class="community-livestream-card-actions">
-                                            <button class="community-livestream-icon-btn" type="button" onclick="toggleCommunityLivestreamCard('${id}')" aria-label="編輯"><i class="fa-solid fa-pen"></i></button>
-                                            <button class="community-livestream-icon-btn danger" type="button" onclick="deleteCommunityLivestreamOrder(${quoteJs(order.id)}, ${quoteJs(order.productName || '')})" aria-label="刪除"><i class="fa-solid fa-trash"></i></button>
-                                        </div>
-                                    </div>
-                                    ${order.notes ? `<div class="community-livestream-summary-notes">備註：${escapeHtml(order.notes)}</div>` : ''}
-                                </div>
-                                <div class="community-livestream-full">
-                                    <input type="text" class="community-livestream-product-input" value="${escapeHtml(order.productName || '')}" placeholder="下單商品" onchange="patchCommunityLivestreamOrder('${id}', { productName: this.value })">
-                                    ${unitPrice === null ? '<div class="community-livestream-unrecognized community-livestream-price-warning">⚠ 無法辨識價格，請手動輸入</div>' : ''}
-                                    <div class="community-livestream-grid">
-                                        <div class="community-livestream-field">
-                                            <label>數量</label>
-                                            <input type="number" min="1" step="1" class="community-livestream-full-qty-input${qtyDirty ? ' community-livestream-field-dirty' : ''}" value="${qty}" onchange="${qtyOnChange}">
-                                        </div>
-                                        <div class="community-livestream-field">
-                                            <label>單價</label>
-                                            <input type="number" min="0" step="1" class="community-livestream-full-price-input${priceDirty ? ' community-livestream-field-dirty' : ''}" value="${unitPrice === null ? '' : Number(unitPrice)}" placeholder="未辨識" onchange="${priceOnChange}">
-                                        </div>
-                                        <div class="community-livestream-field">
-                                            <label>總價</label>
-                                            <div class="community-livestream-total">${totalText}</div>
-                                        </div>
-                                    </div>
-                                    <div class="community-livestream-status-row">
-                                        ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought', `patchCommunityLivestreamStatus('${id}', 'purchaseStatus', this.value)`, 'community-livestream-status-select-purchase')}
-                                        ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', `patchCommunityLivestreamStatus('${id}', 'paymentStatus', this.value)`, 'community-livestream-status-select-payment')}
-                                    </div>
-                                    <input type="text" class="community-livestream-notes-input" value="${escapeHtml(order.notes || '')}" placeholder="備註" onchange="patchCommunityLivestreamOrder('${id}', { notes: this.value })">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            list.innerHTML = communityLivestreamCustomerViewEnabled
+                ? renderCommunityLivestreamCustomerGroupsHtml(openIds)
+                : communityLivestreamOrders.map(order => buildCommunityLivestreamOrderCardHtml(order, openIds)).join('');
             updateCommunityLivestreamSelectionControls();
             updateCommunityLivestreamBulkEditControls();
         }
@@ -9291,17 +9412,55 @@
 
         // ===== 匯款紀錄 (community_livestream_remittances) — 獨立頁籤，管理客人
         // 回報的銀行/末五碼/金額紀錄。跟上面的「社群連線訂單」是兩張不同的表、
-        // 兩支不同的 API，只是視覺風格刻意比照（粉色卡片式版面/搜尋列/快篩
-        // 按鈕），命名上用 CommunityLivestreamRemittance(s) 字首跟既有、完全
-        // 無關的 loadCommunityRemittances()（社群訂單頁籤裡舊的記事本系統
-        // 匯款審核功能）區隔，避免混淆。 =====
-        let communityLivestreamRemittances = [];
-        const communityRemittancesFilters = { q: '', reviewed: '' };
+        // 兩支不同的 API，只是視覺風格刻意比照（粉色系/搜尋列/快篩按鈕），
+        // 命名上用 CommunityLivestreamRemittance(s) 字首跟既有、完全無關的
+        // loadCommunityRemittances()（社群訂單頁籤裡舊的記事本系統匯款審核
+        // 功能）區隔，避免混淆。
+        //
+        // 這輪改成「人名 → 匯款紀錄」雙層結構：GET 回傳的是依客人分組的
+        // 巢狀 JSON（customers[].remittances[].orders[]），不是扁平陣列了。
+        // 人名這一層永遠展開（不是手風琴）；每一筆匯款紀錄本身可以展開看
+        // 商品明細；「未匯款」固定排在每個人紀錄的最後一行（沒有未付款
+        // 訂單就不顯示這一行）。原本的未核對/已核對快篩拿掉，改成銀行
+        // 篩選（中信/富邦/國泰/異常/全部）。 =====
+        let communityLivestreamRemittanceCustomers = [];
+        const communityRemittancesFilters = { q: '', bank: '' };
+        // 哪些匯款紀錄/哪些人的「未匯款」行目前展開著——跟社群連線訂單的
+        // openIds 不同，這裡不用每次重繪前去 DOM 反查，直接拿這兩個 Set
+        // 當唯一的狀態來源即可（渲染函式本身就是純函式，讀這兩個 Set）。
+        const communityLivestreamRemittanceExpandedIds = new Set();
+        const communityLivestreamRemittanceExpandedUnpaidIds = new Set();
+
+        const COMMUNITY_REMITTANCE_BANK_FILTERS = [
+            { value: '', label: '全部' },
+            { value: 'zhongxin', label: '中信' },
+            { value: 'fubon', label: '富邦' },
+            { value: 'cathay', label: '國泰' },
+            { value: 'anomaly', label: '異常' },
+        ];
+        // 跟後端 livestream-bank-aliases.ts 的 LIVESTREAM_STANDARD_BANK_NAMES
+        // 是同一份清單（中信/富邦/國泰），這裡沒有共用模組可以直接 import，
+        // 手動保持兩邊一致——銀行下拉選單只能選這三個，異常資料靠下拉選單
+        // 重新指定成正確的那個來修正。
+        const COMMUNITY_REMITTANCE_STANDARD_BANKS = ['中信', '富邦', '國泰'];
+
+        function renderCommunityRemittanceBankFilterButtons() {
+            const container = document.getElementById('community-remittances-bank-filters');
+            if (!container) return;
+            container.innerHTML = COMMUNITY_REMITTANCE_BANK_FILTERS.map(filter => `
+                <button type="button" class="community-remittances-filter-btn${communityRemittancesFilters.bank === filter.value ? ' active' : ''}" onclick="setCommunityRemittancesBankFilter(${quoteJs(filter.value)})">${escapeHtml(filter.label)}</button>
+            `).join('');
+        }
+
+        function setCommunityRemittancesBankFilter(value) {
+            communityRemittancesFilters.bank = value;
+            loadCommunityLivestreamRemittances();
+        }
 
         function communityRemittancesQueryString() {
             const params = new URLSearchParams();
             if (communityRemittancesFilters.q) params.set('q', communityRemittancesFilters.q);
-            if (communityRemittancesFilters.reviewed) params.set('reviewed', communityRemittancesFilters.reviewed);
+            if (communityRemittancesFilters.bank) params.set('bank', communityRemittancesFilters.bank);
             const qs = params.toString();
             return qs ? `?${qs}` : '';
         }
@@ -9309,10 +9468,7 @@
         function writeCommunityRemittancesFilterInputs() {
             const search = document.getElementById('community-remittances-search');
             if (search) search.value = communityRemittancesFilters.q || '';
-            document.querySelectorAll('.community-remittances-filter-btn').forEach(btn => {
-                const [, value] = (btn.dataset.filter || '').split(':');
-                btn.classList.toggle('active', communityRemittancesFilters.reviewed === value);
-            });
+            renderCommunityRemittanceBankFilterButtons();
         }
 
         async function loadCommunityLivestreamRemittances() {
@@ -9324,7 +9480,7 @@
                 const response = await fetch(`/api/backend/community/livestream-remittances${communityRemittancesQueryString()}`, { cache: 'no-store' });
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '匯款紀錄讀取失敗。');
-                communityLivestreamRemittances = Array.isArray(result.remittances) ? result.remittances : [];
+                communityLivestreamRemittanceCustomers = Array.isArray(result.customers) ? result.customers : [];
                 renderCommunityLivestreamRemittances();
             } catch (error) {
                 console.error(error);
@@ -9332,57 +9488,143 @@
             }
         }
 
+        // 商品明細一列：縮圖＋名稱＋數量×單價＋小計，比照社群連線訂單卡片
+        // 縮圖風格但尺寸更小（這裡只是輔助展示，不是主要互動對象）。匯款
+        // 紀錄底下跟「未匯款」底下的商品明細都呼叫這同一支函式。
+        function communityRemittanceOrderItemHtml(order) {
+            const thumb = order.photoUrl
+                ? `<img class="community-remittances-order-thumb" src="${escapeHtml(order.photoUrl)}" alt="商品照片" loading="lazy">`
+                : `<div class="community-remittances-order-thumb-placeholder"><i class="fa-regular fa-image"></i></div>`;
+            const unitPriceText = order.unitPrice === null ? '—' : storefrontMoney(order.unitPrice);
+            const lineTotalText = order.lineTotal === null ? '—' : storefrontMoney(order.lineTotal);
+            return `
+                <div class="community-remittances-order-item">
+                    ${thumb}
+                    <span class="community-remittances-order-name">${escapeHtml(order.productName || '商品')}</span>
+                    <span class="community-remittances-order-qty">${Number(order.quantity || 1)} × ${unitPriceText}</span>
+                    <span class="community-remittances-order-total">${lineTotalText}</span>
+                </div>
+            `;
+        }
+
+        // 銀行下拉選單只能選中信/富邦/國泰三個標準名稱——如果這筆紀錄目前
+        // 的值是「異常」（查無此名），額外插一個選中、帶 ⚠ 的選項顯示
+        // 目前的實際值，不然 <select> 會因為找不到對應 option 而默默選到
+        // 第一個標準銀行，誤導管理員以為資料其實是正常的。
+        function communityRemittanceBankSelectHtml(remittanceId, bankName, isAnomaly) {
+            const anomalyOption = isAnomaly
+                ? `<option value="${escapeHtml(bankName || '')}" selected>⚠ ${escapeHtml(bankName || '未填寫')}</option>`
+                : '';
+            const standardOptions = COMMUNITY_REMITTANCE_STANDARD_BANKS
+                .map(bank => `<option value="${bank}" ${!isAnomaly && bank === bankName ? 'selected' : ''}>${bank}</option>`)
+                .join('');
+            return `<select class="community-remittances-bank-select" onchange="patchCommunityLivestreamRemittance('${remittanceId}', { bankName: this.value })">${anomalyOption}${standardOptions}</select>`;
+        }
+
+        function communityRemittanceRowHtml(remittance) {
+            const expanded = communityLivestreamRemittanceExpandedIds.has(remittance.id);
+            const reviewed = Boolean(remittance.reviewedAt);
+            const toggleLabel = reviewed ? '取消標記' : '標記已核對';
+            const toggleIcon = reviewed ? 'fa-rotate-left' : 'fa-check';
+            const mismatchBadge = remittance.mismatch
+                ? '<span class="community-remittances-mismatch-badge" title="客人回報金額跟系統計算金額不一致">⚠</span>'
+                : '';
+            const deleteLabel = `${remittance.bankName || '銀行未填'}／${remittance.accountLast5 || '末五碼未填'}`;
+            return `
+                <div class="community-remittances-row">
+                    <div class="community-remittances-row-main">
+                        <button type="button" class="community-remittances-row-toggle" onclick="toggleCommunityRemittanceOrdersExpanded('${remittance.id}')" aria-label="展開商品明細">
+                            <i class="fa-solid fa-chevron-${expanded ? 'down' : 'right'}"></i>
+                        </button>
+                        ${communityRemittanceBankSelectHtml(remittance.id, remittance.bankName, remittance.isBankAnomaly)}
+                        <input type="text" class="community-remittances-last5-input" maxlength="5" inputmode="numeric" placeholder="末五碼" value="${escapeHtml(remittance.accountLast5 || '')}" onchange="patchCommunityLivestreamRemittance('${remittance.id}', { accountLast5: this.value })">
+                        <span class="community-remittances-row-time">${storefrontDateTime(remittance.submittedAt)}</span>
+                        <span class="community-remittances-mini-pill ${reviewed ? 'community-remittances-tone-green' : 'community-remittances-tone-gray'}">${reviewed ? '已核對' : '未核對'}</span>
+                        <span class="community-remittances-row-amounts">
+                            <span>系統 ${storefrontMoney(remittance.systemCalculatedTotal)}</span>
+                            <span>回報 <input type="number" min="0" step="1" class="community-remittances-amount-input" placeholder="未填寫" value="${remittance.amount === null ? '' : Number(remittance.amount)}" onchange="patchCommunityLivestreamRemittance('${remittance.id}', { amount: this.value === '' ? null : Number(this.value) })">${mismatchBadge}</span>
+                        </span>
+                        <div class="community-remittances-row-actions">
+                            <button class="community-remittances-icon-btn${reviewed ? ' active' : ''}" type="button" onclick="toggleCommunityRemittanceReviewed('${remittance.id}', ${!reviewed})" aria-label="${toggleLabel}" title="${toggleLabel}"><i class="fa-solid ${toggleIcon}"></i></button>
+                            <button class="community-remittances-icon-btn danger" type="button" onclick="deleteCommunityLivestreamRemittance('${remittance.id}', ${quoteJs(deleteLabel)})" aria-label="刪除"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="community-remittances-row-orders${expanded ? ' open' : ''}">
+                        ${remittance.orders.map(communityRemittanceOrderItemHtml).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 「未匯款」固定排在每個人紀錄的最後一行——只展示系統計算總額跟
+        // 商品明細，沒有銀行/末五碼/核對狀態（本來就不是一筆匯款申報）。
+        function communityRemittanceUnpaidRowHtml(customer) {
+            const expanded = communityLivestreamRemittanceExpandedUnpaidIds.has(customer.lineUserId);
+            return `
+                <div class="community-remittances-row community-remittances-unpaid-row">
+                    <div class="community-remittances-row-main">
+                        <button type="button" class="community-remittances-row-toggle" onclick="toggleCommunityRemittanceUnpaidExpanded(${quoteJs(customer.lineUserId)})" aria-label="展開未付款商品明細">
+                            <i class="fa-solid fa-chevron-${expanded ? 'down' : 'right'}"></i>
+                        </button>
+                        <span class="community-remittances-unpaid-label">未匯款</span>
+                        <span class="community-remittances-row-amounts"><span>系統 ${storefrontMoney(customer.unpaid.systemCalculatedTotal)}</span></span>
+                    </div>
+                    <div class="community-remittances-row-orders${expanded ? ' open' : ''}">
+                        ${customer.unpaid.orders.map(communityRemittanceOrderItemHtml).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function communityRemittanceCustomerBlockHtml(customer) {
+            const remittanceRows = customer.remittances.map(communityRemittanceRowHtml).join('');
+            const unpaidRow = customer.unpaid ? communityRemittanceUnpaidRowHtml(customer) : '';
+            const emptyRow = (!customer.remittances.length && !customer.unpaid)
+                ? '<div class="community-remittances-empty-row">目前沒有匯款紀錄</div>'
+                : '';
+            return `
+                <div class="community-remittances-customer-block">
+                    <div class="community-remittances-customer-header">
+                        <span class="community-remittances-customer-name">${escapeHtml(customer.lineDisplayName || 'LINE 使用者')}</span>
+                    </div>
+                    <div class="community-remittances-customer-body">
+                        ${remittanceRows}
+                        ${unpaidRow}
+                        ${emptyRow}
+                    </div>
+                </div>
+            `;
+        }
+
         function renderCommunityLivestreamRemittances() {
             const list = document.getElementById('community-remittances-list');
             const countEl = document.getElementById('community-remittances-total-count-text');
             if (!list) return;
-            if (countEl) countEl.textContent = `共 ${communityLivestreamRemittances.length} 筆`;
-            if (!communityLivestreamRemittances.length) {
+            if (countEl) countEl.textContent = `共 ${communityLivestreamRemittanceCustomers.length} 人`;
+            if (!communityLivestreamRemittanceCustomers.length) {
                 list.innerHTML = '<div class="empty-state">沒有符合條件的匯款紀錄</div>';
                 return;
             }
-            list.innerHTML = communityLivestreamRemittances.map(row => {
-                const id = escapeHtml(row.id);
-                const reviewed = Boolean(row.reviewedAt);
-                const toggleLabel = reviewed ? '取消標記' : '標記已核對';
-                const toggleIcon = reviewed ? 'fa-rotate-left' : 'fa-check';
-                return `
-                    <div class="community-remittances-card" id="community-remittances-card-${id}">
-                        <div class="community-remittances-card-header">
-                            <div class="community-remittances-customer">
-                                <div class="community-remittances-customer-row">
-                                    <span>${escapeHtml(row.nickname || '—')}</span>
-                                    <span class="community-remittances-customer-time">${storefrontDateTime(row.submittedAt)}</span>
-                                </div>
-                            </div>
-                            <div class="community-remittances-card-actions">
-                                <button class="community-remittances-icon-btn ${reviewed ? 'active' : ''}" type="button" onclick="toggleCommunityRemittanceReviewed('${id}', ${!reviewed})" aria-label="${toggleLabel}" title="${toggleLabel}"><i class="fa-solid ${toggleIcon}"></i></button>
-                                <button class="community-remittances-icon-btn danger" type="button" onclick="deleteCommunityLivestreamRemittance('${id}', ${quoteJs(row.nickname || '')})" aria-label="刪除"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        </div>
-                        <div class="community-remittances-grid">
-                            <div class="community-remittances-field">
-                                <label>銀行</label>
-                                <input type="text" value="${escapeHtml(row.bankName || '')}" placeholder="未填寫" onchange="patchCommunityLivestreamRemittance('${id}', { bankName: this.value })">
-                            </div>
-                            <div class="community-remittances-field">
-                                <label>末五碼</label>
-                                <input type="text" maxlength="5" inputmode="numeric" value="${escapeHtml(row.accountLast5 || '')}" onchange="patchCommunityLivestreamRemittance('${id}', { accountLast5: this.value })">
-                            </div>
-                            <div class="community-remittances-field">
-                                <label>金額</label>
-                                <input type="number" min="0" step="1" value="${row.amount === null ? '' : Number(row.amount)}" placeholder="未填寫" onchange="patchCommunityLivestreamRemittance('${id}', { amount: this.value === '' ? null : Number(this.value) })">
-                            </div>
-                        </div>
-                        <div class="community-remittances-summary-line">
-                            <span>關聯 ${Number(row.orderCount || 0)} 筆商品</span>
-                            <span class="community-remittances-mini-pill ${reviewed ? 'community-remittances-tone-green' : 'community-remittances-tone-gray'}">${reviewed ? '已核對' : '未核對'}</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            list.innerHTML = communityLivestreamRemittanceCustomers.map(communityRemittanceCustomerBlockHtml).join('');
         }
 
+        function toggleCommunityRemittanceOrdersExpanded(id) {
+            if (communityLivestreamRemittanceExpandedIds.has(id)) communityLivestreamRemittanceExpandedIds.delete(id);
+            else communityLivestreamRemittanceExpandedIds.add(id);
+            renderCommunityLivestreamRemittances();
+        }
+
+        function toggleCommunityRemittanceUnpaidExpanded(lineUserId) {
+            if (communityLivestreamRemittanceExpandedUnpaidIds.has(lineUserId)) communityLivestreamRemittanceExpandedUnpaidIds.delete(lineUserId);
+            else communityLivestreamRemittanceExpandedUnpaidIds.add(lineUserId);
+            renderCommunityLivestreamRemittances();
+        }
+
+        // 編輯/刪除/標記已核對都還是對單筆匯款紀錄打原本的 PATCH/DELETE
+        // 端點（後端沒有改這兩支函式本身，只是 bankName 驗證收緊成只能
+        // 填三個標準名稱）——存檔後整份重新載入，不做局部 DOM 更新，這張
+        // 表的操作頻率不像社群連線訂單的單價/數量那麼高，沒有必要為了
+        // 這裡的巢狀結構額外做一套局部更新機制。
         async function patchCommunityLivestreamRemittance(id, patch) {
             try {
                 const response = await fetch(`/api/backend/community/livestream-remittances/${encodeURIComponent(id)}`, {
@@ -9405,9 +9647,8 @@
             patchCommunityLivestreamRemittance(id, { reviewed });
         }
 
-        async function deleteCommunityLivestreamRemittance(id, nickname) {
-            const label = nickname || '這筆匯款紀錄';
-            if (!confirm(`確定要刪除「${label}」的匯款紀錄嗎？此操作無法復原。`)) return;
+        async function deleteCommunityLivestreamRemittance(id, label) {
+            if (!confirm(`確定要刪除「${label || '這筆匯款紀錄'}」嗎？此操作無法復原。`)) return;
             try {
                 const response = await fetch(`/api/backend/community/livestream-remittances/${encodeURIComponent(id)}`, { method: 'DELETE' });
                 const result = await response.json().catch(() => null);
@@ -9431,12 +9672,7 @@
 
         function clearCommunityRemittancesFilters() {
             communityRemittancesFilters.q = '';
-            communityRemittancesFilters.reviewed = '';
-            loadCommunityLivestreamRemittances();
-        }
-
-        function toggleCommunityRemittancesQuickFilter(value) {
-            communityRemittancesFilters.reviewed = communityRemittancesFilters.reviewed === value ? '' : value;
+            communityRemittancesFilters.bank = '';
             loadCommunityLivestreamRemittances();
         }
 
