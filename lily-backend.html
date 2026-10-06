@@ -1577,6 +1577,8 @@
                 <div class="page-header">
                     <h2 class="page-title">匯款紀錄</h2>
                     <div class="toolbar">
+                        <button class="btn btn-secondary" type="button" onclick="openCommunityRemittanceManualAddModal()"><i class="fa-solid fa-plus"></i><span class="btn-label"> 新增匯款紀錄</span></button>
+                        <button class="btn btn-secondary" type="button" onclick="exportCommunityLivestreamRemittances()"><i class="fa-solid fa-file-arrow-down"></i><span class="btn-label"> 匯出 Excel</span></button>
                         <button class="btn btn-secondary" type="button" onclick="loadCommunityLivestreamRemittances()"><i class="fa-solid fa-rotate"></i><span class="btn-label"> 重新整理</span></button>
                     </div>
                 </div>
@@ -3152,6 +3154,47 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" onclick="closeCommunityLivestreamBankInfoModal()">取消</button>
                 <button class="btn btn-primary" type="button" id="community-livestream-bank-info-save-btn" onclick="saveCommunityLivestreamBankInfo(this)">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="communityRemittanceManualAddModal">
+        <div class="modal-content" style="max-width:560px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-plus"></i> 新增匯款紀錄</h3>
+                <button class="close-btn" type="button" onclick="closeCommunityRemittanceManualAddModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin:0 0 0.75rem;color:#94a3b8;font-size:0.76rem;font-weight:800;">給客人一直沒辦法透過 LINE 自助送出匯款格式的情況，直接在這裡手動補一筆。</p>
+                <div class="form-group">
+                    <label>客人</label>
+                    <select id="community-remittance-manual-customer-select" onchange="renderCommunityRemittanceManualAddOrderList()">
+                        <option value="">請選擇客人</option>
+                    </select>
+                </div>
+                <div class="form-group" id="community-remittance-manual-orders-group" style="display:none;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem;">
+                        <label style="margin:0;">選擇要申報的訂單</label>
+                        <button class="btn btn-sm btn-secondary" type="button" onclick="toggleCommunityRemittanceManualAddSelectAll()">全選</button>
+                    </div>
+                    <div id="community-remittance-manual-order-list" style="display:grid;gap:0.5rem;max-height:260px;overflow-y:auto;"></div>
+                </div>
+                <div class="form-group">
+                    <label>銀行</label>
+                    <select id="community-remittance-manual-bank-select"></select>
+                </div>
+                <div class="form-group">
+                    <label>末五碼</label>
+                    <input id="community-remittance-manual-last5-input" type="text" maxlength="5" inputmode="numeric" placeholder="5 碼數字">
+                </div>
+                <div class="form-group">
+                    <label>金額（可留空）</label>
+                    <input id="community-remittance-manual-amount-input" type="number" min="0" step="1" placeholder="未填寫">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeCommunityRemittanceManualAddModal()">取消</button>
+                <button class="btn btn-primary" type="button" id="community-remittance-manual-save-btn" onclick="submitCommunityRemittanceManualAdd(this)">新增</button>
             </div>
         </div>
     </div>
@@ -9674,6 +9717,137 @@
             communityRemittancesFilters.q = '';
             communityRemittancesFilters.bank = '';
             loadCommunityLivestreamRemittances();
+        }
+
+        // 匯出 Excel——直接用已經載入的 communityLivestreamRemittanceCustomers
+        // 攤平成一筆匯款紀錄一列，不額外打 API。只匯出真正的匯款紀錄
+        // （不含每筆的商品明細、也不含「未匯款」那一行——那不是一筆
+        // 「已申報」的紀錄），跟社群連線訂單的 Excel 匯出共用同一個
+        // XLSX 全域（頁面已經載入過，不用再 import 一次）。
+        function exportCommunityLivestreamRemittances() {
+            const rows = [];
+            communityLivestreamRemittanceCustomers.forEach(customer => {
+                customer.remittances.forEach(remittance => {
+                    rows.push({
+                        '客人名稱': customer.lineDisplayName || '',
+                        '銀行': remittance.bankName || '',
+                        '末五碼': remittance.accountLast5 || '',
+                        '客人回報金額': remittance.amount === null ? '' : remittance.amount,
+                        '系統計算金額': remittance.systemCalculatedTotal,
+                        '是否核對': remittance.reviewedAt ? '已核對' : '未核對',
+                        '匯款時間': remittance.submittedAt ? storefrontDateTime(remittance.submittedAt) : ''
+                    });
+                });
+            });
+            if (!rows.length) {
+                showToast('目前沒有可匯出的匯款紀錄', 'error');
+                return;
+            }
+            const worksheet = XLSX.utils.json_to_sheet(rows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, '匯款紀錄');
+            const filename = `匯款紀錄_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            XLSX.writeFile(workbook, filename);
+        }
+
+        // ===== 匯款紀錄：後台手動新增（給一直沒辦法透過 LINE 自助送出
+        // 匯款格式的客人補登）。選客人（只列有 unpaid 訂單的人，直接從
+        // 已經載入的 communityLivestreamRemittanceCustomers 篩，不另外
+        // 打 API）→ 勾選要申報哪幾筆未付款訂單（可全選、可在全選後取消
+        // 個別項目）→ 填銀行/末五碼/金額 → POST 到跟 LINE 那條路徑共用
+        // 的同一個端點。 =====
+        function openCommunityRemittanceManualAddModal() {
+            const select = document.getElementById('community-remittance-manual-customer-select');
+            if (select) {
+                const eligible = communityLivestreamRemittanceCustomers.filter(c => c.unpaid);
+                select.innerHTML = '<option value="">請選擇客人</option>' + eligible.map(c => `
+                    <option value="${escapeHtml(c.lineUserId)}">${escapeHtml(c.lineDisplayName)}（${c.unpaid.orders.length} 筆未付款）</option>
+                `).join('');
+            }
+            const bankSelect = document.getElementById('community-remittance-manual-bank-select');
+            if (bankSelect) bankSelect.innerHTML = COMMUNITY_REMITTANCE_STANDARD_BANKS.map(bank => `<option value="${bank}">${bank}</option>`).join('');
+            const last5Input = document.getElementById('community-remittance-manual-last5-input');
+            if (last5Input) last5Input.value = '';
+            const amountInput = document.getElementById('community-remittance-manual-amount-input');
+            if (amountInput) amountInput.value = '';
+            const group = document.getElementById('community-remittance-manual-orders-group');
+            if (group) group.style.display = 'none';
+            const list = document.getElementById('community-remittance-manual-order-list');
+            if (list) list.innerHTML = '';
+            document.getElementById('communityRemittanceManualAddModal')?.classList.add('active');
+        }
+
+        function closeCommunityRemittanceManualAddModal() {
+            document.getElementById('communityRemittanceManualAddModal')?.classList.remove('active');
+        }
+
+        // 選完客人才列出他的未付款訂單——每筆前面一個 checkbox，預設都
+        // 不勾（讓管理員自己挑這筆匯款實際涵蓋哪幾項，不是預設全算），
+        // 「全選」按鈕只是一次把全部勾上，勾完之後還是可以再取消個別項目
+        // （checkbox 本身的行為，不需要額外邏輯）。
+        function renderCommunityRemittanceManualAddOrderList() {
+            const lineUserId = document.getElementById('community-remittance-manual-customer-select')?.value || '';
+            const group = document.getElementById('community-remittance-manual-orders-group');
+            const list = document.getElementById('community-remittance-manual-order-list');
+            if (!group || !list) return;
+            if (!lineUserId) {
+                group.style.display = 'none';
+                list.innerHTML = '';
+                return;
+            }
+            const customer = communityLivestreamRemittanceCustomers.find(c => c.lineUserId === lineUserId);
+            const orders = customer?.unpaid?.orders || [];
+            group.style.display = orders.length ? '' : 'none';
+            list.innerHTML = orders.map(order => `
+                <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                    <input type="checkbox" class="community-remittance-manual-order-checkbox" value="${escapeHtml(order.id)}">
+                    ${communityRemittanceOrderItemHtml(order)}
+                </label>
+            `).join('');
+        }
+
+        function toggleCommunityRemittanceManualAddSelectAll() {
+            document.querySelectorAll('.community-remittance-manual-order-checkbox').forEach(box => { box.checked = true; });
+        }
+
+        async function submitCommunityRemittanceManualAdd(button) {
+            const lineUserId = document.getElementById('community-remittance-manual-customer-select')?.value || '';
+            if (!lineUserId) {
+                showToast('請選擇客人', 'error');
+                return;
+            }
+            const orderIds = [...document.querySelectorAll('.community-remittance-manual-order-checkbox:checked')].map(box => box.value);
+            if (!orderIds.length) {
+                showToast('請至少勾選一筆訂單', 'error');
+                return;
+            }
+            const bankName = document.getElementById('community-remittance-manual-bank-select')?.value || '';
+            const accountLast5 = document.getElementById('community-remittance-manual-last5-input')?.value.trim() || '';
+            if (!/^\d{5}$/.test(accountLast5)) {
+                showToast('末五碼需為 5 碼數字', 'error');
+                return;
+            }
+            const amountRaw = document.getElementById('community-remittance-manual-amount-input')?.value;
+            const amount = (amountRaw === '' || amountRaw === undefined || amountRaw === null) ? null : Number(amountRaw);
+
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch('/api/backend/community/livestream-remittances', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lineUserId, orderIds, bankName, accountLast5, amount })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '新增失敗。');
+                showToast('已新增匯款紀錄', 'success');
+                closeCommunityRemittanceManualAddModal();
+                await loadCommunityLivestreamRemittances();
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '新增失敗，請稍後再試', 'error');
+            } finally {
+                if (button) button.disabled = false;
+            }
         }
 
         // ===== 社群連線訂單：店家收款帳號設定 (自助匯款流程用，schedule_settings 通用 KV) =====
