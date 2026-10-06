@@ -260,6 +260,14 @@
         .community-shipment-notebook-group:last-child { margin-bottom: 0; }
         .community-shipment-notebook-group h4 { margin: 0 0 0.3rem; font-size: 0.8rem; font-weight: 900; color: #be185d; }
         .community-shipment-item-row { display: flex; gap: 0.35rem; padding: 0.25rem 0; font-size: 0.78rem; font-weight: 700; color: #475569; }
+        /* 關鍵字設定 Modal 裡每組的「啟用/停用」開關——放在該組 label
+           同一行、靠右。停用時對應的 textarea 視覺上調淡（opacity），
+           但不加 disabled 屬性，後台還是可以照常編輯詞庫內容，純粹是
+           客人端觸不觸發的開關，跟能不能管理詞庫無關。 */
+        .community-livestream-keyword-group-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+        .community-livestream-keyword-toggle { border: 1px solid #e2e8f0; border-radius: 999px; background: #f1f5f9; color: #64748b; font-size: 0.72rem; font-weight: 900; padding: 0.2rem 0.7rem; cursor: pointer; flex-shrink: 0; transition: all .15s ease; }
+        .community-livestream-keyword-toggle.active { background: #dcfce7; border-color: #86efac; color: #16a34a; }
+        .community-livestream-keyword-textarea-disabled { opacity: 0.5; }
         .community-livestream-filterbar { gap: 0.4rem; }
         .community-livestream-quick-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
         .community-livestream-filter-btn { border: 1px solid #fbcfe8; border-radius: 999px; background: white; color: #475569; font-size: 0.76rem; font-weight: 800; padding: 0.4rem 0.85rem; cursor: pointer; transition: all .15s ease; }
@@ -3206,29 +3214,47 @@
                 <button class="close-btn" type="button" onclick="closeCommunityLivestreamKeywordModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
-                <p style="margin:0 0 0.75rem;color:#94a3b8;font-size:0.76rem;font-weight:800;">每組關鍵字用逗號或換行分隔多個詞，留空會自動改用預設值。</p>
+                <p style="margin:0 0 0.75rem;color:#94a3b8;font-size:0.76rem;font-weight:800;">每組關鍵字用逗號或換行分隔多個詞，留空會自動改用預設值。停用某一組只會讓客人端不再觸發，詞庫內容還是可以照常編輯。</p>
                 <div class="form-group">
-                    <label>下單觸發詞（客人傳這些字會開啟圖片下單）</label>
+                    <div class="community-livestream-keyword-group-header">
+                        <label>下單觸發詞（客人傳這些字會開啟圖片下單）</label>
+                        <button type="button" class="community-livestream-keyword-toggle" id="community-livestream-keyword-enabled-order" data-enabled="true" onclick="toggleCommunityLivestreamKeywordEnabled('order')">啟用中</button>
+                    </div>
                     <textarea id="community-livestream-keyword-order" rows="2" placeholder="我要下單, 下單, 開始下單"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>匯款觸發詞（客人用這些字開始自助匯款申報）</label>
+                    <div class="community-livestream-keyword-group-header">
+                        <label>匯款觸發詞（客人用這些字開始自助匯款申報）</label>
+                        <button type="button" class="community-livestream-keyword-toggle" id="community-livestream-keyword-enabled-remittance" data-enabled="true" onclick="toggleCommunityLivestreamKeywordEnabled('remittance')">啟用中</button>
+                    </div>
                     <textarea id="community-livestream-keyword-remittance" rows="2" placeholder="我要匯款, 匯款申報"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>取消觸發詞（客人用這些字開始自助取消訂單）</label>
+                    <div class="community-livestream-keyword-group-header">
+                        <label>取消觸發詞（客人用這些字開始自助取消訂單）</label>
+                        <button type="button" class="community-livestream-keyword-toggle" id="community-livestream-keyword-enabled-cancel" data-enabled="true" onclick="toggleCommunityLivestreamKeywordEnabled('cancel')">啟用中</button>
+                    </div>
                     <textarea id="community-livestream-keyword-cancel" rows="2" placeholder="取消訂單, 我要取消"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>查詢訂單觸發詞（客人用這些字查看自己下的全部商品，純查詢不能取消）</label>
+                    <div class="community-livestream-keyword-group-header">
+                        <label>查詢訂單觸發詞（客人用這些字查看自己下的全部商品，純查詢不能取消）</label>
+                        <button type="button" class="community-livestream-keyword-toggle" id="community-livestream-keyword-enabled-order_query" data-enabled="true" onclick="toggleCommunityLivestreamKeywordEnabled('order_query')">啟用中</button>
+                    </div>
                     <textarea id="community-livestream-keyword-order_query" rows="2" placeholder="查詢訂單"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>傳照片確認觸發詞（客人用這些字確認是否已收到他傳的照片）</label>
+                    <div class="community-livestream-keyword-group-header">
+                        <label>傳照片確認觸發詞（客人用這些字確認是否已收到他傳的照片）</label>
+                        <button type="button" class="community-livestream-keyword-toggle" id="community-livestream-keyword-enabled-photo_confirm" data-enabled="true" onclick="toggleCommunityLivestreamKeywordEnabled('photo_confirm')">啟用中</button>
+                    </div>
                     <textarea id="community-livestream-keyword-photo_confirm" rows="2" placeholder="傳好了, 好了, 傳完了"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>取消匯款觸發詞（客人在等待回報匯款格式時，用這些字退出）</label>
+                    <div class="community-livestream-keyword-group-header">
+                        <label>取消匯款觸發詞（客人在等待回報匯款格式時，用這些字退出）</label>
+                        <button type="button" class="community-livestream-keyword-toggle" id="community-livestream-keyword-enabled-remittance_cancel" data-enabled="true" onclick="toggleCommunityLivestreamKeywordEnabled('remittance_cancel')">啟用中</button>
+                    </div>
                     <textarea id="community-livestream-keyword-remittance_cancel" rows="2" placeholder="取消匯款"></textarea>
                 </div>
             </div>
@@ -9915,6 +9941,10 @@
             return `community-livestream-keyword-${group}`;
         }
 
+        function communityLivestreamKeywordToggleId(group) {
+            return `community-livestream-keyword-enabled-${group}`;
+        }
+
         function parseCommunityLivestreamKeywordInput(text) {
             return String(text || '')
                 .split(/[,，\n]+/)
@@ -9922,11 +9952,32 @@
                 .filter(Boolean);
         }
 
+        // 切換某一組的啟用/停用開關本身的視覺（按鈕文字/顏色 + textarea
+        // 調淡），存檔前都是先讀這個狀態，不是另外維護一份 JS 物件——
+        // 跟關鍵字 textarea 本身的做法一致（唯一真相來源就是 DOM）。
+        function applyCommunityLivestreamKeywordEnabledState(group, enabled) {
+            const toggle = document.getElementById(communityLivestreamKeywordToggleId(group));
+            if (toggle) {
+                toggle.dataset.enabled = enabled ? 'true' : 'false';
+                toggle.textContent = enabled ? '啟用中' : '已停用';
+                toggle.classList.toggle('active', enabled);
+            }
+            const textarea = document.getElementById(communityLivestreamKeywordTextareaId(group));
+            if (textarea) textarea.classList.toggle('community-livestream-keyword-textarea-disabled', !enabled);
+        }
+
+        function toggleCommunityLivestreamKeywordEnabled(group) {
+            const toggle = document.getElementById(communityLivestreamKeywordToggleId(group));
+            const nextEnabled = toggle?.dataset.enabled !== 'true';
+            applyCommunityLivestreamKeywordEnabledState(group, nextEnabled);
+        }
+
         async function openCommunityLivestreamKeywordModal() {
             document.getElementById('communityLivestreamKeywordModal')?.classList.add('active');
             Object.keys(COMMUNITY_LIVESTREAM_KEYWORD_GROUP_LABELS).forEach(group => {
                 const el = document.getElementById(communityLivestreamKeywordTextareaId(group));
                 if (el) el.value = '讀取中...';
+                applyCommunityLivestreamKeywordEnabledState(group, true);
             });
             try {
                 const response = await fetch('/api/backend/community/livestream-keywords', { cache: 'no-store' });
@@ -9935,12 +9986,14 @@
                 Object.keys(COMMUNITY_LIVESTREAM_KEYWORD_GROUP_LABELS).forEach(group => {
                     const el = document.getElementById(communityLivestreamKeywordTextareaId(group));
                     if (el) el.value = (result.keywords?.[group] || []).join(', ');
+                    applyCommunityLivestreamKeywordEnabledState(group, result.enabled?.[group] !== false);
                 });
             } catch (error) {
                 console.error(error);
                 Object.keys(COMMUNITY_LIVESTREAM_KEYWORD_GROUP_LABELS).forEach(group => {
                     const el = document.getElementById(communityLivestreamKeywordTextareaId(group));
                     if (el) el.value = '';
+                    applyCommunityLivestreamKeywordEnabledState(group, true);
                 });
                 showToast('關鍵字設定讀取失敗，請稍後再試', 'error');
             }
@@ -9952,16 +10005,19 @@
 
         async function saveCommunityLivestreamKeywords(button, force) {
             const keywords = {};
+            const enabled = {};
             Object.keys(COMMUNITY_LIVESTREAM_KEYWORD_GROUP_LABELS).forEach(group => {
                 const el = document.getElementById(communityLivestreamKeywordTextareaId(group));
                 keywords[group] = parseCommunityLivestreamKeywordInput(el?.value);
+                const toggle = document.getElementById(communityLivestreamKeywordToggleId(group));
+                enabled[group] = toggle?.dataset.enabled !== 'false';
             });
             if (button) button.disabled = true;
             try {
                 const response = await fetch('/api/backend/community/livestream-keywords', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ keywords, force: Boolean(force) })
+                    body: JSON.stringify({ keywords, enabled, force: Boolean(force) })
                 });
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) {
