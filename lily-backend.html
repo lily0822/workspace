@@ -271,19 +271,36 @@
         .community-livestream-filterbar { gap: 0.4rem; }
 
         /* 網站功能開關——左上角的 iOS 風格滑動開關是唯一真正可點擊的
-           主開關，右邊的文字膠囊純顯示用，不能再單獨點擊切換。 */
-        .site-feature-flag-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-        .site-feature-flag-title { display: flex; align-items: center; gap: 0.6rem; }
+           主開關，右邊的文字膠囊純顯示用，不能再單獨點擊切換。整體
+           改成橫向表格感的列表（左：開關/名稱/狀態、中：提示文字、
+           右：維護時間），寬螢幕三欄並排、窄螢幕自動改回直向堆疊。 */
+        .site-feature-flag-list { display: flex; flex-direction: column; }
+        .site-feature-flag-table-row { display: grid; grid-template-columns: minmax(220px, 300px) minmax(220px, 1fr) minmax(260px, 340px); gap: 1.5rem; align-items: center; padding: 1rem 0; border-bottom: 1px solid #e2e8f0; }
+        .site-feature-flag-table-row:last-child { border-bottom: none; }
+        .site-feature-flag-col-main { display: flex; align-items: center; gap: 0.65rem; min-width: 0; }
         .site-feature-flag-switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; cursor: pointer; }
         .site-feature-flag-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
         .site-feature-flag-switch-track { position: absolute; inset: 0; background: #cbd5e1; border-radius: 999px; transition: background .15s ease; pointer-events: none; }
         .site-feature-flag-switch-track::before { content: ""; position: absolute; left: 2px; top: 2px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: transform .15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.25); }
         .site-feature-flag-switch input:checked + .site-feature-flag-switch-track { background: #16a34a; }
         .site-feature-flag-switch input:checked + .site-feature-flag-switch-track::before { transform: translateX(18px); }
-        .site-feature-flag-status { border: 1px solid #e2e8f0; border-radius: 999px; background: #f1f5f9; color: #64748b; font-size: 0.72rem; font-weight: 900; padding: 0.2rem 0.7rem; flex-shrink: 0; }
+        .site-feature-flag-name-wrap { min-width: 0; }
+        .site-feature-flag-name { font-size: 0.9rem; font-weight: 700; color: #1e293b; }
+        .site-feature-flag-desc { margin-top: 0.15rem; font-size: 0.68rem; font-weight: 500; color: #94a3b8; line-height: 1.4; }
+        .site-feature-flag-status { border: 1px solid #e2e8f0; border-radius: 999px; background: #f1f5f9; color: #64748b; font-size: 0.68rem; font-weight: 900; padding: 0.18rem 0.6rem; flex-shrink: 0; margin-left: auto; }
         .site-feature-flag-status.active { background: #dcfce7; border-color: #86efac; color: #16a34a; }
-        .site-feature-flag-maintenance-row { display: flex; flex-wrap: wrap; gap: 1rem; }
-        .site-feature-flag-maintenance-row > div { flex: 1; min-width: 200px; }
+        .site-feature-flag-col-message textarea { width: 100%; min-height: 2.6rem; padding: 0.5rem 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: inherit; font-size: 0.8rem; color: #334155; resize: vertical; transition: border-color 0.2s; }
+        .site-feature-flag-col-message textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1); }
+        .site-feature-flag-col-maintenance { display: flex; gap: 0.75rem; }
+        .site-feature-flag-col-maintenance > div { flex: 1; min-width: 0; }
+        .site-feature-flag-col-maintenance label { display: block; font-size: 0.66rem; font-weight: 500; color: #94a3b8; margin-bottom: 0.25rem; }
+        .site-feature-flag-col-maintenance input[type="datetime-local"] { width: 100%; padding: 0.4rem 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: inherit; font-size: 0.78rem; color: #334155; transition: border-color 0.2s; }
+        .site-feature-flag-col-maintenance input[type="datetime-local"]:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1); }
+        @media (max-width: 860px) {
+            .site-feature-flag-table-row { grid-template-columns: 1fr; gap: 0.6rem; }
+            .site-feature-flag-status { margin-left: 0; }
+            .site-feature-flag-col-maintenance { flex-direction: column; }
+        }
         .community-livestream-quick-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
         .community-livestream-filter-btn { border: 1px solid #fbcfe8; border-radius: 999px; background: white; color: #475569; font-size: 0.76rem; font-weight: 800; padding: 0.4rem 0.85rem; cursor: pointer; transition: all .15s ease; }
         .community-livestream-filter-btn:hover { border-color: #f472b6; }
@@ -2231,7 +2248,7 @@
                 <div class="page-header">
                     <h2 class="page-title">網站功能開關</h2>
                 </div>
-                <div id="site-feature-flag-cards"></div>
+                <div id="site-feature-flag-cards" class="site-feature-flag-list"></div>
                 <div class="brand-setting-actions">
                     <button class="btn btn-primary" type="button" onclick="saveSiteFeatureFlags(this)"><i class="fa-solid fa-floppy-disk"></i> 儲存</button>
                     <span id="site-feature-flags-save-state" class="appearance-save-state"></span>
@@ -10108,29 +10125,28 @@
             const container = document.getElementById('site-feature-flag-cards');
             if (!container) return;
             container.innerHTML = SITE_FEATURE_FLAG_DEFS.map(def => `
-                <div class="brand-setting-card" style="max-width:640px;">
-                    <div class="site-feature-flag-row">
-                        <h3 class="site-feature-flag-title">
-                            <label class="site-feature-flag-switch">
-                                <input type="checkbox" id="${siteFeatureFlagToggleId(def.key)}" onchange="handleSiteFeatureFlagSwitchChange('${def.key}')">
-                                <span class="site-feature-flag-switch-track"></span>
-                            </label>
-                            ${def.label}
-                        </h3>
+                <div class="site-feature-flag-table-row">
+                    <div class="site-feature-flag-col-main">
+                        <label class="site-feature-flag-switch">
+                            <input type="checkbox" id="${siteFeatureFlagToggleId(def.key)}" onchange="handleSiteFeatureFlagSwitchChange('${def.key}')">
+                            <span class="site-feature-flag-switch-track"></span>
+                        </label>
+                        <div class="site-feature-flag-name-wrap">
+                            <div class="site-feature-flag-name">${def.label}</div>
+                            <div class="site-feature-flag-desc" title="${def.description}">${def.description}</div>
+                        </div>
                         <span class="site-feature-flag-status" id="${siteFeatureFlagStatusId(def.key)}">啟用中</span>
                     </div>
-                    <p>${def.description}</p>
-                    <div class="form-group">
-                        <label>停用時顯示的提示文字</label>
-                        <textarea id="${siteFeatureFlagMessageId(def.key)}" rows="2" placeholder="目前暫停服務，造成不便敬請見諒。"></textarea>
+                    <div class="site-feature-flag-col-message">
+                        <textarea id="${siteFeatureFlagMessageId(def.key)}" rows="2" placeholder="停用時顯示的提示文字，例如：目前暫停服務，造成不便敬請見諒。"></textarea>
                     </div>
-                    <div class="site-feature-flag-maintenance-row">
+                    <div class="site-feature-flag-col-maintenance">
                         <div>
-                            <label>維護開始時間（台灣時間，可留空）</label>
+                            <label>維護開始（台灣時間，可留空）</label>
                             <input type="datetime-local" id="${siteFeatureFlagMaintenanceStartId(def.key)}">
                         </div>
                         <div>
-                            <label>維護結束時間（台灣時間，可留空）</label>
+                            <label>維護結束（台灣時間，可留空）</label>
                             <input type="datetime-local" id="${siteFeatureFlagMaintenanceEndId(def.key)}">
                         </div>
                     </div>
