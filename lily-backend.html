@@ -269,6 +269,12 @@
         .community-livestream-keyword-toggle.active { background: #dcfce7; border-color: #86efac; color: #16a34a; }
         .community-livestream-keyword-textarea-disabled { opacity: 0.5; }
         .community-livestream-filterbar { gap: 0.4rem; }
+
+        /* 網站功能開關——同一套啟用/停用開關樣式，獨立命名避免跟
+           關鍵字設定的 class 耦合。 */
+        .site-feature-flag-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+        .site-feature-flag-toggle { border: 1px solid #e2e8f0; border-radius: 999px; background: #f1f5f9; color: #64748b; font-size: 0.72rem; font-weight: 900; padding: 0.2rem 0.7rem; cursor: pointer; flex-shrink: 0; transition: all .15s ease; }
+        .site-feature-flag-toggle.active { background: #dcfce7; border-color: #86efac; color: #16a34a; }
         .community-livestream-quick-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
         .community-livestream-filter-btn { border: 1px solid #fbcfe8; border-radius: 999px; background: white; color: #475569; font-size: 0.76rem; font-weight: 800; padding: 0.4rem 0.85rem; cursor: pointer; transition: all .15s ease; }
         .community-livestream-filter-btn:hover { border-color: #f472b6; }
@@ -923,6 +929,7 @@
                     <div class="submenu-item" data-module-item-key="data-overview" onclick="openTab('data-overview', '數據總覽')">數據總覽</div>
                     <div class="submenu-item" data-module-item-key="exchange-rates" onclick="openTab('exchange-rates', '匯率報表')">匯率報表</div>
                     <div class="submenu-item" data-module-item-key="brand-management" onclick="openTab('brand-management', '品牌管理')">品牌管理</div>
+                    <div class="submenu-item" data-module-item-key="site-feature-flags" onclick="openTab('site-feature-flags', '網站功能開關')">網站功能開關</div>
                 </div>
             </div>
             <div class="menu-group" data-module-key="purchasing">
@@ -2210,6 +2217,45 @@
                 </div>
             </div>
 
+            <!-- Site Feature Flags Section -->
+            <div id="section-site-feature-flags" class="section-container">
+                <div class="page-header">
+                    <h2 class="page-title">網站功能開關</h2>
+                </div>
+                <div class="brand-setting-card" style="max-width:640px;">
+                    <h3><i class="fa-solid fa-toggle-on" style="color: var(--primary-color);"></i> 會員註冊</h3>
+                    <p>停用後，前台註冊頁不會顯示註冊表單，改顯示下方提示文字；直接呼叫註冊 API 也會被擋下。</p>
+                    <div class="form-group">
+                        <div class="site-feature-flag-row">
+                            <label>啟用狀態</label>
+                            <button type="button" class="site-feature-flag-toggle" id="site-feature-flag-enabled-signup" data-enabled="true" onclick="toggleSiteFeatureFlagEnabled('signup')">啟用中</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>停用時顯示的提示文字</label>
+                        <textarea id="site-feature-flag-message-signup" rows="2" placeholder="目前暫停服務，造成不便敬請見諒。"></textarea>
+                    </div>
+                </div>
+                <div class="brand-setting-card" style="max-width:640px;">
+                    <h3><i class="fa-solid fa-toggle-on" style="color: var(--primary-color);"></i> 會員登入</h3>
+                    <p>停用後，前台登入頁不會顯示登入表單（email/密碼、Google、LINE 全部一起關），改顯示下方提示文字；直接呼叫登入相關 API 也會被擋下。</p>
+                    <div class="form-group">
+                        <div class="site-feature-flag-row">
+                            <label>啟用狀態</label>
+                            <button type="button" class="site-feature-flag-toggle" id="site-feature-flag-enabled-login" data-enabled="true" onclick="toggleSiteFeatureFlagEnabled('login')">啟用中</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>停用時顯示的提示文字</label>
+                        <textarea id="site-feature-flag-message-login" rows="2" placeholder="目前暫停服務，造成不便敬請見諒。"></textarea>
+                    </div>
+                </div>
+                <div class="brand-setting-actions">
+                    <button class="btn btn-primary" type="button" onclick="saveSiteFeatureFlags(this)"><i class="fa-solid fa-floppy-disk"></i> 儲存</button>
+                    <span id="site-feature-flags-save-state" class="appearance-save-state"></span>
+                </div>
+            </div>
+
             <!-- Data Overview Section -->
             <div id="section-data-overview" class="section-container">
                 <div class="page-header">
@@ -3465,6 +3511,7 @@
             if(name === 'general-ledger') renderGeneralLedger();
             if(name === 'exchange-rates') initExchangeRates();
             if(name === 'brand-management') renderBrandManagement();
+            if(name === 'site-feature-flags') loadSiteFeatureFlags();
         }
 
         function closeTab(name, event) {
@@ -10037,6 +10084,87 @@
                 }
                 showToast('已儲存關鍵字設定', 'success');
                 closeCommunityLivestreamKeywordModal();
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '儲存失敗，請稍後再試', 'error');
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        // ===== 網站功能開關 (schedule_settings 通用 KV，比照關鍵字設定模式) =====
+        const SITE_FEATURE_FLAG_KEYS = ['signup', 'login'];
+
+        function siteFeatureFlagToggleId(flag) {
+            return `site-feature-flag-enabled-${flag}`;
+        }
+
+        function siteFeatureFlagMessageId(flag) {
+            return `site-feature-flag-message-${flag}`;
+        }
+
+        function applySiteFeatureFlagEnabledState(flag, enabled) {
+            const toggle = document.getElementById(siteFeatureFlagToggleId(flag));
+            if (toggle) {
+                toggle.dataset.enabled = enabled ? 'true' : 'false';
+                toggle.textContent = enabled ? '啟用中' : '已停用';
+                toggle.classList.toggle('active', enabled);
+            }
+        }
+
+        function toggleSiteFeatureFlagEnabled(flag) {
+            const toggle = document.getElementById(siteFeatureFlagToggleId(flag));
+            const nextEnabled = toggle?.dataset.enabled !== 'true';
+            applySiteFeatureFlagEnabledState(flag, nextEnabled);
+        }
+
+        async function loadSiteFeatureFlags() {
+            SITE_FEATURE_FLAG_KEYS.forEach(flag => {
+                applySiteFeatureFlagEnabledState(flag, true);
+                const msgEl = document.getElementById(siteFeatureFlagMessageId(flag));
+                if (msgEl) msgEl.value = '讀取中...';
+            });
+            try {
+                const response = await fetch('/api/backend/site-feature-flags', { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '讀取失敗。');
+                SITE_FEATURE_FLAG_KEYS.forEach(flag => {
+                    const state = result.flags?.[flag] || { enabled: true, message: '' };
+                    applySiteFeatureFlagEnabledState(flag, state.enabled !== false);
+                    const msgEl = document.getElementById(siteFeatureFlagMessageId(flag));
+                    if (msgEl) msgEl.value = state.message || '';
+                });
+            } catch (error) {
+                console.error(error);
+                SITE_FEATURE_FLAG_KEYS.forEach(flag => {
+                    applySiteFeatureFlagEnabledState(flag, true);
+                    const msgEl = document.getElementById(siteFeatureFlagMessageId(flag));
+                    if (msgEl) msgEl.value = '';
+                });
+                showToast('網站功能開關讀取失敗，請稍後再試', 'error');
+            }
+        }
+
+        async function saveSiteFeatureFlags(button) {
+            const flags = {};
+            SITE_FEATURE_FLAG_KEYS.forEach(flag => {
+                const toggle = document.getElementById(siteFeatureFlagToggleId(flag));
+                const msgEl = document.getElementById(siteFeatureFlagMessageId(flag));
+                flags[flag] = {
+                    enabled: toggle?.dataset.enabled !== 'false',
+                    message: String(msgEl?.value || '').trim()
+                };
+            });
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch('/api/backend/site-feature-flags', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ flags })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '儲存失敗。');
+                showToast('已儲存網站功能開關', 'success');
             } catch (error) {
                 console.error(error);
                 showToast(error.message || '儲存失敗，請稍後再試', 'error');
