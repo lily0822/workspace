@@ -4684,7 +4684,6 @@
         // fetchAPI 的功能是分開的，這裡刻意不共用 fetchAPI）。失敗時回傳
         // null，呼叫端原本的 `if (!result)`/`if (!saved)` 判斷不用改。
         async function saveProductToBackend(type, product) {
-            showLoading();
             try {
                 const res = await fetch(`/api/backend/products/${type}`, {
                     method: 'POST',
@@ -4700,13 +4699,10 @@
             } catch (err) {
                 console.error(err);
                 return null;
-            } finally {
-                hideLoading();
             }
         }
 
         async function deleteProductFromBackend(type, id) {
-            showLoading();
             try {
                 const res = await fetch(`/api/backend/products/${type}/${encodeURIComponent(id)}`, { method: 'DELETE' });
                 const result = await res.json().catch(() => null);
@@ -4718,8 +4714,6 @@
             } catch (err) {
                 console.error(err);
                 return null;
-            } finally {
-                hideLoading();
             }
         }
 
@@ -4730,7 +4724,6 @@
         // 處理部分失敗。
         async function syncProductsToBackend(type, products) {
             if (!products.length) return [];
-            showLoading();
             try {
                 const res = await fetch(`/api/backend/products/${type}/batch`, {
                     method: 'POST',
@@ -4746,14 +4739,11 @@
             } catch (err) {
                 console.error(err);
                 return null;
-            } finally {
-                hideLoading();
             }
         }
 
         async function deleteProductsBatchFromBackend(type, ids) {
             if (!ids.length) return [];
-            showLoading();
             try {
                 const res = await fetch(`/api/backend/products/${type}/batch`, {
                     method: 'DELETE',
@@ -4769,8 +4759,6 @@
             } catch (err) {
                 console.error(err);
                 return null;
-            } finally {
-                hideLoading();
             }
         }
 
@@ -5783,6 +5771,7 @@
         }
 
         async function saveProductVariants(type, id) {
+            const previousProducts = type === 'stock' ? [...stockProducts] : [...preorderProducts];
             try {
                 const products = type === 'stock' ? stockProducts : preorderProducts;
                 const existing = products.find(product => sameId(product.id, id));
@@ -5804,6 +5793,11 @@
                 showToast('規格明細已保存', 'success')
             } catch (error) {
                 console.error(error);
+                if (type === 'stock') stockProducts = previousProducts;
+                else preorderProducts = previousProducts;
+                persistProductManagement();
+                renderProductRows(type);
+                renderProductTags();
                 showToast('規格明細儲存失敗，請稍後再試', 'error')
             }
         }
@@ -5978,23 +5972,32 @@
         }
 
         async function setProductActive(type, id, active) {
+            const previousProducts = type === 'stock' ? [...stockProducts] : [...preorderProducts];
             if (type === 'stock') stockProducts = stockProducts.map(product => sameId(product.id, id) ? { ...product, active } : product);
             else preorderProducts = preorderProducts.map(product => sameId(product.id, id) ? { ...product, active } : product);
             persistProductManagement();
             renderProductRows(type);
             const updated = (type === 'stock' ? stockProducts : preorderProducts).find(product => sameId(product.id, id));
             const saved = updated ? await saveProductToBackend(type, updated) : null;
-            if (!saved) return;
+            if (!saved) {
+                if (type === 'stock') stockProducts = previousProducts;
+                else preorderProducts = previousProducts;
+                persistProductManagement();
+                renderProductRows(type);
+                showToast('商品狀態更新失敗，請稍後再試', 'error');
+                return;
+            }
             showToast('商品狀態已更新', 'success');
         }
 
         async function deleteProduct(type, id) {
+            let removedProduct = null;
             try {
                 const label = type === 'stock' ? '現貨商品' : '預購商品';
                 if (!confirm(`確定刪除此${label}嗎？`)) return;
                 const products = type === 'stock' ? stockProducts : preorderProducts;
-                const product = products.find(item => sameId(item.id, id));
-                await deleteCloudinaryImages(cloudinaryPublicIdsFromProduct(product));
+                removedProduct = products.find(item => sameId(item.id, id));
+                await deleteCloudinaryImages(cloudinaryPublicIdsFromProduct(removedProduct));
                 if (type === 'stock') stockProducts = stockProducts.filter(product => !sameId(product.id, id));
                 else preorderProducts = preorderProducts.filter(product => !sameId(product.id, id));
                 persistProductManagement();
@@ -6005,6 +6008,16 @@
                 showToast('商品已刪除', 'success')
             } catch (error) {
                 console.error(error);
+                if (removedProduct) {
+                    const current = type === 'stock' ? stockProducts : preorderProducts;
+                    if (!current.some(product => sameId(product.id, id))) {
+                        if (type === 'stock') stockProducts = [...stockProducts, removedProduct];
+                        else preorderProducts = [...preorderProducts, removedProduct];
+                        persistProductManagement();
+                        renderProductRows(type);
+                        renderProductTags();
+                    }
+                }
                 showToast('商品刪除失敗，請稍後再試', 'error')
             }
         }
