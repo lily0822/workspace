@@ -572,20 +572,15 @@
             .storefront-order-mini-section:nth-child(2n + 1) { padding-left: 0; }
         }
         @media (max-width: 720px) {
-            /* 全後台共用：標題列在窄螢幕下改直向堆疊，避免跟右上角固定的
-               環境徽章 (.environment-badge) 或彼此擠壓成一團。範圍限定在
-               這個既有 mobile media query 內，不影響桌面版。 */
+            /* 全後台共用：標題列在窄螢幕下改直向堆疊，避免彼此擠壓成一團。
+               範圍限定在這個既有 mobile media query 內，不影響桌面版。 */
             .page-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
             .toolbar { flex-wrap: wrap; }
-            /* 右上角固定的 STAGING/環境徽章：桌面版沿用原本 top:0.75rem 貼齊
-               topbar 中線；窄螢幕上 topbar 本身沒有響應式收合（.topbar-right
-               的「調整模塊順序」等按鈕會被擠在同一個右上角），徽章往下移到
-               topbar（60px 高）下方，避免兩者互相蓋住。 */
-            .environment-badge { top: 64px; right: 0.75rem; }
-            /* 右下角固定的帳號操作按鈕（修改密碼／登出，src/app/backend/route.ts）
-               在窄螢幕上會蓋住捲動到底部的內容，這裡只加內容區的底部留白，
-               不動浮動按鈕本身的定位。 */
-            .content { padding: 1rem 1rem 80px; }
+            /* 窄螢幕下內容區留白縮小（桌面版 2rem 太寬）。原本這裡還有額外的
+               底部留白是為了避開固定在右下角的修改密碼/登出按鈕——那兩顆
+               按鈕已經移到頂部列（src/app/backend/route.ts），不再固定在
+               畫面上，底部留白一併拿掉。 */
+            .content { padding: 1rem; }
             /* 手機版導覽收斂：窄螢幕下側邊選單只顯示「社群管理」整組
                （社群訂單/社群名單/面交管理/社群連線訂單），其餘模塊完全
                不出現在選單裡。純顯示層級收斂，不動資料/API/權限；桌面版
@@ -611,6 +606,12 @@
             .topbar-home-link { display: none; }
             .topbar-module-order-btn { display: none; }
             #tabsContainer { display: none; }
+            /* 修改密碼／登出（src/app/backend/route.ts 動態插入到 .topbar-right
+               裡）：跟「調整模塊順序」不一樣，這兩顆窄螢幕下還是要能用
+               （登出不能被隱藏掉），所以不整顆隱藏，改成跟搜尋/清除按鈕
+               一樣只留圖示，文字包在 .btn-label 裡隱藏，避免跟鈴鐺/地球
+               圖示擠在一起換行。 */
+            .topbar-account-btn .btn-label { display: none; }
             /* 搜尋列再精簡：.backend-member-filter-row 系列頁面（會員管理/
                記事本管理/訂單明細/出貨申請/社群連線訂單等）的搜尋框在窄
                螢幕下不再強制 220~260px 最小寬度（inline style 設的，用
@@ -930,19 +931,15 @@
         .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.7); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(2px); }
         .loading-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
         .spinner { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: var(--primary-color); animation: spin 1s ease-in-out infinite; }
-        .environment-badge { display: none; position: fixed; right: 1rem; top: 0.75rem; z-index: 2000; border-radius: 999px; background: #f97316; color: white; box-shadow: 0 8px 18px rgba(249, 115, 22, 0.28); padding: 0.35rem 0.75rem; font-size: 0.75rem; font-weight: 900; letter-spacing: 0.08em; }
-        .environment-badge.active { display: inline-flex; align-items: center; gap: 0.35rem; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div class="environment-badge" id="environmentBadge">STAGING</div>
-
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <i class="fa-solid fa-crown"></i>
-            <span>麗麗後台</span>
+            <span id="sidebarBrandTitle">麗麗後台</span>
         </div>
         <div class="sidebar-menu">
             <div class="menu-group" data-module-key="operations">
@@ -3733,19 +3730,16 @@
         function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
         function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
 
-        function renderEnvironmentBadge() {
-            const badge = document.getElementById('environmentBadge');
-            if (!badge) return;
-            if (IS_STAGING_BACKEND) {
-                badge.textContent = BACKEND_ENV_LABEL || 'STAGING';
-                badge.classList.add('active');
-                console.info(`Backend environment: ${BACKEND_ENV_LABEL}`);
-            } else {
-                badge.classList.remove('active');
-            }
+        // 環境標示不再用獨立浮動徽章，改成直接併入側邊欄標題文字——
+        // Staging 顯示「麗麗後台-測試」，正式環境維持原本的「麗麗後台」。
+        function renderSidebarBrandTitle() {
+            const title = document.getElementById('sidebarBrandTitle');
+            if (!title) return;
+            title.textContent = IS_STAGING_BACKEND ? '麗麗後台-測試' : '麗麗後台';
+            if (IS_STAGING_BACKEND) console.info(`Backend environment: ${BACKEND_ENV_LABEL}`);
         }
 
-        renderEnvironmentBadge();
+        renderSidebarBrandTitle();
 
         function renderBackendData() {
             populateFilterVendors();
