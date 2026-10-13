@@ -3648,8 +3648,6 @@
         const DEFAULT_STORE_NAME_EN = 'KOPENGUIN SELECT SHOP';
         const DEFAULT_BRAND_LOGO_URL = 'https://res.cloudinary.com/dhrfwtarc/image/upload/v1782899951/pinkkkuin_logo_q1y5jr.png';
         const PRODUCT_UPLOAD_API_URL = window.PINKKKUIN_UPLOAD_API_URL || (/^(127\.0\.0\.1|localhost)$/.test(location.hostname) ? 'http://127.0.0.1:3000/api/upload' : 'https://pinkkkuin-shop.vercel.app/api/upload');
-        const STOCK_PRODUCT_SOURCE_ID = 2026062001;
-        const PREORDER_PRODUCT_SOURCE_ID = 2026062002;
         let vendors = [];
         let websites = [];
         let orders = [];
@@ -4665,50 +4663,12 @@
             if (!Array.isArray(productTags) || productTags.length === 0) productTags = defaultProductTags();
             stockProducts = safeParseStorage(STOCK_PRODUCTS_KEY, defaultStockProducts()).map(p => normalizeProduct(p, 'stock'));
             preorderProducts = safeParseStorage(PREORDER_PRODUCTS_KEY, defaultPreorderProducts()).map(p => normalizeProduct(p, 'preorder'));
-            hydrateProductCatalogsFromOrders();
             persistProductManagement();
             renderProductTagOptions();
             renderStockProducts();
             renderPreorderProducts();
             renderProductTags();
             setInterval(renderPreorderProducts, 60000);
-        }
-
-        function hydrateProductCatalogsFromOrders() {
-            const stockCatalog = orders.find(order => Number(order.vendorId) === STOCK_PRODUCT_SOURCE_ID);
-            const preorderCatalog = orders.find(order => Number(order.vendorId) === PREORDER_PRODUCT_SOURCE_ID);
-            if (stockCatalog && stockCatalog.items?.length) stockProducts = stockCatalog.items.map(item => catalogItemToProduct(item, 'stock'));
-            if (preorderCatalog && preorderCatalog.items?.length) preorderProducts = preorderCatalog.items.map(item => catalogItemToProduct(item, 'preorder'));
-        }
-
-        function catalogItemToProduct(item, type) {
-            let meta = {};
-            try { meta = item.tracking ? JSON.parse(item.tracking) : {}; } catch { meta = {}; }
-            return normalizeProduct({ id: Number(item.itemId || Date.now()), name: item.name, costPrice: Number(meta.costPrice || 0), listPrice: Number(item.price || meta.listPrice || 0), active: meta.active !== false, quantity: Number(item.qty || meta.quantity || 0), quota: Number(item.qty || meta.quota || 0), tagIds: meta.tagIds || [], deadline: meta.deadline || '', description: meta.description || '', image: normalizeStoredProductImageUrl(meta.imageUrl || meta.image || ''), images: meta.images || [], variants: meta.variants || [] }, type);
-        }
-
-        function productToCatalogItem(product, type) {
-            const qty = type === 'stock' ? product.quantity : product.quota;
-            const images = normalizeProductImages(product);
-            const safeImage = images.find(image => image.isPrimary)?.url || images[0]?.url || '';
-            const variants = normalizeProductVariants(product, type);
-            const meta = { type, costPrice: product.costPrice, listPrice: product.listPrice, active: product.active !== false, tagIds: product.tagIds || [], tagNames: (product.tagIds || []).map(id => getProductTag(id).name), deadline: product.deadline || '', description: product.description || '', image: safeImage, imageUrl: safeImage, images, variants };
-            return { itemId: product.id, name: product.name, link: '商品管理', price: product.listPrice, qty, tracking: JSON.stringify(meta) };
-        }
-
-        async function syncProductCatalog(type) {
-            const products = type === 'stock' ? stockProducts : preorderProducts;
-            const sourceId = type === 'stock' ? STOCK_PRODUCT_SOURCE_ID : PREORDER_PRODUCT_SOURCE_ID;
-            const orderData = { id: sourceId, date: new Date().toISOString().slice(0, 10), vendorId: sourceId, orderNo: type === 'stock' ? 'STOCK-PRODUCT-CATALOG' : 'PREORDER-PRODUCT-CATALOG', trackingNo: '', shipped: '未出貨', shippedDate: '', items: products.map(product => productToCatalogItem(product, type)) };
-            return await fetchAPI('saveOrder', orderData, null, true);
-        }
-
-        function productSaveAction(type) {
-            return type === 'stock' ? 'saveStockProduct' : 'savePreorderProduct';
-        }
-
-        function productDeleteAction(type) {
-            return type === 'stock' ? 'deleteStockProduct' : 'deletePreorderProduct';
         }
 
         function productSheetPayload(product, type) {
@@ -4719,12 +4679,48 @@
             return payload;
         }
 
+        // 現貨/預購商品的存檔/刪除改成直接打 Next.js API 讀寫 Supabase，不再
+        // 經過 Apps Script（跟商品標籤管理/叫貨管理/帳表管理等其他還在用
+        // fetchAPI 的功能是分開的，這裡刻意不共用 fetchAPI）。失敗時回傳
+        // null，呼叫端原本的 `if (!result)`/`if (!saved)` 判斷不用改。
         async function saveProductToBackend(type, product) {
-            return await fetchAPI(productSaveAction(type), productSheetPayload(product, type), null, true);
+            showLoading();
+            try {
+                const res = await fetch(`/api/backend/products/${type}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(productSheetPayload(product, type))
+                });
+                const result = await res.json().catch(() => null);
+                if (!res.ok || !result?.ok) {
+                    console.error('saveProductToBackend failed:', result);
+                    return null;
+                }
+                return result;
+            } catch (err) {
+                console.error(err);
+                return null;
+            } finally {
+                hideLoading();
+            }
         }
 
         async function deleteProductFromBackend(type, id) {
-            return await fetchAPI(productDeleteAction(type), null, id, true);
+            showLoading();
+            try {
+                const res = await fetch(`/api/backend/products/${type}/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                const result = await res.json().catch(() => null);
+                if (!res.ok || !result?.ok) {
+                    console.error('deleteProductFromBackend failed:', result);
+                    return null;
+                }
+                return result;
+            } catch (err) {
+                console.error(err);
+                return null;
+            } finally {
+                hideLoading();
+            }
         }
 
         async function syncProductsToBackend(type, products) {
@@ -5745,8 +5741,7 @@
                 renderProductRows(type);
                 renderProductTags();
                 const result = await saveProductToBackend(type, updated);
-                if (!result || result.status !== 'success') throw new Error('後端商品資料沒有回傳成功');
-                await syncProductCatalog(type);
+                if (!result) throw new Error('後端商品資料沒有回傳成功');
                 showToast('規格明細已保存', 'success')
             } catch (error) {
                 console.error(error);
@@ -5896,8 +5891,7 @@
                 renderProductRows(type);
                 renderProductTags();
                 const result = await saveProductToBackend(type, updated);
-                if (!result || result.status !== 'success') throw new Error('後端商品資料沒有回傳成功');
-                await syncProductCatalog(type);
+                if (!result) throw new Error('後端商品資料沒有回傳成功');
                 let cleanupFailed = false;
                 try {
                     await deleteCloudinaryImages(deletedPublicIds);
@@ -5932,8 +5926,7 @@
             const updated = (type === 'stock' ? stockProducts : preorderProducts).find(product => sameId(product.id, id));
             const saved = updated ? await saveProductToBackend(type, updated) : null;
             if (!saved) return;
-            const catalogSaved = await syncProductCatalog(type);
-            if (catalogSaved) showToast('商品狀態已更新', 'success');
+            showToast('商品狀態已更新', 'success');
         }
 
         async function deleteProduct(type, id) {
@@ -5949,8 +5942,7 @@
                 renderProductRows(type);
                 renderProductTags();
                 const result = await deleteProductFromBackend(type, id);
-                if (!result || result.status !== 'success') throw new Error('後端商品資料沒有回傳成功');
-                await syncProductCatalog(type);
+                if (!result) throw new Error('後端商品資料沒有回傳成功');
                 showToast('商品已刪除', 'success')
             } catch (error) {
                 console.error(error);
@@ -5981,8 +5973,6 @@
                     const deleted = await deleteProductFromBackend(type, id);
                     if (!deleted) return;
                 }
-                const catalogSaved = await syncProductCatalog(type);
-                if (!catalogSaved) return;
                 showToast('商品已刪除', 'success');
 } catch (error) {
                 console.error(error);
@@ -6002,8 +5992,6 @@
             const updatedProducts = (type === 'stock' ? stockProducts : preorderProducts).filter(product => ids.some(id => sameId(id, product.id)));
             const productsSaved = await syncProductsToBackend(type, updatedProducts);
             if (!productsSaved) return;
-            const catalogSaved = await syncProductCatalog(type);
-            if (!catalogSaved) return;
             showToast(`商品已批量${label}`, 'success');
         }
 
@@ -6022,8 +6010,6 @@
             const updatedProducts = (type === 'stock' ? stockProducts : preorderProducts).filter(product => ids.some(id => sameId(id, product.id)));
             const productsSaved = await syncProductsToBackend(type, updatedProducts);
             if (!productsSaved) return;
-            const catalogSaved = await syncProductCatalog(type);
-            if (!catalogSaved) return;
             showToast('商品已批量更新', 'success');
         }
 
@@ -6115,7 +6101,12 @@
                 const ipTagIds = Array.from(row.querySelectorAll('.pb-ip-tag:checked')).map(input => String(input.value));
                 const categoryTagIds = Array.from(row.querySelectorAll('.pb-category-tag:checked')).map(input => String(input.value));
                 const tagIds = [...ipTagIds, ...categoryTagIds];
-                const productId = Date.now() + Math.random();
+                // 字串 id，不要用 Date.now() + Math.random() 這種浮點數——13 位數的
+                // 整數部分已經快把 float64 的有效位數用完，小數點後的隨機尾數存進
+                // Google Sheets 的數字格式欄位時會被精度誤差吃掉（這正是這輪遷移前
+                // 資料核對時，實際在 Staging Sheet 抓到的真實案例：id 從
+                // 1787728685685.3914 存回 Sheet 後變成 1787728685685）。
+                const productId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
                 const base = {
                     id: productId,
                     name: row.querySelector('.pb-name').value.trim(),
@@ -6152,8 +6143,6 @@
             renderProductTags();
             const productsSaved = await syncProductsToBackend(type, newProducts);
             if (!productsSaved) throw new Error('後端商品資料沒有回傳成功');
-            const catalogSaved = await syncProductCatalog(type);
-            if (!catalogSaved) throw new Error('後端商品目錄沒有回傳成功');
             showToast('商品已保存', 'success');
             } catch (error) {
                 console.error(error);
