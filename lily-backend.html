@@ -4723,12 +4723,71 @@
             }
         }
 
+        // 批次存檔：一次送出整批給新的 /batch API，不要再逐筆迴圈打單筆 API
+        // （一筆一筆打，10 筆商品就是近 100 次依序請求，疊加起來非常慢）。
+        // 回傳 null 代表整個請求失敗（網路/驗證/伺服器錯誤）；回傳陣列代表
+        // 請求本身成功，裡面每一筆各自標記 ok/error，呼叫端自己決定怎麼
+        // 處理部分失敗。
         async function syncProductsToBackend(type, products) {
-            for (const product of products) {
-                const result = await saveProductToBackend(type, product);
-                if (!result) return false;
+            if (!products.length) return [];
+            showLoading();
+            try {
+                const res = await fetch(`/api/backend/products/${type}/batch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ products: products.map(product => productSheetPayload(product, type)) })
+                });
+                const result = await res.json().catch(() => null);
+                if (!res.ok || !result?.ok) {
+                    console.error('syncProductsToBackend failed:', result);
+                    return null;
+                }
+                return result.results || [];
+            } catch (err) {
+                console.error(err);
+                return null;
+            } finally {
+                hideLoading();
             }
-            return true;
+        }
+
+        async function deleteProductsBatchFromBackend(type, ids) {
+            if (!ids.length) return [];
+            showLoading();
+            try {
+                const res = await fetch(`/api/backend/products/${type}/batch`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids })
+                });
+                const result = await res.json().catch(() => null);
+                if (!res.ok || !result?.ok) {
+                    console.error('deleteProductsBatchFromBackend failed:', result);
+                    return null;
+                }
+                return result.results || [];
+            } catch (err) {
+                console.error(err);
+                return null;
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 批次結果（results）共用的「部分失敗」回報小工具：全部成功就顯示
+        // 成功 toast，有失敗就顯示失敗 toast（列出是哪幾筆，不是整批靜默
+        // 失敗或靜默成功），回傳失敗的 legacy id 清單讓呼叫端自己決定要不要
+        // 把那幾筆的本機狀態復原。
+        function reportBatchResults(results, items, successMessage, failureMessagePrefix) {
+            const failed = results.filter(r => !r.ok);
+            if (!failed.length) {
+                showToast(successMessage, 'success');
+                return [];
+            }
+            const failedIds = failed.map(r => r.legacyId);
+            const failedNames = items.filter(item => failedIds.some(id => sameId(id, item.id))).map(item => item.name).join('、');
+            showToast(`${failureMessagePrefix}：${failedNames || '未知商品'}`, 'error');
+            return failedIds;
         }
 
         function persistProductManagement() {
@@ -5955,25 +6014,51 @@
         function selectedProductIds(type) { return Array.from(document.querySelectorAll(`.${type}-product-check:checked`)).map(input => input.value); }
         function toggleAllProductRows(type, checkbox) { document.querySelectorAll(`.${type}-product-check`).forEach(input => input.checked = checkbox.checked); }
 
+        // 批次存檔失敗（results 裡部分 ok:false）時，只把失敗的那幾筆本機
+        // 狀態復原成批次前的值，成功的那些維持新值——不要整批一起復原，
+        // 不然就失去了「這批有幾筆成功」的意義。
+        function revertFailedProducts(type, failedIds, previousProducts) {
+            if (!failedIds.length) return;
+            const previousById = new Map(previousProducts.map(p => [String(p.id), p]));
+            const reverter = product => failedIds.some(id => sameId(id, product.id)) && previousById.has(String(product.id))
+                ? previousById.get(String(product.id))
+                : product;
+            if (type === 'stock') { stockProducts = stockProducts.map(reverter); renderStockProducts(); }
+            else { preorderProducts = preorderProducts.map(reverter); renderPreorderProducts(); }
+            persistProductManagement();
+        }
+
         async function batchDeleteProducts(type) {
             try {
                 const ids = selectedProductIds(type);
                 if (!ids.length) return showToast('請先勾選商品', 'error')
                 if (!confirm(`確定刪除 ${ids.length} 個商品嗎？`)) return;
                 const products = type === 'stock' ? stockProducts : preorderProducts;
-                const publicIds = products
-                    .filter(product => ids.some(id => sameId(id, product.id)))
-                    .flatMap(cloudinaryPublicIdsFromProduct);
-                await deleteCloudinaryImages(publicIds);
+                const targets = products.filter(product => ids.some(id => sameId(id, product.id)));
+                await deleteCloudinaryImages(targets.flatMap(cloudinaryPublicIdsFromProduct));
                 if (type === 'stock') { stockProducts = stockProducts.filter(p => !ids.some(id => sameId(id, p.id))); renderStockProducts(); }
                 else { preorderProducts = preorderProducts.filter(p => !ids.some(id => sameId(id, p.id))); renderPreorderProducts(); }
                 persistProductManagement();
                 renderProductTags();
-                for (const id of ids) {
-                    const deleted = await deleteProductFromBackend(type, id);
-                    if (!deleted) return;
+
+                const results = await deleteProductsBatchFromBackend(type, ids);
+                if (!results) {
+                    // 整個請求失敗：全部商品都還沒真的被刪，復原回畫面上
+                    if (type === 'stock') { stockProducts = [...stockProducts, ...targets]; renderStockProducts(); }
+                    else { preorderProducts = [...preorderProducts, ...targets]; renderPreorderProducts(); }
+                    persistProductManagement();
+                    throw new Error('後端商品刪除沒有回傳成功');
                 }
-                showToast('商品已刪除', 'success');
+                const failedIds = results.filter(r => !r.ok).map(r => r.legacyId);
+                if (failedIds.length) {
+                    const restored = targets.filter(p => failedIds.some(id => sameId(id, p.id)));
+                    if (type === 'stock') { stockProducts = [...stockProducts, ...restored]; renderStockProducts(); }
+                    else { preorderProducts = [...preorderProducts, ...restored]; renderPreorderProducts(); }
+                    persistProductManagement();
+                    showToast(`部分商品刪除失敗：${restored.map(p => p.name).join('、') || '未知商品'}`, 'error');
+                } else {
+                    showToast('商品已刪除', 'success');
+                }
 } catch (error) {
                 console.error(error);
                 showToast('商品刪除失敗，請稍後再試', 'error')
@@ -5985,14 +6070,19 @@
             if (!ids.length) return showToast('請先勾選商品', 'error')
             const label = active ? '上架' : '下架';
             if (!confirm(`確定批量${label} ${ids.length} 個商品嗎？`)) return;
+            const previousProducts = type === 'stock' ? [...stockProducts] : [...preorderProducts];
             const updater = product => ids.some(id => sameId(id, product.id)) ? { ...product, active } : product;
             if (type === 'stock') { stockProducts = stockProducts.map(updater); renderStockProducts(); }
             else { preorderProducts = preorderProducts.map(updater); renderPreorderProducts(); }
             persistProductManagement();
             const updatedProducts = (type === 'stock' ? stockProducts : preorderProducts).filter(product => ids.some(id => sameId(id, product.id)));
-            const productsSaved = await syncProductsToBackend(type, updatedProducts);
-            if (!productsSaved) return;
-            showToast(`商品已批量${label}`, 'success');
+            const results = await syncProductsToBackend(type, updatedProducts);
+            if (!results) {
+                revertFailedProducts(type, ids, previousProducts);
+                return showToast(`批量${label}失敗，請稍後再試`, 'error');
+            }
+            const failedIds = reportBatchResults(results, updatedProducts, `商品已批量${label}`, `部分商品${label}失敗`);
+            revertFailedProducts(type, failedIds, previousProducts);
         }
 
         async function batchEditProducts(type) {
@@ -6004,13 +6094,18 @@
             const ipTagIds = ipNames ? ensureTagsByNames(ipNames.split(',').map(s => s.trim()).filter(Boolean), 'ip') : null;
             const categoryTagIds = categoryNames ? ensureTagsByNames(categoryNames.split(',').map(s => s.trim()).filter(Boolean), 'category') : null;
             const tagIds = ipTagIds || categoryTagIds ? [...(ipTagIds || []), ...(categoryTagIds || [])] : null;
+            const previousProducts = type === 'stock' ? [...stockProducts] : [...preorderProducts];
             const updater = product => ids.some(id => sameId(id, product.id)) ? { ...product, listPrice: listPrice ? Number(listPrice) : product.listPrice, costPrice: costPrice ? Number(costPrice) : product.costPrice, tagIds: tagIds || product.tagIds } : product;
             if (type === 'stock') { stockProducts = stockProducts.map(updater); renderStockProducts(); } else { preorderProducts = preorderProducts.map(updater); renderPreorderProducts(); }
             persistProductManagement(); renderProductTagOptions(); renderProductTags();
             const updatedProducts = (type === 'stock' ? stockProducts : preorderProducts).filter(product => ids.some(id => sameId(id, product.id)));
-            const productsSaved = await syncProductsToBackend(type, updatedProducts);
-            if (!productsSaved) return;
-            showToast('商品已批量更新', 'success');
+            const results = await syncProductsToBackend(type, updatedProducts);
+            if (!results) {
+                revertFailedProducts(type, ids, previousProducts);
+                return showToast('批量更新失敗，請稍後再試', 'error');
+            }
+            const failedIds = reportBatchResults(results, updatedProducts, '商品已批量更新', '部分商品更新失敗');
+            revertFailedProducts(type, failedIds, previousProducts);
         }
 
         function ensureTagsByNames(names, type = 'category') {
@@ -6141,8 +6236,14 @@
             closeProductBatchModal();
             persistProductManagement();
             renderProductTags();
-            const productsSaved = await syncProductsToBackend(type, newProducts);
-            if (!productsSaved) throw new Error('後端商品資料沒有回傳成功');
+            const results = await syncProductsToBackend(type, newProducts);
+            if (!results) throw new Error('後端商品資料沒有回傳成功');
+            const failed = results.filter(r => !r.ok);
+            if (failed.length) {
+                const failedIds = failed.map(r => r.legacyId);
+                const failedNames = newProducts.filter(p => failedIds.some(id => sameId(id, p.id))).map(p => p.name).join('、');
+                throw new Error(`部分商品儲存失敗：${failedNames || '未知商品'}，整批已復原，請修正後重新送出`);
+            }
             showToast('商品已保存', 'success');
             } catch (error) {
                 console.error(error);
@@ -6155,7 +6256,7 @@
                 if (uploadedPublicIds.length) {
                     await cleanupUploadedProductImages(uploadedPublicIds);
                 }
-                showToast('商品圖片上傳或儲存失敗，請稍後再試', 'error')
+                showToast(error?.message || '商品圖片上傳或儲存失敗，請稍後再試', 'error')
             } finally {
                 productSaveInProgress[saveKey] = false;
                 setSavingButton(saveButton, false);
