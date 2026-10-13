@@ -4017,11 +4017,7 @@
                 items: [...group.querySelectorAll('.module-order-item')].map(item => item.dataset.moduleItemKey)
             }));
             if (button) button.disabled = true;
-            const saved = await fetchAPI('saveScheduleSetting', {
-                id: 'backend-module-order',
-                type: 'backend-module-order',
-                image: JSON.stringify({ groups: nextOrder })
-            }, null, true);
+            const saved = await saveScheduleSettingToBackend('backend-module-order', JSON.stringify({ groups: nextOrder }));
             if (button) button.disabled = false;
             if (!saved) return;
             backendModuleOrder = nextOrder;
@@ -4080,6 +4076,42 @@
             }
         }
 
+        // 【遷移 第一階段】商品列表讀取/商品標籤管理/擺攤連線時程/品牌管理
+        // 整包設定這四塊不再靠 Apps Script 的 doGet()/readData() 供應，改成
+        // 直接打下面這幾支新路由。vendors/orders/websites（這輪不在範圍內）
+        // 還是照舊從 API_URL 讀。每支都各自 try/catch，任何一支失敗都不會
+        // 拖垮其他幾支——沿用 applyBackendData() 本來就有的「陣列非空才
+        // 覆蓋」判斷，單支失敗時該欄位就維持原本畫面上的狀態，不會整頁掛掉。
+        async function fetchJson(url) {
+            try {
+                const res = await fetch(url);
+                if (!res.ok) return null;
+                return await res.json();
+            } catch (err) {
+                console.error('fetchJson failed:', url, err);
+                return null;
+            }
+        }
+
+        async function loadMigratedBackendData() {
+            const [stockRes, preorderRes, tagsRes, stallRes, connectionRes, settingsRes] = await Promise.all([
+                fetchJson('/api/backend/products/stock'),
+                fetchJson('/api/backend/products/preorder'),
+                fetchJson('/api/backend/product-tags'),
+                fetchJson('/api/backend/schedules/stall'),
+                fetchJson('/api/backend/schedules/connection'),
+                fetchJson('/api/backend/schedule-settings'),
+            ]);
+            const data = {};
+            if (stockRes?.ok) data.stockProducts = stockRes.products;
+            if (preorderRes?.ok) data.preorderProducts = preorderRes.products;
+            if (tagsRes?.ok) data.productTags = tagsRes.tags;
+            if (stallRes?.ok) data.stallSchedules = stallRes.schedules;
+            if (connectionRes?.ok) data.connectionSchedules = connectionRes.schedules;
+            if (settingsRes?.ok) data.scheduleSettings = settingsRes.settings;
+            return data;
+        }
+
         async function loadData() {
             const cached = getCachedBackendData();
             if (cached) {
@@ -4090,10 +4122,16 @@
             }
 
             try {
-                const res = await fetch(API_URL);
-                const result = await res.json();
-                cacheBackendData(result || {});
-                applyBackendData(result || {});
+                const [legacyResult, migratedData] = await Promise.all([
+                    fetch(API_URL).then(res => res.json()).catch(err => {
+                        console.error('Legacy Apps Script fetch failed:', err);
+                        return null;
+                    }),
+                    loadMigratedBackendData(),
+                ]);
+                const result = { ...(legacyResult || {}), ...migratedData };
+                cacheBackendData(result);
+                applyBackendData(result);
                 renderBackendData();
             } catch (err) {
                 console.error(err);
@@ -4702,6 +4740,98 @@
                 const result = await res.json().catch(() => null);
                 if (!res.ok || !result?.ok) {
                     console.error('deleteProductFromBackend failed:', result);
+                    return null;
+                }
+                return result;
+            } catch (err) {
+                console.error(err);
+                return null;
+            }
+        }
+
+        // 【遷移 第一階段】商品標籤管理/擺攤連線時程/品牌管理整包設定改走
+        // Supabase，不再經過 Apps Script 的 fetchAPI(action, payload, id)
+        // 機制——這幾支都是直接 fetch 新路由，寫法比照上面 saveProductToBackend/
+        // deleteProductFromBackend，刻意不共用 fetchAPI（原因同上：fetchAPI
+        // 跟 Apps Script 的 {action,payload,id} 格式綁死）。
+        async function saveProductTagToBackend(tag) {
+            try {
+                const res = await fetch('/api/backend/product-tags', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(tag)
+                });
+                const result = await res.json().catch(() => null);
+                if (!res.ok || !result?.ok) {
+                    console.error('saveProductTagToBackend failed:', result);
+                    return null;
+                }
+                return result;
+            } catch (err) {
+                console.error(err);
+                return null;
+            }
+        }
+
+        async function deleteProductTagFromBackend(id) {
+            try {
+                const res = await fetch(`/api/backend/product-tags/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                const result = await res.json().catch(() => null);
+                if (!res.ok || !result?.ok) {
+                    console.error('deleteProductTagFromBackend failed:', result);
+                    return null;
+                }
+                return result;
+            } catch (err) {
+                console.error(err);
+                return null;
+            }
+        }
+
+        async function saveScheduleToBackend(type, schedule) {
+            try {
+                const res = await fetch(`/api/backend/schedules/${type}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(schedule)
+                });
+                const result = await res.json().catch(() => null);
+                if (!res.ok || !result?.ok) {
+                    console.error('saveScheduleToBackend failed:', result);
+                    return null;
+                }
+                return result;
+            } catch (err) {
+                console.error(err);
+                return null;
+            }
+        }
+
+        async function deleteScheduleFromBackend(type, id) {
+            try {
+                const res = await fetch(`/api/backend/schedules/${type}/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                const result = await res.json().catch(() => null);
+                if (!res.ok || !result?.ok) {
+                    console.error('deleteScheduleFromBackend failed:', result);
+                    return null;
+                }
+                return result;
+            } catch (err) {
+                console.error(err);
+                return null;
+            }
+        }
+
+        async function saveScheduleSettingToBackend(type, image) {
+            try {
+                const res = await fetch('/api/backend/schedule-settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, image })
+                });
+                const result = await res.json().catch(() => null);
+                if (!res.ok || !result?.ok) {
+                    console.error('saveScheduleSettingToBackend failed:', result);
                     return null;
                 }
                 return result;
@@ -6534,12 +6664,12 @@
             if (state) state.textContent = '儲存中...';
             try {
                 for (const id of deletedProductTagIds) {
-                    const result = await fetchAPI('deleteProductTag', null, id, true);
+                    const result = await deleteProductTagFromBackend(id);
                     if (!result) throw new Error('商品標籤刪除失敗');
                 }
                 const normalized = normalizeProductTags(productTags);
                 for (const tag of normalized) {
-                    const result = await fetchAPI('saveProductTag', tag, null, true);
+                    const result = await saveProductTagToBackend(tag);
                     if (!result) throw new Error('商品標籤儲存失敗');
                 }
                 productTags = normalized;
@@ -6604,7 +6734,7 @@
             scheduleDefaultImages[type] = image;
             persistScheduleManagement();
             previewScheduleDefaultImage(type);
-            const result = await fetchAPI('saveScheduleSetting', { id: type, type, image }, null, true);
+            const result = await saveScheduleSettingToBackend(type, image);
             if (result) showToast(`${type === 'stall' ? '擺攤' : '連線'}預設圖片已保存`, 'success')
         }
 
@@ -6658,13 +6788,9 @@
             scheduleDefaultImages.productScale = Math.min(200, Math.max(50, Number(scaleInput?.value) || 100));
             persistScheduleManagement();
             renderProductDefaultImagePreviews();
-            const imageSaved = await fetchAPI('saveScheduleSetting', { id: 'product-default', type: 'product-default', image }, null, true);
+            const imageSaved = await saveScheduleSettingToBackend('product-default', image);
             if (!imageSaved) return;
-            const scaleSaved = await fetchAPI('saveScheduleSetting', {
-                id: 'product-default-scale',
-                type: 'product-default-scale',
-                image: String(scheduleDefaultImages.productScale)
-            }, null, true);
+            const scaleSaved = await saveScheduleSettingToBackend('product-default-scale', String(scheduleDefaultImages.productScale));
             if (!scaleSaved) return;
             closeProductDefaultImageModal();
             showToast('商品預設圖已保存', 'success')
@@ -6931,23 +7057,11 @@
         async function saveBrandLogoLibrary() {
             syncBrandSettingsFromLogoLibrary();
             localStorage.setItem(BRAND_SETTINGS_KEY, JSON.stringify(brandSettings));
-            const savedLibrary = await fetchAPI('saveScheduleSetting', {
-                id: 'brand-logo-library',
-                type: 'brand-logo-library',
-                image: brandLogoLibraryPayload()
-            }, null, true);
+            const savedLibrary = await saveScheduleSettingToBackend('brand-logo-library', brandLogoLibraryPayload());
             if (!savedLibrary) throw new Error('LOGO 圖庫保存失敗');
-            const savedBrand = await fetchAPI('saveScheduleSetting', {
-                id: 'brand',
-                type: 'brand',
-                image: brandSettingsPayload()
-            }, null, true);
+            const savedBrand = await saveScheduleSettingToBackend('brand', brandSettingsPayload());
             if (!savedBrand) throw new Error('品牌設定保存失敗');
-            const savedLogo = await fetchAPI('saveScheduleSetting', {
-                id: 'brand-logo',
-                type: 'brand-logo',
-                image: brandSettings.logo || ''
-            }, null, true);
+            const savedLogo = await saveScheduleSettingToBackend('brand-logo', brandSettings.logo || '');
             if (!savedLogo) throw new Error('目前 LOGO 保存失敗');
             renderBrandManagement();
         }
@@ -7044,11 +7158,7 @@
             siteInfoSettings.ogImagePublicId = String(document.getElementById('site-info-og-public-id')?.value || '').trim();
             const state = document.getElementById('site-info-save-state');
             if (state) state.textContent = '儲存中...';
-            const saved = await fetchAPI('saveScheduleSetting', {
-                id: 'site-info',
-                type: 'site-info',
-                image: siteInfoSettingsPayload()
-            }, null, true);
+            const saved = await saveScheduleSettingToBackend('site-info', siteInfoSettingsPayload());
             if (!saved) throw new Error('Site info save failed');
             if (state) state.textContent = '已儲存';
             showToast('網站資訊已儲存', 'success')
@@ -7514,10 +7624,10 @@
             const state = document.getElementById('homepage-save-state');
             if (state) state.textContent = '儲存中...';
             const saves = [
-                fetchAPI('saveScheduleSetting', { id: 'site-announcements', type: 'site-announcements', image: siteAnnouncementPayload() }, null, true),
-                fetchAPI('saveScheduleSetting', { id: 'site-banners', type: 'site-banners', image: siteBannersPayload() }, null, true),
-                fetchAPI('saveScheduleSetting', { id: 'homepage-sections', type: 'homepage-sections', image: homepageSectionsPayload() }, null, true),
-                fetchAPI('saveScheduleSetting', { id: 'site-navigation', type: 'site-navigation', image: siteNavigationPayload() }, null, true)
+                saveScheduleSettingToBackend('site-announcements', siteAnnouncementPayload()),
+                saveScheduleSettingToBackend('site-banners', siteBannersPayload()),
+                saveScheduleSettingToBackend('homepage-sections', homepageSectionsPayload()),
+                saveScheduleSettingToBackend('site-navigation', siteNavigationPayload())
             ];
             const results = await Promise.all(saves);
             if (results.some(result => !result)) throw new Error('Homepage settings save failed');
@@ -7631,26 +7741,14 @@
             localStorage.setItem(BRAND_SETTINGS_KEY, JSON.stringify(brandSettings));
             previewBrandSetting(key);
             const payloadImage = key === 'watermark' ? brandWatermarkPayload() : key === 'textImage' ? brandTextImagePayload() : image;
-            const savedSetting = await fetchAPI('saveScheduleSetting', { id: meta.type, type: meta.type, image: payloadImage }, null, true);
+            const savedSetting = await saveScheduleSettingToBackend(meta.type, payloadImage);
             if (!savedSetting) throw new Error(`${meta.label}保存失敗`);
             if (key === 'logo') {
-                const savedBrand = await fetchAPI('saveScheduleSetting', {
-                    id: 'brand',
-                    type: 'brand',
-                    image: brandSettingsPayload()
-                }, null, true);
+                const savedBrand = await saveScheduleSettingToBackend('brand', brandSettingsPayload());
                 if (!savedBrand) throw new Error('品牌設定保存失敗');
-                const savedLibrary = await fetchAPI('saveScheduleSetting', {
-                    id: 'brand-logo-library',
-                    type: 'brand-logo-library',
-                    image: brandLogoLibraryPayload()
-                }, null, true);
+                const savedLibrary = await saveScheduleSettingToBackend('brand-logo-library', brandLogoLibraryPayload());
                 if (!savedLibrary) throw new Error('LOGO 圖庫保存失敗');
-                const savedScale = await fetchAPI('saveScheduleSetting', {
-                    id: 'brand-logo-scale',
-                    type: 'brand-logo-scale',
-                    image: String(brandSettings.logoScale)
-                }, null, true);
+                const savedScale = await saveScheduleSettingToBackend('brand-logo-scale', String(brandSettings.logoScale));
                 if (!savedScale) throw new Error('LOGO 大小保存失敗');
                 const cleanupIds = [...new Set(pendingBrandLogoDeletePublicIds)]
                     .filter(publicId => publicId && publicId !== brandSettings.logoPublicId);
@@ -12592,7 +12690,7 @@
             persistScheduleManagement();
             document.getElementById('scheduleModal').classList.remove('active');
             renderSchedules(type);
-            const result = await fetchAPI(type === 'stall' ? 'saveStallSchedule' : 'saveConnectionSchedule', data, null, true);
+            const result = await saveScheduleToBackend(type, data);
             if (result) {
                 const replacedPublicId = imageState.originalUrl !== imageState.currentUrl ? imageState.originalPublicId : '';
                 scheduleImageEditState = { originalUrl: '', originalPublicId: '', currentUrl: '', currentPublicId: '', pendingPublicId: '' };
@@ -12612,7 +12710,7 @@
             setScheduleList(type, scheduleList(type).filter(item => String(item.id) !== String(id)));
             persistScheduleManagement();
             renderSchedules(type);
-            const result = await fetchAPI(type === 'stall' ? 'deleteStallSchedule' : 'deleteConnectionSchedule', null, id, true);
+            const result = await deleteScheduleFromBackend(type, id);
             if (result) {
                 const publicId = cloudinaryPublicIdFromUrl(target?.image || '');
                 if (publicId) await cleanupScheduleImages([publicId], '時程已刪除，但圖片清理失敗');
