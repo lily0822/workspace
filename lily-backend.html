@@ -704,15 +704,48 @@
         .product-default-modal-preview img { width: 100%; height: 100%; object-fit: contain; display: block; transform-origin: center; }
         .product-image-editor { border: 1px dashed #cbd5e1; border-radius: 0.7rem; padding: 0.45rem; width: 100%; max-width: 280px; min-width: 0; background: #f8fafc; transition: border-color 0.15s ease; }
         .product-image-list { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.45rem; }
-        .product-image-thumb { width: 74px; border: 1px solid #e2e8f0; border-radius: 0.55rem; overflow: hidden; background: white; }
-        .product-image-thumb.primary { border-color: #ec4899; box-shadow: 0 0 0 2px rgba(236,72,153,0.16); }
-        .product-image-thumb img { width: 100%; height: 58px; object-fit: cover; display: block; }
-        .product-image-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.15rem; padding: 0.2rem; }
-        .product-image-actions button, .product-image-actions span { border: 0; border-radius: 0.3rem; background: #f1f5f9; color: #475569; font-size: 0.62rem; font-weight: 700; padding: 0.12rem; text-align: center; cursor: pointer; }
-        .product-image-actions button:hover { background: #fce7f3; color: #be185d; }
-        .product-image-variant-select { width: 100%; border: 0; border-top: 1px solid #e2e8f0; border-radius: 0 0 0.3rem 0.3rem; background: #f8fafc; color: #475569; font-size: 0.62rem; font-weight: 700; padding: 0.18rem 0.2rem; cursor: pointer; }
+        /* 商品圖片這排只放圖片本身＋右上角疊一顆垃圾桶刪除鈕——「主圖」/
+           「指定規格」這兩個功能這次拿掉了，指定規格移到下面規格表格的
+           小縮圖挑選，主圖改成自動取第一張（沒有任何一張標記 isPrimary
+           時，normalizePrimaryProductImages 本來就會退回第一張，詳情頁
+           大圖預設顯示的邏輯不用跟著改）。 */
+        .product-image-thumb { position: relative; width: 72px; height: 72px; flex-shrink: 0; border: 1px solid #e2e8f0; border-radius: 0.55rem; overflow: hidden; background: white; }
+        .product-image-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .product-image-thumb-delete { position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 0.4rem; border: 0; background: rgba(15, 23, 42, 0.55); color: #fff; font-size: 0.6rem; display: grid; place-items: center; cursor: pointer; }
+        .product-image-thumb-delete:hover { background: #dc2626; }
         .product-image-dropzone { display: flex; align-items: center; justify-content: center; gap: 0.35rem; min-height: 42px; border-radius: 0.5rem; background: white; color: #64748b; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
         .product-image-dropzone input { display: none; }
+        /* 名稱/描述同一行＋右側上架狀態切換，字樣當 placeholder 打在輸入框
+           裡，不另外顯示標題文字。 */
+        .product-name-desc-row { display: flex; gap: 0.75rem; align-items: stretch; flex-wrap: wrap; margin-bottom: 0.9rem; }
+        .product-name-desc-row .product-edit-field { flex: 1 1 220px; min-width: 0; }
+        .product-name-desc-row textarea.product-edit-field { flex: 2 1 320px; resize: vertical; min-height: 44px; }
+        .product-name-desc-row .status-pill { flex-shrink: 0; align-self: center; }
+        /* IP／商品類別：標籤文字跟選項擠在同一行，兩組也在同一行。 */
+        .product-inline-tag-row { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 0.6rem 1rem; margin-bottom: 0.9rem; }
+        .product-inline-tag-row .tag-group-inline { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem; }
+        .product-inline-tag-row .tag-group-inline-label { font-size: 0.78rem; font-weight: 900; color: #334155; flex-shrink: 0; }
+        .product-edit-divider { height: 1px; background: #fce7f3; margin: 0.9rem 0; border: none; }
+        /* 規格表格：小縮圖｜規格名稱｜庫存｜成本價｜特價｜原價｜刪除。 */
+        .product-variant-table { width: 100%; border-collapse: collapse; }
+        .product-variant-table th { text-align: left; font-size: 0.72rem; font-weight: 900; color: #64748b; padding: 0 0.4rem 0.4rem; }
+        .product-variant-table th.col-thumb, .product-variant-table th.col-action { width: 1%; }
+        .product-variant-table td { padding: 0.3rem 0.4rem; vertical-align: middle; }
+        .product-variant-table td input.product-edit-field { min-width: 70px; }
+        .variant-thumb-picker { position: relative; }
+        .variant-thumb { width: 44px; height: 44px; border: 1px dashed #cbd5e1; border-radius: 0.5rem; overflow: hidden; background: #f8fafc; display: grid; place-items: center; color: #94a3b8; cursor: pointer; padding: 0; }
+        .variant-thumb:hover { border-color: #ec4899; color: #ec4899; }
+        .variant-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .variant-thumb-picker-panel { display: none; position: absolute; top: calc(100% + 0.25rem); left: 0; z-index: 2000; width: 220px; max-height: 220px; overflow-y: auto; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; background: #fff; box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12); display: none; flex-wrap: wrap; gap: 0.35rem; }
+        .variant-thumb-picker.open .variant-thumb-picker-panel { display: flex; }
+        .variant-thumb-picker-panel button { width: 46px; height: 46px; border: 1px solid #e2e8f0; border-radius: 0.4rem; overflow: hidden; padding: 0; cursor: pointer; background: #f8fafc; }
+        .variant-thumb-picker-panel button img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .variant-thumb-picker-panel .variant-thumb-clear { width: 100%; height: auto; display: block; font-size: 0.72rem; font-weight: 700; color: #be185d; background: #fdf2f8; padding: 0.3rem; text-align: center; }
+        .variant-thumb-picker-panel .variant-thumb-empty { font-size: 0.72rem; color: #94a3b8; padding: 0.3rem; }
+        .product-variant-remove-btn { width: 32px; height: 32px; border-radius: 0.4rem; border: 1px solid #fecdd3; background: #fff; color: #dc2626; cursor: pointer; }
+        .product-variant-remove-btn:hover { background: #fef2f2; }
+        .product-variant-add-btn { margin-top: 0.4rem; border: 1px dashed #cbd5e1; border-radius: 0.5rem; background: #f8fafc; color: #64748b; font-size: 0.78rem; font-weight: 800; padding: 0.4rem 0.9rem; cursor: pointer; }
+        .product-variant-add-btn:hover { border-color: #ec4899; color: #ec4899; }
         .brand-settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
         .brand-setting-card { background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; border: 1px solid #fce7f3; }
         .brand-setting-card h3 { font-size: 1rem; font-weight: 700; color: #334155; display: flex; align-items: center; gap: 0.5rem; }
@@ -875,11 +908,8 @@
         .product-tag-status { border: 0; border-radius: 999px; padding: 0.42rem 0.7rem; font-size: 0.76rem; font-weight: 900; cursor: pointer; }
         .product-tag-status.on { background: #dcfce7; color: #166534; }
         .product-tag-status.off { background: #f1f5f9; color: #64748b; }
-        .product-edit-card { display: grid; gap: 1rem; border: 1px solid #fce7f3; border-radius: 1rem; background: #fff; padding: 1rem; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06); min-width: 0; }
-        .product-edit-grid { display: grid; grid-template-columns: minmax(220px, 0.9fr) minmax(240px, 1fr) minmax(220px, 0.85fr); gap: 1rem; align-items: start; min-width: 0; }
-        .product-edit-section { display: grid; gap: 0.65rem; min-width: 0; }
-        .product-edit-section-title { font-size: 0.78rem; font-weight: 900; color: #64748b; letter-spacing: 0.03em; }
-        .product-edit-actions { position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: 0.6rem; border-top: 1px solid #fce7f3; background: rgba(255,255,255,0.96); padding-top: 0.75rem; z-index: 2; }
+        .product-edit-card { display: block; border: 1px solid #fce7f3; border-radius: 1rem; background: #fff; padding: 1rem; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06); min-width: 0; }
+        .product-edit-actions { position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: 0.6rem; border-top: 1px solid #fce7f3; background: rgba(255,255,255,0.96); padding-top: 0.75rem; margin-top: 0.9rem; z-index: 2; }
         .product-tag-checkbox-wrap { display: flex; flex-wrap: wrap; gap: 0.35rem; max-height: 150px; overflow-y: auto; padding-right: 0.15rem; }
         .product-tag-check-chip { display: inline-flex; align-items: center; gap: 0.25rem; border: 1px solid var(--tag-border, #e2e8f0); border-radius: 999px; background: var(--tag-bg, #f8fafc); color: var(--tag-fg, #334155); padding: 0.24rem 0.5rem; font-size: 0.75rem; font-weight: 800; line-height: 1.1; }
         .product-tag-check-chip input { margin: 0; accent-color: var(--tag-fg, #ec4899); }
@@ -894,11 +924,10 @@
             .product-tag-row { grid-template-columns: 34px minmax(0, 1fr); }
             .product-tag-row .product-tag-status,
             .product-tag-row .btn { justify-self: start; }
-            .product-edit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
         @media (max-width: 640px) {
-            .product-edit-grid { grid-template-columns: 1fr; }
             .product-tag-edit-row { grid-template-columns: 1fr 44px 1fr 1fr 34px; }
+            .product-variant-table { display: block; overflow-x: auto; }
         }
         .product-edit-field { width: 100%; min-width: 92px; padding: 0.55rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; background: #fff; color: #334155; font: inherit; font-size: 0.86rem; transition: border-color 0.2s, box-shadow 0.2s; }
         .product-edit-field:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1); }
@@ -4654,6 +4683,8 @@
                 id: variant.id || `${product.id || Date.now()}-${index + 1}`,
                 spec: String(variant.spec || variant.name || '').trim(),
                 price: Number(variant.price ?? product.listPrice ?? product.price ?? 0),
+                costPrice: Number(variant.costPrice ?? variant.cost_price ?? 0),
+                originalPrice: variant.originalPrice ?? variant.original_price ?? undefined,
                 quantity: Number(variant.quantity ?? variant.qty ?? qty ?? 0),
                 link: String(variant.link || '').trim()
             })).filter(variant => variant.spec);
@@ -4664,6 +4695,8 @@
                 id: `${product.id || Date.now()}-${index + 1}`,
                 spec,
                 price: Number(product.listPrice ?? product.price ?? 0),
+                costPrice: Number(product.costPrice ?? 0),
+                originalPrice: product.originalPrice ?? undefined,
                 quantity: qty,
                 link: ''
             }));
@@ -4738,6 +4771,13 @@
         // 經過 Apps Script（跟商品標籤管理/叫貨管理/帳表管理等其他還在用
         // fetchAPI 的功能是分開的，這裡刻意不共用 fetchAPI）。失敗時回傳
         // null，呼叫端原本的 `if (!result)`/`if (!saved)` 判斷不用改。
+        // 存檔失敗時把後端回傳的具體原因（例如規格或圖片那步失敗，但商品
+        // 基本資料已經存成功）留在這個變數——呼叫端原本都是看
+        // saveProductToBackend 回傳 null 當失敗判斷（很多地方在用，改成
+        // 回傳物件會讓所有 if (!result) 判斷失效），用一個模組層級變數
+        // 存最後一次失敗原因，不動這個函式的回傳型態。
+        let lastProductSaveErrorMessage = '';
+
         async function saveProductToBackend(type, product) {
             try {
                 const res = await fetch(`/api/backend/products/${type}`, {
@@ -4748,11 +4788,14 @@
                 const result = await res.json().catch(() => null);
                 if (!res.ok || !result?.ok) {
                     console.error('saveProductToBackend failed:', result);
+                    lastProductSaveErrorMessage = result?.error || '';
                     return null;
                 }
+                lastProductSaveErrorMessage = '';
                 return result;
             } catch (err) {
                 console.error(err);
+                lastProductSaveErrorMessage = '';
                 return null;
             }
         }
@@ -5584,7 +5627,7 @@
                 isPrimary: source.isPrimary === true || source.is_primary === true,
                 sortOrder: Number(source.sortOrder ?? source.sort_order ?? index),
                 // 留空＝商品共用圖片；有值＝只屬於那一個規格（存的是規格的
-                // legacy id，跟 collectProductVariants() 用的 id 同一套）。
+                // legacy id，跟 collectProductEditVariants() 用的 id 同一套）。
                 variantId: String(source.variantId || source.variant_id || '').trim() || undefined
             };
         }
@@ -5768,52 +5811,34 @@
             `;
         }
 
-        // 圖片可以指定規格這個下拉選單的選項，來自商品「目前已保存」的
-        // 規格清單——圖片編輯是 saveProductRow 這套存檔流程，跟「編輯規格」
-        // （setProductVariantEditMode/saveProductVariants）是分開的兩個
-        // 存檔動作，这裡故意不去讀正在編輯中、還沒保存的規格列，避免兩邊
-        // 存檔互相干擾。商品沒有多規格（normalizeProductVariants 永遠至少
-        // 回傳一個「預設款」）時只有 1 筆，下拉選單就不顯示。
-        function productImageVariantOptions(type, id) {
-            const products = type === 'stock' ? stockProducts : preorderProducts;
-            const product = products.find(item => sameId(item.id, id));
-            if (!product) return [];
-            return normalizeProductVariants(product, type);
-        }
-
+        // 商品圖片這排只負責上傳/刪除，不再處理「主圖」「指定規格」——
+        // 指定規格改成在規格表格的小縮圖挑選（見 variantThumbPickerHtml
+        // 等函式，一樣是寫進這裡的 store.images/pendingFiles 的
+        // variantId，只是觸發點換了）；主圖改成自動取第一張。
         function renderProductImageEditor(type, id) {
             const key = productImageStoreKey(type, id);
             const store = productImageEditStores[key];
             const list = document.getElementById(`image-list-${key}`);
             if (!store || !list) return;
-            const variantOptions = productImageVariantOptions(type, id);
-            const saved = store.images.map((image, index) => productImageThumbHtml(type, id, image.url, index, image.isPrimary, false, image.variantId, variantOptions)).join('');
-            const pending = store.pendingFiles.map((item, index) => productImageThumbHtml(type, id, item.previewUrl, index, item.isPrimary, true, item.variantId, variantOptions)).join('');
+            const saved = store.images.map((image, index) => productImageThumbHtml(type, id, image.url, index, false)).join('');
+            const pending = store.pendingFiles.map((item, index) => productImageThumbHtml(type, id, item.previewUrl, index, true)).join('');
             list.innerHTML = saved + pending || '<span style="font-size:0.75rem;color:#94a3b8;">尚未選擇圖片</span>';
+            renderProductEditVariantThumbs(type, id);
         }
 
-        function productImageThumbHtml(type, id, url, index, isPrimary, isPending, variantId, variantOptions = []) {
+        function productImageThumbHtml(type, id, url, index, isPending) {
             const target = isPending ? 'pending' : 'saved';
-            const variantSelectHtml = variantOptions.length > 1 ? `
-                <select class="product-image-variant-select" onchange="setProductImageVariant('${type}', ${quoteJs(id)}, '${target}', ${index}, this.value)" title="指定規格（可不選）">
-                    <option value="" ${variantId ? '' : 'selected'}>通用</option>
-                    ${variantOptions.map(variant => `<option value="${escapeHtml(variant.id)}" ${String(variantId || '') === String(variant.id) ? 'selected' : ''}>${escapeHtml(variant.spec)}</option>`).join('')}
-                </select>
-            ` : '';
             return `
-                <div class="product-image-thumb ${isPrimary ? 'primary' : ''}">
+                <div class="product-image-thumb">
                     <img src="${escapeHtml(url)}" alt="商品圖片">
-                    <div class="product-image-actions">
-                        <button type="button" onclick="setProductPrimaryImage('${type}', ${quoteJs(id)}, '${target}', ${index})">主圖</button>
-                        <button type="button" onclick="moveProductImage('${type}', ${quoteJs(id)}, '${target}', ${index}, -1)">↑</button>
-                        <button type="button" onclick="moveProductImage('${type}', ${quoteJs(id)}, '${target}', ${index}, 1)">↓</button>
-                        <button type="button" onclick="removeProductImage('${type}', ${quoteJs(id)}, '${target}', ${index})">刪除</button>
-                    </div>
-                    ${variantSelectHtml}
+                    <button type="button" class="product-image-thumb-delete" title="刪除" onclick="removeProductImage('${type}', ${quoteJs(id)}, '${target}', ${index})"><i class="fa-solid fa-trash"></i></button>
                 </div>
             `;
         }
 
+        // 規格表格的小縮圖挑選用的還是同一份 store，跟上面的圖片編輯區
+        // 共用資料——只是哪個規格「代表圖」是哪一張，不會像上面那樣影響
+        // 圖片本身的排序/刪除。
         function setProductImageVariant(type, id, target, index, variantId) {
             const store = productImageEditStores[productImageStoreKey(type, id)];
             if (!store) return;
@@ -5837,25 +5862,6 @@
             files.forEach(file => {
                 store.pendingFiles.push({ file, previewUrl: URL.createObjectURL(file), isPrimary: store.images.length === 0 && store.pendingFiles.length === 0 });
             });
-            renderProductImageEditor(type, id);
-        }
-
-        function setProductPrimaryImage(type, id, target, index) {
-            const store = productImageEditStores[productImageStoreKey(type, id)];
-            if (!store) return;
-            store.images = store.images.map((image, imageIndex) => ({ ...image, isPrimary: target === 'saved' && imageIndex === index }));
-            store.pendingFiles = store.pendingFiles.map((item, itemIndex) => ({ ...item, isPrimary: target === 'pending' && itemIndex === index }));
-            renderProductImageEditor(type, id);
-        }
-
-        function moveProductImage(type, id, target, index, delta) {
-            const store = productImageEditStores[productImageStoreKey(type, id)];
-            if (!store) return;
-            const list = target === 'pending' ? store.pendingFiles : store.images;
-            const next = index + delta;
-            if (next < 0 || next >= list.length) return;
-            [list[index], list[next]] = [list[next], list[index]];
-            if (target === 'saved') store.images = normalizePrimaryProductImages(list);
             renderProductImageEditor(type, id);
         }
 
@@ -5973,15 +5979,6 @@
             renderProductRows(type);
         }
 
-        function tagCheckboxesHtml(type, id, selectedIds = []) {
-            const selected = selectedIds.map(String);
-            const htmlForType = tagType => {
-                const tags = normalizeProductTags(productTags).filter(tag => tag.type === tagType && (tag.enabled !== false || selected.includes(String(tag.id))));
-                return `<div class="tag-group-block"><div class="tag-group-title">${tagType === 'ip' ? 'IP' : '商品類別'}</div><div class="product-tag-checkbox-wrap">${tags.map(tag => `<label class="product-tag-check-chip" style="${tagStyleVars(tag.color)}"><input type="checkbox" data-product-type="${type}" data-product-id="${escapeHtml(id)}" value="${tag.id}" ${selected.includes(String(tag.id)) ? 'checked' : ''}> ${escapeHtml(tag.name)}${tag.enabled === false ? '（已停用）' : ''}</label>`).join('') || '<span style="font-size:0.75rem;color:#94a3b8;">尚無可選項目</span>'}</div></div>`;
-            };
-            return `<div style="display:grid;gap:0.75rem;min-width:0;">${htmlForType('ip')}${htmlForType('category')}</div>`;
-        }
-
         function editImageInputHtml(type, product) {
             return productImagesEditorHtml(type, product);
         }
@@ -6003,29 +6000,19 @@
             icon.classList.toggle('fa-chevron-right', !active);
         }
 
-        function productVariantRowsHtml(product, type) {
-            const variants = normalizeProductVariants(product, type);
-            return variants.map((variant, index) => `
-                <div class="product-variant-row" data-variant-id="${escapeHtml(variant.id)}">
-                    <input type="text" class="variant-no" value="${index + 1}" disabled>
-                    <input type="text" class="variant-spec" value="${escapeHtml(variant.spec)}" placeholder="規格">
-                    <input type="number" class="variant-price" value="${Number(variant.price || 0)}" min="0" placeholder="價格">
-                    <input type="number" class="variant-quantity" value="${Number(variant.quantity || 0)}" min="0" placeholder="數量">
-                    <input type="url" class="variant-link" value="${escapeHtml(variant.link || '')}" placeholder="商品連結">
-                    <button class="btn btn-sm btn-danger" onclick="this.closest('.product-variant-row').remove()"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            `).join('');
-        }
-
+        // 規格明細這個子列現在純粹是「不展開編輯表單也能看一眼」的唯讀
+        // 摘要——編輯規格這件事這次整合進 productEditRow 裡面那張規格
+        // 表格一起做，不再有獨立的「編輯規格／保存規格」入口，避免兩套
+        // 存檔動作互相打架（這也是這輪特別調查過的既有風險之一）。
         function productVariantViewRowsHtml(product, type) {
             const variants = normalizeProductVariants(product, type);
             return variants.map((variant, index) => `
                 <div class="product-variant-row" data-variant-id="${escapeHtml(variant.id)}">
                     <span>${index + 1}</span>
                     <strong>${escapeHtml(variant.spec)}</strong>
-                    <span>NT$ ${Number(variant.price || 0).toLocaleString()}</span>
-                    <span>${Number(variant.quantity || 0)}</span>
+                    <span>庫存 ${Number(variant.quantity || 0)}・成本 NT$${Number(variant.costPrice || 0).toLocaleString()}・特價 NT$${Number(variant.price || 0).toLocaleString()}${variant.originalPrice ? `・原價 NT$${Number(variant.originalPrice).toLocaleString()}` : ''}</span>
                     <span>${variant.link ? `<a href="${escapeHtml(variant.link)}" target="_blank" rel="noopener">查看連結</a>` : '-'}</span>
+                    <span></span>
                     <span></span>
                 </div>
             `).join('');
@@ -6033,18 +6020,11 @@
 
         function productVariantSubRow(product, type) {
             const colspan = type === 'preorder' ? 12 : 11;
-            const productId = quoteJs(product.id);
             return `<tr class="sub-row" id="${type}-variant-row-${product.id}">
                 <td colspan="${colspan}">
                     <div class="sub-table-container" id="${type}-variant-detail-${product.id}">
                         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
                             <strong style="color:#334155;"><i class="fa-solid fa-list-ul" style="color:var(--primary-color);margin-right:0.4rem;"></i>商品規格明細</strong>
-                            <div style="display:flex;gap:0.5rem;">
-                                <button class="btn btn-sm btn-secondary" onclick="setProductVariantEditMode('${type}', ${productId}, true)"><i class="fa-solid fa-pen"></i> 編輯規格</button>
-                            </div>
-                        </div>
-                        <div class="product-variant-header">
-                            <span>編號</span><span>規格</span><span>價格</span><span>數量</span><span>商品連結</span><span></span>
                         </div>
                         <div id="${type}-variant-container-${product.id}">
                             ${productVariantViewRowsHtml(product, type)}
@@ -6054,138 +6034,193 @@
             </tr>`;
         }
 
-        function setProductVariantEditMode(type, id, editing) {
-            const products = type === 'stock' ? stockProducts : preorderProducts;
-            const product = products.find(item => sameId(item.id, id));
-            const detail = document.getElementById(`${type}-variant-detail-${id}`);
-            if (!product || !detail) return;
-            const productId = quoteJs(id);
-            detail.innerHTML = editing ? `
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
-                    <strong style="color:#334155;"><i class="fa-solid fa-list-ul" style="color:var(--primary-color);margin-right:0.4rem;"></i>商品規格明細</strong>
-                    <div style="display:flex;gap:0.5rem;">
-                        <button class="btn btn-sm btn-secondary" onclick="addProductVariantRow('${type}', ${productId})"><i class="fa-solid fa-plus"></i> 新增規格</button>
-                        <button class="btn btn-sm btn-primary" onclick="saveProductVariants('${type}', ${productId})"><i class="fa-solid fa-floppy-disk"></i> 保存規格</button>
-                        <button class="btn btn-sm btn-secondary" onclick="setProductVariantEditMode('${type}', ${productId}, false)"><i class="fa-solid fa-xmark"></i> 取消</button>
-                    </div>
-                </div>
-                <div class="product-variant-header">
-                    <span>編號</span><span>規格</span><span>價格</span><span>數量</span><span>商品連結</span><span></span>
-                </div>
-                <div id="${type}-variant-container-${id}">
-                    ${productVariantRowsHtml(product, type)}
-                </div>
-            ` : `
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
-                    <strong style="color:#334155;"><i class="fa-solid fa-list-ul" style="color:var(--primary-color);margin-right:0.4rem;"></i>商品規格明細</strong>
-                    <div style="display:flex;gap:0.5rem;">
-                        <button class="btn btn-sm btn-secondary" onclick="setProductVariantEditMode('${type}', ${productId}, true)"><i class="fa-solid fa-pen"></i> 編輯規格</button>
-                    </div>
-                </div>
-                <div class="product-variant-header">
-                    <span>編號</span><span>規格</span><span>價格</span><span>數量</span><span>商品連結</span><span></span>
-                </div>
-                <div id="${type}-variant-container-${id}">
-                    ${productVariantViewRowsHtml(product, type)}
+        // ---- 規格表格（編輯表單內，跟商品圖片同一個 productImageEditStores
+        // 共用資料）：小縮圖｜規格名稱｜庫存｜成本價｜特價｜原價｜刪除 ----
+
+        function productEditVariantTableHtml(type, product) {
+            const variants = normalizeProductVariants(product, type);
+            const rows = variants.map((variant, index) => productEditVariantRowHtml(type, product.id, variant, index)).join('');
+            return `
+                <table class="product-variant-table" id="${type}-edit-variant-table-${product.id}">
+                    <thead>
+                        <tr>
+                            <th class="col-thumb"></th>
+                            <th>規格名稱</th>
+                            <th>庫存</th>
+                            <th>成本價</th>
+                            <th>特價</th>
+                            <th>原價</th>
+                            <th>連結</th>
+                            <th class="col-action"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="${type}-edit-variant-tbody-${product.id}">${rows}</tbody>
+                </table>
+                <button type="button" class="product-variant-add-btn" onclick="addProductEditVariantRow('${type}', ${quoteJs(product.id)})"><i class="fa-solid fa-plus"></i> 新增規格</button>
+            `;
+        }
+
+        function productEditVariantRowHtml(type, productId, variant, index) {
+            const rowId = String(variant.id || `${productId}-${Date.now()}-${index}`);
+            return `
+                <tr class="product-edit-variant-row" data-variant-row-id="${escapeHtml(rowId)}">
+                    <td>${variantThumbPickerHtml(type, productId, rowId)}</td>
+                    <td><input class="product-edit-field variant-edit-spec" type="text" value="${escapeHtml(variant.spec || '')}" placeholder="規格名稱"></td>
+                    <td><input class="product-edit-field variant-edit-quantity" type="number" min="0" value="${Number(variant.quantity || 0)}"></td>
+                    <td><input class="product-edit-field variant-edit-cost" type="number" min="0" value="${Number(variant.costPrice || 0)}"></td>
+                    <td><input class="product-edit-field variant-edit-price" type="number" min="0" value="${Number(variant.price || 0)}"></td>
+                    <td><input class="product-edit-field variant-edit-original" type="number" min="0" value="${variant.originalPrice ? Number(variant.originalPrice) : ''}" placeholder="不填則不顯示特價"></td>
+                    <td><input class="product-edit-field variant-edit-link" type="url" value="${escapeHtml(variant.link || '')}" placeholder="商品連結（選填）" style="min-width:120px;"></td>
+                    <td><button type="button" class="product-variant-remove-btn" onclick="this.closest('tr').remove()"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>
+            `;
+        }
+
+        function addProductEditVariantRow(type, id) {
+            const tbody = document.getElementById(`${type}-edit-variant-tbody-${id}`);
+            if (!tbody) return;
+            const rowId = `${id}-${Date.now()}`;
+            const placeholderVariant = { id: rowId, spec: '', price: 0, costPrice: 0, originalPrice: undefined, quantity: 0 };
+            tbody.insertAdjacentHTML('beforeend', productEditVariantRowHtml(type, id, placeholderVariant, tbody.children.length));
+        }
+
+        function collectProductEditVariants(type, id) {
+            const tbody = document.getElementById(`${type}-edit-variant-tbody-${id}`);
+            if (!tbody) return [];
+            return Array.from(tbody.querySelectorAll('.product-edit-variant-row')).map(row => {
+                const originalRaw = row.querySelector('.variant-edit-original')?.value;
+                return {
+                    id: row.dataset.variantRowId,
+                    spec: row.querySelector('.variant-edit-spec')?.value.trim() || '',
+                    quantity: Number(row.querySelector('.variant-edit-quantity')?.value || 0),
+                    costPrice: Number(row.querySelector('.variant-edit-cost')?.value || 0),
+                    price: Number(row.querySelector('.variant-edit-price')?.value || 0),
+                    originalPrice: originalRaw ? Number(originalRaw) : undefined,
+                    link: row.querySelector('.variant-edit-link')?.value.trim() || '',
+                };
+            }).filter(variant => variant.spec);
+        }
+
+        // ---- 規格列最前面的小縮圖：點擊挑一張已上傳的圖片代表這個規格 ----
+        // 跟上面商品圖片編輯區共用同一份 productImageEditStores[key]，只是
+        // 寫入 variantId 的觸發點換成這裡，沿用既有的 setProductImageVariant。
+
+        function findAssignedVariantImageUrl(type, id, rowId) {
+            const store = productImageEditStores[productImageStoreKey(type, id)];
+            if (!store) return '';
+            const saved = store.images.find(image => String(image.variantId || '') === String(rowId));
+            if (saved) return saved.url;
+            const pending = store.pendingFiles.find(item => String(item.variantId || '') === String(rowId));
+            if (pending) return pending.previewUrl;
+            return '';
+        }
+
+        function variantThumbPickerHtml(type, id, rowId) {
+            const assignedUrl = findAssignedVariantImageUrl(type, id, rowId);
+            return `
+                <div class="variant-thumb-picker" id="variant-thumb-picker-${type}-${id}-${escapeHtml(rowId)}" data-variant-row-id="${escapeHtml(rowId)}">
+                    <button type="button" class="variant-thumb" onclick="toggleVariantThumbPicker('${type}', ${quoteJs(id)}, ${quoteJs(rowId)})" title="點擊指定這個規格的代表圖">
+                        ${assignedUrl ? `<img src="${escapeHtml(assignedUrl)}" alt="">` : '<i class="fa-solid fa-plus"></i>'}
+                    </button>
+                    <div class="variant-thumb-picker-panel"></div>
                 </div>
             `;
         }
 
-        function addProductVariantRow(type, id) {
-            const container = document.getElementById(`${type}-variant-container-${id}`);
-            if (!container) return;
-            const index = container.querySelectorAll('.product-variant-row').length + 1;
-            const row = document.createElement('div');
-            row.className = 'product-variant-row';
-            row.dataset.variantId = `${id}-${Date.now()}`;
-            row.innerHTML = `
-                <input type="text" class="variant-no" value="${index}" disabled>
-                <input type="text" class="variant-spec" placeholder="規格">
-                <input type="number" class="variant-price" min="0" placeholder="價格">
-                <input type="number" class="variant-quantity" min="0" placeholder="數量">
-                <input type="url" class="variant-link" placeholder="商品連結">
-                <button class="btn btn-sm btn-danger" onclick="this.closest('.product-variant-row').remove()"><i class="fa-solid fa-trash"></i></button>
-            `;
-            container.appendChild(row);
+        function variantThumbPickerPanelOptionsHtml(type, id, rowId) {
+            const store = productImageEditStores[productImageStoreKey(type, id)];
+            if (!store) return '<span class="variant-thumb-empty">尚未上傳圖片</span>';
+            const savedButtons = store.images.map((image, index) => `<button type="button" onclick="assignVariantThumb('${type}', ${quoteJs(id)}, ${quoteJs(rowId)}, 'saved', ${index})"><img src="${escapeHtml(image.url)}" alt=""></button>`).join('');
+            const pendingButtons = store.pendingFiles.map((item, index) => `<button type="button" onclick="assignVariantThumb('${type}', ${quoteJs(id)}, ${quoteJs(rowId)}, 'pending', ${index})"><img src="${escapeHtml(item.previewUrl)}" alt=""></button>`).join('');
+            const options = savedButtons + pendingButtons;
+            if (!options) return '<span class="variant-thumb-empty">尚未上傳圖片</span>';
+            const clearButton = findAssignedVariantImageUrl(type, id, rowId) ? `<button type="button" class="variant-thumb-clear" onclick="clearVariantThumb('${type}', ${quoteJs(id)}, ${quoteJs(rowId)})">清除</button>` : '';
+            return clearButton + options;
         }
 
-        function collectProductVariants(type, id) {
-            const container = document.getElementById(`${type}-variant-container-${id}`);
-            if (!container) return [];
-            return Array.from(container.querySelectorAll('.product-variant-row')).map((row, index) => ({
-                id: row.dataset.variantId || `${id}-${index + 1}`,
-                spec: row.querySelector('.variant-spec')?.value.trim() || '',
-                price: Number(row.querySelector('.variant-price')?.value || 0),
-                quantity: Number(row.querySelector('.variant-quantity')?.value || 0),
-                link: row.querySelector('.variant-link')?.value.trim() || ''
-            })).filter(variant => variant.spec);
-        }
-
-        async function saveProductVariants(type, id) {
-            const previousProducts = type === 'stock' ? [...stockProducts] : [...preorderProducts];
-            try {
-                const products = type === 'stock' ? stockProducts : preorderProducts;
-                const existing = products.find(product => sameId(product.id, id));
-                if (!existing) return showToast('找不到這個商品，請重新整理後再試。', 'error')
-                const variants = collectProductVariants(type, id);
-                if (!variants.length) return showToast('請至少填寫一個規格', 'error')
-                const firstVariant = variants[0];
-                const totalQty = variants.reduce((sum, variant) => sum + Number(variant.quantity || 0), 0);
-                const updated = { ...existing, variants, listPrice: Number(firstVariant.price || existing.listPrice || 0) };
-                if (type === 'stock') updated.quantity = totalQty;
-                else updated.quota = totalQty;
-                if (type === 'stock') stockProducts = stockProducts.map(product => sameId(product.id, id) ? updated : product);
-                else preorderProducts = preorderProducts.map(product => sameId(product.id, id) ? updated : product);
-                persistProductManagement();
-                renderProductRows(type);
-                renderProductTags();
-                const result = await saveProductToBackend(type, updated);
-                if (!result) throw new Error('後端商品資料沒有回傳成功');
-                showToast('規格明細已保存', 'success')
-            } catch (error) {
-                console.error(error);
-                if (type === 'stock') stockProducts = previousProducts;
-                else preorderProducts = previousProducts;
-                persistProductManagement();
-                renderProductRows(type);
-                renderProductTags();
-                showToast('規格明細儲存失敗，請稍後再試', 'error')
+        function toggleVariantThumbPicker(type, id, rowId) {
+            const wrap = document.getElementById(`variant-thumb-picker-${type}-${id}-${rowId}`);
+            if (!wrap) return;
+            const shouldOpen = !wrap.classList.contains('open');
+            closeVariantThumbPickers();
+            if (shouldOpen) {
+                const panel = wrap.querySelector('.variant-thumb-picker-panel');
+                if (panel) panel.innerHTML = variantThumbPickerPanelOptionsHtml(type, id, rowId);
+                wrap.classList.add('open');
             }
         }
 
+        function closeVariantThumbPickers() {
+            document.querySelectorAll('.variant-thumb-picker.open').forEach(panel => panel.classList.remove('open'));
+        }
+
+        function assignVariantThumb(type, id, rowId, target, index) {
+            setProductImageVariant(type, id, target, index, rowId);
+            closeVariantThumbPickers();
+            renderProductEditVariantThumbs(type, id);
+        }
+
+        function clearVariantThumb(type, id, rowId) {
+            const store = productImageEditStores[productImageStoreKey(type, id)];
+            if (!store) return;
+            store.images.forEach(image => { if (String(image.variantId || '') === String(rowId)) image.variantId = undefined; });
+            store.pendingFiles.forEach(item => { if (String(item.variantId || '') === String(rowId)) item.variantId = undefined; });
+            closeVariantThumbPickers();
+            renderProductEditVariantThumbs(type, id);
+        }
+
+        // 圖片上傳/刪除、或規格列的縮圖指定動作之後都要呼叫這個——只重新畫
+        // 每個規格列當下的代表縮圖按鈕，不去動旁邊的文字輸入框（不然使用者
+        // 正在打字的規格名稱/價格會被重新渲染蓋掉）。
+        function renderProductEditVariantThumbs(type, id) {
+            const tbody = document.getElementById(`${type}-edit-variant-tbody-${id}`);
+            if (!tbody) return;
+            tbody.querySelectorAll('.product-edit-variant-row').forEach(row => {
+                const rowId = row.dataset.variantRowId;
+                const cell = row.querySelector('.variant-thumb-picker');
+                if (!cell || !rowId) return;
+                cell.outerHTML = variantThumbPickerHtml(type, id, rowId);
+            });
+        }
+
+        function tagCheckboxesInlineHtml(type, id, selectedIds = []) {
+            const selected = selectedIds.map(String);
+            const htmlForType = (tagType, label) => {
+                const tags = normalizeProductTags(productTags).filter(tag => tag.type === tagType && (tag.enabled !== false || selected.includes(String(tag.id))));
+                return `<div class="tag-group-inline"><span class="tag-group-inline-label">${label}：</span>${tags.map(tag => `<label class="product-tag-check-chip" style="${tagStyleVars(tag.color)}"><input type="checkbox" data-product-type="${type}" data-product-id="${escapeHtml(id)}" value="${tag.id}" ${selected.includes(String(tag.id)) ? 'checked' : ''}> ${escapeHtml(tag.name)}${tag.enabled === false ? '（已停用）' : ''}</label>`).join('') || '<span style="font-size:0.75rem;color:#94a3b8;">尚無可選項目</span>'}</div>`;
+            };
+            return `${htmlForType('ip', 'IP')}${htmlForType('category', '商品類別')}`;
+        }
+
         function productEditRow(product, type) {
-            const qtyKey = type === 'stock' ? 'quantity' : 'quota';
             const statusCell = productStatusSelectHtml(type, product, 'edit');
-            const deadlineCell = type === 'preorder' ? `<input class="product-edit-field" type="datetime-local" id="${type}-edit-deadline-${product.id}" value="${escapeHtml(product.deadline || '')}" style="min-width:160px;">` : statusCell;
             const productId = quoteJs(product.id);
             const colSpan = type === 'preorder' ? 12 : 11;
+            const deadlineFieldHtml = type === 'preorder' ? `
+                <div class="tag-group-inline" style="margin-bottom:0.9rem;">
+                    <span class="tag-group-inline-label">結單倒數：</span>
+                    <input class="product-edit-field" type="datetime-local" id="${type}-edit-deadline-${product.id}" value="${escapeHtml(product.deadline || '')}" style="max-width:220px;">
+                </div>
+            ` : '';
             return `<tr class="product-edit-row"><td colspan="${colSpan}">
                 <div class="product-edit-card">
-                    <div class="product-edit-grid">
-                        <section class="product-edit-section">
-                            <div class="product-edit-section-title">商品圖片 / 基本資料</div>
-                            ${editImageInputHtml(type, product)}
-                            <input class="product-edit-field" type="text" id="${type}-edit-name-${product.id}" value="${escapeHtml(product.name)}" placeholder="商品名稱">
-                            <textarea class="product-edit-field" id="${type}-edit-description-${product.id}" placeholder="商品描述" rows="4" style="resize:vertical;">${escapeHtml(product.description || '')}</textarea>
-                            <p style="margin:0;font-size:0.68rem;color:#94a3b8;line-height:1.5;">建議寫法：一句話賣點＋基本資訊（來源／材質／尺寸等，如果有的話）。</p>
-                        </section>
-                        <section class="product-edit-section">
-                            <div class="product-edit-section-title">IP / 商品類別</div>
-                            ${tagCheckboxesHtml(type, product.id, product.tagIds)}
-                        </section>
-                        <section class="product-edit-section">
-                            <div class="product-edit-section-title">價格 / 狀態</div>
-                            <label style="display:grid;gap:0.35rem;font-size:0.76rem;font-weight:900;color:#64748b;">${type === 'stock' ? '庫存' : '名額'}<input class="product-edit-field" type="number" id="${type}-edit-qty-${product.id}" value="${Number(product[qtyKey] || 0)}" min="0"></label>
-                            <label style="display:grid;gap:0.35rem;font-size:0.76rem;font-weight:900;color:#64748b;">成本價<input class="product-edit-field" type="number" id="${type}-edit-cost-${product.id}" value="${Number(product.costPrice || 0)}" min="0"></label>
-                            <label style="display:grid;gap:0.35rem;font-size:0.76rem;font-weight:900;color:#64748b;">定價<input class="product-edit-field" type="number" id="${type}-edit-list-${product.id}" value="${Number(product.listPrice || 0)}" min="0"></label>
-                            <label style="display:grid;gap:0.35rem;font-size:0.76rem;font-weight:900;color:#64748b;">原價（可留空，前台會顯示劃線價）<input class="product-edit-field" type="number" id="${type}-edit-original-${product.id}" value="${product.originalPrice ? Number(product.originalPrice) : ''}" min="0" placeholder="不填則不顯示特價"></label>
-                            <label style="display:grid;gap:0.35rem;font-size:0.76rem;font-weight:900;color:#64748b;">狀態${statusCell}</label>
-                            ${type === 'preorder' ? `<label style="display:grid;gap:0.35rem;font-size:0.76rem;font-weight:900;color:#64748b;">結單倒數${deadlineCell}</label>` : ''}
-                        </section>
+                    <div class="product-name-desc-row">
+                        <input class="product-edit-field" type="text" id="${type}-edit-name-${product.id}" value="${escapeHtml(product.name)}" placeholder="商品名稱">
+                        <textarea class="product-edit-field" id="${type}-edit-description-${product.id}" placeholder="商品描述" rows="1">${escapeHtml(product.description || '')}</textarea>
+                        ${statusCell}
                     </div>
+                    <p style="margin:-0.5rem 0 0.9rem;font-size:0.68rem;color:#94a3b8;line-height:1.5;">商品描述建議寫法：一句話賣點＋基本資訊（來源／材質／尺寸等，如果有的話）。</p>
+                    <div class="product-inline-tag-row">
+                        ${tagCheckboxesInlineHtml(type, product.id, product.tagIds)}
+                    </div>
+                    ${deadlineFieldHtml}
+                    <hr class="product-edit-divider">
+                    ${editImageInputHtml(type, product)}
+                    <hr class="product-edit-divider">
+                    ${productEditVariantTableHtml(type, product)}
                     <div class="product-edit-actions">
                         <button class="btn btn-secondary" type="button" onclick="cancelProductRowEdit('${type}')"><i class="fa-solid fa-xmark"></i> 取消</button>
-                        <button class="btn btn-primary" type="button" onclick="saveProductRow('${type}', ${productId})"><i class="fa-solid fa-floppy-disk"></i> 保存商品</button>
+                        <button class="btn btn-primary" type="button" onclick="saveProductRow('${type}', ${productId})"><i class="fa-solid fa-floppy-disk"></i> 保存</button>
                     </div>
                 </div>
             </td></tr>`;
@@ -6249,6 +6284,18 @@
                 .map(input => String(input.value));
         }
 
+        // 本機這份「代表值」只是存檔送出前，讓商品列表（還沒重新整理拿到
+        // 後端真正算好的值之前）看起來不要太離譜的樂觀更新，邏輯對照後端
+        // src/lib/backend/product-sync.ts 的 pickRepresentativeVariant：
+        // 優先選有庫存裡最便宜的，沒有就選全部規格裡最便宜的。真正權威的
+        // 值是後端算的，這裡算錯也不影響實際存檔內容。
+        function pickCheapestVariant(variants) {
+            if (!variants.length) return null;
+            const inStock = variants.filter(variant => Number(variant.quantity || 0) > 0);
+            const pool = inStock.length ? inStock : variants;
+            return pool.reduce((min, variant) => (Number(variant.price || 0) < Number(min.price || 0) ? variant : min), pool[0]);
+        }
+
         async function saveProductRow(type, id) {
             const saveKey = `edit-${type}-${id}`;
             if (productSaveInProgress[saveKey]) return;
@@ -6264,32 +6311,34 @@
                 if (!existing) return showToast('找不到這個商品，請重新整理後再試。', 'error')
                 const nameEl = document.getElementById(`${type}-edit-name-${id}`);
                 const descEl = document.getElementById(`${type}-edit-description-${id}`);
-                const costEl = document.getElementById(`${type}-edit-cost-${id}`);
-                const listEl = document.getElementById(`${type}-edit-list-${id}`);
-                const originalEl = document.getElementById(`${type}-edit-original-${id}`);
-                const qtyEl = document.getElementById(`${type}-edit-qty-${id}`);
                 const activeEl = document.getElementById(`${type}-edit-active-${id}`);
-                if (!nameEl || !descEl || !costEl || !listEl || !originalEl || !qtyEl || !activeEl) return showToast('編輯欄位載入不完整，請重新整理後再試。', 'error')
+                if (!nameEl || !descEl || !activeEl) return showToast('編輯欄位載入不完整，請重新整理後再試。', 'error')
+                // 成本價/定價/特價/原價/庫存這次全部從規格表格一次收集，
+                // 不再有獨立的商品層級輸入框。
+                const variants = collectProductEditVariants(type, id);
+                if (!variants.length) return showToast('請至少填寫一個規格', 'error')
                 const uploadedImages = await uploadPendingProductImages(type, id, String(existing.id));
                 const store = productImageEditStores[productImageStoreKey(type, id)];
                 uploadedPublicIds.push(...(store?.lastUploadedPublicIds || []));
                 const deletedPublicIds = [...(store?.deletedPublicIds || [])];
+                const totalQty = variants.reduce((sum, variant) => sum + Number(variant.quantity || 0), 0);
+                const representative = pickCheapestVariant(variants);
                 const updated = applyProductImages({
                     ...existing,
                     name: nameEl.value.trim(),
                     description: descEl.value.trim(),
-                    costPrice: Number(costEl.value || 0),
-                    listPrice: Number(listEl.value || 0),
-                    originalPrice: Number(originalEl.value || 0),
                     active: activeEl.dataset.active === 'true',
-                    tagIds: getCheckedRowTagIds(type, id)
+                    tagIds: getCheckedRowTagIds(type, id),
+                    variants,
+                    listPrice: representative ? Number(representative.price || 0) : existing.listPrice,
+                    costPrice: representative ? Number(representative.costPrice || 0) : existing.costPrice,
+                    originalPrice: representative ? (representative.originalPrice || undefined) : existing.originalPrice
                 }, uploadedImages);
-                if (type === 'stock') updated.quantity = Number(qtyEl.value || 0);
+                if (type === 'stock') updated.quantity = totalQty;
                 else {
-                    updated.quota = Number(qtyEl.value || 0);
+                    updated.quota = totalQty;
                     updated.deadline = document.getElementById(`${type}-edit-deadline-${id}`)?.value || '';
                 }
-                updated.variants = normalizeProductVariants({ ...updated, variants: existing.variants }, type).map((variant, index) => index === 0 ? { ...variant, price: updated.listPrice, quantity: type === 'stock' ? updated.quantity : updated.quota } : variant);
                 if (!updated.name) return showToast('請填寫商品名稱', 'error')
                 if (type === 'stock') stockProducts = stockProducts.map(product => sameId(product.id, id) ? updated : product);
                 else preorderProducts = preorderProducts.map(product => sameId(product.id, id) ? updated : product);
@@ -6299,7 +6348,7 @@
                 renderProductRows(type);
                 renderProductTags();
                 const result = await saveProductToBackend(type, updated);
-                if (!result) throw new Error('後端商品資料沒有回傳成功');
+                if (!result) throw new Error(lastProductSaveErrorMessage || '後端商品資料沒有回傳成功');
                 let cleanupFailed = false;
                 try {
                     await deleteCloudinaryImages(deletedPublicIds);
@@ -6319,7 +6368,10 @@
                 if (uploadedPublicIds.length) {
                     await cleanupUploadedProductImages(uploadedPublicIds);
                 }
-                showToast('商品儲存失敗，請稍後再試', 'error')
+                // 後端在規格/圖片那步失敗時會丟回具體原因（例如商品基本
+                // 資料已經存成功、但規格或圖片沒有）——這裡原封不動顯示，
+                // 不要整個蓋成通用訊息讓使用者誤以為完全沒存到任何東西。
+                showToast(error?.message || '商品儲存失敗，請稍後再試', 'error')
             } finally {
                 productSaveInProgress[saveKey] = false;
                 setSavingButton(saveButton, false);
