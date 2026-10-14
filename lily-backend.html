@@ -3548,7 +3548,7 @@
                     btn.innerHTML = '<i class="fa-solid fa-xmark"></i> 未出貨';
                 }
 
-                const result = await fetchAPI('saveOrder', o, null, true);
+                const result = await callBackendApi('saveOrder', o, null, true);
                 if (result) showToast('訂單狀態已更新', 'success');
             }
         }
@@ -3568,7 +3568,7 @@
                         btn.innerHTML = '<i class="fa-solid fa-xmark"></i> 未出貨';
                     }
 
-                    const result = await fetchAPI('saveOrder', o, null, true);
+                    const result = await callBackendApi('saveOrder', o, null, true);
                     if (result) showToast('商品出貨狀態已更新', 'success');
                 }
             }
@@ -4076,12 +4076,20 @@
             }
         }
 
-        // 【遷移 第一階段】商品列表讀取/商品標籤管理/擺攤連線時程/品牌管理
-        // 整包設定這四塊不再靠 Apps Script 的 doGet()/readData() 供應，改成
-        // 直接打下面這幾支新路由。vendors/orders/websites（這輪不在範圍內）
-        // 還是照舊從 API_URL 讀。每支都各自 try/catch，任何一支失敗都不會
-        // 拖垮其他幾支——沿用 applyBackendData() 本來就有的「陣列非空才
-        // 覆蓋」判斷，單支失敗時該欄位就維持原本畫面上的狀態，不會整頁掛掉。
+        // 【遷移 第一+第二階段】商品列表讀取/商品標籤管理/擺攤連線時程/品牌
+        // 管理整包設定/叫貨處管理（廠商、購物網站）/廠商、購物網站、客戶
+        // 訂單明細，這九個 readData() 原本回傳的欄位全部不再靠 Apps Script
+        // 的 doGet()/readData() 供應，改成直接打下面這幾支新路由（也就是
+        // readData() 原本回傳的欄位已經全部涵蓋，舊版 API_URL 這支 GET
+        // 理論上已經沒有任何欄位非靠它不可——這裡仍然保留著跟新路由平行
+        // 請求、結果互相合併，當作過渡期的保險，不是必要依賴）。每支都
+        // 各自 try/catch，任何一支失敗都不會拖垮其他幾支：stockProducts/
+        // preorderProducts/productTags/stallSchedules/connectionSchedules/
+        // scheduleSettings 這 6 個欄位沿用 applyBackendData() 本來就有的
+        // 「陣列非空才覆蓋」判斷；vendors/orders/websites 這 3 個欄位
+        // applyBackendData() 裡沒有這層保護（無條件覆蓋），這裡改成失敗時
+        // 乾脆不把這個欄位放進回傳物件，讓 loadData() 的合併邏輯自然落回
+        // 同時並行請求的舊版 API_URL 資料，而不是被覆蓋成空陣列。
         async function fetchJson(url) {
             try {
                 const res = await fetch(url);
@@ -4094,13 +4102,16 @@
         }
 
         async function loadMigratedBackendData() {
-            const [stockRes, preorderRes, tagsRes, stallRes, connectionRes, settingsRes] = await Promise.all([
+            const [stockRes, preorderRes, tagsRes, stallRes, connectionRes, settingsRes, vendorsRes, websitesRes, ordersRes] = await Promise.all([
                 fetchJson('/api/backend/products/stock'),
                 fetchJson('/api/backend/products/preorder'),
                 fetchJson('/api/backend/product-tags'),
                 fetchJson('/api/backend/schedules/stall'),
                 fetchJson('/api/backend/schedules/connection'),
                 fetchJson('/api/backend/schedule-settings'),
+                fetchJson('/api/backend/vendors'),
+                fetchJson('/api/backend/websites'),
+                fetchJson('/api/backend/vendor-orders'),
             ]);
             const data = {};
             if (stockRes?.ok) data.stockProducts = stockRes.products;
@@ -4109,6 +4120,17 @@
             if (stallRes?.ok) data.stallSchedules = stallRes.schedules;
             if (connectionRes?.ok) data.connectionSchedules = connectionRes.schedules;
             if (settingsRes?.ok) data.scheduleSettings = settingsRes.settings;
+            // vendors/websites/orders：applyBackendData() 對這三個欄位是
+            // 無條件覆蓋（vendors = data.vendors || []，沒有像其他欄位那樣
+            // 「陣列非空才覆蓋」的保護），這裡沒有去改 applyBackendData
+            // 本身。單一來源失敗時的保護改成靠下面 loadData() 仍然保留的
+            // 舊版 Apps Script fetch 當 fallback——這三個欄位失敗時直接
+            // 不放進這個物件，讓 loadData() 的 {...legacyResult,
+            // ...migratedData} 合併自然落回 legacyResult 裡同樣來自
+            // Supabase 的那份資料，而不是被覆蓋成空陣列。
+            if (vendorsRes?.ok) data.vendors = vendorsRes.vendors;
+            if (websitesRes?.ok) data.websites = websitesRes.websites;
+            if (ordersRes?.ok) data.orders = ordersRes.orders;
             return data;
         }
 
@@ -4227,10 +4249,10 @@
             };
             if(!data.name) return showToast('請填寫廠商名稱', 'error')
             closeVendorModal();
-            await fetchAPI('saveVendor', data);
+            await callBackendApi('saveVendor', data);
         }
         async function deleteVendor(id) {
-            if(confirm('確定要刪除這個廠商嗎？')) { await fetchAPI('deleteVendor', null, id); }
+            if(confirm('確定要刪除這個廠商嗎？')) { await callBackendApi('deleteVendor', null, id); }
         }
 
         // --- Websites ---
@@ -4284,10 +4306,10 @@
             };
             if(!data.name) return showToast('請填寫購物網站名稱', 'error')
             closeWebsiteModal();
-            await fetchAPI('saveWebsite', data);
+            await callBackendApi('saveWebsite', data);
         }
         async function deleteWebsite(id) {
-            if(confirm('確定要刪除這個購物網站嗎？')) { await fetchAPI('deleteWebsite', null, id); }
+            if(confirm('確定要刪除這個購物網站嗎？')) { await callBackendApi('deleteWebsite', null, id); }
         }
 
         function clearVendorOrderFilters() {
@@ -4838,6 +4860,175 @@
             } catch (err) {
                 console.error(err);
                 return null;
+            }
+        }
+
+        // 【遷移 第二階段】叫貨處管理（廠商/購物網站）+ 廠商/購物網站/
+        // 客戶訂單明細改走 Supabase，不再經過 fetchAPI。orders 這張表
+        // 三個頁籤共用同一套存檔/刪除邏輯，不分開。
+        async function saveVendorToBackend(vendor) {
+            try {
+                const res = await fetch('/api/backend/vendors', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(vendor)
+                });
+                const result = await res.json().catch(() => null);
+                if (!res.ok || !result?.ok) {
+                    console.error('saveVendorToBackend failed:', result);
+                    return null;
+                }
+                return result;
+            } catch (err) {
+                console.error(err);
+                return null;
+            }
+        }
+
+        async function deleteVendorFromBackend(id) {
+            try {
+                const res = await fetch(`/api/backend/vendors/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                const result = await res.json().catch(() => null);
+                if (!res.ok || !result?.ok) {
+                    console.error('deleteVendorFromBackend failed:', result);
+                    return null;
+                }
+                return result;
+            } catch (err) {
+                console.error(err);
+                return null;
+            }
+        }
+
+        async function saveWebsiteToBackend(website) {
+            try {
+                const res = await fetch('/api/backend/websites', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(website)
+                });
+                const result = await res.json().catch(() => null);
+                if (!res.ok || !result?.ok) {
+                    console.error('saveWebsiteToBackend failed:', result);
+                    return null;
+                }
+                return result;
+            } catch (err) {
+                console.error(err);
+                return null;
+            }
+        }
+
+        async function deleteWebsiteFromBackend(id) {
+            try {
+                const res = await fetch(`/api/backend/websites/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                const result = await res.json().catch(() => null);
+                if (!res.ok || !result?.ok) {
+                    console.error('deleteWebsiteFromBackend failed:', result);
+                    return null;
+                }
+                return result;
+            } catch (err) {
+                console.error(err);
+                return null;
+            }
+        }
+
+        async function saveOrderToBackend(order) {
+            try {
+                const res = await fetch('/api/backend/vendor-orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(order)
+                });
+                const result = await res.json().catch(() => null);
+                if (!res.ok || !result?.ok) {
+                    console.error('saveOrderToBackend failed:', result);
+                    return null;
+                }
+                return result;
+            } catch (err) {
+                console.error(err);
+                return null;
+            }
+        }
+
+        async function deleteOrderFromBackend(id) {
+            try {
+                const res = await fetch(`/api/backend/vendor-orders/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                const result = await res.json().catch(() => null);
+                if (!res.ok || !result?.ok) {
+                    console.error('deleteOrderFromBackend failed:', result);
+                    return null;
+                }
+                return result;
+            } catch (err) {
+                console.error(err);
+                return null;
+            }
+        }
+
+        // callBackendApi(action, payload, id, skipRender) 取代舊的
+        // fetchAPI(...) 給叫貨處/訂單這 6 個 action 用，呼叫介面（參數
+        // 順序、回傳值、skipRender 行為）完全比照 fetchAPI，降低呼叫端
+        // 要改的東西。保留 showLoading()/hideLoading()、成功後
+        // renderBackendData()+toast 這整套既有行為——這輪範圍是「換存檔
+        // 管道」，不是「拿掉遮罩改樂觀更新」（那是另一輪現貨/預購商品
+        // 管理專屬的改動，沒有要求套用到這裡）。
+        //
+        // saveOrder 這個分支要特別注意：舊的 fetchAPI 在送出前會把
+        // { isMeta, orderNo, trackingNo, shipped, shippedDate } 塞進
+        // items[0] 再送出，而 applyLocalBackendMutation() 的 saveOrder
+        // 分支是靠 processAPIData() 去讀 items[0].isMeta 把這些欄位
+        // 讀回 order 層級——沒有這個 meta 項目，processAPIData 會把
+        // 本地這筆訂單的 orderNo/trackingNo/shipped 清空（它一律先清空
+        // 再視情況從 meta 項目復原）。這裡原樣重建同一個 meta 項目，
+        // 確保存檔成功後本地畫面不會被錯誤清空。
+        async function callBackendApi(action, payload = null, id = null, skipRender = false) {
+            showLoading();
+            try {
+                let result;
+                let localPayload = payload;
+                if (action === 'saveVendor') {
+                    result = await saveVendorToBackend(payload);
+                } else if (action === 'deleteVendor') {
+                    result = await deleteVendorFromBackend(id);
+                } else if (action === 'saveWebsite') {
+                    result = await saveWebsiteToBackend(payload);
+                } else if (action === 'deleteWebsite') {
+                    result = await deleteWebsiteFromBackend(id);
+                } else if (action === 'saveOrder') {
+                    localPayload = JSON.parse(JSON.stringify(payload));
+                    localPayload.items = [{
+                        isMeta: true,
+                        orderNo: localPayload.orderNo || '',
+                        trackingNo: localPayload.trackingNo || '',
+                        shipped: localPayload.shipped || '未出貨',
+                        shippedDate: localPayload.shippedDate || ''
+                    }, ...(Array.isArray(localPayload.items) ? localPayload.items : [])];
+                    result = await saveOrderToBackend(payload);
+                } else if (action === 'deleteOrder') {
+                    result = await deleteOrderFromBackend(id);
+                } else {
+                    console.error('callBackendApi: unknown action', action);
+                    return null;
+                }
+
+                if (!result) {
+                    showToast('操作失敗，請稍後再試', 'error')
+                    return null;
+                }
+                if (skipRender) return result;
+                applyLocalBackendMutation(action, localPayload, id);
+                renderBackendData();
+                showToast(String(action).toLowerCase().startsWith('delete') ? '刪除成功' : '儲存成功', 'success');
+                return result;
+            } catch (err) {
+                console.error(err);
+                showToast('操作失敗，請檢查網路後再試', 'error')
+                return null;
+            } finally {
+                hideLoading();
             }
         }
 
@@ -13106,7 +13297,7 @@
         }
 
         async function deleteOrder(id) {
-            if(confirm('確定要刪除整筆訂貨單嗎？')) { await fetchAPI('deleteOrder', null, id); }
+            if(confirm('確定要刪除整筆訂貨單嗎？')) { await callBackendApi('deleteOrder', null, id); }
         }
 
         function toggleAllItems(orderId, checkbox) {
@@ -13306,7 +13497,7 @@
             }
             
             closeBatchAddModal();
-            await fetchAPI('saveOrder', orderData);
+            await callBackendApi('saveOrder', orderData);
             
             // Automatically expand the modified order
             setTimeout(() => {
@@ -13328,8 +13519,8 @@
                 const o = orders.find(x => x.id === orderId);
                 const idsToRemove = Array.from(chks).map(c => parseFloat(c.value));
                 o.items = o.items.filter(item => !idsToRemove.includes(item.itemId));
-                
-                await fetchAPI('saveOrder', o);
+
+                await callBackendApi('saveOrder', o);
                 
                 setTimeout(() => {
                     const row = document.getElementById(`sub-row-${orderId}`);
@@ -13392,7 +13583,7 @@
             });
             
             closeBatchEditModal();
-            await fetchAPI('saveOrder', o);
+            await callBackendApi('saveOrder', o);
             
             setTimeout(() => {
                 const row = document.getElementById(`sub-row-${editOrderId}`);
@@ -13452,7 +13643,7 @@
             }
             
             closeEditOrderMainModal();
-            await fetchAPI('saveOrder', o);
+            await callBackendApi('saveOrder', o);
         }
 
         // --- Exchange Rates ---
