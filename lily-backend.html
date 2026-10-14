@@ -710,6 +710,7 @@
         .product-image-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.15rem; padding: 0.2rem; }
         .product-image-actions button, .product-image-actions span { border: 0; border-radius: 0.3rem; background: #f1f5f9; color: #475569; font-size: 0.62rem; font-weight: 700; padding: 0.12rem; text-align: center; cursor: pointer; }
         .product-image-actions button:hover { background: #fce7f3; color: #be185d; }
+        .product-image-variant-select { width: 100%; border: 0; border-top: 1px solid #e2e8f0; border-radius: 0 0 0.3rem 0.3rem; background: #f8fafc; color: #475569; font-size: 0.62rem; font-weight: 700; padding: 0.18rem 0.2rem; cursor: pointer; }
         .product-image-dropzone { display: flex; align-items: center; justify-content: center; gap: 0.35rem; min-height: 42px; border-radius: 0.5rem; background: white; color: #64748b; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
         .product-image-dropzone input { display: none; }
         .brand-settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
@@ -5581,7 +5582,10 @@
                 url,
                 publicId: String(source.publicId || source.public_id || source.publicID || source.key || source.objectKey || source.object_key || '').trim(),
                 isPrimary: source.isPrimary === true || source.is_primary === true,
-                sortOrder: Number(source.sortOrder ?? source.sort_order ?? index)
+                sortOrder: Number(source.sortOrder ?? source.sort_order ?? index),
+                // 留空＝商品共用圖片；有值＝只屬於那一個規格（存的是規格的
+                // legacy id，跟 collectProductVariants() 用的 id 同一套）。
+                variantId: String(source.variantId || source.variant_id || '').trim() || undefined
             };
         }
 
@@ -5601,7 +5605,8 @@
                 url: normalizeStoredProductImageUrl(image.url || ''),
                 publicId: String(image.publicId || image.public_id || image.key || '').trim(),
                 isPrimary: image.isPrimary === true,
-                sortOrder: index
+                sortOrder: index,
+                variantId: image.variantId || undefined
             })).filter(image => image.url);
             if (!normalized.length) return [];
             let primaryIndex = normalized.findIndex(image => image.isPrimary);
@@ -5763,18 +5768,38 @@
             `;
         }
 
+        // 圖片可以指定規格這個下拉選單的選項，來自商品「目前已保存」的
+        // 規格清單——圖片編輯是 saveProductRow 這套存檔流程，跟「編輯規格」
+        // （setProductVariantEditMode/saveProductVariants）是分開的兩個
+        // 存檔動作，这裡故意不去讀正在編輯中、還沒保存的規格列，避免兩邊
+        // 存檔互相干擾。商品沒有多規格（normalizeProductVariants 永遠至少
+        // 回傳一個「預設款」）時只有 1 筆，下拉選單就不顯示。
+        function productImageVariantOptions(type, id) {
+            const products = type === 'stock' ? stockProducts : preorderProducts;
+            const product = products.find(item => sameId(item.id, id));
+            if (!product) return [];
+            return normalizeProductVariants(product, type);
+        }
+
         function renderProductImageEditor(type, id) {
             const key = productImageStoreKey(type, id);
             const store = productImageEditStores[key];
             const list = document.getElementById(`image-list-${key}`);
             if (!store || !list) return;
-            const saved = store.images.map((image, index) => productImageThumbHtml(type, id, image.url, index, image.isPrimary, false)).join('');
-            const pending = store.pendingFiles.map((item, index) => productImageThumbHtml(type, id, item.previewUrl, index, item.isPrimary, true)).join('');
+            const variantOptions = productImageVariantOptions(type, id);
+            const saved = store.images.map((image, index) => productImageThumbHtml(type, id, image.url, index, image.isPrimary, false, image.variantId, variantOptions)).join('');
+            const pending = store.pendingFiles.map((item, index) => productImageThumbHtml(type, id, item.previewUrl, index, item.isPrimary, true, item.variantId, variantOptions)).join('');
             list.innerHTML = saved + pending || '<span style="font-size:0.75rem;color:#94a3b8;">尚未選擇圖片</span>';
         }
 
-        function productImageThumbHtml(type, id, url, index, isPrimary, isPending) {
+        function productImageThumbHtml(type, id, url, index, isPrimary, isPending, variantId, variantOptions = []) {
             const target = isPending ? 'pending' : 'saved';
+            const variantSelectHtml = variantOptions.length > 1 ? `
+                <select class="product-image-variant-select" onchange="setProductImageVariant('${type}', ${quoteJs(id)}, '${target}', ${index}, this.value)" title="指定規格（可不選）">
+                    <option value="" ${variantId ? '' : 'selected'}>通用</option>
+                    ${variantOptions.map(variant => `<option value="${escapeHtml(variant.id)}" ${String(variantId || '') === String(variant.id) ? 'selected' : ''}>${escapeHtml(variant.spec)}</option>`).join('')}
+                </select>
+            ` : '';
             return `
                 <div class="product-image-thumb ${isPrimary ? 'primary' : ''}">
                     <img src="${escapeHtml(url)}" alt="商品圖片">
@@ -5784,8 +5809,18 @@
                         <button type="button" onclick="moveProductImage('${type}', ${quoteJs(id)}, '${target}', ${index}, 1)">↓</button>
                         <button type="button" onclick="removeProductImage('${type}', ${quoteJs(id)}, '${target}', ${index})">刪除</button>
                     </div>
+                    ${variantSelectHtml}
                 </div>
             `;
+        }
+
+        function setProductImageVariant(type, id, target, index, variantId) {
+            const store = productImageEditStores[productImageStoreKey(type, id)];
+            if (!store) return;
+            const list = target === 'pending' ? store.pendingFiles : store.images;
+            const item = list[index];
+            if (!item) return;
+            item.variantId = variantId || undefined;
         }
 
         function handleProductImageDrop(event, type, id) {
@@ -5854,7 +5889,8 @@
                 url: image.secure_url || image.url,
                 publicId: image.public_id || image.publicId,
                 isPrimary: store.pendingFiles[index]?.isPrimary === true || (store.images.length === 0 && index === 0),
-                sortOrder: store.images.length + index
+                sortOrder: store.images.length + index,
+                variantId: store.pendingFiles[index]?.variantId || undefined
             }));
             store.lastUploadedPublicIds = uploaded.map(image => image.publicId).filter(Boolean);
             store.pendingFiles.forEach(item => item.previewUrl && URL.revokeObjectURL(item.previewUrl));
@@ -6131,6 +6167,7 @@
                             ${editImageInputHtml(type, product)}
                             <input class="product-edit-field" type="text" id="${type}-edit-name-${product.id}" value="${escapeHtml(product.name)}" placeholder="商品名稱">
                             <textarea class="product-edit-field" id="${type}-edit-description-${product.id}" placeholder="商品描述" rows="4" style="resize:vertical;">${escapeHtml(product.description || '')}</textarea>
+                            <p style="margin:0;font-size:0.68rem;color:#94a3b8;line-height:1.5;">建議寫法：一句話賣點＋基本資訊（來源／材質／尺寸等，如果有的話）。</p>
                         </section>
                         <section class="product-edit-section">
                             <div class="product-edit-section-title">IP / 商品類別</div>
@@ -6141,6 +6178,7 @@
                             <label style="display:grid;gap:0.35rem;font-size:0.76rem;font-weight:900;color:#64748b;">${type === 'stock' ? '庫存' : '名額'}<input class="product-edit-field" type="number" id="${type}-edit-qty-${product.id}" value="${Number(product[qtyKey] || 0)}" min="0"></label>
                             <label style="display:grid;gap:0.35rem;font-size:0.76rem;font-weight:900;color:#64748b;">成本價<input class="product-edit-field" type="number" id="${type}-edit-cost-${product.id}" value="${Number(product.costPrice || 0)}" min="0"></label>
                             <label style="display:grid;gap:0.35rem;font-size:0.76rem;font-weight:900;color:#64748b;">定價<input class="product-edit-field" type="number" id="${type}-edit-list-${product.id}" value="${Number(product.listPrice || 0)}" min="0"></label>
+                            <label style="display:grid;gap:0.35rem;font-size:0.76rem;font-weight:900;color:#64748b;">原價（可留空，前台會顯示劃線價）<input class="product-edit-field" type="number" id="${type}-edit-original-${product.id}" value="${product.originalPrice ? Number(product.originalPrice) : ''}" min="0" placeholder="不填則不顯示特價"></label>
                             <label style="display:grid;gap:0.35rem;font-size:0.76rem;font-weight:900;color:#64748b;">狀態${statusCell}</label>
                             ${type === 'preorder' ? `<label style="display:grid;gap:0.35rem;font-size:0.76rem;font-weight:900;color:#64748b;">結單倒數${deadlineCell}</label>` : ''}
                         </section>
@@ -6228,9 +6266,10 @@
                 const descEl = document.getElementById(`${type}-edit-description-${id}`);
                 const costEl = document.getElementById(`${type}-edit-cost-${id}`);
                 const listEl = document.getElementById(`${type}-edit-list-${id}`);
+                const originalEl = document.getElementById(`${type}-edit-original-${id}`);
                 const qtyEl = document.getElementById(`${type}-edit-qty-${id}`);
                 const activeEl = document.getElementById(`${type}-edit-active-${id}`);
-                if (!nameEl || !descEl || !costEl || !listEl || !qtyEl || !activeEl) return showToast('編輯欄位載入不完整，請重新整理後再試。', 'error')
+                if (!nameEl || !descEl || !costEl || !listEl || !originalEl || !qtyEl || !activeEl) return showToast('編輯欄位載入不完整，請重新整理後再試。', 'error')
                 const uploadedImages = await uploadPendingProductImages(type, id, String(existing.id));
                 const store = productImageEditStores[productImageStoreKey(type, id)];
                 uploadedPublicIds.push(...(store?.lastUploadedPublicIds || []));
@@ -6241,6 +6280,7 @@
                     description: descEl.value.trim(),
                     costPrice: Number(costEl.value || 0),
                     listPrice: Number(listEl.value || 0),
+                    originalPrice: Number(originalEl.value || 0),
                     active: activeEl.dataset.active === 'true',
                     tagIds: getCheckedRowTagIds(type, id)
                 }, uploadedImages);
