@@ -938,9 +938,23 @@
         .status-pill.inactive { background: #ef4444; }
         .product-row-actions { display: flex; gap: 0.5rem; justify-content: center; align-items: center; }
         .product-row-actions .btn { border-radius: 0.45rem; min-width: 34px; height: 30px; display: inline-flex; align-items: center; justify-content: center; }
-        .product-variant-row { display: grid; grid-template-columns: 0.7fr 1.4fr 1fr 1fr 2fr 40px; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
-        .product-variant-row input { min-width: 0; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.8rem; }
-        .product-variant-header { display: grid; grid-template-columns: 0.7fr 1.4fr 1fr 1fr 2fr 40px; gap: 0.5rem; font-size: 0.78rem; font-weight: 700; color: #64748b; margin-bottom: 0.5rem; }
+        /* 商品列表「商品規格明細」展開區——唯讀顯示用，故意不跟
+           .sub-table-container（第 651 行）共用，那個卡片樣式還被廠商/
+           購物網站/客戶訂單明細 3 個展開區共用，改那個會連帶動到它們。
+           這裡改成直接貼齊、無外框無陰影，用淡粉底色跟上面主要那列
+           區隔。 */
+        .product-variant-detail-panel { padding: 0.5rem 0.8rem 0.75rem; background: #fdf2f8; }
+        .product-variant-detail-title { display: flex; align-items: center; color: #334155; font-weight: 700; margin-bottom: 0.4rem; }
+        .product-variant-view-table { width: 100%; border-collapse: collapse; }
+        .product-variant-view-table th { text-align: left; font-size: 0.68rem; font-weight: 700; color: #94a3b8; padding: 0.3rem 0.6rem 0.25rem; letter-spacing: 0.02em; }
+        .product-variant-view-table td { padding: 0.35rem 0.6rem; border-top: 1px solid #f9d9ea; font-size: 0.82rem; color: #334155; vertical-align: middle; }
+        .product-variant-view-table tr:first-child td { border-top: none; }
+        .product-variant-view-thumb { width: 28px; height: 28px; border-radius: 0.4rem; object-fit: cover; display: block; background: #f1f5f9; border: 1px solid #fce7f3; }
+        .product-variant-view-thumb-empty { width: 28px; height: 28px; border-radius: 0.4rem; background: #f1f5f9; border: 1px dashed #e2e8f0; }
+        .product-variant-view-table .v-spec { font-weight: 700; color: #0f172a; }
+        .product-variant-view-table .v-sale { color: #ec4899; font-weight: 700; }
+        .product-variant-view-table .v-original { color: #94a3b8; text-decoration: line-through; }
+        .product-variant-view-table .v-empty { color: #94a3b8; }
         @media (max-width: 920px) {
             .product-batch-row { grid-template-columns: repeat(2, minmax(0, 1fr)) 40px; }
             .product-batch-tags, .product-batch-image-row, .product-batch-description { grid-column: 1 / -1; }
@@ -6005,28 +6019,65 @@
         // 摘要——編輯規格這件事這次整合進 productEditRow 裡面那張規格
         // 表格一起做，不再有獨立的「編輯規格／保存規格」入口，避免兩套
         // 存檔動作互相打架（這也是這輪特別調查過的既有風險之一）。
+        // 這個規格指定的專屬縮圖——唯讀顯示路徑，讀的是商品已經保存的
+        // images（跟 normalizeProductImages(product) 同一份資料），不是
+        // 編輯中的 productImageEditStores；找不到指定圖就回空字串，不用
+        // fallback 成商品主圖（這個規格可能真的沒有專屬圖）。
+        function productVariantThumbUrl(product, variantId) {
+            const images = normalizeProductImages(product);
+            const match = images.find(image => image.variantId === variantId);
+            return match ? match.url : '';
+        }
+
         function productVariantViewRowsHtml(product, type) {
             const variants = normalizeProductVariants(product, type);
-            return variants.map((variant, index) => `
-                <div class="product-variant-row" data-variant-id="${escapeHtml(variant.id)}">
-                    <span>${index + 1}</span>
-                    <strong>${escapeHtml(variant.spec)}</strong>
-                    <span>庫存 ${Number(variant.quantity || 0)}・成本 NT$${Number(variant.costPrice || 0).toLocaleString()}・特價 NT$${Number(variant.price || 0).toLocaleString()}${variant.originalPrice ? `・原價 NT$${Number(variant.originalPrice).toLocaleString()}` : ''}</span>
-                    <span>${variant.link ? `<a href="${escapeHtml(variant.link)}" target="_blank" rel="noopener">查看連結</a>` : '-'}</span>
-                    <span></span>
-                    <span></span>
-                </div>
-            `).join('');
+            const rows = variants.map(variant => {
+                const thumbUrl = productVariantThumbUrl(product, variant.id);
+                const thumbHtml = thumbUrl
+                    ? `<img class="product-variant-view-thumb" src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(variant.spec)}">`
+                    : `<span class="product-variant-view-thumb-empty"></span>`;
+                const originalHtml = variant.originalPrice
+                    ? `<span class="v-original">NT$${Number(variant.originalPrice).toLocaleString()}</span>`
+                    : `<span class="v-empty">—</span>`;
+                const linkHtml = variant.link
+                    ? `<a href="${escapeHtml(variant.link)}" target="_blank" rel="noopener">查看連結</a>`
+                    : `<span class="v-empty">-</span>`;
+                return `
+                    <tr data-variant-id="${escapeHtml(variant.id)}">
+                        <td>${thumbHtml}</td>
+                        <td class="v-spec">${escapeHtml(variant.spec)}</td>
+                        <td>${Number(variant.quantity || 0)}</td>
+                        <td>NT$${Number(variant.costPrice || 0).toLocaleString()}</td>
+                        <td class="v-sale">NT$${Number(variant.price || 0).toLocaleString()}</td>
+                        <td>${originalHtml}</td>
+                        <td>${linkHtml}</td>
+                    </tr>
+                `;
+            }).join('');
+            return `
+                <table class="product-variant-view-table">
+                    <thead>
+                        <tr>
+                            <th style="width:2.6rem;"></th>
+                            <th>規格名稱</th>
+                            <th>庫存</th>
+                            <th>成本價</th>
+                            <th>特價</th>
+                            <th>原價</th>
+                            <th>商品連結</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            `;
         }
 
         function productVariantSubRow(product, type) {
             const colspan = type === 'preorder' ? 12 : 11;
             return `<tr class="sub-row" id="${type}-variant-row-${product.id}">
                 <td colspan="${colspan}">
-                    <div class="sub-table-container" id="${type}-variant-detail-${product.id}">
-                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
-                            <strong style="color:#334155;"><i class="fa-solid fa-list-ul" style="color:var(--primary-color);margin-right:0.4rem;"></i>商品規格明細</strong>
-                        </div>
+                    <div class="product-variant-detail-panel" id="${type}-variant-detail-${product.id}">
+                        <div class="product-variant-detail-title"><i class="fa-solid fa-list-ul" style="color:var(--primary-color);margin-right:0.4rem;"></i>商品規格明細</div>
                         <div id="${type}-variant-container-${product.id}">
                             ${productVariantViewRowsHtml(product, type)}
                         </div>
