@@ -944,7 +944,6 @@
            這裡改成直接貼齊、無外框無陰影，用淡粉底色跟上面主要那列
            區隔。 */
         .product-variant-detail-panel { padding: 0.5rem 0.8rem 0.75rem; background: #fdf2f8; }
-        .product-variant-detail-title { display: flex; align-items: center; color: #334155; font-weight: 700; margin-bottom: 0.4rem; }
         .product-variant-view-table { width: 100%; border-collapse: collapse; }
         .product-variant-view-table th { text-align: left; font-size: 0.68rem; font-weight: 700; color: #94a3b8; padding: 0.3rem 0.6rem 0.25rem; letter-spacing: 0.02em; }
         .product-variant-view-table td { padding: 0.35rem 0.6rem; border-top: 1px solid #f9d9ea; font-size: 0.82rem; color: #334155; vertical-align: middle; }
@@ -6077,7 +6076,6 @@
             return `<tr class="sub-row" id="${type}-variant-row-${product.id}">
                 <td colspan="${colspan}">
                     <div class="product-variant-detail-panel" id="${type}-variant-detail-${product.id}">
-                        <div class="product-variant-detail-title"><i class="fa-solid fa-list-ul" style="color:var(--primary-color);margin-right:0.4rem;"></i>商品規格明細</div>
                         <div id="${type}-variant-container-${product.id}">
                             ${productVariantViewRowsHtml(product, type)}
                         </div>
