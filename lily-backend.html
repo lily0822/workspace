@@ -1060,6 +1060,7 @@
                 <div class="submenu">
                     <div class="submenu-item" data-module-item-key="stock-products" onclick="openTab('stock-products', '現貨商品管理')">現貨商品管理</div>
                     <div class="submenu-item" data-module-item-key="preorder-products" onclick="openTab('preorder-products', '預購商品管理')">預購商品管理</div>
+                    <div class="submenu-item" data-module-item-key="preorder-series" onclick="openTab('preorder-series', '預購系列管理')">預購系列管理</div>
                     <div class="submenu-item" data-module-item-key="product-tags" onclick="openTab('product-tags', '商品標籤管理')">商品標籤管理</div>
                 </div>
             </div>
@@ -1971,6 +1972,26 @@
                             </tr>
                         </thead>
                         <tbody id="preorder-products-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 預購獨立流程：系列管理取代標籤批次機制。系列是預購商品編輯
+                 表單的必填下拉來源，也是「產生預購連結」工具的批次識別
+                 依據，所以獨立成自己的頁面，不是塞進商品標籤管理底下。 -->
+            <div id="section-preorder-series" class="section-container">
+                <div class="page-header">
+                    <h2 class="page-title">預購系列管理</h2>
+                    <div class="toolbar">
+                        <button class="btn btn-primary" type="button" onclick="openSeriesModal()"><i class="fa-solid fa-plus"></i><span class="btn-label"> 新增系列</span></button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr><th style="width:90px;">主圖</th><th>名稱</th><th>底下商品數</th><th style="width:100px;">排序</th><th style="width:140px;">操作</th></tr>
+                        </thead>
+                        <tbody id="preorder-series-tbody"></tbody>
                     </table>
                 </div>
             </div>
@@ -3387,6 +3408,43 @@
         </div>
     </div>
 
+    <!-- 預購系列管理：新增/編輯一個系列（名稱＋主圖＋排序），圖片上傳
+         沿用擺攤連線時程圖片那套 PRODUCT_UPLOAD_API_URL 流程。 -->
+    <div class="modal-overlay" id="seriesModal">
+        <div class="modal-content" style="max-width:480px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-layer-group"></i> <span id="series-modal-title">新增系列</span></h3>
+                <button class="close-btn" type="button" onclick="closeSeriesModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="series-id">
+                <div class="form-group">
+                    <label>系列名稱（這個名稱會直接當 LINE 批次連結的識別文字，請避免重複或包含「｜」符號）</label>
+                    <input type="text" id="series-name" placeholder="例如：2027年2月 大耳狗">
+                </div>
+                <div class="form-group">
+                    <label>主圖</label>
+                    <input type="file" id="series-image-file" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleSeriesImageFile(this.files); this.value='';">
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <div id="series-image-preview" class="schedule-image-preview"></div>
+                        <div style="display:flex;flex-direction:column;gap:0.4rem;">
+                            <button class="btn btn-secondary" type="button" onclick="document.getElementById('series-image-file')?.click()"><i class="fa-solid fa-cloud-arrow-up"></i> 上傳圖片</button>
+                            <button class="btn btn-sm btn-danger" type="button" id="series-image-remove" onclick="removeSeriesImage()" style="display:none;"><i class="fa-solid fa-trash"></i> 移除圖片</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>排序（數字越小越前面）</label>
+                    <input type="number" id="series-sort-order" value="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeSeriesModal()">取消</button>
+                <button class="btn btn-primary" type="button" id="series-save-btn" onclick="saveSeries(this)">儲存</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 預購獨立流程 第二期：回頭客關鍵字／oaMessage 預填文案，兩個都是
          schedule_settings KV，比照上面社群連線訂單的關鍵字設定/訊息文案
          設定同一套 modal 模式。 -->
@@ -3421,14 +3479,10 @@
                 <button class="close-btn" type="button" onclick="closePreorderLinkGeneratorModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
-                <p style="margin:0 0 0.75rem;color:#94a3b8;font-size:0.76rem;font-weight:800;">選一個代表這批記事本商品的 IP／商品類別標籤，輸入這批的顯示名稱（例如「2027年2月大耳狗」），產生完整的 LINE 連結——客人點了連結會直接開啟跟官方帳號的對話，預先帶好這批的識別文字，只要補上暱稱送出就會自動完成綁定並看到這批的預購清單。</p>
+                <p style="margin:0 0 0.75rem;color:#94a3b8;font-size:0.76rem;font-weight:800;">選一個預購系列，產生完整的 LINE 連結——客人點了連結會直接開啟跟官方帳號的對話，預先帶好這個系列的識別文字（系列名稱），只要補上暱稱送出就會自動完成綁定並看到這個系列的預購清單。系列請先到「預購系列管理」頁面建立。</p>
                 <div class="form-group">
-                    <label>對應標籤</label>
-                    <select id="preorder-link-generator-tag"></select>
-                </div>
-                <div class="form-group">
-                    <label>這批的顯示名稱</label>
-                    <input type="text" id="preorder-link-generator-batch-name" placeholder="例如：2027年2月大耳狗">
+                    <label>對應系列</label>
+                    <select id="preorder-link-generator-series"></select>
                 </div>
                 <div class="form-group" id="preorder-link-generator-result-row" style="display:none;">
                     <label>產生的連結</label>
@@ -3621,6 +3675,7 @@
             if(name === 'customer-orders') renderCustomerOrders();
             if(name === 'stock-products') renderStockProducts();
             if(name === 'preorder-products') renderPreorderProducts();
+            if(name === 'preorder-series') renderPreorderSeriesList();
             if(name === 'product-tags') renderProductTags();
             if(name === 'stall-schedules') renderSchedules('stall');
             if(name === 'connection-schedules') renderSchedules('connection');
@@ -3803,6 +3858,8 @@
         let deletedProductTagIds = [];
         let stockProducts = [];
         let preorderProducts = [];
+        let preorderSeriesList = [];
+        let seriesImageEditState = { originalUrl: '', originalPublicId: '', currentUrl: '', currentPublicId: '', pendingPublicId: '' };
         let stallSchedules = [];
         let connectionSchedules = [];
         let scheduleImageEditState = { originalUrl: '', originalPublicId: '', currentUrl: '', currentPublicId: '', pendingPublicId: '' };
@@ -3875,6 +3932,7 @@
             renderProductTagOptions();
             renderStockProducts();
             renderPreorderProducts();
+            renderPreorderSeriesList();
             renderProductTags();
             renderSchedules('stall');
             renderSchedules('connection');
@@ -3933,6 +3991,11 @@
             if (Array.isArray(data.preorderProducts) && data.preorderProducts.length) {
                 preorderProducts = data.preorderProducts.map(p => normalizeProduct(p, 'preorder'));
                 localStorage.setItem(PREORDER_PRODUCTS_KEY, JSON.stringify(preorderProducts));
+            }
+            // 系列清單沒有舊的 Apps Script 資料源，不需要「陣列非空才覆蓋」
+            // 這層保護——真的是空清單時直接反映空清單，不是靠本地快取保底。
+            if (Array.isArray(data.preorderSeries)) {
+                preorderSeriesList = data.preorderSeries;
             }
             if (Array.isArray(data.stallSchedules)) {
                 stallSchedules = data.stallSchedules;
@@ -4222,9 +4285,10 @@
         }
 
         async function loadMigratedBackendData() {
-            const [stockRes, preorderRes, tagsRes, stallRes, connectionRes, settingsRes, vendorsRes, websitesRes, ordersRes] = await Promise.all([
+            const [stockRes, preorderRes, seriesRes, tagsRes, stallRes, connectionRes, settingsRes, vendorsRes, websitesRes, ordersRes] = await Promise.all([
                 fetchJson('/api/backend/products/stock'),
                 fetchJson('/api/backend/products/preorder'),
+                fetchJson('/api/backend/preorder-series'),
                 fetchJson('/api/backend/product-tags'),
                 fetchJson('/api/backend/schedules/stall'),
                 fetchJson('/api/backend/schedules/connection'),
@@ -4236,6 +4300,7 @@
             const data = {};
             if (stockRes?.ok) data.stockProducts = stockRes.products;
             if (preorderRes?.ok) data.preorderProducts = preorderRes.products;
+            if (seriesRes?.ok) data.preorderSeries = seriesRes.series;
             if (tagsRes?.ok) data.productTags = tagsRes.tags;
             if (stallRes?.ok) data.stallSchedules = stallRes.schedules;
             if (connectionRes?.ok) data.connectionSchedules = connectionRes.schedules;
@@ -6367,9 +6432,16 @@
             const productId = quoteJs(product.id);
             const colSpan = type === 'preorder' ? 12 : 11;
             const deadlineFieldHtml = type === 'preorder' ? `
-                <div class="tag-group-inline" style="margin-bottom:0.9rem;">
+                <div class="tag-group-inline" style="margin-bottom:0.9rem;flex-wrap:wrap;">
                     <span class="tag-group-inline-label">結單倒數：</span>
                     <input class="product-edit-field" type="datetime-local" id="${type}-edit-deadline-${product.id}" value="${escapeHtml(product.deadline || '')}" style="max-width:220px;">
+                    <span class="tag-group-inline-label">所屬系列：</span>
+                    <select class="product-edit-field" id="${type}-edit-series-${product.id}" style="max-width:220px;">
+                        <option value="">請選擇系列</option>
+                        ${preorderSeriesList.map(series => `<option value="${escapeHtml(series.id)}" ${String(product.seriesId || '') === String(series.id) ? 'selected' : ''}>${escapeHtml(series.name)}</option>`).join('')}
+                    </select>
+                    <span class="tag-group-inline-label">預計到貨日期：</span>
+                    <input class="product-edit-field" type="date" id="${type}-edit-arrival-${product.id}" value="${escapeHtml(product.estimatedArrivalDate || '')}" style="max-width:160px;">
                 </div>
             ` : '';
             return `<tr class="product-edit-row"><td colspan="${colSpan}">
@@ -6508,8 +6580,11 @@
                 else {
                     updated.quota = totalQty;
                     updated.deadline = document.getElementById(`${type}-edit-deadline-${id}`)?.value || '';
+                    updated.seriesId = document.getElementById(`${type}-edit-series-${id}`)?.value || '';
+                    updated.estimatedArrivalDate = document.getElementById(`${type}-edit-arrival-${id}`)?.value || '';
                 }
                 if (!updated.name) return showToast('請填寫商品名稱', 'error')
+                if (type === 'preorder' && !updated.seriesId) return showToast('請選擇所屬系列', 'error')
                 if (type === 'stock') stockProducts = stockProducts.map(product => sameId(product.id, id) ? updated : product);
                 else preorderProducts = preorderProducts.map(product => sameId(product.id, id) ? updated : product);
                 delete productImageEditStores[productImageStoreKey(type, id)];
@@ -6746,7 +6821,9 @@
             row.className = 'dynamic-row product-batch-row';
             row.dataset.rowId = rowId;
             const deadlineField = type === 'preorder'
-                ? '<label class="product-batch-field">結單時間<input type="datetime-local" class="pb-deadline"></label>'
+                ? `<label class="product-batch-field">結單時間<input type="datetime-local" class="pb-deadline"></label>
+                   <label class="product-batch-field">所屬系列<select class="pb-series"><option value="">請選擇系列</option>${preorderSeriesList.map(series => `<option value="${escapeHtml(series.id)}">${escapeHtml(series.name)}</option>`).join('')}</select></label>
+                   <label class="product-batch-field">預計到貨日期<input type="date" class="pb-arrival"></label>`
                 : '';
             row.innerHTML = `
                 <label class="product-batch-field">商品名稱<input type="text" class="pb-name" placeholder="商品名稱"></label>
@@ -6815,7 +6892,15 @@
                     continue;
                 }
 
-                const product = { ...baseWithImages, quota: Number(row.querySelector('.pb-qty').value || 0), deadline: row.querySelector('.pb-deadline').value };
+                const seriesId = row.querySelector('.pb-series')?.value || '';
+                if (!seriesId) return showToast(`「${base.name}」請選擇所屬系列`, 'error')
+                const product = {
+                    ...baseWithImages,
+                    quota: Number(row.querySelector('.pb-qty').value || 0),
+                    deadline: row.querySelector('.pb-deadline').value,
+                    seriesId,
+                    estimatedArrivalDate: row.querySelector('.pb-arrival')?.value || ''
+                };
                 product.variants = normalizeProductVariants(product, type);
                 newProducts.push(product);
             }
@@ -7092,25 +7177,16 @@
             }
         }
 
-        // 下拉選單的選項直接讀本機已經載入的 productTags（跟商品編輯表單
-        // 的 IP／商品類別勾選框是同一份資料），不用另外打 API。只列出
-        // 目前啟用中的標籤，停用的標籤不該被拿來開新的預購批次連結。
-        function preorderLinkGeneratorTagOptionsHtml() {
-            const tags = normalizeProductTags(productTags).filter(tag => tag.enabled !== false);
-            const ipTags = tags.filter(tag => tag.type === 'ip');
-            const categoryTags = tags.filter(tag => tag.type === 'category');
-            const optionsForGroup = (label, groupTags) => groupTags.length
-                ? `<optgroup label="${escapeHtml(label)}">${groupTags.map(tag => `<option value="${escapeHtml(tag.id)}">${escapeHtml(tag.name)}</option>`).join('')}</optgroup>`
-                : '';
-            return optionsForGroup('IP', ipTags) + optionsForGroup('商品類別', categoryTags);
+        // 下拉選單的選項直接讀本機已經載入的 preorderSeriesList，不用另外
+        // 打 API——跟上面「預購系列管理」頁面是同一份資料。
+        function preorderLinkGeneratorSeriesOptionsHtml() {
+            return preorderSeriesList.map(series => `<option value="${escapeHtml(series.id)}">${escapeHtml(series.name)}</option>`).join('');
         }
 
         function openPreorderLinkGeneratorModal() {
             document.getElementById('preorderLinkGeneratorModal')?.classList.add('active');
-            const select = document.getElementById('preorder-link-generator-tag');
-            if (select) select.innerHTML = preorderLinkGeneratorTagOptionsHtml() || '<option value="">尚無可選標籤</option>';
-            const nameEl = document.getElementById('preorder-link-generator-batch-name');
-            if (nameEl) nameEl.value = '';
+            const select = document.getElementById('preorder-link-generator-series');
+            if (select) select.innerHTML = preorderLinkGeneratorSeriesOptionsHtml() || '<option value="">尚無可選系列，請先到「預購系列管理」新增</option>';
             const resultRow = document.getElementById('preorder-link-generator-result-row');
             if (resultRow) resultRow.style.display = 'none';
         }
@@ -7120,17 +7196,14 @@
         }
 
         async function submitPreorderLinkGenerator(button) {
-            const tagId = document.getElementById('preorder-link-generator-tag')?.value || '';
-            const batchName = document.getElementById('preorder-link-generator-batch-name')?.value.trim() || '';
-            if (!tagId) return showToast('請選擇對應的標籤', 'error');
-            if (!batchName) return showToast('請輸入這批的顯示名稱', 'error');
-            if (batchName.includes('｜')) return showToast('顯示名稱不能包含「｜」符號', 'error');
+            const seriesId = document.getElementById('preorder-link-generator-series')?.value || '';
+            if (!seriesId) return showToast('請選擇對應的系列', 'error');
             if (button) button.disabled = true;
             try {
-                const response = await fetch('/api/backend/preorder-link-batches', {
+                const response = await fetch('/api/backend/preorder-link', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tagId, batchName })
+                    body: JSON.stringify({ seriesId })
                 });
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '連結產生失敗。');
@@ -7163,6 +7236,168 @@
             } catch (error) {
                 console.error(error);
                 showToast('複製失敗，請手動選取複製', 'error');
+            }
+        }
+
+        // ===== 預購系列管理：列表/新增/編輯/刪除（取代舊的 preorder-link-
+        //       batches.ts KV 對照表，是一張真正的表 product_series）=====
+
+        function renderPreorderSeriesList() {
+            const tbody = document.getElementById('preorder-series-tbody');
+            if (!tbody) return;
+            if (!preorderSeriesList.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">尚無預購系列，請先新增</td></tr>';
+                return;
+            }
+            tbody.innerHTML = preorderSeriesList.map(series => `
+                <tr>
+                    <td>${productImageCell(series.coverImageUrl, series.name)}</td>
+                    <td><strong>${escapeHtml(series.name)}</strong></td>
+                    <td>${Number(series.productCount || 0)}</td>
+                    <td>${Number(series.sortOrder || 0)}</td>
+                    <td>
+                        <div class="product-row-actions">
+                            <button class="btn btn-sm btn-action-edit" onclick="openSeriesModal('${series.id}')"><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn btn-sm btn-action-delete" onclick="deleteSeries('${series.id}')"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function resetSeriesImageEditState(imageUrl = '') {
+            const safeImage = normalizeProductImageUrl(imageUrl);
+            const publicId = cloudinaryPublicIdFromUrl(safeImage);
+            seriesImageEditState = {
+                originalUrl: safeImage,
+                originalPublicId: publicId,
+                currentUrl: safeImage,
+                currentPublicId: publicId,
+                pendingPublicId: ''
+            };
+            renderSeriesImagePreview();
+        }
+
+        function renderSeriesImagePreview() {
+            const preview = document.getElementById('series-image-preview');
+            const removeButton = document.getElementById('series-image-remove');
+            if (!preview) return;
+            preview.innerHTML = '';
+            if (seriesImageEditState.currentUrl) {
+                const image = document.createElement('img');
+                image.src = seriesImageEditState.currentUrl;
+                image.alt = '系列主圖預覽';
+                preview.appendChild(image);
+            } else {
+                const icon = document.createElement('i');
+                icon.className = 'fa-regular fa-image';
+                preview.appendChild(icon);
+            }
+            if (removeButton) removeButton.style.display = seriesImageEditState.currentUrl ? 'inline-flex' : 'none';
+        }
+
+        async function handleSeriesImageFile(fileList) {
+            const file = Array.from(fileList || []).find(item => /^image\/(jpeg|png|webp)$/i.test(item.type));
+            if (!file) return showToast('請選擇 JPG、PNG 或 WebP 圖片', 'error');
+            const formData = new FormData();
+            formData.append('productId', `series-${document.getElementById('series-id')?.value || 'new'}`);
+            formData.append('files', file);
+            const previousPendingPublicId = seriesImageEditState.pendingPublicId;
+            try {
+                showLoading();
+                const response = await fetch(PRODUCT_UPLOAD_API_URL, { method: 'POST', body: formData });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(result.error || '主圖上傳失敗');
+                const uploaded = (result.images || [])[0];
+                const url = normalizeProductImageUrl(uploaded?.secure_url || uploaded?.url || '');
+                const publicId = String(uploaded?.public_id || uploaded?.publicId || '').trim();
+                if (!url || !publicId) throw new Error('Cloudinary 未回傳完整圖片資料');
+                seriesImageEditState.currentUrl = url;
+                seriesImageEditState.currentPublicId = publicId;
+                seriesImageEditState.pendingPublicId = publicId;
+                renderSeriesImagePreview();
+                if (previousPendingPublicId && previousPendingPublicId !== publicId) {
+                    await cleanupScheduleImages([previousPendingPublicId], '新圖片已上傳，但前一張暫存圖片清理失敗');
+                }
+                showToast('圖片已上傳，請保存系列', 'success');
+            } catch (error) {
+                console.error('Series image upload failed:', error);
+                showToast('圖片上傳失敗，請稍後再試', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function removeSeriesImage() {
+            const pendingPublicId = seriesImageEditState.pendingPublicId;
+            seriesImageEditState.currentUrl = '';
+            seriesImageEditState.currentPublicId = '';
+            seriesImageEditState.pendingPublicId = '';
+            renderSeriesImagePreview();
+            if (pendingPublicId) await cleanupScheduleImages([pendingPublicId]);
+        }
+
+        function openSeriesModal(id = null) {
+            const series = id ? preorderSeriesList.find(row => String(row.id) === String(id)) : null;
+            document.getElementById('series-modal-title').innerText = id ? '編輯系列' : '新增系列';
+            document.getElementById('series-id').value = series?.id || '';
+            document.getElementById('series-name').value = series?.name || '';
+            document.getElementById('series-sort-order').value = Number(series?.sortOrder || 0);
+            resetSeriesImageEditState(series?.coverImageUrl || '');
+            document.getElementById('seriesModal').classList.add('active');
+        }
+
+        async function closeSeriesModal() {
+            document.getElementById('seriesModal').classList.remove('active');
+            const pendingPublicId = seriesImageEditState.pendingPublicId;
+            seriesImageEditState = { originalUrl: '', originalPublicId: '', currentUrl: '', currentPublicId: '', pendingPublicId: '' };
+            if (pendingPublicId) await cleanupScheduleImages([pendingPublicId]);
+        }
+
+        async function saveSeries(button) {
+            const id = document.getElementById('series-id')?.value || '';
+            const name = document.getElementById('series-name')?.value.trim() || '';
+            const sortOrder = Number(document.getElementById('series-sort-order')?.value || 0);
+            if (!name) return showToast('請輸入系列名稱', 'error');
+            if (name.includes('｜')) return showToast('系列名稱不能包含「｜」符號', 'error');
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch('/api/backend/preorder-series', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id || undefined, name, coverImageUrl: seriesImageEditState.currentUrl, sortOrder })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '系列儲存失敗。');
+                preorderSeriesList = [...preorderSeriesList.filter(row => String(row.id) !== String(result.series.id)), result.series]
+                    .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0) || String(a.name).localeCompare(String(b.name), 'zh-Hant'));
+                renderPreorderSeriesList();
+                const pendingPublicId = seriesImageEditState.pendingPublicId;
+                seriesImageEditState = { originalUrl: '', originalPublicId: '', currentUrl: '', currentPublicId: '', pendingPublicId: '' };
+                document.getElementById('seriesModal').classList.remove('active');
+                showToast('已儲存系列', 'success');
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '系列儲存失敗，請稍後再試', 'error');
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        async function deleteSeries(id) {
+            const series = preorderSeriesList.find(row => String(row.id) === String(id));
+            if (!series) return;
+            if (!confirm(`確定要刪除系列「${series.name}」嗎？`)) return;
+            try {
+                const response = await fetch(`/api/backend/preorder-series/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '系列刪除失敗。');
+                preorderSeriesList = preorderSeriesList.filter(row => String(row.id) !== String(id));
+                renderPreorderSeriesList();
+                showToast('已刪除系列', 'success');
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '系列刪除失敗，請稍後再試', 'error');
             }
         }
 
