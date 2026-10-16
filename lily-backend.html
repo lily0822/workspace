@@ -1979,6 +1979,10 @@
             <div id="section-product-tags" class="section-container">
                 <div class="page-header">
                     <h2 class="page-title">商品標籤管理</h2>
+                    <div class="toolbar">
+                        <button class="btn btn-secondary" type="button" onclick="openPreorderLinkSettingsModal()"><i class="fa-solid fa-gear"></i><span class="btn-label"> 預購連結文案設定</span></button>
+                        <button class="btn btn-secondary" type="button" onclick="openPreorderLinkGeneratorModal()"><i class="fa-solid fa-link"></i><span class="btn-label"> 產生預購連結</span></button>
+                    </div>
                 </div>
                 <div class="table-wrapper" style="padding: 1.25rem;">
                     <div class="product-tag-save-row">
@@ -3379,6 +3383,64 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" onclick="closeCommunityLivestreamReplyTemplateSettingsModal()">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 預購獨立流程 第二期：回頭客關鍵字／oaMessage 預填文案，兩個都是
+         schedule_settings KV，比照上面社群連線訂單的關鍵字設定/訊息文案
+         設定同一套 modal 模式。 -->
+    <div class="modal-overlay" id="preorderLinkSettingsModal">
+        <div class="modal-content" style="max-width:560px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-gear"></i> 預購連結文案設定</h3>
+                <button class="close-btn" type="button" onclick="closePreorderLinkSettingsModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin:0 0 0.75rem;color:#94a3b8;font-size:0.76rem;font-weight:800;">這兩個文案會被「產生預購連結」工具跟 LINE 機器人同時讀取，改了之後新產生的連結跟機器人的判斷邏輯會立刻套用新文案——但已經發出去、客人手上還沒點的舊連結不會自動更新上面印著的文字。</p>
+                <div class="form-group">
+                    <label>回頭客關鍵字（客人在 LINE 打這幾個字等於「查看全部預購清單」，沒有批次篩選）</label>
+                    <input type="text" id="preorder-link-settings-returning-keyword" placeholder="【查看預購新品】">
+                </div>
+                <div class="form-group">
+                    <label>oaMessage 預填文案（客人點連結後，LINE 聊天輸入框會預先帶出「批次名稱｜這段文案」，等客人補上暱稱送出）</label>
+                    <input type="text" id="preorder-link-settings-oa-prefix" placeholder="請在此輸入(ig/社群)暱稱後送出：">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closePreorderLinkSettingsModal()">取消</button>
+                <button class="btn btn-primary" type="button" id="preorder-link-settings-save-btn" onclick="savePreorderLinkSettings(this)">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="preorderLinkGeneratorModal">
+        <div class="modal-content" style="max-width:560px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-link"></i> 產生預購連結</h3>
+                <button class="close-btn" type="button" onclick="closePreorderLinkGeneratorModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin:0 0 0.75rem;color:#94a3b8;font-size:0.76rem;font-weight:800;">選一個代表這批記事本商品的 IP／商品類別標籤，輸入這批的顯示名稱（例如「2027年2月大耳狗」），產生完整的 LINE 連結——客人點了連結會直接開啟跟官方帳號的對話，預先帶好這批的識別文字，只要補上暱稱送出就會自動完成綁定並看到這批的預購清單。</p>
+                <div class="form-group">
+                    <label>對應標籤</label>
+                    <select id="preorder-link-generator-tag"></select>
+                </div>
+                <div class="form-group">
+                    <label>這批的顯示名稱</label>
+                    <input type="text" id="preorder-link-generator-batch-name" placeholder="例如：2027年2月大耳狗">
+                </div>
+                <div class="form-group" id="preorder-link-generator-result-row" style="display:none;">
+                    <label>產生的連結</label>
+                    <div style="display:flex;gap:0.5rem;">
+                        <input type="text" id="preorder-link-generator-result" readonly style="flex:1;">
+                        <button class="btn btn-secondary" type="button" onclick="copyPreorderLinkGeneratorResult()"><i class="fa-solid fa-copy"></i> 複製</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closePreorderLinkGeneratorModal()">關閉</button>
+                <button class="btn btn-primary" type="button" id="preorder-link-generator-submit-btn" onclick="submitPreorderLinkGenerator(this)">產生連結</button>
             </div>
         </div>
     </div>
@@ -6979,6 +7041,129 @@
             productTags = normalizeProductTags(productTags);
             renderProductTagList('ip');
             renderProductTagList('category');
+        }
+
+        // ===== 預購獨立流程 第二期：預購連結文案設定 + 產生預購連結工具
+        //       (schedule_settings 通用 KV，比照社群連線訂單關鍵字設定/
+        //       訊息文案設定同一套模式) =====
+
+        async function openPreorderLinkSettingsModal() {
+            document.getElementById('preorderLinkSettingsModal')?.classList.add('active');
+            const keywordEl = document.getElementById('preorder-link-settings-returning-keyword');
+            const prefixEl = document.getElementById('preorder-link-settings-oa-prefix');
+            if (keywordEl) keywordEl.value = '讀取中...';
+            if (prefixEl) prefixEl.value = '';
+            try {
+                const response = await fetch('/api/backend/preorder-link-settings', { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '讀取失敗。');
+                if (keywordEl) keywordEl.value = result.returningKeyword || '';
+                if (prefixEl) prefixEl.value = result.oaMessagePrefix || '';
+            } catch (error) {
+                console.error(error);
+                if (keywordEl) keywordEl.value = '';
+                showToast('預購連結文案設定讀取失敗，請稍後再試', 'error');
+            }
+        }
+
+        function closePreorderLinkSettingsModal() {
+            document.getElementById('preorderLinkSettingsModal')?.classList.remove('active');
+        }
+
+        async function savePreorderLinkSettings(button) {
+            const returningKeyword = document.getElementById('preorder-link-settings-returning-keyword')?.value.trim() || '';
+            const oaMessagePrefix = document.getElementById('preorder-link-settings-oa-prefix')?.value.trim() || '';
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch('/api/backend/preorder-link-settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ returningKeyword, oaMessagePrefix })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '儲存失敗。');
+                showToast('已儲存預購連結文案設定', 'success');
+                closePreorderLinkSettingsModal();
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '儲存失敗，請稍後再試', 'error');
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        // 下拉選單的選項直接讀本機已經載入的 productTags（跟商品編輯表單
+        // 的 IP／商品類別勾選框是同一份資料），不用另外打 API。只列出
+        // 目前啟用中的標籤，停用的標籤不該被拿來開新的預購批次連結。
+        function preorderLinkGeneratorTagOptionsHtml() {
+            const tags = normalizeProductTags(productTags).filter(tag => tag.enabled !== false);
+            const ipTags = tags.filter(tag => tag.type === 'ip');
+            const categoryTags = tags.filter(tag => tag.type === 'category');
+            const optionsForGroup = (label, groupTags) => groupTags.length
+                ? `<optgroup label="${escapeHtml(label)}">${groupTags.map(tag => `<option value="${escapeHtml(tag.id)}">${escapeHtml(tag.name)}</option>`).join('')}</optgroup>`
+                : '';
+            return optionsForGroup('IP', ipTags) + optionsForGroup('商品類別', categoryTags);
+        }
+
+        function openPreorderLinkGeneratorModal() {
+            document.getElementById('preorderLinkGeneratorModal')?.classList.add('active');
+            const select = document.getElementById('preorder-link-generator-tag');
+            if (select) select.innerHTML = preorderLinkGeneratorTagOptionsHtml() || '<option value="">尚無可選標籤</option>';
+            const nameEl = document.getElementById('preorder-link-generator-batch-name');
+            if (nameEl) nameEl.value = '';
+            const resultRow = document.getElementById('preorder-link-generator-result-row');
+            if (resultRow) resultRow.style.display = 'none';
+        }
+
+        function closePreorderLinkGeneratorModal() {
+            document.getElementById('preorderLinkGeneratorModal')?.classList.remove('active');
+        }
+
+        async function submitPreorderLinkGenerator(button) {
+            const tagId = document.getElementById('preorder-link-generator-tag')?.value || '';
+            const batchName = document.getElementById('preorder-link-generator-batch-name')?.value.trim() || '';
+            if (!tagId) return showToast('請選擇對應的標籤', 'error');
+            if (!batchName) return showToast('請輸入這批的顯示名稱', 'error');
+            if (batchName.includes('｜')) return showToast('顯示名稱不能包含「｜」符號', 'error');
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch('/api/backend/preorder-link-batches', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tagId, batchName })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '連結產生失敗。');
+                const resultRow = document.getElementById('preorder-link-generator-result-row');
+                const resultInput = document.getElementById('preorder-link-generator-result');
+                if (resultInput) resultInput.value = result.link;
+                if (resultRow) resultRow.style.display = '';
+                showToast('已產生連結', 'success');
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '連結產生失敗，請稍後再試', 'error');
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        async function copyPreorderLinkGeneratorResult() {
+            const input = document.getElementById('preorder-link-generator-result');
+            if (!input || !input.value) return;
+            try {
+                if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(input.value);
+                } else {
+                    input.removeAttribute('readonly');
+                    input.select();
+                    document.execCommand('copy');
+                    input.setAttribute('readonly', '');
+                }
+                showToast('已複製連結', 'success');
+            } catch (error) {
+                console.error(error);
+                showToast('複製失敗，請手動選取複製', 'error');
+            }
         }
 
         function saveProductTag(event) {
