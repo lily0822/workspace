@@ -3434,6 +3434,10 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label>對應 IP（可多選；前台「系列篩選」「全部預購商品篩選」兩排 IP 鈕都是依這裡設定的 IP 分組，不是商品自己的 IP 標籤）</label>
+                    <div id="series-ip-tags" class="tag-group-inline"></div>
+                </div>
+                <div class="form-group">
                     <label>排序（數字越小越前面）</label>
                     <input type="number" id="series-sort-order" value="0">
                 </div>
@@ -6418,13 +6422,16 @@
             });
         }
 
+        // IP 標籤這輪改掛在系列身上（「預購系列管理」畫面），不是商品身上
+        // ——預購商品不用自己再選 IP 了，選了系列就自動帶入那個系列設定
+        // 的 IP。商品類別標籤維持原樣掛在商品上，兩種類型都不受影響。
         function tagCheckboxesInlineHtml(type, id, selectedIds = []) {
             const selected = selectedIds.map(String);
             const htmlForType = (tagType, label) => {
                 const tags = normalizeProductTags(productTags).filter(tag => tag.type === tagType && (tag.enabled !== false || selected.includes(String(tag.id))));
                 return `<div class="tag-group-inline"><span class="tag-group-inline-label">${label}：</span>${tags.map(tag => `<label class="product-tag-check-chip" style="${tagStyleVars(tag.color)}"><input type="checkbox" data-product-type="${type}" data-product-id="${escapeHtml(id)}" value="${tag.id}" ${selected.includes(String(tag.id)) ? 'checked' : ''}> ${escapeHtml(tag.name)}${tag.enabled === false ? '（已停用）' : ''}</label>`).join('') || '<span style="font-size:0.75rem;color:#94a3b8;">尚無可選項目</span>'}</div>`;
             };
-            return `${htmlForType('ip', 'IP')}${htmlForType('category', '商品類別')}`;
+            return `${type === 'preorder' ? '' : htmlForType('ip', 'IP')}${htmlForType('category', '商品類別')}`;
         }
 
         function productEditRow(product, type) {
@@ -6832,7 +6839,7 @@
                 <label class="product-batch-field">${type === 'stock' ? '庫存' : '名額'}<input type="number" class="pb-qty" min="0" placeholder="${type === 'stock' ? '庫存' : '名額'}"></label>
                 <button class="btn btn-sm btn-danger" type="button" onclick="this.closest('.product-batch-row').remove()" style="align-self:end;"><i class="fa-solid fa-trash"></i></button>
                 <div class="product-batch-tags">
-                    ${productBatchTagCheckboxes(rowId, 'ip')}
+                    ${type === 'preorder' ? '' : productBatchTagCheckboxes(rowId, 'ip')}
                     ${productBatchTagCheckboxes(rowId, 'category')}
                 </div>
                 ${deadlineField}
@@ -7337,12 +7344,27 @@
             if (pendingPublicId) await cleanupScheduleImages([pendingPublicId]);
         }
 
+        // 系列的 IP picker——選項固定只列 type='ip' 的標籤，不要跟商品
+        // 類別混在一起（商品類別標籤還是掛在商品身上，跟系列無關）。
+        function seriesIpTagCheckboxesHtml(selectedIds = []) {
+            const selected = selectedIds.map(String);
+            const tags = normalizeProductTags(productTags).filter(tag => tag.type === 'ip' && (tag.enabled !== false || selected.includes(String(tag.id))));
+            if (!tags.length) return '<span style="font-size:0.75rem;color:#94a3b8;">尚無可選的 IP 標籤，請先到商品標籤管理新增</span>';
+            return tags.map(tag => `<label class="product-tag-check-chip series-ip-tag-check" style="${tagStyleVars(tag.color)}"><input type="checkbox" class="series-ip-tag" value="${tag.id}" ${selected.includes(String(tag.id)) ? 'checked' : ''}> ${escapeHtml(tag.name)}${tag.enabled === false ? '（已停用）' : ''}</label>`).join('');
+        }
+
+        function getCheckedSeriesIpTagIds() {
+            return Array.from(document.querySelectorAll('.series-ip-tag:checked')).map(input => String(input.value));
+        }
+
         function openSeriesModal(id = null) {
             const series = id ? preorderSeriesList.find(row => String(row.id) === String(id)) : null;
             document.getElementById('series-modal-title').innerText = id ? '編輯系列' : '新增系列';
             document.getElementById('series-id').value = series?.id || '';
             document.getElementById('series-name').value = series?.name || '';
             document.getElementById('series-sort-order').value = Number(series?.sortOrder || 0);
+            const ipTagsContainer = document.getElementById('series-ip-tags');
+            if (ipTagsContainer) ipTagsContainer.innerHTML = seriesIpTagCheckboxesHtml(series?.ipTagIds || []);
             resetSeriesImageEditState(series?.coverImageUrl || '');
             document.getElementById('seriesModal').classList.add('active');
         }
@@ -7362,10 +7384,11 @@
             if (name.includes('｜')) return showToast('系列名稱不能包含「｜」符號', 'error');
             if (button) button.disabled = true;
             try {
+                const ipTagIds = getCheckedSeriesIpTagIds();
                 const response = await fetch('/api/backend/preorder-series', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: id || undefined, name, coverImageUrl: seriesImageEditState.currentUrl, sortOrder })
+                    body: JSON.stringify({ id: id || undefined, name, coverImageUrl: seriesImageEditState.currentUrl, sortOrder, ipTagIds })
                 });
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '系列儲存失敗。');
