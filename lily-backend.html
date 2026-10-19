@@ -4003,7 +4003,7 @@
         let appearanceDatePickerState = null;
         let siteNavigation = [
             { key: 'home', label: '首頁', href: '/', enabled: true, locked: true, sortOrder: 0 },
-            { key: 'products', label: '全部商品', href: '/products', enabled: true, sortOrder: 1 },
+            { key: 'products', label: '全部商品', href: '/category/in_stock', enabled: true, sortOrder: 1 },
             { key: 'preorder', label: '預購商品', href: '/category/preorder', enabled: true, sortOrder: 2 },
             { key: 'stock', label: '現貨', href: '/category/in_stock', enabled: true, sortOrder: 3 },
             { key: 'live_order', label: '連線 / 擺攤', href: '/category/live_order', enabled: true, sortOrder: 4 },
@@ -5763,7 +5763,7 @@
         function defaultSiteNavigation() {
             return [
                 { key: 'home', label: '首頁', href: '/', enabled: true, locked: true, sortOrder: 0 },
-                { key: 'products', label: '全部商品', href: '/products', enabled: true, sortOrder: 1 },
+                { key: 'products', label: '全部商品', href: '/category/in_stock', enabled: true, sortOrder: 1 },
                 { key: 'preorder', label: '預購商品', href: '/category/preorder', enabled: true, sortOrder: 2 },
                 { key: 'stock', label: '現貨', href: '/category/in_stock', enabled: true, sortOrder: 3 },
                 { key: 'live_order', label: '連線 / 擺攤', href: '/category/live_order', enabled: true, sortOrder: 4 },
@@ -11405,7 +11405,7 @@
         const SITE_FEATURE_FLAG_DEFS = [
             { key: 'signup', label: '會員註冊', description: '停用後，前台註冊頁不會顯示註冊表單，改顯示下方提示文字；直接呼叫註冊 API 也會被擋下。' },
             { key: 'login', label: '會員登入', description: '停用後，前台登入頁不會顯示登入表單（email/密碼、Google、LINE 全部一起關），改顯示下方提示文字；直接呼叫登入相關 API 也會被擋下。' },
-            { key: 'products', label: '全部商品', description: '停用後，/products 商品列表頁與所有商品詳情頁都會改顯示下方提示文字（這是最上層的全域開關）。' },
+            { key: 'products', label: '全部商品', description: '停用後，/search 搜尋結果頁與所有商品詳情頁都會改顯示下方提示文字（這是最上層的全域開關；原本的 /products 全部商品頁已經移除，這個開關現在只剩這兩個入口）。' },
             { key: 'stock', label: '現貨', description: '停用後，現貨分類頁與現貨商品的詳情頁會改顯示下方提示文字；不影響預購商品。' },
             { key: 'preorder', label: '預購', description: '停用後，預購分類頁與預購商品的詳情頁會改顯示下方提示文字；不影響現貨商品。' },
             { key: 'live_order', label: '代購/市集', description: '停用後，代購/市集排程頁會改顯示下方提示文字。' }
