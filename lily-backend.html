@@ -914,6 +914,42 @@
         .product-tag-checkbox-wrap { display: flex; flex-wrap: wrap; gap: 0.35rem; max-height: 150px; overflow-y: auto; padding-right: 0.15rem; }
         .product-tag-check-chip { display: inline-flex; align-items: center; gap: 0.25rem; border: 1px solid var(--tag-border, #e2e8f0); border-radius: 999px; background: var(--tag-bg, #f8fafc); color: var(--tag-fg, #334155); padding: 0.24rem 0.5rem; font-size: 0.75rem; font-weight: 800; line-height: 1.1; }
         .product-tag-check-chip input { margin: 0; accent-color: var(--tag-fg, #ec4899); }
+
+        /* 預購系列管理：新增/編輯系列視窗重排版（左圖右欄位）+ 扁平 IP
+           選擇鈕，取代原本大顆 checkbox+色塊底色、容易換行的樣式。
+           IP chip 這個樣式同時給單筆新增視窗跟下面的批量新增系列用。 */
+        .series-form-row { display: flex; gap: 1.1rem; }
+        .series-image-col { flex: 0 0 140px; }
+        .series-image-box { width: 140px; height: 140px; border-radius: 0.9rem; border: 2px dashed #f3a8d0; background: #fdf2f8; display: flex; align-items: center; justify-content: center; overflow: hidden; color: #f3a8d0; font-size: 1.8rem; }
+        .series-image-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .series-image-actions { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.6rem; }
+        .series-fields-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.9rem; }
+        .series-ip-chip-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .series-ip-chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.85rem; border-radius: 999px; border: 1.5px solid #e2e8f0; background: #fff; color: #64748b; font-size: 0.8rem; font-weight: 800; cursor: pointer; user-select: none; transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease; }
+        .series-ip-chip input { display: none; }
+        .series-ip-chip i { font-size: 0.68rem; display: none; }
+        .series-ip-chip.selected { border-color: var(--primary-color); background: #fdf2f8; color: var(--primary-color); }
+        .series-ip-chip.selected i { display: inline; }
+
+        /* 批量新增系列：仿 .product-batch-row 同一套多列表單模式，欄位
+           比商品單純（縮圖/名稱/IP/排序/刪除五欄），改用自己的 grid 比例
+           （IP 那欄要能讓 chip 自由換行，跟商品批次那種固定窄欄不同）。 */
+        .series-batch-row { display: grid; grid-template-columns: 64px 1.4fr 1.6fr 90px 36px; gap: 0.75rem; align-items: center; border: 1px solid #fce7f3; border-radius: 0.8rem; background: #fff; padding: 0.7rem; margin-bottom: 0.6rem; }
+        .series-batch-row > div, .series-batch-row > label { min-width: 0; }
+        .series-batch-thumb { width: 56px; height: 56px; border-radius: 0.6rem; border: 2px dashed #f3a8d0; display: grid; place-items: center; color: #f3a8d0; overflow: hidden; cursor: pointer; background: #fdf2f8; font-size: 1.1rem; }
+        .series-batch-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .series-batch-row .series-ip-chip-row { gap: 0.3rem; }
+        .series-batch-row .series-ip-chip { padding: 0.25rem 0.6rem; font-size: 0.72rem; }
+        .series-batch-row-error { grid-column: 1 / -1; font-size: 0.74rem; font-weight: 800; color: #dc2626; }
+        @media (max-width: 920px) {
+            .series-batch-row { grid-template-columns: 56px 1fr 80px 36px; }
+            .series-batch-row .series-ip-chip-row { grid-column: 1 / -1; }
+        }
+        @media (max-width: 640px) {
+            .series-batch-row { grid-template-columns: 56px 1fr 36px; }
+            .series-batch-row .series-ip-chip-row, .series-batch-row .series-batch-sort { grid-column: 1 / -1; }
+        }
+
         .tag-group-block { display: grid; gap: 0.35rem; min-width: 0; max-width: 100%; }
         .tag-group-title { font-size: 0.76rem; font-weight: 900; color: #64748b; }
         .product-tag-edit-rows { display: grid; gap: 0.65rem; }
@@ -1983,6 +2019,7 @@
                 <div class="page-header">
                     <h2 class="page-title">預購系列管理</h2>
                     <div class="toolbar">
+                        <button class="btn btn-secondary" type="button" onclick="openSeriesBatchModal()"><i class="fa-solid fa-layer-group"></i><span class="btn-label"> 批量新增系列</span></button>
                         <button class="btn btn-primary" type="button" onclick="openSeriesModal()"><i class="fa-solid fa-plus"></i><span class="btn-label"> 新增系列</span></button>
                     </div>
                 </div>
@@ -3418,33 +3455,62 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="series-id">
-                <div class="form-group">
-                    <label>系列名稱（這個名稱會直接當 LINE 批次連結的識別文字，請避免重複或包含「｜」符號）</label>
-                    <input type="text" id="series-name" placeholder="例如：2027年2月 大耳狗">
-                </div>
-                <div class="form-group">
-                    <label>主圖</label>
-                    <input type="file" id="series-image-file" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleSeriesImageFile(this.files); this.value='';">
-                    <div style="display:flex;align-items:center;gap:0.75rem;">
-                        <div id="series-image-preview" class="schedule-image-preview"></div>
-                        <div style="display:flex;flex-direction:column;gap:0.4rem;">
-                            <button class="btn btn-secondary" type="button" onclick="document.getElementById('series-image-file')?.click()"><i class="fa-solid fa-cloud-arrow-up"></i> 上傳圖片</button>
+                <div class="series-form-row">
+                    <div class="series-image-col">
+                        <input type="file" id="series-image-file" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleSeriesImageFile(this.files); this.value='';">
+                        <div id="series-image-preview" class="series-image-box"></div>
+                        <div class="series-image-actions">
+                            <button class="btn btn-secondary btn-sm" type="button" onclick="document.getElementById('series-image-file')?.click()"><i class="fa-solid fa-cloud-arrow-up"></i> 上傳圖片</button>
                             <button class="btn btn-sm btn-danger" type="button" id="series-image-remove" onclick="removeSeriesImage()" style="display:none;"><i class="fa-solid fa-trash"></i> 移除圖片</button>
                         </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label>對應 IP（可多選；前台「系列篩選」「全部預購商品篩選」兩排 IP 鈕都是依這裡設定的 IP 分組，不是商品自己的 IP 標籤）</label>
-                    <div id="series-ip-tags" class="tag-group-inline"></div>
-                </div>
-                <div class="form-group">
-                    <label>排序（數字越小越前面）</label>
-                    <input type="number" id="series-sort-order" value="0">
+                    <div class="series-fields-col">
+                        <div class="form-group">
+                            <label>系列名稱</label>
+                            <input type="text" id="series-name" placeholder="例如：2027年2月 大耳狗">
+                        </div>
+                        <div class="form-group">
+                            <label>對應 IP</label>
+                            <div id="series-ip-tags" class="series-ip-chip-row"></div>
+                        </div>
+                        <div class="form-group" style="max-width:160px;">
+                            <label>排序（數字越小越前面）</label>
+                            <input type="number" id="series-sort-order" value="0">
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" onclick="closeSeriesModal()">取消</button>
                 <button class="btn btn-primary" type="button" id="series-save-btn" onclick="saveSeries(this)">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量新增系列：仿照「批量新增商品」(productBatchModal) 同一套
+         多列表單模式——每一列各自是一個系列，填完一次全部送出。 -->
+    <div class="modal-overlay" id="seriesBatchModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-layer-group"></i> 批量新增系列</h3>
+                <button class="close-btn" type="button" onclick="closeSeriesBatchModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="dynamic-header" style="grid-template-columns:64px 1.4fr 1.6fr 90px 36px;">
+                    <span>主圖</span>
+                    <span>系列名稱</span>
+                    <span>對應 IP</span>
+                    <span>排序</span>
+                    <span></span>
+                </div>
+                <div id="series-batch-container"></div>
+                <button class="btn btn-secondary" style="align-self: flex-start; margin-top: 0.5rem;" type="button" onclick="addSeriesBatchRow()">
+                    <i class="fa-solid fa-plus"></i> 增加行數
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeSeriesBatchModal()">取消</button>
+                <button class="btn btn-primary" type="button" id="series-batch-save-btn" onclick="saveSeriesBatchRows(this)">全部儲存</button>
             </div>
         </div>
     </div>
@@ -3864,6 +3930,10 @@
         let preorderProducts = [];
         let preorderSeriesList = [];
         let seriesImageEditState = { originalUrl: '', originalPublicId: '', currentUrl: '', currentPublicId: '', pendingPublicId: '' };
+        // 批量新增系列：rowId -> { currentUrl, pendingPublicId }，每一列
+        // 自己的主圖上傳狀態，跟上面單筆新增視窗的 seriesImageEditState
+        // 分開（批量視窗同時有好幾列，不能共用同一份狀態）。
+        let seriesBatchImageState = {};
         let stallSchedules = [];
         let connectionSchedules = [];
         let scheduleImageEditState = { originalUrl: '', originalPublicId: '', currentUrl: '', currentPublicId: '', pendingPublicId: '' };
@@ -7346,15 +7416,24 @@
 
         // 系列的 IP picker——選項固定只列 type='ip' 的標籤，不要跟商品
         // 類別混在一起（商品類別標籤還是掛在商品身上，跟系列無關）。
-        function seriesIpTagCheckboxesHtml(selectedIds = []) {
+        // 樣式改成扁平緊湊：沒選中淡灰外框，選中後邊框/文字變粉色＋前面
+        // 加勾勾，不是原本那種大顆 checkbox+色塊底色。「已停用但已選中
+        // 的標籤仍要顯示」這個邏輯沒有變，只是視覺重新設計。rowId 有帶
+        // 的話 class 多加一個 data-row-id，批量新增那邊收集時用來分辨
+        // 是哪一列的勾選（單筆新增視窗不會帶這個參數）。
+        function seriesIpTagCheckboxesHtml(selectedIds = [], rowId = '') {
             const selected = selectedIds.map(String);
             const tags = normalizeProductTags(productTags).filter(tag => tag.type === 'ip' && (tag.enabled !== false || selected.includes(String(tag.id))));
             if (!tags.length) return '<span style="font-size:0.75rem;color:#94a3b8;">尚無可選的 IP 標籤，請先到商品標籤管理新增</span>';
-            return tags.map(tag => `<label class="product-tag-check-chip series-ip-tag-check" style="${tagStyleVars(tag.color)}"><input type="checkbox" class="series-ip-tag" value="${tag.id}" ${selected.includes(String(tag.id)) ? 'checked' : ''}> ${escapeHtml(tag.name)}${tag.enabled === false ? '（已停用）' : ''}</label>`).join('');
+            return tags.map(tag => {
+                const isSelected = selected.includes(String(tag.id));
+                return `<label class="series-ip-chip${isSelected ? ' selected' : ''}"><input type="checkbox" class="series-ip-tag" ${rowId ? `data-row-id="${escapeHtml(rowId)}"` : ''} value="${tag.id}" ${isSelected ? 'checked' : ''} onchange="this.closest('label').classList.toggle('selected', this.checked)"><i class="fa-solid fa-check"></i>${escapeHtml(tag.name)}${tag.enabled === false ? '（已停用）' : ''}</label>`;
+            }).join('');
         }
 
-        function getCheckedSeriesIpTagIds() {
-            return Array.from(document.querySelectorAll('.series-ip-tag:checked')).map(input => String(input.value));
+        function getCheckedSeriesIpTagIds(rowId = '') {
+            const selector = rowId ? `.series-ip-tag[data-row-id="${rowId}"]:checked` : '.series-ip-tag:not([data-row-id]):checked';
+            return Array.from(document.querySelectorAll(selector)).map(input => String(input.value));
         }
 
         function openSeriesModal(id = null) {
@@ -7402,6 +7481,155 @@
             } catch (error) {
                 console.error(error);
                 showToast(error.message || '系列儲存失敗，請稍後再試', 'error');
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        // ===== 批量新增系列：仿「批量新增商品」(productBatchModal) 同一套
+        //       多列表單模式，欄位比商品單純，每一列直接呼叫既有的單筆
+        //       建立端點 POST /api/backend/preorder-series（不是另外做一支
+        //       批次 API——系列的筆數預期不多，沿用單筆端點迴圈呼叫就夠）。
+        //       每一列各自送出、各自回報成功或失敗：成功的列直接從畫面上
+        //       移除（不會留著重複送出，也不會因為別的列失敗而連帶消失）；
+        //       失敗的列保留輸入內容、在該列下方顯示具體錯誤原因，使用者
+        //       修正後可以再按一次「全部儲存」只送出還留著的那幾列。 =====
+
+        function openSeriesBatchModal() {
+            document.getElementById('series-batch-container').innerHTML = '';
+            seriesBatchImageState = {};
+            addSeriesBatchRow();
+            document.getElementById('seriesBatchModal').classList.add('active');
+        }
+
+        async function closeSeriesBatchModal() {
+            document.getElementById('seriesBatchModal').classList.remove('active');
+            const pendingPublicIds = Object.values(seriesBatchImageState).map(state => state.pendingPublicId).filter(Boolean);
+            seriesBatchImageState = {};
+            if (pendingPublicIds.length) await cleanupScheduleImages(pendingPublicIds);
+        }
+
+        function addSeriesBatchRow() {
+            const rowId = `s${Date.now()}${Math.floor(Math.random() * 10000)}`;
+            const row = document.createElement('div');
+            row.className = 'series-batch-row';
+            row.dataset.rowId = rowId;
+            row.innerHTML = `
+                <input type="file" id="sb-image-file-${rowId}" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleSeriesBatchRowImageFile('${rowId}', this.files); this.value='';">
+                <div class="series-batch-thumb" id="sb-thumb-${rowId}" onclick="document.getElementById('sb-image-file-${rowId}')?.click()" title="點擊上傳主圖"><i class="fa-regular fa-image"></i></div>
+                <input type="text" class="sb-name" placeholder="系列名稱">
+                <div class="series-ip-chip-row">${seriesIpTagCheckboxesHtml([], rowId)}</div>
+                <input type="number" class="sb-sort series-batch-sort" placeholder="排序" value="0">
+                <button class="btn btn-sm btn-danger" type="button" onclick="removeSeriesBatchRow(this)"><i class="fa-solid fa-trash"></i></button>
+            `;
+            document.getElementById('series-batch-container').appendChild(row);
+        }
+
+        async function removeSeriesBatchRow(button) {
+            const row = button.closest('.series-batch-row');
+            if (!row) return;
+            const rowId = row.dataset.rowId;
+            const pendingPublicId = seriesBatchImageState[rowId]?.pendingPublicId;
+            delete seriesBatchImageState[rowId];
+            row.remove();
+            if (pendingPublicId) await cleanupScheduleImages([pendingPublicId]);
+        }
+
+        async function handleSeriesBatchRowImageFile(rowId, fileList) {
+            const file = Array.from(fileList || []).find(item => /^image\/(jpeg|png|webp)$/i.test(item.type));
+            if (!file) return showToast('請選擇 JPG、PNG 或 WebP 圖片', 'error');
+            const formData = new FormData();
+            formData.append('productId', `series-batch-${rowId}`);
+            formData.append('files', file);
+            const previousPendingPublicId = seriesBatchImageState[rowId]?.pendingPublicId;
+            try {
+                showLoading();
+                const response = await fetch(PRODUCT_UPLOAD_API_URL, { method: 'POST', body: formData });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(result.error || '主圖上傳失敗');
+                const uploaded = (result.images || [])[0];
+                const url = normalizeProductImageUrl(uploaded?.secure_url || uploaded?.url || '');
+                const publicId = String(uploaded?.public_id || uploaded?.publicId || '').trim();
+                if (!url || !publicId) throw new Error('Cloudinary 未回傳完整圖片資料');
+                seriesBatchImageState[rowId] = { currentUrl: url, pendingPublicId: publicId };
+                const thumb = document.getElementById(`sb-thumb-${rowId}`);
+                if (thumb) thumb.innerHTML = `<img src="${url}" alt="">`;
+                if (previousPendingPublicId && previousPendingPublicId !== publicId) {
+                    await cleanupScheduleImages([previousPendingPublicId], '新圖片已上傳，但前一張暫存圖片清理失敗');
+                }
+            } catch (error) {
+                console.error('Series batch row image upload failed:', error);
+                showToast('圖片上傳失敗，請稍後再試', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function saveSeriesBatchRows(button) {
+            const rows = Array.from(document.querySelectorAll('.series-batch-row'));
+            if (!rows.length) return showToast('請至少新增一列', 'error');
+            if (button) button.disabled = true;
+            let successCount = 0;
+            let failedCount = 0;
+            try {
+                for (const row of rows) {
+                    const rowId = row.dataset.rowId;
+                    const existingError = row.querySelector('.series-batch-row-error');
+                    if (existingError) existingError.remove();
+
+                    const nameInput = row.querySelector('.sb-name');
+                    const name = nameInput?.value.trim() || '';
+                    if (!name) {
+                        // 完全空白的列（例如多按了幾次「增加行數」但沒填）
+                        // 直接跳過，不算失敗、不顯示錯誤，也不會被當成
+                        // 一筆要送出的資料。
+                        continue;
+                    }
+                    if (name.includes('｜')) {
+                        failedCount += 1;
+                        const errorEl = document.createElement('div');
+                        errorEl.className = 'series-batch-row-error';
+                        errorEl.textContent = '儲存失敗：系列名稱不能包含「｜」符號';
+                        row.appendChild(errorEl);
+                        continue;
+                    }
+
+                    const sortOrder = Number(row.querySelector('.sb-sort')?.value || 0);
+                    const ipTagIds = getCheckedSeriesIpTagIds(rowId);
+                    const coverImageUrl = seriesBatchImageState[rowId]?.currentUrl || '';
+
+                    try {
+                        const response = await fetch('/api/backend/preorder-series', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name, coverImageUrl, sortOrder, ipTagIds })
+                        });
+                        const result = await response.json().catch(() => null);
+                        if (!response.ok || !result?.ok) throw new Error(result?.error || '系列儲存失敗。');
+                        preorderSeriesList = [...preorderSeriesList.filter(item => String(item.id) !== String(result.series.id)), result.series]
+                            .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0) || String(a.name).localeCompare(String(b.name), 'zh-Hant'));
+                        successCount += 1;
+                        delete seriesBatchImageState[rowId];
+                        row.remove();
+                    } catch (error) {
+                        failedCount += 1;
+                        const errorEl = document.createElement('div');
+                        errorEl.className = 'series-batch-row-error';
+                        errorEl.textContent = `儲存失敗：${error?.message || '請稍後再試'}`;
+                        row.appendChild(errorEl);
+                    }
+                }
+
+                if (successCount) renderPreorderSeriesList();
+
+                if (!successCount && !failedCount) {
+                    showToast('請至少填寫一個系列名稱', 'error');
+                } else if (failedCount) {
+                    showToast(`${successCount} 列已成功儲存，${failedCount} 列失敗，請修正後重新送出`, 'error');
+                } else {
+                    showToast(`已成功新增 ${successCount} 個系列`, 'success');
+                    closeSeriesBatchModal();
+                }
             } finally {
                 if (button) button.disabled = false;
             }
