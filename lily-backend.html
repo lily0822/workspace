@@ -742,9 +742,9 @@
         .variant-thumb-picker-panel button img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .variant-thumb-picker-panel .variant-thumb-clear { width: 100%; height: auto; display: block; font-size: 0.72rem; font-weight: 700; color: #be185d; background: #fdf2f8; padding: 0.3rem; text-align: center; }
         .variant-thumb-picker-panel .variant-thumb-empty { font-size: 0.72rem; color: #94a3b8; padding: 0.3rem; }
-        .product-variant-remove-btn { width: 32px; height: 32px; border-radius: 0.4rem; border: 1px solid #fecdd3; background: #fff; color: #dc2626; cursor: pointer; }
+        .product-variant-remove-btn { width: 32px; height: 32px; border-radius: 0.375rem; border: 1px solid #fecdd3; background: #fff; color: #dc2626; cursor: pointer; }
         .product-variant-remove-btn:hover { background: #fef2f2; }
-        .product-variant-add-btn { margin-top: 0.4rem; border: 1px dashed #cbd5e1; border-radius: 0.5rem; background: #f8fafc; color: #64748b; font-size: 0.78rem; font-weight: 800; padding: 0.4rem 0.9rem; cursor: pointer; }
+        .product-variant-add-btn { margin-top: 0.4rem; border: 1px dashed #cbd5e1; border-radius: 0.375rem; background: #f8fafc; color: #64748b; font-size: 0.78rem; font-weight: 800; padding: 0.4rem 0.9rem; cursor: pointer; }
         .product-variant-add-btn:hover { border-color: #ec4899; color: #ec4899; }
         .brand-settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
         .brand-setting-card { background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; border: 1px solid #fce7f3; }
@@ -912,7 +912,10 @@
         .product-edit-card .product-image-editor { max-width: none; }
         .product-edit-actions { position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: 0.6rem; border-top: 1px solid #fce7f3; background: rgba(255,255,255,0.96); padding-top: 0.75rem; margin-top: 0.9rem; z-index: 2; }
         .product-tag-checkbox-wrap { display: flex; flex-wrap: wrap; gap: 0.35rem; max-height: 150px; overflow-y: auto; padding-right: 0.15rem; }
-        .product-tag-check-chip { display: inline-flex; align-items: center; gap: 0.25rem; border: 1px solid var(--tag-border, #e2e8f0); border-radius: 999px; background: var(--tag-bg, #f8fafc); color: var(--tag-fg, #334155); padding: 0.24rem 0.5rem; font-size: 0.75rem; font-weight: 800; line-height: 1.1; }
+        /* 形狀比照 .series-ip-chip 標準（border 粗細/padding），顏色維持
+           這裡原本「依標籤自己的顏色上色」的設計不變（--tag-bg/--tag-fg
+           這兩個變數沒有動）。 */
+        .product-tag-check-chip { display: inline-flex; align-items: center; gap: 0.25rem; border: 1.5px solid var(--tag-border, #e2e8f0); border-radius: 999px; background: var(--tag-bg, #f8fafc); color: var(--tag-fg, #334155); padding: 0.4rem 0.85rem; font-size: 0.75rem; font-weight: 800; line-height: 1.1; }
         .product-tag-check-chip input { margin: 0; accent-color: var(--tag-fg, #ec4899); }
 
         /* 預購系列管理：新增/編輯系列視窗重排版（左圖右欄位）+ 扁平 IP
@@ -948,6 +951,53 @@
         @media (max-width: 640px) {
             .series-batch-row { grid-template-columns: 56px 1fr 36px; }
             .series-batch-row .series-ip-chip-row, .series-batch-row .series-batch-sort { grid-column: 1 / -1; }
+        }
+
+        /* 後台輸入框/按鈕/膠囊按鈕形狀統一——標準樣板是「新增系列」視窗
+           目前實際用的 .form-group input（border 1px #cbd5e1、radius
+           0.375rem、padding 0.625rem、focus 粉色外框+陰影）。這裡新增
+           的規則只套用在批量新增系列/批量新增商品這兩個多列表單——這兩
+           邊的輸入框原本分別是：.series-batch-row 完全沒有樣式（純
+           瀏覽器預設，上一輪被抱怨「醜」的原因）；.product-batch-row
+           雖然有繼承 .dynamic-row input/select 的樣式，但那個 class
+           同時被叫貨/客戶訂單那邊的批次列（batch-new-row/batch-edit-
+           row）共用，不能直接改 .dynamic-row 本身（會連帶影響這次
+           範圍外的畫面），所以在這裡用更明確的 .product-batch-row
+           選擇器蓋過去，只影響商品批次這個情境。 */
+        .product-batch-row input[type="text"],
+        .product-batch-row input[type="number"],
+        .product-batch-row input[type="date"],
+        .product-batch-row input[type="datetime-local"],
+        .product-batch-row select,
+        .series-batch-row input[type="text"],
+        .series-batch-row input[type="number"] {
+            border: 1px solid #cbd5e1;
+            border-radius: 0.375rem;
+            padding: 0.625rem;
+            font-family: inherit;
+            font-size: 0.875rem;
+            color: #334155;
+            transition: border-color 0.2s;
+            width: 100%;
+        }
+        .product-batch-row input:focus,
+        .product-batch-row select:focus,
+        .series-batch-row input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+        }
+
+        /* 商品/系列列表每一列的編輯/刪除小圖示按鈕（.product-row-actions
+           .btn）原本的 border-radius 是 0.45rem，跟 .btn 標準（0.375rem）
+           不一致——但 .product-row-actions 這個 class 同時被排程管理/
+           會員管理共用，不能直接改那條規則本身（會連帶動到這次範圍外
+           的畫面），所以只在商品/系列這三個列表的 tbody 底下用更明確
+           的選擇器蓋過去。 */
+        #stock-products-tbody .product-row-actions .btn,
+        #preorder-products-tbody .product-row-actions .btn,
+        #preorder-series-tbody .product-row-actions .btn {
+            border-radius: 0.375rem;
         }
 
         .tag-group-block { display: grid; gap: 0.35rem; min-width: 0; max-width: 100%; }
