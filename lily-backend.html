@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>麗麗後台 | Portal</title>
-    <!-- 後台 PWA 化第一階段：只做「可加入主畫面」，不做版面/快取改動。
-         manifest/service worker 都放在 /backend 底下，scope 限定不影響
-         前台/會員/購物網站頁面；icons 目前是佔位素材，之後會換正式設計。 -->
+    <!-- 後台 PWA：manifest/service worker 都放在 /backend 底下，scope
+         限定不影響前台、會員與購物網站；資料操作維持連線優先，不快取
+         API 回應，避免管理員在離線狀態看到過期營運資料。 -->
     <link rel="manifest" href="/backend/manifest.json">
     <meta name="theme-color" content="#ec4899">
     <link rel="apple-touch-icon" href="/backend/icons/apple-touch-icon-180.png">
@@ -901,10 +901,13 @@
         .product-tag-save-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
         .product-tag-save-state { color: #be185d; font-size: 0.82rem; font-weight: 900; min-height: 1.2rem; }
         .product-tag-list { display: grid; gap: 0.55rem; }
-        .product-tag-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto auto; gap: 0.65rem; align-items: center; border: 1px solid #e2e8f0; border-radius: 0.8rem; background: #fff; padding: 0.72rem; }
+        .product-tag-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 0.65rem; align-items: center; border: 1px solid #e2e8f0; border-radius: 0.8rem; background: #fff; padding: 0.72rem; }
         .product-tag-row:hover { background: #fff7fb; border-color: #f9a8d4; }
         .product-tag-handle { width: 30px; height: 30px; border: 1px solid #cbd5e1; border-radius: 0.6rem; background: #fff; color: #64748b; cursor: grab; font-weight: 900; }
         .product-tag-handle:active { cursor: grabbing; }
+        .product-tag-main { min-width: 0; }
+        .product-tag-meta { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.28rem; color: #64748b; font-size: 0.74rem; }
+        .product-tag-actions { display: flex; align-items: center; justify-content: flex-end; gap: 0.4rem; }
         .product-tag-status { border: 0; border-radius: 999px; padding: 0.42rem 0.7rem; font-size: 0.76rem; font-weight: 900; cursor: pointer; }
         .product-tag-status.on { background: #dcfce7; color: #166534; }
         .product-tag-status.off { background: #f1f5f9; color: #64748b; }
@@ -1008,9 +1011,6 @@
         .product-tag-preview-pill { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0.24rem 0.6rem; font-size: 0.78rem; font-weight: 900; white-space: nowrap; border: 1px solid var(--tag-border, #f9a8d4); background: var(--tag-bg, #fce7f3); color: var(--tag-fg, #be185d); }
         @media (max-width: 920px) {
             .product-tag-board { grid-template-columns: 1fr; }
-            .product-tag-row { grid-template-columns: 34px minmax(0, 1fr); }
-            .product-tag-row .product-tag-status,
-            .product-tag-row .btn { justify-self: start; }
         }
         @media (max-width: 640px) {
             .product-tag-edit-row { grid-template-columns: 1fr 44px 1fr 1fr 34px; }
@@ -1076,6 +1076,223 @@
            自己 stopPropagation 後開預覽，不會觸發外層按鈕。 */
         .variant-thumb-preview-btn { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 0.3rem; border: 0; background: rgba(15, 23, 42, 0.6); color: #fff; font-size: 0.52rem; display: grid; place-items: center; cursor: pointer; }
         .variant-thumb-preview-btn:hover { background: #ec4899; }
+
+        /* Mobile admin shell v2. The desktop admin remains unchanged; these
+           components become visible only in the phone layout below. */
+        .mobile-topbar-copy,
+        .mobile-bottom-nav,
+        .mobile-module-sheet,
+        .mobile-offline-banner { display: none; }
+        .mobile-dashboard-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+        .mobile-dashboard-heading > div > span { display: block; color: #8b7b81; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; }
+        .mobile-dashboard-heading h2 { margin-top: 0.2rem; font-size: 1.55rem; letter-spacing: -0.03em; }
+        .mobile-dashboard-bell { width: 44px; height: 44px; border: 1px solid #f6dbe5; border-radius: 50%; background: #fff; color: #be185d; box-shadow: 0 5px 16px rgba(80, 40, 54, 0.06); cursor: pointer; }
+        .mobile-dashboard-hero { position: relative; overflow: hidden; border-radius: 1.5rem; padding: 1.35rem; color: #fff; background: linear-gradient(135deg, #f07a9a 0%, #dd5e85 65%, #c94e75 100%); box-shadow: 0 14px 30px rgba(207, 79, 115, 0.22); }
+        .mobile-dashboard-hero::before { content: ''; position: absolute; width: 170px; height: 170px; border-radius: 50%; right: -70px; top: -90px; background: rgba(255,255,255,0.1); }
+        .mobile-dashboard-hero-top { position: relative; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+        .mobile-dashboard-hero-top span { font-size: 0.78rem; opacity: 0.84; }
+        .mobile-dashboard-hero-top strong { display: block; margin-top: 0.2rem; font-size: 2rem; line-height: 1; letter-spacing: -0.04em; }
+        .mobile-dashboard-live { display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 999px; padding: 0.35rem 0.55rem; background: rgba(255,255,255,0.16); font-weight: 800; }
+        .mobile-dashboard-live i { font-size: 0.42rem; }
+        .mobile-dashboard-kpis { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.22); }
+        .mobile-dashboard-kpis button { border: 0; border-left: 1px solid rgba(255,255,255,0.2); background: transparent; color: #fff; text-align: left; padding: 0 0.75rem; cursor: pointer; }
+        .mobile-dashboard-kpis button:first-child { border-left: 0; padding-left: 0; }
+        .mobile-dashboard-kpis span { display: block; font-size: 0.67rem; opacity: 0.76; }
+        .mobile-dashboard-kpis strong { display: block; margin-top: 0.2rem; font-size: 1.18rem; }
+        .mobile-dashboard-alert { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; align-items: center; gap: 0.7rem; padding: 0.8rem 0.9rem; border: 1px solid #f4dfd4; border-radius: 1rem; background: #fff7f0; color: #3f3236; }
+        .mobile-dashboard-alert-icon { width: 34px; height: 34px; border-radius: 0.7rem; display: grid; place-items: center; background: #ffe6d8; color: #d47c42; }
+        .mobile-dashboard-alert strong, .mobile-dashboard-alert small { display: block; }
+        .mobile-dashboard-alert strong { font-size: 0.8rem; }
+        .mobile-dashboard-alert small { margin-top: 0.15rem; color: #8b7b81; font-size: 0.7rem; line-height: 1.4; }
+        .mobile-dashboard-alert > i { color: #b6a8ad; font-size: 0.7rem; }
+        .mobile-dashboard-section-title { display: flex; align-items: center; justify-content: space-between; margin-top: 0.25rem; }
+        .mobile-dashboard-section-title h3 { font-size: 1rem; }
+        .mobile-dashboard-section-title button { border: 0; background: transparent; color: #be185d; font-size: 0.75rem; font-weight: 800; cursor: pointer; }
+        .mobile-dashboard-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.55rem; }
+        .mobile-dashboard-actions button { min-width: 0; border: 1px solid #f0e2e6; border-radius: 1rem; background: #fff; padding: 0.8rem 0.25rem 0.7rem; color: #54464b; font-size: 0.68rem; font-weight: 800; cursor: pointer; }
+        .mobile-dashboard-actions span { width: 38px; height: 38px; margin: 0 auto 0.45rem; border-radius: 0.75rem; display: grid; place-items: center; background: #fff0f4; color: #c94e75; font-size: 0.95rem; }
+        .mobile-dashboard-actions button:nth-child(2) span { background: #eef5ff; color: #4f76a7; }
+        .mobile-dashboard-actions button:nth-child(3) span { background: #eaf8f2; color: #2f9775; }
+        .mobile-dashboard-actions button:nth-child(4) span { background: #f4efff; color: #7d5ca5; }
+        .mobile-dashboard-overview { overflow: hidden; border: 1px solid #f0e2e6; border-radius: 1.2rem; background: #fff; box-shadow: 0 5px 18px rgba(70, 44, 53, 0.04); }
+        .mobile-dashboard-overview button { width: 100%; display: grid; grid-template-columns: 40px minmax(0,1fr) auto auto; align-items: center; gap: 0.7rem; border: 0; border-top: 1px solid #f3eaec; background: transparent; padding: 0.9rem; text-align: left; cursor: pointer; }
+        .mobile-dashboard-overview button:first-child { border-top: 0; }
+        .mobile-dashboard-overview strong, .mobile-dashboard-overview small { display: block; }
+        .mobile-dashboard-overview strong { font-size: 0.83rem; }
+        .mobile-dashboard-overview small { margin-top: 0.15rem; color: #918389; font-size: 0.7rem; }
+        .mobile-dashboard-overview b { color: #be185d; font-size: 0.78rem; }
+        .mobile-dashboard-overview button > i { color: #b6a8ad; font-size: 0.65rem; }
+        .overview-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 0.8rem; background: #fff0f4; color: #c94e75; }
+        .overview-icon.blue { background: #eef5ff; color: #4f76a7; }
+        .overview-icon.green { background: #eaf8f2; color: #2f9775; }
+        .overview-icon.purple { background: #f4efff; color: #7d5ca5; }
+
+        @media (max-width: 720px) {
+            :root { --mobile-nav-height: 76px; }
+            html, body { width: 100%; min-height: 100%; background: #f8f4f5; }
+            body { display: block; height: 100dvh; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+            .main-wrapper { width: 100%; height: 100dvh; overflow: hidden; }
+            .sidebar { display: none !important; }
+            .sidebar-menu > .menu-group:not([data-module-key="community"]) { display: block; }
+            .topbar { height: 62px; padding: 0 0.9rem; border-bottom: 1px solid #f1e4e8; box-shadow: none; flex: 0 0 auto; }
+            .topbar-left { min-width: 0; flex: 1; gap: 0.7rem; }
+            .topbar-left > div:first-child { min-width: 0; gap: 0.7rem !important; }
+            .menu-toggle { width: 38px; height: 38px; border: 1px solid #f2dce4; border-radius: 0.8rem; display: grid; place-items: center; color: #be185d; background: #fff7fa; font-size: 1rem; }
+            .mobile-topbar-copy { display: flex; min-width: 0; align-items: center; gap: 0.5rem; }
+            .mobile-topbar-copy strong { overflow: hidden; color: #33282c; font-size: 0.96rem; white-space: nowrap; text-overflow: ellipsis; }
+            .mobile-staging-badge { flex: 0 0 auto; border: 1px solid #fbcf9e; border-radius: 999px; padding: 0.18rem 0.4rem; background: #fff7ed; color: #c25b18; font-size: 0.56rem; font-weight: 900; letter-spacing: 0.05em; }
+            .topbar-right { gap: 0.45rem; }
+            .topbar-right .topbar-icon, .topbar-right .user-profile > span { display: none; }
+            .user-avatar { width: 34px; height: 34px; font-size: 0.78rem; }
+            .topbar-account-btn { width: 34px; height: 34px; justify-content: center; padding: 0; border-radius: 0.75rem; }
+            .content { padding: 1rem 0.85rem calc(var(--mobile-nav-height) + max(1rem, env(safe-area-inset-bottom))); overflow-x: hidden; overscroll-behavior-y: contain; }
+            .section-container { gap: 1rem; width: 100%; }
+            #section-welcome { display: none !important; }
+            .page-header { margin-bottom: 0; padding-bottom: 0.8rem; gap: 0.7rem; }
+            .page-title { font-size: 1.25rem; letter-spacing: -0.02em; }
+            .page-header .toolbar { width: 100%; display: grid !important; grid-template-columns: repeat(2, minmax(0,1fr)); align-items: stretch !important; height: auto !important; }
+            .page-header .toolbar > .btn { min-width: 0; min-height: 42px; justify-content: center; white-space: normal; text-align: center; }
+            .btn { min-height: 40px; border-radius: 0.75rem; justify-content: center; }
+            .btn-sm { min-height: 34px; }
+            input, select, textarea { font-size: 16px !important; }
+
+            /* Filters and settings become stacked cards instead of squeezed desktop rows. */
+            .filter-bar,
+            .backend-member-filter-row,
+            .storefront-order-search-row,
+            .community-livestream-filter-grid,
+            .community-remittances-filter-grid { width: 100% !important; display: grid !important; grid-template-columns: repeat(2, minmax(0,1fr)) !important; align-items: end !important; gap: 0.65rem !important; padding: 0.8rem !important; border-radius: 1rem !important; }
+            .filter-bar > *, .backend-member-filter-row > *, .storefront-order-search-row > * { width: 100% !important; min-width: 0 !important; max-width: none !important; margin: 0 !important; }
+            .filter-bar .form-group:first-child,
+            .backend-member-filter-row .backend-member-filter-field:first-child,
+            .storefront-order-search-input { grid-column: 1 / -1; }
+            .product-filter-card, .ledger-search-panel, .backend-member-filterbar { border-radius: 1rem; box-shadow: none; }
+            .ledger-filter-card { grid-template-columns: 1fr !important; }
+            .ledger-summary { justify-content: stretch !important; display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 0.45rem !important; }
+            .ledger-summary-item { min-width: 0 !important; padding: 0.55rem !important; }
+
+            /* Every desktop table remains available. Horizontal scroll is explicit
+               for dense data, while the surrounding surface is touch friendly. */
+            .table-wrapper { max-width: 100%; overflow-x: auto !important; border: 1px solid #f0e2e6; border-radius: 1rem; box-shadow: none; -webkit-overflow-scrolling: touch; }
+            .table-wrapper table { min-width: 720px; }
+            .table-wrapper th, .table-wrapper td { padding: 0.72rem 0.8rem; font-size: 0.78rem; }
+            .storefront-order-table-scroll { -webkit-overflow-scrolling: touch; }
+            .storefront-order-table { min-width: 1180px; }
+            .sub-table-container { max-width: calc(100vw - 2.6rem); overflow-x: auto; margin: 0.35rem; padding: 0.7rem; border-left-width: 3px; }
+            .sub-table { min-width: 680px; }
+            .order-group, .brand-setting-card, .appearance-list-item, .site-feature-flag-card { border-radius: 1rem !important; }
+
+            /* Modal forms become full-height bottom sheets; every original field
+               and action stays in the DOM and remains reachable. */
+            .modal-overlay { align-items: flex-end; padding: 0; }
+            .modal-content, .modal-content.large { width: 100%; max-width: none; max-height: 94dvh; border-radius: 1.35rem 1.35rem 0 0; transform: translateY(24px); }
+            .modal-header { padding: 1rem; }
+            .modal-header h3 { font-size: 1.08rem; }
+            .modal-body { padding: 1rem; gap: 0.85rem; }
+            .modal-footer { position: sticky; bottom: 0; padding: 0.8rem 1rem calc(0.8rem + env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); border-radius: 0; }
+            .modal-footer .btn { width: 100%; }
+            .form-row { flex-direction: column; gap: 0.75rem; }
+            .form-row > *, .form-group { width: 100%; min-width: 0; }
+            .dynamic-header { display: none; }
+            .dynamic-row, .hide-tracking.dynamic-header, .hide-tracking .dynamic-row { grid-template-columns: 1fr 1fr !important; padding: 0.75rem; border: 1px solid #f0e2e6; border-radius: 0.85rem; background: #fff; }
+            .dynamic-row .btn-icon { min-height: 36px; border-radius: 0.65rem; background: #fff0f4; }
+            .stall-day-row { grid-template-columns: 1fr 1fr; padding: 0.65rem; border: 1px solid #f0e2e6; border-radius: 0.8rem; }
+            .stall-day-row > :first-child { grid-column: 1 / -1; }
+            .stall-day-row .btn-icon { grid-column: 1 / -1; min-height: 34px; background: #fff0f4; border-radius: 0.65rem; }
+            .product-batch-row { grid-template-columns: 1fr !important; padding: 0.8rem; }
+            .product-batch-tags, .product-batch-image-row, .product-batch-description { grid-column: 1 !important; }
+            .product-default-image-control { width: 100%; margin-left: 0; justify-content: flex-start; }
+
+            .mobile-bottom-nav { position: fixed; z-index: 850; left: 0; right: 0; bottom: 0; height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom)); padding: 0.45rem 0.45rem env(safe-area-inset-bottom); display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid #efe2e6; background: rgba(255,255,255,0.96); box-shadow: 0 -10px 28px rgba(74, 42, 53, 0.08); backdrop-filter: blur(18px); }
+            .mobile-bottom-nav button { min-width: 0; border: 0; background: transparent; color: #a19499; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.15rem; cursor: pointer; }
+            .mobile-bottom-nav button span { width: 40px; height: 32px; border-radius: 0.75rem; display: grid; place-items: center; font-size: 0.98rem; }
+            .mobile-bottom-nav button small { font-size: 0.62rem; font-weight: 800; }
+            .mobile-bottom-nav button.active { color: #be185d; }
+            .mobile-bottom-nav button.active span { background: #fff0f4; }
+
+            .mobile-module-sheet { position: fixed; z-index: 1200; inset: 0; display: block; visibility: hidden; pointer-events: none; }
+            .mobile-module-sheet.open { visibility: visible; pointer-events: auto; }
+            .mobile-module-sheet-backdrop { position: absolute; inset: 0; width: 100%; border: 0; background: rgba(38, 26, 30, 0.42); opacity: 0; transition: opacity 0.2s ease; backdrop-filter: blur(2px); }
+            .mobile-module-sheet.open .mobile-module-sheet-backdrop { opacity: 1; }
+            .mobile-module-sheet-panel { position: absolute; left: 0; right: 0; bottom: 0; max-height: 88dvh; display: flex; flex-direction: column; border-radius: 1.5rem 1.5rem 0 0; background: #fbf8f9; box-shadow: 0 -20px 60px rgba(52, 30, 38, 0.2); transform: translateY(105%); transition: transform 0.26s ease; }
+            .mobile-module-sheet.open .mobile-module-sheet-panel { transform: translateY(0); }
+            .mobile-module-sheet-handle { width: 42px; height: 4px; margin: 0.55rem auto 0; border-radius: 99px; background: #d8cdd1; }
+            .mobile-module-sheet-panel > header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.8rem 1rem 0.7rem; }
+            .mobile-module-sheet-panel > header span { display: block; color: #9a8c91; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em; }
+            .mobile-module-sheet-panel > header h2 { margin-top: 0.15rem; font-size: 1.2rem; }
+            .mobile-module-sheet-panel > header button { width: 38px; height: 38px; border: 1px solid #efdee4; border-radius: 50%; background: #fff; color: #7b6c71; }
+            .mobile-module-sheet-content { overflow-y: auto; padding: 0 1rem calc(1.1rem + env(safe-area-inset-bottom)); }
+            .mobile-module-group { margin-top: 0.6rem; }
+            .mobile-module-group h3 { margin: 0 0 0.45rem 0.2rem; color: #8c7d82; font-size: 0.72rem; letter-spacing: 0.04em; }
+            .mobile-module-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0.55rem; }
+            .mobile-module-grid button { min-width: 0; min-height: 54px; display: grid; grid-template-columns: 34px minmax(0,1fr) auto; align-items: center; gap: 0.55rem; border: 1px solid #efe1e6; border-radius: 0.9rem; background: #fff; padding: 0.6rem; color: #43363b; text-align: left; font-size: 0.76rem; font-weight: 800; box-shadow: 0 3px 10px rgba(74, 42, 53, 0.035); }
+            .mobile-module-grid button > span:first-child { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 0.7rem; background: #fff0f4; color: #c64c72; }
+            .mobile-module-grid button > i { color: #c0b3b7; font-size: 0.58rem; }
+            .mobile-module-grid button:disabled { opacity: 0.48; }
+
+            .mobile-offline-banner { position: fixed; z-index: 1300; left: 0.75rem; right: 0.75rem; top: 0.65rem; display: none; align-items: center; gap: 0.6rem; border-radius: 0.85rem; background: #3f3035; color: #fff; padding: 0.75rem 0.85rem; font-size: 0.72rem; font-weight: 700; line-height: 1.45; box-shadow: 0 10px 30px rgba(30,20,24,0.25); }
+            .mobile-offline-banner.show { display: flex; }
+
+            #section-data-overview { gap: 0.85rem; }
+            #section-data-overview .page-header { display: none; }
+            .brand-management-layout, .appearance-layout { min-width: 0; }
+            .appearance-tabs, .appearance-subnav { max-width: 100%; overflow-x: auto; flex-wrap: nowrap !important; justify-content: flex-start !important; scrollbar-width: none; }
+            .appearance-tabs button, .appearance-subnav button { flex: 0 0 auto; }
+
+            /* Compact mobile surfaces: the top bar already carries the active
+               module name, so dense admin screens should spend their height on
+               data and actions instead of repeated headings and oversized cards. */
+            .content { padding: 0.75rem 0.65rem calc(var(--mobile-nav-height) + max(0.75rem, env(safe-area-inset-bottom))); }
+            .section-container { gap: 0.75rem; }
+            .page-header { padding-bottom: 0.6rem; gap: 0.5rem; }
+            .page-title { font-size: 1.08rem; }
+            .page-header .toolbar { gap: 0.45rem; }
+            .page-header .toolbar > .btn { min-height: 36px; padding: 0.42rem 0.6rem; font-size: 0.78rem; }
+            .btn { min-height: 36px; padding: 0.44rem 0.7rem; border-radius: 0.65rem; }
+            .btn-sm { min-height: 32px; padding: 0.34rem 0.55rem; }
+            .filter-bar,
+            .backend-member-filter-row,
+            .storefront-order-search-row,
+            .community-livestream-filter-grid,
+            .community-remittances-filter-grid { gap: 0.5rem !important; padding: 0.65rem !important; border-radius: 0.8rem !important; }
+            .form-group { gap: 0.35rem; }
+            .form-group label { font-size: 0.78rem; }
+            .brand-setting-card, .appearance-list-item, .site-feature-flag-card { padding: 0.8rem !important; gap: 0.65rem !important; }
+            .modal-header { padding: 0.8rem 0.9rem; }
+            .modal-body { padding: 0.8rem 0.9rem; gap: 0.65rem; }
+            .modal-footer { padding: 0.65rem 0.9rem calc(0.65rem + env(safe-area-inset-bottom)); gap: 0.5rem; }
+            .dynamic-row, .hide-tracking.dynamic-header, .hide-tracking .dynamic-row { gap: 0.5rem !important; padding: 0.6rem; border-radius: 0.7rem; }
+
+            /* 商品標籤在手機上改成一列式資料卡。名稱、使用數與狀態放在
+               同一資訊區，編輯/刪除只保留圖示，避免每筆被拆成三四層。 */
+            #section-product-tags > .page-header .page-title { display: none; }
+            #section-product-tags > .page-header { border-bottom: 0; padding: 0; }
+            #section-product-tags > .page-header .toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .product-tag-surface { padding: 0 !important; overflow: visible !important; border: 0 !important; background: transparent; }
+            .product-tag-save-row { padding: 0.65rem 0.75rem; border: 1px solid #f0e2e6; border-radius: 0.85rem; background: #fff; }
+            .product-tag-help { flex: 1 1 100%; font-size: 0.72rem !important; line-height: 1.45; }
+            .product-tag-save-actions { width: 100%; justify-content: space-between; flex-wrap: nowrap !important; }
+            .product-tag-save-actions .btn { min-height: 34px; }
+            .product-tag-board { gap: 0.65rem; margin-top: 0.65rem !important; }
+            .product-tag-column { padding: 0.65rem; gap: 0.55rem; border-radius: 0.85rem; }
+            .product-tag-column-header { gap: 0.5rem; }
+            .product-tag-column-title { font-size: 0.95rem; }
+            .product-tag-column-header .btn { min-height: 34px; padding: 0.38rem 0.65rem; font-size: 0.78rem; }
+            .product-tag-list { gap: 0.42rem; }
+            .product-tag-row { grid-template-columns: 28px minmax(0, 1fr) auto; gap: 0.5rem; padding: 0.55rem; border-radius: 0.72rem; }
+            .product-tag-handle { width: 28px; height: 28px; border-radius: 0.52rem; }
+            .product-tag-main .product-tag-preview-pill { max-width: 100%; overflow: hidden; text-overflow: ellipsis; padding: 0.2rem 0.5rem; font-size: 0.74rem; }
+            .product-tag-meta { gap: 0.4rem; margin-top: 0.22rem; font-size: 0.68rem; white-space: nowrap; }
+            .product-tag-status { padding: 0.2rem 0.45rem; font-size: 0.66rem; }
+            .product-tag-actions { gap: 0.3rem; }
+            .product-tag-actions .btn { width: 32px; min-width: 32px; height: 32px; min-height: 32px; padding: 0; }
+            .product-tag-actions .btn span { display: none; }
+            .product-tag-edit-row { grid-template-columns: minmax(0, 1fr) 38px 88px 32px; gap: 0.4rem; padding-bottom: 0.55rem; border-bottom: 1px solid #f3e8ec; }
+            .product-tag-edit-row .product-tag-preview-pill { grid-column: 1 / 4; grid-row: 2; justify-self: start; }
+            .product-tag-edit-row > .btn { grid-column: 4; grid-row: 1 / 3; width: 32px; min-width: 32px; padding: 0; }
+            .product-tag-columns { grid-template-columns: 1fr !important; }
+            .brand-setting-grid, .site-feature-flag-list { grid-template-columns: 1fr !important; }
+        }
     </style>
 </head>
 <body>
@@ -1183,6 +1400,10 @@
             <div class="topbar-left">
                 <div style="display: flex; align-items: center; gap: 1rem; height: 100%;">
                     <i class="fa-solid fa-bars menu-toggle" id="menuToggle"></i>
+                    <div class="mobile-topbar-copy">
+                        <span class="mobile-staging-badge" id="mobileStagingBadge">STAGING</span>
+                        <strong id="mobileTopbarTitle">數據總覽</strong>
+                    </div>
                     <a href="index.html" class="topbar-home-link" style="text-decoration: none; color: #475569; font-size: 0.9rem;"><i class="fa-solid fa-house"></i> 回到主選單</a>
                 </div>
                 <div class="tabs-container" id="tabsContainer"></div>
@@ -2092,10 +2313,10 @@
                         <button class="btn btn-secondary" type="button" onclick="openPreorderLinkGeneratorModal()"><i class="fa-solid fa-link"></i><span class="btn-label"> 產生預購連結</span></button>
                     </div>
                 </div>
-                <div class="table-wrapper" style="padding: 1.25rem;">
+                <div class="table-wrapper product-tag-surface" style="padding: 1.25rem;">
                     <div class="product-tag-save-row">
-                        <p style="margin:0;color:#64748b;font-size:0.86rem;font-weight:700;">IP 與商品類別分開管理；排序與顯示狀態按儲存後才會寫入後端。</p>
-                        <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+                        <p class="product-tag-help" style="margin:0;color:#64748b;font-size:0.86rem;font-weight:700;">IP 與商品類別分開管理；排序與顯示狀態按儲存後才會寫入後端。</p>
+                        <div class="product-tag-save-actions" style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
                             <span id="product-tag-save-state" class="product-tag-save-state">已儲存</span>
                             <button class="btn btn-primary" type="button" onclick="saveProductTagsSettings()"><i class="fa-solid fa-floppy-disk"></i> 儲存標籤設定</button>
                         </div>
@@ -2424,13 +2645,46 @@
 
             <!-- Data Overview Section -->
             <div id="section-data-overview" class="section-container">
-                <div class="page-header">
-                    <h2 class="page-title">數據總覽</h2>
+                <div class="mobile-dashboard-heading">
+                    <div>
+                        <span>今天也一起把訂單處理好</span>
+                        <h2>嗨，Lily 👋</h2>
+                    </div>
+                    <button type="button" class="mobile-dashboard-bell" onclick="openMobileModuleSheet()" aria-label="開啟全部功能">
+                        <i class="fa-solid fa-grip"></i>
+                    </button>
                 </div>
-                <div class="content-wrapper" style="padding: 3rem 2rem; background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); text-align: center; color: #64748b;">
-                    <i class="fa-solid fa-chart-pie" style="font-size: 4rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
-                    <h3 style="font-size: 1.25rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem;">數據總覽功能開發中</h3>
-                    <p>未來將在此顯示銷售圖表與各項運營指標。</p>
+                <div class="mobile-dashboard-hero">
+                    <div class="mobile-dashboard-hero-top">
+                        <div>
+                            <span>目前商品總數</span>
+                            <strong id="mobile-dashboard-product-total">0</strong>
+                        </div>
+                        <span class="mobile-dashboard-live"><i class="fa-solid fa-circle"></i> 即時資料</span>
+                    </div>
+                    <div class="mobile-dashboard-kpis">
+                        <button type="button" onclick="openTab('stock-products', '現貨商品管理')"><span>現貨商品</span><strong id="mobile-dashboard-stock-count">0</strong></button>
+                        <button type="button" onclick="openTab('preorder-products', '預購商品管理')"><span>預購商品</span><strong id="mobile-dashboard-preorder-count">0</strong></button>
+                        <button type="button" onclick="openTab('product-tags', '商品標籤管理')"><span>商品標籤</span><strong id="mobile-dashboard-tag-count">0</strong></button>
+                    </div>
+                </div>
+                <div class="mobile-dashboard-alert" id="mobile-dashboard-alert">
+                    <span class="mobile-dashboard-alert-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                    <span><strong id="mobile-dashboard-alert-title">正在整理待辦事項</strong><small id="mobile-dashboard-alert-copy">資料載入後會顯示需要注意的項目</small></span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </div>
+                <div class="mobile-dashboard-section-title"><h3>快速處理</h3><button type="button" onclick="openMobileModuleSheet()">全部功能</button></div>
+                <div class="mobile-dashboard-actions">
+                    <button type="button" onclick="openTab('stock-products', '現貨商品管理')"><span><i class="fa-solid fa-box"></i></span>現貨商品</button>
+                    <button type="button" onclick="openTab('preorder-products', '預購商品管理')"><span><i class="fa-solid fa-clock"></i></span>預購商品</button>
+                    <button type="button" onclick="openTab('storefront-orders', '訂單管理')"><span><i class="fa-solid fa-receipt"></i></span>訂單處理</button>
+                    <button type="button" onclick="openTab('brand-management', '品牌管理')"><span><i class="fa-solid fa-palette"></i></span>品牌外觀</button>
+                </div>
+                <div class="mobile-dashboard-section-title"><h3>營運概況</h3></div>
+                <div class="mobile-dashboard-overview">
+                    <button type="button" onclick="openTab('vendors', '叫貨處管理')"><span class="overview-icon blue"><i class="fa-solid fa-store"></i></span><span><strong>叫貨來源</strong><small>廠商與購物網站</small></span><b id="mobile-dashboard-source-count">0</b><i class="fa-solid fa-chevron-right"></i></button>
+                    <button type="button" onclick="openTab('stall-schedules', '擺攤時程')"><span class="overview-icon green"><i class="fa-solid fa-calendar-days"></i></span><span><strong>活動行程</strong><small>擺攤與連線時程</small></span><b id="mobile-dashboard-schedule-count">0</b><i class="fa-solid fa-chevron-right"></i></button>
+                    <button type="button" onclick="openTab('community-orders', '社群訂單')"><span class="overview-icon purple"><i class="fa-solid fa-comments"></i></span><span><strong>社群管理</strong><small>訂單、名單與面交</small></span><b>進入</b><i class="fa-solid fa-chevron-right"></i></button>
                 </div>
             </div>
 
@@ -3737,6 +3991,41 @@
         <div style="margin-top: 1rem; color: white; font-weight: 500;">處理中...</div>
     </div>
 
+    <div class="mobile-offline-banner" id="mobileOfflineBanner" role="status">
+        <i class="fa-solid fa-wifi"></i>
+        目前沒有網路，為避免資料不同步，儲存功能請等連線恢復後再操作。
+    </div>
+
+    <nav class="mobile-bottom-nav" aria-label="手機版主要功能">
+        <button type="button" data-mobile-nav="home" onclick="openTab('data-overview', '數據總覽')">
+            <span><i class="fa-solid fa-house"></i></span><small>首頁</small>
+        </button>
+        <button type="button" data-mobile-nav="orders" onclick="openTab('storefront-orders', '訂單管理')">
+            <span><i class="fa-solid fa-receipt"></i></span><small>訂單</small>
+        </button>
+        <button type="button" data-mobile-nav="products" onclick="openTab('stock-products', '現貨商品管理')">
+            <span><i class="fa-solid fa-box"></i></span><small>商品</small>
+        </button>
+        <button type="button" data-mobile-nav="community" onclick="openTab('community-orders', '社群訂單')">
+            <span><i class="fa-solid fa-comments"></i></span><small>社群</small>
+        </button>
+        <button type="button" data-mobile-nav="more" onclick="openMobileModuleSheet()">
+            <span><i class="fa-solid fa-grip"></i></span><small>更多</small>
+        </button>
+    </nav>
+
+    <div class="mobile-module-sheet" id="mobileModuleSheet" aria-hidden="true">
+        <button type="button" class="mobile-module-sheet-backdrop" onclick="closeMobileModuleSheet()" aria-label="關閉全部功能"></button>
+        <section class="mobile-module-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="mobileModuleSheetTitle">
+            <div class="mobile-module-sheet-handle"></div>
+            <header>
+                <div><span>所有後台功能</span><h2 id="mobileModuleSheetTitle">選擇要管理的項目</h2></div>
+                <button type="button" onclick="closeMobileModuleSheet()" aria-label="關閉"><i class="fa-solid fa-xmark"></i></button>
+            </header>
+            <div class="mobile-module-sheet-content" id="mobileModuleSheetContent"></div>
+        </section>
+    </div>
+
     <script>
         let backendToastTimer = null;
 
@@ -3764,6 +4053,7 @@
             if (!openTabs.find(t => t.name === name)) {
                 openTabs.push({ name, title });
             }
+            if (isMobileSidebarLayout()) closeMobileModuleSheet();
             activateTab(name);
         }
 
@@ -3803,6 +4093,8 @@
             if(name === 'exchange-rates') initExchangeRates();
             if(name === 'brand-management') renderBrandManagement();
             if(name === 'site-feature-flags') loadSiteFeatureFlags();
+            if(name === 'data-overview') renderMobileDashboard();
+            syncMobileAdminNav(name);
         }
 
         function closeTab(name, event) {
@@ -3898,6 +4190,10 @@
             document.getElementById('sidebar').style.width = isMobileSidebarLayout() ? 'max-content' : '260px';
         }
         document.getElementById('menuToggle').addEventListener('click', () => {
+            if (isMobileSidebarLayout()) {
+                openMobileModuleSheet();
+                return;
+            }
             const sb = document.getElementById('sidebar');
             if (sb.style.width === '0px') openSidebar(); else closeSidebar();
         });
@@ -4062,6 +4358,7 @@
             renderGeneralLedger();
             renderProductDefaultImagePreviews();
             renderBrandManagement();
+            renderMobileDashboard();
         }
 
         function cacheBackendData(data = {}) {
@@ -7221,10 +7518,17 @@
             const usage = productTagUsageCount(tag.id);
             return `<div class="product-tag-row" data-tag-id="${escapeHtml(tag.id)}">
                 <button type="button" class="product-tag-handle" title="拖曳排序" aria-label="拖曳排序">⋮⋮</button>
-                <div>${tagPill(tag.id)}<div style="font-size:0.74rem;color:#64748b;margin-top:0.25rem;">${usage} 個商品使用</div></div>
-                <button type="button" class="product-tag-status ${tag.enabled ? 'on' : 'off'}" onclick="toggleProductTagEnabled(${quoteJs(tag.id)})">${tag.enabled ? '顯示中' : '隱藏中'}</button>
-                <button class="btn btn-sm btn-action-edit" type="button" onclick="openProductTagForm(${quoteJs(tag.type)}, ${quoteJs(tag.id)})"><i class="fa-solid fa-pen"></i> 編輯</button>
-                <button class="btn btn-sm btn-action-delete" type="button" onclick="deleteProductTag(${quoteJs(tag.id)})"><i class="fa-solid fa-trash"></i> 刪除</button>
+                <div class="product-tag-main">
+                    ${tagPill(tag.id)}
+                    <div class="product-tag-meta">
+                        <span>${usage} 個商品使用</span>
+                        <button type="button" class="product-tag-status ${tag.enabled ? 'on' : 'off'}" onclick="toggleProductTagEnabled(${quoteJs(tag.id)})">${tag.enabled ? '顯示中' : '隱藏中'}</button>
+                    </div>
+                </div>
+                <div class="product-tag-actions">
+                    <button class="btn btn-sm btn-action-edit" type="button" title="編輯" aria-label="編輯 ${escapeHtml(tag.name)}" onclick="openProductTagForm(${quoteJs(tag.type)}, ${quoteJs(tag.id)})"><i class="fa-solid fa-pen"></i><span>編輯</span></button>
+                    <button class="btn btn-sm btn-action-delete" type="button" title="刪除" aria-label="刪除 ${escapeHtml(tag.name)}" onclick="deleteProductTag(${quoteJs(tag.id)})"><i class="fa-solid fa-trash"></i><span>刪除</span></button>
+                </div>
             </div>`;
         }
 
@@ -14629,6 +14933,156 @@
                 tbody.innerHTML = '<tr><td colspan="3" class="empty-state" style="color: #ef4444;">匯率抓取失敗，請檢查網路連線或稍後再試。</td></tr>';
             }
         }
+
+        // --- Complete mobile navigation and PWA status ---
+        const MOBILE_MODULE_ICON_MAP = {
+            'data-overview': 'fa-chart-pie',
+            'exchange-rates': 'fa-money-bill-transfer',
+            'brand-management': 'fa-palette',
+            'site-feature-flags': 'fa-toggle-on',
+            'backend-members': 'fa-users',
+            'vendors': 'fa-store',
+            'vendors-orders': 'fa-boxes-stacked',
+            'website-orders': 'fa-cart-flatbed',
+            'storefront-orders': 'fa-receipt',
+            'customer-orders': 'fa-user-tag',
+            'community-orders': 'fa-comments',
+            'community-members': 'fa-address-book',
+            'community-fulfillment': 'fa-handshake',
+            'community-livestream-orders': 'fa-video',
+            'community-livestream-remittances': 'fa-building-columns',
+            'stock-products': 'fa-box',
+            'preorder-products': 'fa-clock',
+            'preorder-series': 'fa-layer-group',
+            'product-tags': 'fa-tags',
+            'stall-schedules': 'fa-shop',
+            'connection-schedules': 'fa-plane',
+            'general-ledger': 'fa-book',
+            'freight-accounting': 'fa-truck-fast',
+            'stall-accounting': 'fa-cash-register',
+            'connection-accounting': 'fa-calculator'
+        };
+
+        function buildMobileModuleSheet() {
+            const target = document.getElementById('mobileModuleSheetContent');
+            const menu = document.querySelector('.sidebar-menu');
+            if (!target || !menu) return;
+            target.innerHTML = [...menu.querySelectorAll(':scope > .menu-group[data-module-key]')].map(group => {
+                const groupTitle = group.querySelector('.menu-item span')?.textContent?.trim() || '其他管理';
+                const items = [...group.querySelectorAll('.submenu-item[data-module-item-key]')];
+                const buttons = items.map(item => {
+                    const key = item.dataset.moduleItemKey || '';
+                    const title = item.textContent.trim();
+                    const enabled = item.getAttribute('onclick')?.includes('openTab(');
+                    const icon = MOBILE_MODULE_ICON_MAP[key] || 'fa-sliders';
+                    return `<button type="button" ${enabled ? `onclick="openMobileModule('${escapeHtml(key)}', '${escapeHtml(title)}')"` : 'disabled'}>
+                        <span><i class="fa-solid ${icon}"></i></span>
+                        <span>${escapeHtml(title)}${enabled ? '' : '<small style="display:block;color:#94a3b8;margin-top:2px;">尚未啟用</small>'}</span>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>`;
+                }).join('');
+                return `<section class="mobile-module-group"><h3>${escapeHtml(groupTitle)}</h3><div class="mobile-module-grid">${buttons}</div></section>`;
+            }).join('');
+        }
+
+        function openMobileModule(name, title) {
+            closeMobileModuleSheet();
+            openTab(name, title);
+        }
+
+        function openMobileModuleSheet() {
+            if (!isMobileSidebarLayout()) {
+                openSidebar();
+                return;
+            }
+            const sheet = document.getElementById('mobileModuleSheet');
+            if (!sheet) return;
+            buildMobileModuleSheet();
+            sheet.classList.add('open');
+            sheet.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('mobile-sheet-open');
+            syncMobileAdminNav(activeTab, true);
+        }
+
+        function closeMobileModuleSheet() {
+            const sheet = document.getElementById('mobileModuleSheet');
+            if (!sheet) return;
+            sheet.classList.remove('open');
+            sheet.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('mobile-sheet-open');
+            syncMobileAdminNav(activeTab);
+        }
+
+        function mobileNavKeyForSection(name) {
+            if (name === 'data-overview') return 'home';
+            if (['storefront-orders', 'customer-orders'].includes(name)) return 'orders';
+            if (['stock-products', 'preorder-products', 'preorder-series', 'product-tags'].includes(name)) return 'products';
+            if (name.startsWith('community-')) return 'community';
+            return 'more';
+        }
+
+        function syncMobileAdminNav(name = activeTab, forceMore = false) {
+            const key = forceMore ? 'more' : mobileNavKeyForSection(name);
+            document.querySelectorAll('[data-mobile-nav]').forEach(button => {
+                button.classList.toggle('active', button.dataset.mobileNav === key);
+            });
+            const titleNode = document.getElementById('mobileTopbarTitle');
+            const activeItem = document.querySelector(`.submenu-item[data-module-item-key="${name}"]`);
+            if (titleNode) titleNode.textContent = activeItem?.textContent?.trim() || (name === 'data-overview' ? '數據總覽' : 'Pinkkkuin 後台');
+        }
+
+        function renderMobileDashboard() {
+            const setText = (id, value) => {
+                const node = document.getElementById(id);
+                if (node) node.textContent = String(value);
+            };
+            const stockCount = Array.isArray(stockProducts) ? stockProducts.length : 0;
+            const preorderCount = Array.isArray(preorderProducts) ? preorderProducts.length : 0;
+            const lowStock = Array.isArray(stockProducts)
+                ? stockProducts.filter(product => product.active !== false && Number(product.quantity || 0) <= 5).length
+                : 0;
+            const scheduleCount = (Array.isArray(stallSchedules) ? stallSchedules.length : 0)
+                + (Array.isArray(connectionSchedules) ? connectionSchedules.length : 0);
+            setText('mobile-dashboard-product-total', stockCount + preorderCount);
+            setText('mobile-dashboard-stock-count', stockCount);
+            setText('mobile-dashboard-preorder-count', preorderCount);
+            setText('mobile-dashboard-tag-count', Array.isArray(productTags) ? productTags.length : 0);
+            setText('mobile-dashboard-source-count', (Array.isArray(vendors) ? vendors.length : 0) + (Array.isArray(websites) ? websites.length : 0));
+            setText('mobile-dashboard-schedule-count', scheduleCount);
+            const alert = document.getElementById('mobile-dashboard-alert');
+            const title = document.getElementById('mobile-dashboard-alert-title');
+            const copy = document.getElementById('mobile-dashboard-alert-copy');
+            if (title && copy) {
+                if (lowStock > 0) {
+                    title.textContent = `${lowStock} 件現貨商品庫存偏低`;
+                    copy.textContent = '點一下前往現貨商品管理查看';
+                    if (alert) alert.onclick = () => openTab('stock-products', '現貨商品管理');
+                } else {
+                    title.textContent = '目前沒有低庫存提醒';
+                    copy.textContent = '商品、標籤與行程資料已載入';
+                    if (alert) alert.onclick = null;
+                }
+            }
+        }
+
+        function updateMobileConnectivity() {
+            const banner = document.getElementById('mobileOfflineBanner');
+            if (banner) banner.classList.toggle('show', !navigator.onLine);
+        }
+
+        window.addEventListener('online', updateMobileConnectivity);
+        window.addEventListener('offline', updateMobileConnectivity);
+        window.addEventListener('DOMContentLoaded', () => {
+            buildMobileModuleSheet();
+            updateMobileConnectivity();
+            const stagingBadge = document.getElementById('mobileStagingBadge');
+            if (stagingBadge) stagingBadge.hidden = !IS_STAGING_BACKEND;
+            if (isMobileSidebarLayout() && activeTab === 'welcome') {
+                openTab('data-overview', '數據總覽');
+            } else {
+                syncMobileAdminNav(activeTab);
+            }
+        });
 
     </script>
 </body>
