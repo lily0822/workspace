@@ -318,11 +318,20 @@
            舊的 .community-livestream-customer/-row/-time 三條規則整組
            換成下面這條單一文字樣式。 */
         .community-livestream-customer-name { flex: 1; min-width: 0; font-size: 0.78rem; font-weight: 800; color: #475569; overflow-wrap: break-word; }
+        /* 「買到幾個」輸入框——取代原本二元的「標記已購買」打勾按鈕，
+           放在卡片頭跟展開表單各一個（跟數量/單價同一套雙處同步手法）。 */
+        .community-livestream-purchased-qty-wrap { display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0; }
+        .community-livestream-purchased-qty-wrap label { font-size: 0.68rem; font-weight: 900; color: #94a3b8; white-space: nowrap; }
+        .community-livestream-summary-purchased-qty-input { width: 60px; min-height: 28px; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.15rem 0.3rem; font-size: 0.8rem; font-weight: 800; color: #334155; outline: none; text-align: center; }
+        .community-livestream-summary-purchased-qty-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
         .community-livestream-thumb-time { display: block; margin-top: 0.3rem; font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-align: center; }
         .community-livestream-product-input { width: 100%; min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.35rem 0.6rem; font-size: 0.82rem; font-weight: 800; color: #334155; outline: none; }
         .community-livestream-product-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
         .community-livestream-unrecognized { color: #dc2626; font-size: 0.7rem; font-weight: 900; margin-top: 0.2rem; }
-        .community-livestream-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+        /* 這輪新增「買到幾個」欄位，從 3 欄改成 2x2——4 欄在窄螢幕容易
+           擠在一起，這個頁籤沒有專用的窄螢幕 media query，2 欄排版在
+           各種寬度都比較安全。 */
+        .community-livestream-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
         .community-livestream-field { display: grid; gap: 0.2rem; }
         .community-livestream-field label { font-size: 0.68rem; font-weight: 900; color: #94a3b8; }
         .community-livestream-field input[type="number"] { width: 100%; min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.35rem 0.5rem; font-size: 0.82rem; font-weight: 800; color: #334155; outline: none; }
@@ -1962,14 +1971,6 @@
                         <button type="button" class="community-livestream-filter-btn" data-filter="unrecognizedOnly:1" onclick="toggleCommunityLivestreamQuickFilter('unrecognizedOnly', '1')">無法辨識價格</button>
                     </div>
                     <div class="community-livestream-batch-bar">
-                        <div class="community-livestream-batch-group">
-                            <label for="community-livestream-batch-purchase-value">購買</label>
-                            <select id="community-livestream-batch-purchase-value">
-                                <option value="not_bought">未購買</option>
-                                <option value="bought">已購買</option>
-                            </select>
-                            <button class="btn btn-sm btn-primary" type="button" id="community-livestream-batch-purchase-btn" onclick="applyCommunityLivestreamBatchPurchaseStatus()" disabled aria-label="套用購買狀態到已選項目"><i class="fa-solid fa-check"></i></button>
-                        </div>
                         <div class="community-livestream-batch-group">
                             <label for="community-livestream-batch-payment-value">匯款</label>
                             <select id="community-livestream-batch-payment-value">
@@ -10322,11 +10323,12 @@
         // 是完全不同的兩件事（那組是「挑幾筆、套用同一個值」；這組是
         // 「每筆各自暫存自己的數量/單價修改，最後一次送出」），函式/變數
         // 刻意不叫 communityLivestreamBatch* 以免跟既有的
-        // applyCommunityLivestreamBatchPurchaseStatus 那組搞混。開啟時，
-        // 數量/單價輸入框的 onchange 改呼叫 stageCommunityLivestreamFieldChange
-        // 把修改暫存進這個 Map（key 是 order id，value 是
-        // { quantity?, unitPrice? }），不是立即 PATCH；畫面上用
-        // .community-livestream-field-dirty 標示哪些欄位還沒存檔。
+        // applyCommunityLivestreamBatchPaymentStatus 那組搞混。開啟時，
+        // 數量/單價/買到幾個輸入框的 onchange 改呼叫
+        // stageCommunityLivestreamFieldChange 把修改暫存進這個 Map（key
+        // 是 order id，value 是 { quantity?, unitPrice?, purchasedQuantity? }），
+        // 不是立即 PATCH；畫面上用 .community-livestream-field-dirty
+        // 標示哪些欄位還沒存檔。
         let communityLivestreamBulkEditEnabled = false;
         const communityLivestreamBulkEditChanges = new Map();
         // 「依客人統計」檢視：純前端把已載入的 communityLivestreamOrders
@@ -10624,28 +10626,37 @@
                 ? `<img class="community-livestream-thumb" src="${escapeHtml(order.photoUrl)}" alt="商品照片" loading="lazy" onclick="openCommunityLivestreamPhotoPreview(${quoteJs(order.photoUrl)})">`
                 : `<div class="community-livestream-thumb-placeholder"><i class="fa-regular fa-image"></i></div>`;
             const checked = communitySelectedLivestreamIds.has(order.id) ? 'checked' : '';
-            const purchased = (order.purchaseStatus || 'not_bought') === 'bought';
             const remittanceInfo = order.paymentStatus === 'confirming' && (order.remittanceBankName || order.remittanceLast5 || order.remittanceAmount !== null)
                 ? `<div class="community-livestream-remittance-info"><span><i class="fa-solid fa-money-check-dollar"></i> 客人回報：${escapeHtml(order.remittanceBankName || '—')}／${order.remittanceAmount === null ? '—' : storefrontMoney(order.remittanceAmount)}／末五碼${escapeHtml(order.remittanceLast5 || '—')}</span></div>`
                 : '';
-            // 批次編輯模式下，數量/單價顯示的是「尚未送出的暫存值」
+            // 批次編輯模式下，數量/單價/買到幾個顯示的是「尚未送出的暫存值」
             // (communityLivestreamBulkEditChanges)，不是 order 物件本身
             // 的值——避免存檔前整份重繪（搜尋/篩選/其他欄位觸發的
             // 一般 reload）把使用者還沒按「保存全部修改」的輸入蓋掉。
             const pendingEdit = communityLivestreamBulkEditEnabled ? communityLivestreamBulkEditChanges.get(order.id) : null;
             const qtyDirty = Boolean(pendingEdit && pendingEdit.quantity !== undefined);
             const priceDirty = Boolean(pendingEdit && pendingEdit.unitPrice !== undefined);
+            const purchasedQtyDirty = Boolean(pendingEdit && pendingEdit.purchasedQuantity !== undefined);
             const qty = qtyDirty ? pendingEdit.quantity : Number(order.quantity || 1);
             const unitPrice = priceDirty ? pendingEdit.unitPrice : order.unitPrice;
-            const totalText = unitPrice === null ? '—' : storefrontMoney(unitPrice * qty);
+            const purchasedQty = purchasedQtyDirty ? pendingEdit.purchasedQuantity : order.purchasedQuantity;
+            // 連線代購下單改版 第二階段：總價改用「買到幾個（還沒採買就用
+            // 訂購數量）× 單價」——還沒採買時顯示的是訂購總價，填了買到
+            // 幾個之後自然切換成實際總價，不用兩個數字並存。
+            const effectiveQty = purchasedQty === null || purchasedQty === undefined ? qty : purchasedQty;
+            const totalText = unitPrice === null ? '—' : storefrontMoney(unitPrice * effectiveQty);
             const qtyOnChange = communityLivestreamBulkEditEnabled
                 ? `stageCommunityLivestreamFieldChange('${id}', 'quantity', this.value)`
                 : `patchCommunityLivestreamQuantity('${id}', this.value)`;
             const priceOnChange = communityLivestreamBulkEditEnabled
                 ? `stageCommunityLivestreamFieldChange('${id}', 'unitPrice', this.value)`
                 : `patchCommunityLivestreamUnitPrice('${id}', this.value)`;
+            const purchasedQtyOnChange = communityLivestreamBulkEditEnabled
+                ? `stageCommunityLivestreamFieldChange('${id}', 'purchasedQuantity', this.value)`
+                : `patchCommunityLivestreamPurchasedQuantity('${id}', this.value)`;
             const summaryQtyInput = `<input type="number" min="1" step="1" class="community-livestream-summary-qty-input${qtyDirty ? ' community-livestream-field-dirty' : ''}" value="${qty}" onchange="${qtyOnChange}">`;
             const summaryPriceInput = `<input type="number" min="0" step="1" class="community-livestream-summary-price-input${priceDirty ? ' community-livestream-field-dirty' : ''}" value="${unitPrice === null ? '' : Number(unitPrice)}" placeholder="未輸入" onchange="${priceOnChange}">`;
+            const purchasedQtyInputHtml = (cls) => `<input type="number" min="0" step="1" class="${cls}${purchasedQtyDirty ? ' community-livestream-field-dirty' : ''}" value="${purchasedQty === null || purchasedQty === undefined ? '' : Number(purchasedQty)}" placeholder="—" onchange="${purchasedQtyOnChange}">`;
             return `
                 <div class="community-livestream-card ${isOpen ? 'expanded' : ''}" id="community-livestream-card-${id}" data-row-id="${id}">
                     <div class="community-livestream-card-top">
@@ -10657,8 +10668,9 @@
                         <div class="community-livestream-card-main">
                             <div class="community-livestream-card-header">
                                 <div class="community-livestream-customer-name">${escapeHtml(order.lineDisplayName || 'LINE 使用者')}</div>
-                                <div class="community-livestream-card-actions">
-                                    <button class="community-livestream-icon-btn community-livestream-purchase-toggle-btn${purchased ? ' active' : ''}" type="button" onclick="toggleCommunityLivestreamPurchased('${id}')" aria-label="${purchased ? '取消已購買' : '標記已購買'}" title="${purchased ? '取消已購買' : '標記已購買'}"><i class="fa-solid fa-check"></i></button>
+                                <div class="community-livestream-purchased-qty-wrap">
+                                    <label>買到</label>
+                                    ${purchasedQtyInputHtml('community-livestream-summary-purchased-qty-input')}
                                 </div>
                             </div>
                             ${remittanceInfo}
@@ -10681,15 +10693,19 @@
                             </div>
                             <div class="community-livestream-full">
                                 <input type="text" class="community-livestream-product-input" value="${escapeHtml(order.productName || '')}" placeholder="下單商品" onchange="patchCommunityLivestreamOrder('${id}', { productName: this.value })">
-                                ${unitPrice === null ? '<div class="community-livestream-unrecognized community-livestream-price-warning">⚠ 無法辨識價格，請手動輸入</div>' : ''}
+                                ${unitPrice === null ? '<div class="community-livestream-unrecognized community-livestream-price-warning">⚠ 尚未輸入單價</div>' : ''}
                                 <div class="community-livestream-grid">
                                     <div class="community-livestream-field">
-                                        <label>數量</label>
+                                        <label>訂購數量</label>
                                         <input type="number" min="1" step="1" class="community-livestream-full-qty-input${qtyDirty ? ' community-livestream-field-dirty' : ''}" value="${qty}" onchange="${qtyOnChange}">
                                     </div>
                                     <div class="community-livestream-field">
-                                        <label>單價</label>
-                                        <input type="number" min="0" step="1" class="community-livestream-full-price-input${priceDirty ? ' community-livestream-field-dirty' : ''}" value="${unitPrice === null ? '' : Number(unitPrice)}" placeholder="未辨識" onchange="${priceOnChange}">
+                                        <label>買到幾個</label>
+                                        ${purchasedQtyInputHtml('community-livestream-full-purchased-qty-input')}
+                                    </div>
+                                    <div class="community-livestream-field">
+                                        <label>單價（客人填的，可覆蓋）</label>
+                                        <input type="number" min="0" step="1" class="community-livestream-full-price-input${priceDirty ? ' community-livestream-field-dirty' : ''}" value="${unitPrice === null ? '' : Number(unitPrice)}" placeholder="未輸入" onchange="${priceOnChange}">
                                     </div>
                                     <div class="community-livestream-field">
                                         <label>總價</label>
@@ -10845,8 +10861,6 @@
         function updateCommunityLivestreamSelectionControls() {
             const countEl = document.getElementById('community-livestream-selected-count');
             if (countEl) countEl.textContent = `已選 ${communitySelectedLivestreamIds.size} 筆`;
-            const purchaseBtn = document.getElementById('community-livestream-batch-purchase-btn');
-            if (purchaseBtn) purchaseBtn.disabled = communitySelectedLivestreamIds.size === 0;
             const paymentBtn = document.getElementById('community-livestream-batch-payment-btn');
             if (paymentBtn) paymentBtn.disabled = communitySelectedLivestreamIds.size === 0;
             const deleteBtn = document.getElementById('community-livestream-batch-delete-btn');
@@ -10883,11 +10897,6 @@
             } finally {
                 if (button) button.disabled = communitySelectedLivestreamIds.size === 0;
             }
-        }
-
-        function applyCommunityLivestreamBatchPurchaseStatus() {
-            const value = document.getElementById('community-livestream-batch-purchase-value')?.value || 'not_bought';
-            applyCommunityLivestreamBatchStatus('purchaseStatus', value, document.getElementById('community-livestream-batch-purchase-btn'));
         }
 
         function applyCommunityLivestreamBatchPaymentStatus() {
@@ -10964,7 +10973,7 @@
                 const wasNull = order ? order.unitPrice === null : false;
                 if (order) {
                     order.unitPrice = value;
-                    order.totalPrice = value === null ? null : value * Number(order.quantity || 1);
+                    order.totalPrice = value === null ? null : value * Number(order.purchasedQuantity ?? order.quantity ?? 1);
                 }
 
                 // 例外：目前正套用「無法辨識價格」快篩，而且這筆原本單價是
@@ -11022,7 +11031,7 @@
                 const order = communityLivestreamOrders.find(o => o.id === id);
                 if (order) {
                     order.quantity = value;
-                    order.totalPrice = order.unitPrice === null ? null : order.unitPrice * value;
+                    order.totalPrice = order.unitPrice === null ? null : order.unitPrice * Number(order.purchasedQuantity ?? value);
                 }
 
                 const totalText = order && order.totalPrice !== null ? storefrontMoney(order.totalPrice) : '—';
@@ -11044,12 +11053,55 @@
             }
         }
 
+        // 「買到幾個」——取代原本二元的「標記已購買」打勾按鈕。空字串代表
+        // 重設回未採買；後端 PATCH 會同時自動把 purchaseStatus 衍生成
+        // not_bought/bought，這裡收到成功回應後比照同步更新記憶體跟小圓點
+        // 顯示，不用另外呼叫 patchCommunityLivestreamStatus。
+        async function patchCommunityLivestreamPurchasedQuantity(id, rawValue) {
+            const value = rawValue === '' ? null : Math.max(0, Math.round(Number(rawValue)) || 0);
+            try {
+                const response = await fetch(`/api/backend/community/livestream-orders/${encodeURIComponent(id)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ purchasedQuantity: value })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '更新失敗。');
+
+                const order = communityLivestreamOrders.find(o => o.id === id);
+                if (order) {
+                    order.purchasedQuantity = value;
+                    order.purchaseStatus = value === null ? 'not_bought' : 'bought';
+                    order.totalPrice = order.unitPrice === null ? null : order.unitPrice * Number(value ?? order.quantity ?? 1);
+                }
+
+                const totalText = order && order.totalPrice !== null ? storefrontMoney(order.totalPrice) : '—';
+                const card = document.getElementById(`community-livestream-card-${id}`);
+                if (card) {
+                    const summaryTotal = card.querySelector('.community-livestream-summary-total');
+                    if (summaryTotal) summaryTotal.textContent = `= ${totalText}`;
+                    const fullTotal = card.querySelector('.community-livestream-total');
+                    if (fullTotal) fullTotal.textContent = totalText;
+                    const qtyText = value === null ? '' : String(value);
+                    card.querySelectorAll('.community-livestream-summary-purchased-qty-input, .community-livestream-full-purchased-qty-input').forEach(input => {
+                        if (input.value !== qtyText) input.value = qtyText;
+                    });
+                    if (order) applyCommunityLivestreamStatusToCard(id, 'purchaseStatus', order.purchaseStatus);
+                }
+                showToast('已更新', 'success');
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '更新失敗，請稍後再試', 'error');
+            }
+        }
+
         // 把 purchaseStatus/paymentStatus 其中一個欄位的新值套到這張卡片的
-        // 三個會顯示該狀態的地方：摘要行小圓點、展開表單的 <select>、
-        // （僅 purchaseStatus）卡片右上角的打勾切換按鈕。純操作 DOM，不碰
-        // communityLivestreamOrders 陣列本身——陣列只在 PATCH 真的成功後
-        // 才更新，失敗時重新呼叫這支函式、傳回原本的值，等於把畫面復原，
-        // 陣列從頭到尾都沒被錯誤地改過。
+        // 兩個會顯示該狀態的地方：摘要行小圓點、展開表單的 <select>。純
+        // 操作 DOM，不碰 communityLivestreamOrders 陣列本身——陣列只在
+        // PATCH 真的成功後才更新，失敗時重新呼叫這支函式、傳回原本的值，
+        // 等於把畫面復原，陣列從頭到尾都沒被錯誤地改過。purchaseStatus
+        // 這輪改成主要由「買到幾個」衍生，卡片右上角的打勾切換按鈕已經
+        // 拿掉，這裡不用再同步它。
         function applyCommunityLivestreamStatusToCard(id, field, value) {
             const card = document.getElementById(`community-livestream-card-${id}`);
             if (!card) return;
@@ -11067,16 +11119,6 @@
             if (select) {
                 select.value = value;
                 select.className = `community-order-status-select ${selectClass} ${tone}`;
-            }
-            if (field === 'purchaseStatus') {
-                const toggleBtn = card.querySelector('.community-livestream-purchase-toggle-btn');
-                if (toggleBtn) {
-                    const bought = value === 'bought';
-                    const label = bought ? '取消已購買' : '標記已購買';
-                    toggleBtn.classList.toggle('active', bought);
-                    toggleBtn.setAttribute('aria-label', label);
-                    toggleBtn.setAttribute('title', label);
-                }
             }
         }
 
@@ -11115,13 +11157,7 @@
             }
         }
 
-        function toggleCommunityLivestreamPurchased(id) {
-            const order = communityLivestreamOrders.find(o => o.id === id);
-            const current = order ? (order.purchaseStatus || 'not_bought') : 'not_bought';
-            patchCommunityLivestreamStatus(id, 'purchaseStatus', current === 'bought' ? 'not_bought' : 'bought');
-        }
-
-        // ===== 批次編輯模式：數量/單價先暫存、最後一次送出 =====
+        // ===== 批次編輯模式：數量/單價/買到幾個先暫存、最後一次送出 =====
         function toggleCommunityLivestreamBulkEdit() {
             if (communityLivestreamBulkEditEnabled) {
                 if (communityLivestreamBulkEditChanges.size > 0) {
@@ -11166,7 +11202,9 @@
             if (!order) return;
             const value = field === 'quantity'
                 ? Math.max(1, Math.round(Number(rawValue)) || 1)
-                : (rawValue === '' ? null : Number(rawValue));
+                : field === 'purchasedQuantity'
+                    ? (rawValue === '' ? null : Math.max(0, Math.round(Number(rawValue)) || 0))
+                    : (rawValue === '' ? null : Number(rawValue));
 
             const existing = communityLivestreamBulkEditChanges.get(id) || {};
             existing[field] = value;
@@ -11177,13 +11215,20 @@
                 const text = value === null ? '' : String(value);
                 const selector = field === 'quantity'
                     ? '.community-livestream-summary-qty-input, .community-livestream-full-qty-input'
-                    : '.community-livestream-summary-price-input, .community-livestream-full-price-input';
+                    : field === 'purchasedQuantity'
+                        ? '.community-livestream-summary-purchased-qty-input, .community-livestream-full-purchased-qty-input'
+                        : '.community-livestream-summary-price-input, .community-livestream-full-price-input';
                 card.querySelectorAll(selector).forEach(input => {
                     if (input.value !== text) input.value = text;
                     input.classList.add('community-livestream-field-dirty');
                 });
 
-                const effectiveQty = existing.quantity !== undefined ? existing.quantity : Number(order.quantity || 1);
+                // 總價：買到幾個（暫存值優先，否則用這筆訂單已存檔的值）
+                // 還有值就用它，沒有才退回訂購數量——跟其他地方算總價的
+                // 公式一致。
+                const stagedPurchasedQty = existing.purchasedQuantity !== undefined ? existing.purchasedQuantity : order.purchasedQuantity;
+                const stagedQty = existing.quantity !== undefined ? existing.quantity : Number(order.quantity || 1);
+                const effectiveQty = stagedPurchasedQty === null || stagedPurchasedQty === undefined ? stagedQty : stagedPurchasedQty;
                 const effectivePrice = existing.unitPrice !== undefined ? existing.unitPrice : order.unitPrice;
                 const totalText = effectivePrice === null ? '—' : storefrontMoney(effectivePrice * effectiveQty);
                 const summaryTotal = card.querySelector('.community-livestream-summary-total');
@@ -13152,23 +13197,19 @@
         // 比照上面的 LINE 通知文案設定/關鍵字設定同一套模式) =====
         const COMMUNITY_LIVESTREAM_REPLY_TEMPLATE_GROUPS = [
             { label: '連線下單', keys: ['order_no_session', 'order_welcome', 'order_photo_first', 'order_photo_confirm_card', 'order_idle_closed', 'order_session_ended', 'photo_confirm_empty'] },
-            { label: '取消訂單', keys: ['cancel_empty', 'cancel_intro_all', 'cancel_intro_partial', 'cancel_blocked_bought', 'cancel_blocked_paying', 'cancel_success'] },
-            { label: '查詢訂單', keys: ['order_query_empty', 'order_query_intro'] },
+            { label: '查詢/管理訂單', keys: ['order_query_empty', 'order_manage_card'] },
             { label: '匯款', keys: ['remittance_empty', 'remittance_summary', 'remittance_format_invalid', 'remittance_cancelled', 'remittance_success'] },
         ];
         const COMMUNITY_LIVESTREAM_REPLY_TEMPLATE_LABELS = {
             order_no_session: '按「我要下單」但沒有進行中的連線', order_welcome: '開始下單說明', order_photo_first: '每輪第一張照片回覆',
             order_photo_confirm_card: '「傳好了」確認卡片說明文字', order_idle_closed: '閒置 10 分鐘後下次動作提醒', order_session_ended: '連線結束後下次動作提醒',
             photo_confirm_empty: '「傳好了」但沒有暫存照片',
-            cancel_empty: '沒有可取消的商品', cancel_intro_all: '可取消清單開頭（全部可取消）', cancel_intro_partial: '可取消清單開頭（部分不可取消）',
-            cancel_blocked_bought: '取消失敗：已購買', cancel_blocked_paying: '取消失敗：已在匯款流程', cancel_success: '取消成功',
-            order_query_empty: '查詢訂單：沒有下單紀錄', order_query_intro: '查詢訂單清單開頭',
+            order_query_empty: '查詢/取消訂單：沒有下單紀錄', order_manage_card: '查詢/取消訂單卡片說明文字',
             remittance_empty: '沒有待匯款訂單', remittance_summary: '匯款回報格式說明', remittance_format_invalid: '匯款回報格式錯誤',
             remittance_cancelled: '取消匯款申報成功', remittance_success: '匯款回報已收到',
         };
         const COMMUNITY_LIVESTREAM_REPLY_TEMPLATE_VARS = {
             order_idle_closed: ['數量'], order_session_ended: ['數量'],
-            cancel_intro_partial: ['數量'], cancel_success: ['商品名稱'],
         };
 
         let communityLivestreamReplyTemplates = {};
