@@ -318,6 +318,15 @@
            舊的 .community-livestream-customer/-row/-time 三條規則整組
            換成下面這條單一文字樣式。 */
         .community-livestream-customer-name { flex: 1; min-width: 0; font-size: 0.78rem; font-weight: 800; color: #475569; overflow-wrap: break-word; }
+        /* 社群綁定：暱稱／@IG＋類型標籤＋LINE 名稱，三個既有顯示客人名稱
+           的地方（社群連線訂單卡片／依客人統計／匯款紀錄）共用這組樣式。 */
+        .community-binding-line { display: inline-flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
+        .community-binding-value { font-weight: 900; }
+        .community-binding-badge { display: inline-block; border-radius: 999px; padding: 0.05rem 0.5rem; font-size: 0.68rem; font-weight: 800; border: 1px solid; white-space: nowrap; }
+        .community-binding-badge-nick { background: #ecfdf3; border-color: #86efac; color: #15803d; }
+        .community-binding-badge-ig { background: #f5ebff; border-color: #d8b4fe; color: #7e22ce; }
+        .community-binding-badge-none { background: #f1f5f9; border-color: #e2e8f0; color: #94a3b8; }
+        .community-binding-sub { font-size: 0.72rem; font-weight: 700; color: #94a3b8; }
         /* 「買到幾個」輸入框——取代原本二元的「標記已購買」打勾按鈕，
            放在卡片頭跟展開表單各一個（跟數量/單價同一套雙處同步手法）。 */
         .community-livestream-purchased-qty-wrap { display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0; }
@@ -1358,6 +1367,7 @@
                 <div class="submenu">
                     <div class="submenu-item" data-module-item-key="community-orders" onclick="openTab('community-orders', '社群訂單')">社群訂單</div>
                     <div class="submenu-item" data-module-item-key="community-members" onclick="openTab('community-members', '社群名單')">社群名單</div>
+                    <div class="submenu-item" data-module-item-key="community-line-identities" onclick="openTab('community-line-identities', '社群綁定')">社群綁定</div>
                     <div class="submenu-item" data-module-item-key="community-fulfillment" onclick="openTab('community-fulfillment', '面交管理')">面交管理</div>
                     <div class="submenu-item" data-module-item-key="community-livestream-sessions" onclick="openTab('community-livestream-sessions', '連線場次')">連線場次</div>
                     <div class="submenu-item" data-module-item-key="community-livestream-orders" onclick="openTab('community-livestream-orders', '社群連線訂單')">社群連線訂單</div>
@@ -1957,7 +1967,7 @@
                             </select>
                         </div>
                         <div class="backend-member-filter-field" style="min-width:220px;">
-                            <input id="community-livestream-search" type="search" placeholder="LINE 名稱、社群暱稱、商品名" aria-label="搜尋" onkeydown="handleCommunityLivestreamSearchKey(event)">
+                            <input id="community-livestream-search" type="search" placeholder="LINE 名稱、暱稱、IG、商品名" aria-label="搜尋" onkeydown="handleCommunityLivestreamSearchKey(event)">
                         </div>
                         <button class="btn btn-primary" type="button" onclick="applyCommunityLivestreamFilters()"><i class="fa-solid fa-magnifying-glass"></i><span class="btn-label"> 搜尋</span></button>
                         <button class="btn btn-secondary" type="button" onclick="clearCommunityLivestreamFilters()"><i class="fa-solid fa-eraser"></i><span class="btn-label"> 清除</span></button>
@@ -2019,7 +2029,7 @@
                             </select>
                         </div>
                         <div class="backend-member-filter-field" style="min-width:220px;">
-                            <input id="community-remittances-search" type="search" placeholder="暱稱、LINE 名稱" aria-label="搜尋" onkeydown="handleCommunityRemittancesSearchKey(event)">
+                            <input id="community-remittances-search" type="search" placeholder="暱稱、IG、LINE 名稱" aria-label="搜尋" onkeydown="handleCommunityRemittancesSearchKey(event)">
                         </div>
                         <button class="btn btn-primary" type="button" onclick="applyCommunityRemittancesFilters()"><i class="fa-solid fa-magnifying-glass"></i><span class="btn-label"> 搜尋</span></button>
                         <button class="btn btn-secondary" type="button" onclick="clearCommunityRemittancesFilters()"><i class="fa-solid fa-eraser"></i><span class="btn-label"> 清除</span></button>
@@ -2031,6 +2041,49 @@
                 </div>
                 <div id="community-remittances-list" class="community-remittances-list">
                     <div class="empty-state">尚未載入匯款紀錄</div>
+                </div>
+            </div>
+
+            <!-- Community Line Identities Section (社群綁定：暱稱／IG，跟社群名單審核是獨立的新機制，不碰社群名單任何既有邏輯) -->
+            <div id="section-community-line-identities" class="section-container">
+                <div class="page-header">
+                    <h2 class="page-title">社群綁定</h2>
+                    <div class="toolbar">
+                        <button class="btn btn-secondary" type="button" onclick="loadCommunityLineIdentities()"><i class="fa-solid fa-rotate"></i><span class="btn-label"> 重新整理</span></button>
+                    </div>
+                </div>
+                <div class="community-livestream-quick-filters" style="margin-bottom:0.75rem;">
+                    <button type="button" class="community-livestream-filter-btn active" id="community-line-identities-tab-bound" onclick="setCommunityLineIdentitiesTab('bound')">已綁定</button>
+                    <button type="button" class="community-livestream-filter-btn" id="community-line-identities-tab-unbound" onclick="setCommunityLineIdentitiesTab('unbound')">尚未綁定</button>
+                    <button type="button" class="community-livestream-filter-btn" id="community-line-identities-tab-logs" onclick="setCommunityLineIdentitiesTab('logs')">綁定紀錄</button>
+                </div>
+
+                <div id="community-line-identities-bound-panel">
+                    <div class="backend-member-filterbar community-remittances-filterbar">
+                        <div class="backend-member-filter-row">
+                            <div class="backend-member-filter-field" style="min-width:220px;">
+                                <input id="community-line-identities-search" type="search" placeholder="暱稱、IG、LINE 名稱" aria-label="搜尋" onkeydown="handleCommunityLineIdentitiesSearchKey(event)">
+                            </div>
+                            <button class="btn btn-primary" type="button" onclick="applyCommunityLineIdentitiesFilters()"><i class="fa-solid fa-magnifying-glass"></i><span class="btn-label"> 搜尋</span></button>
+                            <button class="btn btn-secondary" type="button" onclick="clearCommunityLineIdentitiesFilters()"><i class="fa-solid fa-eraser"></i><span class="btn-label"> 清除</span></button>
+                        </div>
+                    </div>
+                    <div id="community-line-identities-stats" class="community-remittances-count-line"></div>
+                    <div id="community-line-identities-list" class="community-remittances-list">
+                        <div class="empty-state">尚未載入</div>
+                    </div>
+                </div>
+
+                <div id="community-line-identities-unbound-panel" hidden>
+                    <div id="community-line-identities-unbound-list" class="community-remittances-list">
+                        <div class="empty-state">尚未載入</div>
+                    </div>
+                </div>
+
+                <div id="community-line-identities-logs-panel" hidden>
+                    <div id="community-line-identities-logs-list" class="community-remittances-list">
+                        <div class="empty-state">尚未載入</div>
+                    </div>
                 </div>
             </div>
 
@@ -3732,6 +3785,51 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="communityLineIdentityEditModal">
+        <div class="modal-content" style="max-width:420px;">
+            <div class="modal-header">
+                <h3 id="community-line-identity-edit-title"><i class="fa-solid fa-id-badge"></i> 編輯綁定</h3>
+                <button class="close-btn" type="button" onclick="closeCommunityLineIdentityEditModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p id="community-line-identity-edit-line-name" style="margin:0 0 0.75rem;color:#64748b;font-size:0.8rem;font-weight:800;"></p>
+                <div class="form-group">
+                    <label>類型</label>
+                    <select id="community-line-identity-edit-type" onchange="updateCommunityLineIdentityEditHint()">
+                        <option value="nickname">社群暱稱</option>
+                        <option value="ig">IG 帳號</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label id="community-line-identity-edit-value-label">社群暱稱</label>
+                    <input id="community-line-identity-edit-value" type="text" maxlength="40" oninput="document.getElementById('community-line-identity-edit-error').textContent=''">
+                </div>
+                <p id="community-line-identity-edit-error" role="alert" style="margin:0;color:#dc2626;font-size:0.8rem;font-weight:800;min-height:1.2em;"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeCommunityLineIdentityEditModal()">取消</button>
+                <button class="btn btn-primary" type="button" id="community-line-identity-edit-save-btn" onclick="submitCommunityLineIdentityEdit(this)">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="communityLineIdentityUnbindModal">
+        <div class="modal-content" style="max-width:420px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-link-slash"></i> 解除綁定</h3>
+                <button class="close-btn" type="button" onclick="closeCommunityLineIdentityUnbindModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin:0 0 0.75rem;color:#64748b;font-size:0.8rem;line-height:1.6;">解除後這位客人在後台會回到只顯示 LINE 名稱，他之後可以重新綁定。</p>
+                <p id="community-line-identity-unbind-target" style="margin:0;font-weight:900;color:#334155;"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeCommunityLineIdentityUnbindModal()">不解除</button>
+                <button class="btn btn-danger" type="button" id="community-line-identity-unbind-save-btn" onclick="submitCommunityLineIdentityUnbind(this)">確定解除</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="communityLivestreamKeywordModal">
         <div class="modal-content" style="max-width:560px;">
             <div class="modal-header">
@@ -3740,6 +3838,13 @@
             </div>
             <div class="modal-body">
                 <p style="margin:0 0 0.75rem;color:#94a3b8;font-size:0.76rem;font-weight:800;">每組關鍵字用逗號或換行分隔多個詞，留空會自動改用預設值。停用某一組只會讓客人端不再觸發，詞庫內容還是可以照常編輯。</p>
+                <div class="form-group">
+                    <div class="community-livestream-keyword-group-header">
+                        <label>綁定觸發詞（客人用這些字開啟社群綁定頁面，不要放單獨的「修改」）</label>
+                        <button type="button" class="community-livestream-keyword-toggle" id="community-livestream-keyword-enabled-bind" data-enabled="true" onclick="toggleCommunityLivestreamKeywordEnabled('bind')">啟用中</button>
+                    </div>
+                    <textarea id="community-livestream-keyword-bind" rows="2" placeholder="綁定, 綁定帳號, 修改綁定"></textarea>
+                </div>
                 <div class="form-group">
                     <div class="community-livestream-keyword-group-header">
                         <label>下單觸發詞（客人傳這些字會開啟圖片下單）</label>
@@ -4142,6 +4247,7 @@
             if(name === 'community-livestream-sessions') loadCommunityLivestreamSessions();
             if(name === 'community-livestream-orders') { loadCommunityLivestreamSessionOptions(); loadCommunityLivestreamOrders(); }
             if(name === 'community-livestream-remittances') { loadCommunityRemittancesSessionOptions(); loadCommunityLivestreamRemittances(); }
+            if(name === 'community-line-identities') loadCommunityLineIdentities();
             if(name === 'customer-orders') renderCustomerOrders();
             if(name === 'stock-products') renderStockProducts();
             if(name === 'preorder-products') renderPreorderProducts();
@@ -5780,6 +5886,21 @@
 
         function escapeHtml(value = '') {
             return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        // 社群綁定：三個既有顯示客人名稱的地方（社群連線訂單卡片／依客人
+        // 統計／匯款紀錄）共用——binding 是 API 回傳的 { type, value } |
+        // null（null 代表沒有任何綁定，新表跟舊表都查不到）。
+        function communityBindingLineHtml(binding, lineDisplayName) {
+            const lineName = escapeHtml(lineDisplayName || 'LINE 使用者');
+            if (!binding) {
+                return `<span class="community-binding-line"><span class="community-binding-badge community-binding-badge-none">未綁定</span><span class="community-binding-sub">${lineName}</span></span>`;
+            }
+            const isIg = binding.type === 'ig';
+            const shown = escapeHtml(isIg ? ('@' + binding.value) : binding.value);
+            const badgeCls = isIg ? 'community-binding-badge-ig' : 'community-binding-badge-nick';
+            const typeLabel = isIg ? 'IG' : '社群暱稱';
+            return `<span class="community-binding-line"><span class="community-binding-value">${shown}</span><span class="community-binding-badge ${badgeCls}">${typeLabel}</span><span class="community-binding-sub">LINE：${lineName}</span></span>`;
         }
 
         function quoteJs(value = '') {
@@ -10677,7 +10798,7 @@
                         </div>
                         <div class="community-livestream-card-main">
                             <div class="community-livestream-card-header">
-                                <div class="community-livestream-customer-name">${escapeHtml(order.lineDisplayName || 'LINE 使用者')}</div>
+                                <div class="community-livestream-customer-name">${communityBindingLineHtml(order.binding, order.lineDisplayName)}</div>
                                 <div class="community-livestream-purchased-qty-wrap">
                                     <label>買到</label>
                                     ${purchasedQtyInputHtml('community-livestream-summary-purchased-qty-input')}
@@ -10744,7 +10865,7 @@
             const groups = new Map();
             communityLivestreamOrders.forEach(order => {
                 const key = order.lineUserId || `__no-line-user-id__${order.id}`;
-                if (!groups.has(key)) groups.set(key, { lineUserId: key, lineDisplayName: order.lineDisplayName || 'LINE 使用者', orders: [] });
+                if (!groups.has(key)) groups.set(key, { lineUserId: key, lineDisplayName: order.lineDisplayName || 'LINE 使用者', binding: order.binding || null, orders: [] });
                 groups.get(key).orders.push(order);
             });
             const summaryByUserId = new Map(communityLivestreamCustomerSummaries.map(c => [c.lineUserId, c]));
@@ -10757,7 +10878,7 @@
                 return `
                     <div class="community-livestream-customer-group">
                         <button type="button" class="community-livestream-customer-group-header" onclick="toggleCommunityLivestreamCustomerGroup(${quoteJs(group.lineUserId)})">
-                            <span class="community-livestream-customer-group-name">${escapeHtml(group.lineDisplayName)}</span>
+                            <span class="community-livestream-customer-group-name">${communityBindingLineHtml(summary.binding || group.binding, group.lineDisplayName)}</span>
                             <span class="community-livestream-customer-group-amounts">
                                 <span>訂單總額 ${storefrontMoney(summary.totalAmount)}</span>
                                 <span>已核對 ${storefrontMoney(summary.confirmedRemittanceAmount)}</span>
@@ -11649,7 +11770,7 @@
             return `
                 <div class="community-remittances-customer-block">
                     <div class="community-remittances-customer-header">
-                        <span class="community-remittances-customer-name">${escapeHtml(customer.lineDisplayName || 'LINE 使用者')}</span>
+                        <span class="community-remittances-customer-name">${communityBindingLineHtml(customer.binding, customer.lineDisplayName)}</span>
                     </div>
                     <div class="community-remittances-customer-body">
                         ${remittanceRows}
@@ -11873,6 +11994,239 @@
             }
         }
 
+        // ===== 社群綁定（暱稱／IG）——跟社群名單的舊審核機制完全獨立，
+        // 不碰 community-members 任何既有邏輯/資料。三個子畫面（已綁定／
+        // 尚未綁定／綁定紀錄）共用同一個 section，用顯示/隱藏切換，不是
+        // 三個分開的頁籤，所以只需要一次 loadCommunityLineIdentities()
+        // 入口，三個分頁各自懶載入（第一次切過去才打 API）。=====
+        let communityLineIdentitiesTab = 'bound';
+        let communityLineIdentitiesLoaded = { bound: false, unbound: false, logs: false };
+        let communityLineIdentitiesCustomers = [];
+        const communityLineIdentitiesFilters = { q: '' };
+        let communityLineIdentityEditContext = null; // { mode: 'edit'|'new', lineUserId, lineDisplayName }
+        let communityLineIdentityUnbindContext = null; // { lineUserId, lineDisplayName }
+
+        function setCommunityLineIdentitiesTab(tab) {
+            communityLineIdentitiesTab = tab;
+            ['bound', 'unbound', 'logs'].forEach(key => {
+                document.getElementById(`community-line-identities-tab-${key}`)?.classList.toggle('active', key === tab);
+                const panel = document.getElementById(`community-line-identities-${key}-panel`);
+                if (panel) panel.hidden = key !== tab;
+            });
+            loadCommunityLineIdentities();
+        }
+
+        async function loadCommunityLineIdentities() {
+            if (communityLineIdentitiesTab === 'bound') return loadCommunityLineIdentitiesBound();
+            if (communityLineIdentitiesTab === 'unbound') return loadCommunityLineIdentitiesUnbound();
+            return loadCommunityLineIdentitiesLogs();
+        }
+
+        async function loadCommunityLineIdentitiesBound(force) {
+            if (communityLineIdentitiesLoaded.bound && !force) return renderCommunityLineIdentitiesBound();
+            const list = document.getElementById('community-line-identities-list');
+            if (list) list.innerHTML = '<div class="empty-state">載入中...</div>';
+            try {
+                const params = new URLSearchParams();
+                if (communityLineIdentitiesFilters.q) params.set('q', communityLineIdentitiesFilters.q);
+                const qs = params.toString();
+                const response = await fetch(`/api/backend/community/line-identities${qs ? '?' + qs : ''}`, { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '社群綁定讀取失敗。');
+                communityLineIdentitiesCustomers = result.customers || [];
+                communityLineIdentitiesLoaded.bound = true;
+                renderCommunityLineIdentitiesBound(result.stats);
+            } catch (error) {
+                console.error(error);
+                if (list) list.innerHTML = '<div class="empty-state">社群綁定讀取失敗，請稍後再試</div>';
+            }
+        }
+
+        function renderCommunityLineIdentitiesBound(stats) {
+            const statsEl = document.getElementById('community-line-identities-stats');
+            if (statsEl && stats) {
+                statsEl.innerHTML = `<span>已綁定 ${stats.total} 人</span><span style="margin-left:0.75rem;">社群暱稱 ${stats.nickname}</span><span style="margin-left:0.75rem;">IG ${stats.ig}</span>`;
+            }
+            const list = document.getElementById('community-line-identities-list');
+            if (!list) return;
+            if (!communityLineIdentitiesCustomers.length) {
+                list.innerHTML = '<div class="empty-state">目前沒有符合的客人</div>';
+                return;
+            }
+            list.innerHTML = communityLineIdentitiesCustomers.map(c => `
+                <div class="community-remittances-row">
+                    <div class="community-remittances-row-main" style="flex-wrap:wrap;">
+                        <span style="flex:1;min-width:0;">${communityBindingLineHtml({ type: c.type, value: c.value }, c.lineDisplayName)}</span>
+                        <span class="community-remittances-row-time">綁定於 ${storefrontDateTime(c.boundAt)}${c.editCount ? `・修改過 ${c.editCount} 次` : ''}</span>
+                        <div class="community-remittances-row-actions">
+                            <button class="community-remittances-icon-btn" type="button" onclick="openCommunityLineIdentityEditModal('edit', ${quoteJs(c.lineUserId)}, ${quoteJs(c.lineDisplayName)}, ${quoteJs(c.type)}, ${quoteJs(c.value)})" aria-label="編輯"><i class="fa-solid fa-pen"></i></button>
+                            <button class="community-remittances-icon-btn danger" type="button" onclick="openCommunityLineIdentityUnbindModal(${quoteJs(c.lineUserId)}, ${quoteJs(c.lineDisplayName)}, ${quoteJs(c.type)}, ${quoteJs(c.value)})" aria-label="解除綁定"><i class="fa-solid fa-link-slash"></i></button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function handleCommunityLineIdentitiesSearchKey(event) {
+            if (event.key === 'Enter') applyCommunityLineIdentitiesFilters();
+        }
+        function applyCommunityLineIdentitiesFilters() {
+            communityLineIdentitiesFilters.q = document.getElementById('community-line-identities-search')?.value.trim() || '';
+            loadCommunityLineIdentitiesBound(true);
+        }
+        function clearCommunityLineIdentitiesFilters() {
+            communityLineIdentitiesFilters.q = '';
+            const input = document.getElementById('community-line-identities-search');
+            if (input) input.value = '';
+            loadCommunityLineIdentitiesBound(true);
+        }
+
+        async function loadCommunityLineIdentitiesUnbound(force) {
+            if (communityLineIdentitiesLoaded.unbound && !force) return;
+            const list = document.getElementById('community-line-identities-unbound-list');
+            if (list) list.innerHTML = '<div class="empty-state">載入中...</div>';
+            try {
+                const response = await fetch('/api/backend/community/line-identities/unbound', { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '尚未綁定客人清單讀取失敗。');
+                communityLineIdentitiesLoaded.unbound = true;
+                const customers = result.customers || [];
+                if (!list) return;
+                if (!customers.length) {
+                    list.innerHTML = '<div class="empty-state">目前沒有尚未綁定的客人</div>';
+                    return;
+                }
+                list.innerHTML = customers.map(c => `
+                    <div class="community-remittances-row">
+                        <div class="community-remittances-row-main" style="flex-wrap:wrap;">
+                            <span style="flex:1;min-width:0;font-weight:900;color:#334155;">${escapeHtml(c.lineDisplayName)}</span>
+                            <span class="community-remittances-row-time">最近下單：${c.lastOrderAt ? storefrontDateTime(c.lastOrderAt) : '—'}</span>
+                            <div class="community-remittances-row-actions">
+                                <button class="btn btn-sm btn-secondary" type="button" onclick="openCommunityLineIdentityEditModal('new', ${quoteJs(c.lineUserId)}, ${quoteJs(c.lineDisplayName)}, 'nickname', '')">幫他綁定</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error(error);
+                if (list) list.innerHTML = '<div class="empty-state">尚未綁定客人清單讀取失敗，請稍後再試</div>';
+            }
+        }
+
+        async function loadCommunityLineIdentitiesLogs(force) {
+            if (communityLineIdentitiesLoaded.logs && !force) return;
+            const list = document.getElementById('community-line-identities-logs-list');
+            if (list) list.innerHTML = '<div class="empty-state">載入中...</div>';
+            try {
+                const response = await fetch('/api/backend/community/line-identities/logs', { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '綁定紀錄讀取失敗。');
+                communityLineIdentitiesLoaded.logs = true;
+                const logs = result.logs || [];
+                if (!list) return;
+                if (!logs.length) {
+                    list.innerHTML = '<div class="empty-state">還沒有任何紀錄</div>';
+                    return;
+                }
+                // 被擋下（blocked）的紀錄用淡橘底色凸顯——賣家要能一眼看到
+                // 有人想搶已經被別人用掉的暱稱/IG。
+                list.innerHTML = logs.map(l => `
+                    <div class="lg" style="${l.action === 'blocked' ? 'background:#fff7ed;border-radius:0.5rem;padding:0.5rem 0.6rem;border-top:none;margin-bottom:0.3rem;' : 'padding:0.5rem 0;'}">
+                        <time>${storefrontDateTime(l.createdAt)}</time>
+                        <div><b>${escapeHtml(l.lineDisplayName)}</b>　${escapeHtml(l.text)}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error(error);
+                if (list) list.innerHTML = '<div class="empty-state">綁定紀錄讀取失敗，請稍後再試</div>';
+            }
+        }
+
+        // ---- 編輯／幫他綁定（共用同一個 modal，mode 區分文案跟要不要帶出目前值）----
+        function openCommunityLineIdentityEditModal(mode, lineUserId, lineDisplayName, type, value) {
+            communityLineIdentityEditContext = { mode, lineUserId, lineDisplayName };
+            document.getElementById('community-line-identity-edit-title').innerHTML = mode === 'new'
+                ? '<i class="fa-solid fa-id-badge"></i> 替客人綁定'
+                : '<i class="fa-solid fa-id-badge"></i> 編輯綁定';
+            document.getElementById('community-line-identity-edit-line-name').textContent = `LINE：${lineDisplayName || 'LINE 使用者'}`;
+            document.getElementById('community-line-identity-edit-type').value = type || 'nickname';
+            document.getElementById('community-line-identity-edit-value').value = value || '';
+            document.getElementById('community-line-identity-edit-error').textContent = '';
+            updateCommunityLineIdentityEditHint();
+            document.getElementById('communityLineIdentityEditModal')?.classList.add('active');
+        }
+        function closeCommunityLineIdentityEditModal() {
+            document.getElementById('communityLineIdentityEditModal')?.classList.remove('active');
+            communityLineIdentityEditContext = null;
+        }
+        function updateCommunityLineIdentityEditHint() {
+            const type = document.getElementById('community-line-identity-edit-type')?.value;
+            const label = document.getElementById('community-line-identity-edit-value-label');
+            if (label) label.textContent = type === 'ig' ? 'IG 帳號' : '社群暱稱';
+        }
+        async function submitCommunityLineIdentityEdit(button) {
+            if (!communityLineIdentityEditContext) return;
+            const type = document.getElementById('community-line-identity-edit-type')?.value || 'nickname';
+            const value = document.getElementById('community-line-identity-edit-value')?.value || '';
+            const errorEl = document.getElementById('community-line-identity-edit-error');
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch('/api/backend/community/line-identities', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lineUserId: communityLineIdentityEditContext.lineUserId,
+                        lineDisplayName: communityLineIdentityEditContext.lineDisplayName,
+                        type, value
+                    })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) {
+                    if (errorEl) errorEl.textContent = result?.error || '儲存失敗，請稍後再試。';
+                    return;
+                }
+                showToast(communityLineIdentityEditContext.mode === 'new' ? '已幫客人綁定' : '已儲存修改', 'success');
+                closeCommunityLineIdentityEditModal();
+                communityLineIdentitiesLoaded = { bound: false, unbound: false, logs: false };
+                await loadCommunityLineIdentities();
+            } catch (error) {
+                console.error(error);
+                if (errorEl) errorEl.textContent = '儲存失敗，請稍後再試一次。';
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        // ---- 解除綁定 ----
+        function openCommunityLineIdentityUnbindModal(lineUserId, lineDisplayName, type, value) {
+            communityLineIdentityUnbindContext = { lineUserId, lineDisplayName };
+            const shown = type === 'ig' ? `@${value}` : value;
+            document.getElementById('community-line-identity-unbind-target').textContent = `${shown}（LINE：${lineDisplayName || 'LINE 使用者'}）`;
+            document.getElementById('communityLineIdentityUnbindModal')?.classList.add('active');
+        }
+        function closeCommunityLineIdentityUnbindModal() {
+            document.getElementById('communityLineIdentityUnbindModal')?.classList.remove('active');
+            communityLineIdentityUnbindContext = null;
+        }
+        async function submitCommunityLineIdentityUnbind(button) {
+            if (!communityLineIdentityUnbindContext) return;
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch(`/api/backend/community/line-identities/${encodeURIComponent(communityLineIdentityUnbindContext.lineUserId)}`, { method: 'DELETE' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '解除綁定失敗。');
+                showToast('已解除綁定', 'success');
+                closeCommunityLineIdentityUnbindModal();
+                communityLineIdentitiesLoaded = { bound: false, unbound: false, logs: false };
+                await loadCommunityLineIdentities();
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '解除綁定失敗，請稍後再試', 'error');
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
         // ===== 社群連線訂單：店家收款帳號設定 (自助匯款流程用，schedule_settings 通用 KV) =====
         // 三個固定銀行(中信/富邦/國泰)各自一個帳號欄位——客人「我要匯款」
         // 收到的不再是一段自由文字，而是三顆 LINE Flex clipboard 按鈕，
@@ -11932,7 +12286,7 @@
         }
 
         // ===== 社群連線訂單：四組觸發關鍵字設定 (schedule_settings 通用 KV，比照收款帳號設定) =====
-        const COMMUNITY_LIVESTREAM_KEYWORD_GROUP_LABELS = { order: '下單', remittance: '匯款', cancel: '取消', order_query: '查詢訂單', photo_confirm: '傳照片確認', remittance_cancel: '取消匯款' };
+        const COMMUNITY_LIVESTREAM_KEYWORD_GROUP_LABELS = { bind: '綁定', order: '下單', remittance: '匯款', cancel: '取消', order_query: '查詢訂單', photo_confirm: '傳照片確認', remittance_cancel: '取消匯款' };
 
         function communityLivestreamKeywordTextareaId(group) {
             return `community-livestream-keyword-${group}`;
@@ -13272,6 +13626,7 @@
         // ===== 社群連線訂單：主要流程回覆文案設定 (schedule_settings 通用 KV，
         // 比照上面的 LINE 通知文案設定/關鍵字設定同一套模式) =====
         const COMMUNITY_LIVESTREAM_REPLY_TEMPLATE_GROUPS = [
+            { label: '社群綁定', keys: ['bind_card_title', 'bind_card_body_unbound', 'bind_card_body_bound', 'bind_button_bind', 'bind_button_edit'] },
             { label: '連線下單', keys: ['order_no_session', 'order_welcome', 'order_photo_first', 'order_photo_confirm_card', 'order_idle_closed', 'order_session_ended', 'photo_confirm_empty'] },
             { label: '查詢/管理訂單', keys: ['order_query_empty', 'order_manage_card'] },
             { label: '匯款', keys: [
@@ -13283,6 +13638,8 @@
             ] },
         ];
         const COMMUNITY_LIVESTREAM_REPLY_TEMPLATE_LABELS = {
+            bind_card_title: '綁定卡片標題', bind_card_body_unbound: '綁定卡片內文（尚未綁定）', bind_card_body_bound: '綁定卡片內文（已經綁定）',
+            bind_button_bind: '綁定卡片「綁定」按鈕文字', bind_button_edit: '綁定卡片「修改」按鈕文字',
             order_no_session: '按「我要下單」但沒有進行中的連線', order_welcome: '開始下單說明', order_photo_first: '每輪第一張照片回覆',
             order_photo_confirm_card: '「傳好了」確認卡片說明文字', order_idle_closed: '閒置 10 分鐘後下次動作提醒', order_session_ended: '連線結束後下次動作提醒',
             photo_confirm_empty: '「傳好了」但沒有暫存照片',
@@ -13297,6 +13654,7 @@
             remittance_cancelled: '取消匯款申報成功', remittance_done: '匯款申報已收到',
         };
         const COMMUNITY_LIVESTREAM_REPLY_TEMPLATE_VARS = {
+            bind_card_body_bound: ['值'],
             order_idle_closed: ['數量'], order_session_ended: ['數量'],
             remittance_all_shortage: ['數量'], remittance_items_intro: ['金額'], remittance_shortage_note: ['數量'],
             remittance_confirm_amount_question: ['金額'], remittance_done: ['金額'],
@@ -15303,6 +15661,7 @@
             'customer-orders': 'fa-user-tag',
             'community-orders': 'fa-comments',
             'community-members': 'fa-address-book',
+            'community-line-identities': 'fa-id-badge',
             'community-fulfillment': 'fa-handshake',
             'community-livestream-sessions': 'fa-calendar-days',
             'community-livestream-orders': 'fa-video',
