@@ -1366,7 +1366,6 @@
                 </div>
                 <div class="submenu">
                     <div class="submenu-item" data-module-item-key="community-orders" onclick="openTab('community-orders', '社群訂單')">社群訂單</div>
-                    <div class="submenu-item" data-module-item-key="community-members" onclick="openTab('community-members', '社群名單')">社群名單</div>
                     <div class="submenu-item" data-module-item-key="community-line-identities" onclick="openTab('community-line-identities', '社群綁定')">社群綁定</div>
                     <div class="submenu-item" data-module-item-key="community-fulfillment" onclick="openTab('community-fulfillment', '面交管理')">面交管理</div>
                     <div class="submenu-item" data-module-item-key="community-livestream-sessions" onclick="openTab('community-livestream-sessions', '連線場次')">連線場次</div>
@@ -1879,51 +1878,6 @@
                 </div>
             </div>
 
-            <!-- Community Members Section -->
-            <div id="section-community-members" class="section-container">
-                <div class="page-header">
-                    <h2 class="page-title">社群名單</h2>
-                    <div class="toolbar">
-                        <button class="btn btn-secondary" type="button" onclick="loadCommunityMembers()"><i class="fa-solid fa-rotate"></i> 重新整理</button>
-                    </div>
-                </div>
-                <div class="community-member-grid">
-                    <section class="community-member-panel">
-                        <div class="community-member-panel-header">
-                            <h3><i class="fa-solid fa-clock"></i> 待處理名單</h3>
-                            <button id="community-bulk-approve-btn" class="btn btn-primary btn-sm" type="button" onclick="approveSelectedCommunityMembers(this)" disabled><i class="fa-solid fa-check-double"></i> 一鍵審核</button>
-                        </div>
-                        <div class="table-wrapper">
-                            <table class="community-member-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width:42px;text-align:center;"><input id="community-pending-select-all" type="checkbox" aria-label="全選待審核名單" onchange="toggleAllCommunityPendingMembers(this.checked)"></th>
-                                        <th>LINE 名稱</th><th>申請暱稱</th><th>審核狀態</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="community-pending-member-list"><tr><td colspan="4" class="empty-state">尚未載入待處理名單</td></tr></tbody>
-                            </table>
-                        </div>
-                    </section>
-                    <section class="community-member-panel">
-                        <div class="community-member-panel-header">
-                            <h3><i class="fa-solid fa-circle-check"></i> 已綁定名單</h3>
-                            <div class="community-member-searches">
-                                <input id="community-approved-line-search" class="storefront-order-search-input" type="search" placeholder="LINE 名稱" aria-label="LINE 名稱" onkeydown="handleCommunityApprovedSearchKey(event)">
-                                <input id="community-approved-nickname-search" class="storefront-order-search-input" type="search" placeholder="申請暱稱" aria-label="申請暱稱" onkeydown="handleCommunityApprovedSearchKey(event)">
-                                <button class="btn btn-primary btn-sm" type="button" onclick="applyCommunityApprovedSearch()"><i class="fa-solid fa-magnifying-glass"></i> 搜尋</button>
-                            </div>
-                        </div>
-                        <div class="table-wrapper">
-                            <table class="community-member-table">
-                                <thead><tr><th>LINE 名稱</th><th>申請暱稱</th><th>綁定時間</th><th>最後更新時間</th><th>審核狀態</th></tr></thead>
-                                <tbody id="community-approved-member-list"><tr><td colspan="5" class="empty-state">尚未載入已綁定名單</td></tr></tbody>
-                            </table>
-                        </div>
-                    </section>
-                </div>
-            </div>
-
             <!-- Community Livestream Orders Section (LINE 圖片下單，全新獨立功能) -->
             <div id="section-community-livestream-sessions" class="section-container">
                 <div class="page-header">
@@ -2052,6 +2006,19 @@
                         <button class="btn btn-secondary" type="button" onclick="loadCommunityLineIdentities()"><i class="fa-solid fa-rotate"></i><span class="btn-label"> 重新整理</span></button>
                     </div>
                 </div>
+                <div class="site-feature-flag-table-row" style="padding:0.75rem 0;margin-bottom:0.75rem;border-bottom:1px solid #e2e8f0;">
+                    <div class="site-feature-flag-col-main">
+                        <label class="site-feature-flag-switch">
+                            <input type="checkbox" id="community-order-gate-toggle" onchange="handleCommunityOrderGateToggle(this.checked)">
+                            <span class="site-feature-flag-switch-track"></span>
+                        </label>
+                        <div class="site-feature-flag-name-wrap">
+                            <div class="site-feature-flag-name">下單前必須先綁定</div>
+                            <div class="site-feature-flag-desc">開啟後，客人第一次按「我要下單」前要先綁定社群帳號（暱稱／IG），讓賣家在後台認得出是誰；關閉後客人不用綁定就能下單。</div>
+                        </div>
+                        <span class="site-feature-flag-status" id="community-order-gate-status">啟用中</span>
+                    </div>
+                </div>
                 <div class="community-livestream-quick-filters" style="margin-bottom:0.75rem;">
                     <button type="button" class="community-livestream-filter-btn active" id="community-line-identities-tab-bound" onclick="setCommunityLineIdentitiesTab('bound')">已綁定</button>
                     <button type="button" class="community-livestream-filter-btn" id="community-line-identities-tab-unbound" onclick="setCommunityLineIdentitiesTab('unbound')">尚未綁定</button>
@@ -2066,6 +2033,9 @@
                             </div>
                             <button class="btn btn-primary" type="button" onclick="applyCommunityLineIdentitiesFilters()"><i class="fa-solid fa-magnifying-glass"></i><span class="btn-label"> 搜尋</span></button>
                             <button class="btn btn-secondary" type="button" onclick="clearCommunityLineIdentitiesFilters()"><i class="fa-solid fa-eraser"></i><span class="btn-label"> 清除</span></button>
+                            <label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.85rem;font-weight:700;color:#9a3412;white-space:nowrap;">
+                                <input type="checkbox" onchange="toggleCommunityLineIdentitiesPendingOnly(this.checked)"> 只顯示待核准
+                            </label>
                         </div>
                     </div>
                     <div id="community-line-identities-stats" class="community-remittances-count-line"></div>
@@ -3522,24 +3492,6 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="communityMemberEditModal">
-        <div class="modal-content" style="max-width:460px;">
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-pen"></i> 編輯社群暱稱</h3>
-                <button class="close-btn" type="button" onclick="closeCommunityMemberEditModal()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="modal-body">
-                <input id="community-member-edit-id" type="hidden">
-                <div class="form-group"><label>LINE 名稱</label><input id="community-member-edit-line-name" type="text" readonly></div>
-                <div class="form-group"><label>社群暱稱</label><input id="community-member-edit-nickname" type="text" maxlength="120"></div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" type="button" onclick="closeCommunityMemberEditModal()">取消</button>
-                <button class="btn btn-primary" type="button" onclick="saveCommunityMemberNickname(this)">儲存</button>
-            </div>
-        </div>
-    </div>
-
     <div class="modal-overlay" id="communityOrderAddModal">
         <div class="modal-content" style="max-width:560px;">
             <div class="modal-header">
@@ -4243,11 +4195,10 @@
             if(name === 'backend-members') loadBackendMembers();
             if(name === 'community-orders') { renderCommunityBatchValueOptions(); loadCommunityOrders(); loadCommunityNotebookMeta(); loadCommunityImportBatches(); loadCommunityRemittances(); loadCommunityShipmentRequests(); loadCommunityPendingSummary(); loadCommunityLineTemplates(); loadCommunityLineNotifications(); }
             if(name === 'community-fulfillment') { loadCommunityMeetupSlots(); loadCommunityMeetupRequests(); loadCommunityPendingSummary(); }
-            if(name === 'community-members') loadCommunityMembers();
             if(name === 'community-livestream-sessions') loadCommunityLivestreamSessions();
             if(name === 'community-livestream-orders') { loadCommunityLivestreamSessionOptions(); loadCommunityLivestreamOrders(); }
             if(name === 'community-livestream-remittances') { loadCommunityRemittancesSessionOptions(); loadCommunityLivestreamRemittances(); }
-            if(name === 'community-line-identities') loadCommunityLineIdentities();
+            if(name === 'community-line-identities') { loadCommunityLineIdentities(); loadCommunityOrderGateSetting(); }
             if(name === 'customer-orders') renderCustomerOrders();
             if(name === 'stock-products') renderStockProducts();
             if(name === 'preorder-products') renderPreorderProducts();
@@ -4424,10 +4375,6 @@
         let communityOrderPagination = { page: 1, pageSize: 50, total: 0, totalPages: 0 };
         let communityOrderRequestSeq = 0;
         let communitySelectedOrderItemIds = new Set();
-        let communityApprovedMembers = [];
-        let communityPendingMembers = [];
-        let communityApprovedSearch = { lineName: '', nickname: '' };
-        let communitySelectedPendingMemberIds = new Set();
         let backendModuleOrder = [];
         let moduleOrderSortables = [];
         let communityImportRows = [];
@@ -10226,219 +10173,6 @@
             }
         }
 
-        function renderCommunityMembers() {
-            const approvedList = document.getElementById('community-approved-member-list');
-            const pendingList = document.getElementById('community-pending-member-list');
-            if (approvedList) {
-                const lineQuery = communityApprovedSearch.lineName.trim().toLocaleLowerCase('zh-TW');
-                const nicknameQuery = communityApprovedSearch.nickname.trim().toLocaleLowerCase('zh-TW');
-                const rows = communityApprovedMembers.filter(member =>
-                    (!lineQuery || String(member.lineDisplayName || '').toLocaleLowerCase('zh-TW').includes(lineQuery)) &&
-                    (!nicknameQuery || String(member.nickname || '').toLocaleLowerCase('zh-TW').includes(nicknameQuery))
-                );
-                approvedList.innerHTML = rows.length
-                    ? rows.map(member => `
-                        <tr>
-                            <td><strong>${escapeHtml(member.lineDisplayName || 'LINE 使用者')}</strong></td>
-                            <td>${escapeHtml(member.nickname || '—')}</td>
-                            <td>${storefrontDateTime(member.createdAt)}</td>
-                            <td>${storefrontDateTime(member.updatedAt)}</td>
-                            <td>
-                                <span class="backend-member-pill on">已綁定</span>
-                                <span class="community-member-actions">
-                                    <button class="btn btn-sm btn-action-edit" type="button" onclick="openCommunityMemberEditModal('${escapeHtml(member.id)}')"><i class="fa-solid fa-pen"></i> 編輯</button>
-                                    <button class="btn btn-sm btn-danger" type="button" onclick="unbindCommunityMember('${escapeHtml(member.id)}', this)"><i class="fa-solid fa-link-slash"></i> 刪除</button>
-                                </span>
-                            </td>
-                        </tr>
-                    `).join('')
-                    : `<tr><td colspan="5" class="empty-state">${lineQuery || nicknameQuery ? '找不到符合的已綁定名單' : '目前沒有已綁定名單'}</td></tr>`;
-            }
-            if (pendingList) {
-                pendingList.innerHTML = communityPendingMembers.length
-                    ? communityPendingMembers.map(member => {
-                        const isPending = member.reviewStatus === 'pending' && member.requestedNickname;
-                        return `
-                            <tr>
-                                <td style="text-align:center;"><input type="checkbox" aria-label="選取 ${escapeHtml(member.lineDisplayName || 'LINE 使用者')}" ${isPending ? '' : 'disabled'} ${communitySelectedPendingMemberIds.has(member.id) ? 'checked' : ''} onchange="toggleCommunityPendingMember('${escapeHtml(member.id)}', this.checked)"></td>
-                                <td><strong>${escapeHtml(member.lineDisplayName || 'LINE 使用者')}</strong></td>
-                                <td>${escapeHtml(member.requestedNickname || '—')}</td>
-                                <td>
-                                    <span class="backend-member-pill ${isPending ? '' : 'off'}">${isPending ? '待審核' : '未申請'}</span>
-                                    ${isPending ? `<button class="btn btn-sm btn-primary" type="button" onclick="approveCommunityMember('${escapeHtml(member.id)}', this)"><i class="fa-solid fa-check"></i> 通過</button>` : ''}
-                                </td>
-                            </tr>
-                        `;
-                    }).join('')
-                    : '<tr><td colspan="4" class="empty-state">目前沒有待處理名單</td></tr>';
-            }
-            syncCommunityPendingSelectionControls();
-        }
-
-        function applyCommunityApprovedSearch() {
-            communityApprovedSearch = {
-                lineName: document.getElementById('community-approved-line-search')?.value || '',
-                nickname: document.getElementById('community-approved-nickname-search')?.value || ''
-            };
-            renderCommunityMembers();
-        }
-
-        function handleCommunityApprovedSearchKey(event) {
-            if (event.key === 'Enter') applyCommunityApprovedSearch();
-        }
-
-        function pendingCommunityMemberIds() {
-            return communityPendingMembers
-                .filter(member => member.reviewStatus === 'pending' && member.requestedNickname)
-                .map(member => member.id);
-        }
-
-        function syncCommunityPendingSelectionControls() {
-            const availableIds = pendingCommunityMemberIds();
-            const availableSet = new Set(availableIds);
-            communitySelectedPendingMemberIds = new Set(
-                [...communitySelectedPendingMemberIds].filter(id => availableSet.has(id))
-            );
-            const selectAll = document.getElementById('community-pending-select-all');
-            if (selectAll) {
-                selectAll.disabled = availableIds.length === 0;
-                selectAll.checked = availableIds.length > 0 && availableIds.every(id => communitySelectedPendingMemberIds.has(id));
-                selectAll.indeterminate = communitySelectedPendingMemberIds.size > 0 && !selectAll.checked;
-            }
-            const bulkButton = document.getElementById('community-bulk-approve-btn');
-            if (bulkButton) bulkButton.disabled = communitySelectedPendingMemberIds.size === 0;
-        }
-
-        function toggleCommunityPendingMember(id, checked) {
-            if (checked) communitySelectedPendingMemberIds.add(id);
-            else communitySelectedPendingMemberIds.delete(id);
-            syncCommunityPendingSelectionControls();
-        }
-
-        function toggleAllCommunityPendingMembers(checked) {
-            communitySelectedPendingMemberIds = checked ? new Set(pendingCommunityMemberIds()) : new Set();
-            renderCommunityMembers();
-        }
-
-        async function loadCommunityMembers() {
-            const approvedList = document.getElementById('community-approved-member-list');
-            const pendingList = document.getElementById('community-pending-member-list');
-            if (approvedList) approvedList.innerHTML = '<tr><td colspan="5" class="empty-state">正在載入...</td></tr>';
-            if (pendingList) pendingList.innerHTML = '<tr><td colspan="4" class="empty-state">正在載入...</td></tr>';
-            try {
-                const response = await fetch('/api/backend/community/members', { cache: 'no-store' });
-                const result = await response.json().catch(() => null);
-                if (!response.ok || !result?.ok) throw new Error(result?.error || '社群名單載入失敗');
-                communityApprovedMembers = Array.isArray(result.approved) ? result.approved : [];
-                communityPendingMembers = Array.isArray(result.pending) ? result.pending : [];
-                communitySelectedPendingMemberIds.clear();
-                renderCommunityMembers();
-            } catch (error) {
-                console.error(error);
-                if (approvedList) approvedList.innerHTML = '<tr><td colspan="5" class="empty-state">社群名單載入失敗，請稍後再試</td></tr>';
-                if (pendingList) pendingList.innerHTML = '<tr><td colspan="4" class="empty-state">社群名單載入失敗，請稍後再試</td></tr>';
-            }
-        }
-
-        async function mutateCommunityMember(id, action = 'approve', nickname = '') {
-            const response = await fetch('/api/backend/community/members', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, action, nickname })
-            });
-            const result = await response.json().catch(() => null);
-            if (!response.ok || !result?.ok) throw new Error(result?.error || '操作失敗');
-            return result;
-        }
-
-        function requestCommunityMemberApproval(id) {
-            return mutateCommunityMember(id, 'approve');
-        }
-
-        function openCommunityMemberEditModal(id) {
-            const member = communityApprovedMembers.find(item => item.id === id);
-            if (!member) return;
-            document.getElementById('community-member-edit-id').value = member.id;
-            document.getElementById('community-member-edit-line-name').value = member.lineDisplayName || 'LINE 使用者';
-            document.getElementById('community-member-edit-nickname').value = member.nickname || '';
-            document.getElementById('communityMemberEditModal')?.classList.add('active');
-            document.getElementById('community-member-edit-nickname')?.focus();
-        }
-
-        function closeCommunityMemberEditModal() {
-            document.getElementById('communityMemberEditModal')?.classList.remove('active');
-        }
-
-        async function saveCommunityMemberNickname(button) {
-            const id = document.getElementById('community-member-edit-id')?.value || '';
-            const nickname = document.getElementById('community-member-edit-nickname')?.value.trim() || '';
-            if (!nickname) return showToast('請輸入社群暱稱', 'error');
-            if (button) button.disabled = true;
-            try {
-                await mutateCommunityMember(id, 'edit', nickname);
-                closeCommunityMemberEditModal();
-                await loadCommunityMembers();
-                showToast('社群暱稱已更新', 'success');
-            } catch (error) {
-                console.error(error);
-                showToast(error instanceof Error ? error.message : '社群暱稱更新失敗', 'error');
-            } finally {
-                if (button) button.disabled = false;
-            }
-        }
-
-        async function unbindCommunityMember(id, button) {
-            const member = communityApprovedMembers.find(item => item.id === id);
-            if (!member) return;
-            if (!confirm(`確定要解除 ${member.lineDisplayName || 'LINE 使用者'} 與 ${member.nickname || '此暱稱'} 的 LINE 綁定嗎？\n解除後，該使用者下次登入需要重新綁定社群暱稱。`)) return;
-            if (button) button.disabled = true;
-            try {
-                await mutateCommunityMember(id, 'unbind');
-                await loadCommunityMembers();
-                showToast('LINE 與社群暱稱的綁定已解除', 'success');
-            } catch (error) {
-                console.error(error);
-                showToast(error instanceof Error ? error.message : '解除綁定失敗', 'error');
-                if (button) button.disabled = false;
-            }
-        }
-
-        async function approveCommunityMember(id, button) {
-            if (!id || button?.disabled) return;
-            if (button) button.disabled = true;
-            try {
-                const result = await requestCommunityMemberApproval(id);
-                showToast(`已通過「${result.nickname}」的暱稱綁定`, 'success');
-                await loadCommunityMembers();
-            } catch (error) {
-                console.error(error);
-                showToast(error instanceof Error ? error.message : '審核失敗，請稍後再試', 'error');
-                if (button) button.disabled = false;
-            }
-        }
-
-        async function approveSelectedCommunityMembers(button) {
-            const ids = [...communitySelectedPendingMemberIds];
-            if (!ids.length || button?.disabled) return;
-            if (button) button.disabled = true;
-            let approvedCount = 0;
-            let failedCount = 0;
-            let firstError = '';
-            for (const id of ids) {
-                try {
-                    await requestCommunityMemberApproval(id);
-                    approvedCount += 1;
-                } catch (error) {
-                    console.error(error);
-                    failedCount += 1;
-                    if (!firstError) firstError = error instanceof Error ? error.message : '審核失敗';
-                }
-            }
-            await loadCommunityMembers();
-            if (failedCount) showToast(`已通過 ${approvedCount} 筆，${failedCount} 筆失敗：${firstError}`, 'error');
-            else showToast(`已通過 ${approvedCount} 筆暱稱綁定`, 'success');
-        }
-
         // ===== 社群連線訂單 (LINE 圖片下單) — 全新獨立功能，不共用 communityOrders 資料 =====
         let communityLivestreamOrders = [];
         const communityLivestreamFilters = { q: '', purchaseStatus: '', paymentStatus: '', unrecognizedOnly: false, sessionId: '' };
@@ -11994,15 +11728,18 @@
             }
         }
 
-        // ===== 社群綁定（暱稱／IG）——跟社群名單的舊審核機制完全獨立，
-        // 不碰 community-members 任何既有邏輯/資料。三個子畫面（已綁定／
-        // 尚未綁定／綁定紀錄）共用同一個 section，用顯示/隱藏切換，不是
-        // 三個分開的頁籤，所以只需要一次 loadCommunityLineIdentities()
-        // 入口，三個分頁各自懶載入（第一次切過去才打 API）。=====
+        // ===== 社群綁定（暱稱／IG）——統一綁定（2026-10-29）之後，舊的
+        // 「社群名單」審核頁面已經移除，這裡是唯一的綁定管理畫面。三個
+        // 子畫面（已綁定／尚未綁定／綁定紀錄）共用同一個 section，用
+        // 顯示/隱藏切換，不是三個分開的頁籤，所以只需要一次
+        // loadCommunityLineIdentities() 入口，三個分頁各自懶載入（第一次
+        // 切過去才打 API）。needs_review=true（客人自己綁定、撞到記事本
+        // 既有客人名字、還沒核准）的客人顯示橘色「待核准」標籤，有獨立
+        // 的篩選與「核准」按鈕。=====
         let communityLineIdentitiesTab = 'bound';
         let communityLineIdentitiesLoaded = { bound: false, unbound: false, logs: false };
         let communityLineIdentitiesCustomers = [];
-        const communityLineIdentitiesFilters = { q: '' };
+        const communityLineIdentitiesFilters = { q: '', pendingOnly: false };
         let communityLineIdentityEditContext = null; // { mode: 'edit'|'new', lineUserId, lineDisplayName }
         let communityLineIdentityUnbindContext = null; // { lineUserId, lineDisplayName }
 
@@ -12045,26 +11782,96 @@
         function renderCommunityLineIdentitiesBound(stats) {
             const statsEl = document.getElementById('community-line-identities-stats');
             if (statsEl && stats) {
-                statsEl.innerHTML = `<span>已綁定 ${stats.total} 人</span><span style="margin-left:0.75rem;">社群暱稱 ${stats.nickname}</span><span style="margin-left:0.75rem;">IG ${stats.ig}</span>`;
+                statsEl.innerHTML = `<span>已綁定 ${stats.total} 人</span><span style="margin-left:0.75rem;">社群暱稱 ${stats.nickname}</span><span style="margin-left:0.75rem;">IG ${stats.ig}</span>${stats.needsReview ? `<span style="margin-left:0.75rem;color:#c2410c;font-weight:900;">待核准 ${stats.needsReview}</span>` : ''}`;
             }
             const list = document.getElementById('community-line-identities-list');
             if (!list) return;
-            if (!communityLineIdentitiesCustomers.length) {
-                list.innerHTML = '<div class="empty-state">目前沒有符合的客人</div>';
+            const rows = communityLineIdentitiesFilters.pendingOnly
+                ? communityLineIdentitiesCustomers.filter(c => c.needsReview)
+                : communityLineIdentitiesCustomers;
+            if (!rows.length) {
+                list.innerHTML = `<div class="empty-state">${communityLineIdentitiesFilters.pendingOnly ? '目前沒有待核准的客人' : '目前沒有符合的客人'}</div>`;
                 return;
             }
-            list.innerHTML = communityLineIdentitiesCustomers.map(c => `
-                <div class="community-remittances-row">
+            // needs_review=true：客人自己綁定、撞到記事本既有客人名字，
+            // 還沒核准——橘色「待核准」標籤 + 記事本對應紀錄（幫賣家判斷
+            // 是不是同一個人）+「核准」按鈕，跟一般已核准的客人用同一個
+            // 列表，用標籤跟額外的一行資訊區分，不用另外開一個分頁。
+            list.innerHTML = rows.map(c => `
+                <div class="community-remittances-row" style="${c.needsReview ? 'background:#fff7ed;border-radius:0.5rem;' : ''}">
                     <div class="community-remittances-row-main" style="flex-wrap:wrap;">
-                        <span style="flex:1;min-width:0;">${communityBindingLineHtml({ type: c.type, value: c.value }, c.lineDisplayName)}</span>
+                        <span style="flex:1;min-width:0;">${communityBindingLineHtml({ type: c.type, value: c.value }, c.lineDisplayName)}${c.needsReview ? ' <span style="display:inline-block;margin-left:0.4rem;padding:0.1rem 0.5rem;border-radius:999px;background:#fed7aa;color:#9a3412;font-size:0.75rem;font-weight:900;">待核准</span>' : ''}</span>
                         <span class="community-remittances-row-time">綁定於 ${storefrontDateTime(c.boundAt)}${c.editCount ? `・修改過 ${c.editCount} 次` : ''}</span>
                         <div class="community-remittances-row-actions">
+                            ${c.needsReview ? `<button class="btn btn-sm btn-primary" type="button" onclick="approveCommunityLineIdentity(${quoteJs(c.lineUserId)}, this)"><i class="fa-solid fa-check"></i> 核准</button>` : ''}
                             <button class="community-remittances-icon-btn" type="button" onclick="openCommunityLineIdentityEditModal('edit', ${quoteJs(c.lineUserId)}, ${quoteJs(c.lineDisplayName)}, ${quoteJs(c.type)}, ${quoteJs(c.value)})" aria-label="編輯"><i class="fa-solid fa-pen"></i></button>
                             <button class="community-remittances-icon-btn danger" type="button" onclick="openCommunityLineIdentityUnbindModal(${quoteJs(c.lineUserId)}, ${quoteJs(c.lineDisplayName)}, ${quoteJs(c.type)}, ${quoteJs(c.value)})" aria-label="解除綁定"><i class="fa-solid fa-link-slash"></i></button>
                         </div>
                     </div>
+                    ${c.needsReview ? `<div style="padding:0 0.6rem 0.5rem;font-size:0.8rem;color:#9a3412;">記事本裡符合的紀錄：${c.notebookMatch ? `「${escapeHtml(c.notebookMatch.notebookName)}」最近下單 ${storefrontDateTime(c.notebookMatch.lastOrderAt)}` : '沒有找到符合的記事本紀錄（可能已經核准過一次，或名字已經不在記事本裡）'}</div>` : ''}
                 </div>
             `).join('');
+        }
+
+        async function approveCommunityLineIdentity(lineUserId, button) {
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch(`/api/backend/community/line-identities/${encodeURIComponent(lineUserId)}`, { method: 'PATCH' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '核准失敗。');
+                showToast('已核准這筆綁定', 'success');
+                communityLineIdentitiesLoaded.bound = false;
+                await loadCommunityLineIdentitiesBound(true);
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '核准失敗，請稍後再試', 'error');
+                if (button) button.disabled = false;
+            }
+        }
+
+        function toggleCommunityLineIdentitiesPendingOnly(checked) {
+            communityLineIdentitiesFilters.pendingOnly = checked;
+            renderCommunityLineIdentitiesBound();
+        }
+
+        // ---- 下單前必須先綁定（開關，schedule_settings KV）----
+        async function loadCommunityOrderGateSetting() {
+            const toggle = document.getElementById('community-order-gate-toggle');
+            const status = document.getElementById('community-order-gate-status');
+            try {
+                const response = await fetch('/api/backend/community/line-identities/order-gate', { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '讀取失敗');
+                if (toggle) toggle.checked = Boolean(result.enabled);
+                if (status) {
+                    status.textContent = result.enabled ? '啟用中' : '已停用';
+                    status.classList.toggle('active', Boolean(result.enabled));
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+        async function handleCommunityOrderGateToggle(checked) {
+            const toggle = document.getElementById('community-order-gate-toggle');
+            const status = document.getElementById('community-order-gate-status');
+            try {
+                const response = await fetch('/api/backend/community/line-identities/order-gate', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled: checked })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '儲存失敗');
+                if (status) {
+                    status.textContent = checked ? '啟用中' : '已停用';
+                    status.classList.toggle('active', checked);
+                }
+                showToast(checked ? '已開啟「下單前必須先綁定」' : '已關閉「下單前必須先綁定」', 'success');
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '設定儲存失敗，請稍後再試', 'error');
+                if (toggle) toggle.checked = !checked;
+            }
         }
 
         function handleCommunityLineIdentitiesSearchKey(event) {
@@ -15660,7 +15467,6 @@
             'storefront-orders': 'fa-receipt',
             'customer-orders': 'fa-user-tag',
             'community-orders': 'fa-comments',
-            'community-members': 'fa-address-book',
             'community-line-identities': 'fa-id-badge',
             'community-fulfillment': 'fa-handshake',
             'community-livestream-sessions': 'fa-calendar-days',
