@@ -10656,7 +10656,12 @@
                 : `patchCommunityLivestreamPurchasedQuantity('${id}', this.value)`;
             const summaryQtyInput = `<input type="number" min="1" step="1" class="community-livestream-summary-qty-input${qtyDirty ? ' community-livestream-field-dirty' : ''}" value="${qty}" onchange="${qtyOnChange}">`;
             const summaryPriceInput = `<input type="number" min="0" step="1" class="community-livestream-summary-price-input${priceDirty ? ' community-livestream-field-dirty' : ''}" value="${unitPrice === null ? '' : Number(unitPrice)}" placeholder="未輸入" onchange="${priceOnChange}">`;
-            const purchasedQtyInputHtml = (cls) => `<input type="number" min="0" step="1" class="${cls}${purchasedQtyDirty ? ' community-livestream-field-dirty' : ''}" value="${purchasedQty === null || purchasedQty === undefined ? '' : Number(purchasedQty)}" placeholder="—" onchange="${purchasedQtyOnChange}">`;
+            // 連線代購下單改版 第三階段：max 屬性限制原生 spinner/鍵盤上下鍵
+            // 不能超過訂購數量（防止「缺貨數 = 訂購數 - 買到幾個」出現負
+            // 數）；手動輸入超過的情況交給 patchCommunityLivestreamPurchasedQuantity/
+            // stageCommunityLivestreamFieldChange 的 JS clamp，後端 PATCH
+            // 也有資料庫 constraint 再擋一次。
+            const purchasedQtyInputHtml = (cls) => `<input type="number" min="0" max="${qty}" step="1" class="${cls}${purchasedQtyDirty ? ' community-livestream-field-dirty' : ''}" value="${purchasedQty === null || purchasedQty === undefined ? '' : Number(purchasedQty)}" placeholder="—" onchange="${purchasedQtyOnChange}">`;
             return `
                 <div class="community-livestream-card ${isOpen ? 'expanded' : ''}" id="community-livestream-card-${id}" data-row-id="${id}">
                     <div class="community-livestream-card-top">
@@ -10704,7 +10709,7 @@
                                         ${purchasedQtyInputHtml('community-livestream-full-purchased-qty-input')}
                                     </div>
                                     <div class="community-livestream-field">
-                                        <label>單價（客人填的，可覆蓋）</label>
+                                        <label>單價（可填賣家確認價，留空則用客人填的）</label>
                                         <input type="number" min="0" step="1" class="community-livestream-full-price-input${priceDirty ? ' community-livestream-field-dirty' : ''}" value="${unitPrice === null ? '' : Number(unitPrice)}" placeholder="未輸入" onchange="${priceOnChange}">
                                     </div>
                                     <div class="community-livestream-field">
@@ -11058,7 +11063,22 @@
         // not_bought/bought，這裡收到成功回應後比照同步更新記憶體跟小圓點
         // 顯示，不用另外呼叫 patchCommunityLivestreamStatus。
         async function patchCommunityLivestreamPurchasedQuantity(id, rawValue) {
-            const value = rawValue === '' ? null : Math.max(0, Math.round(Number(rawValue)) || 0);
+            const order = communityLivestreamOrders.find(o => o.id === id);
+            const maxQty = order ? Number(order.quantity || 0) : null;
+            let value = rawValue === '' ? null : Math.max(0, Math.round(Number(rawValue)) || 0);
+            // 連線代購下單改版 第三階段：不能超過訂購數量——前端先 clamp
+            // 一次（避免「缺貨數 = 訂購數 - 買到幾個」出現負數），資料庫
+            // 端的 constraint 是最後一道防線，不是主要擋法。
+            if (value !== null && maxQty !== null && value > maxQty) {
+                value = maxQty;
+                showToast(`已經自動調整為訂購數量 ${maxQty}`, 'error');
+                const card = document.getElementById(`community-livestream-card-${id}`);
+                if (card) {
+                    card.querySelectorAll('.community-livestream-summary-purchased-qty-input, .community-livestream-full-purchased-qty-input').forEach(input => {
+                        input.value = String(value);
+                    });
+                }
+            }
             try {
                 const response = await fetch(`/api/backend/community/livestream-orders/${encodeURIComponent(id)}`, {
                     method: 'PATCH',
@@ -11200,13 +11220,24 @@
         function stageCommunityLivestreamFieldChange(id, field, rawValue) {
             const order = communityLivestreamOrders.find(o => o.id === id);
             if (!order) return;
-            const value = field === 'quantity'
+            const existing = communityLivestreamBulkEditChanges.get(id) || {};
+            let value = field === 'quantity'
                 ? Math.max(1, Math.round(Number(rawValue)) || 1)
                 : field === 'purchasedQuantity'
                     ? (rawValue === '' ? null : Math.max(0, Math.round(Number(rawValue)) || 0))
                     : (rawValue === '' ? null : Number(rawValue));
 
-            const existing = communityLivestreamBulkEditChanges.get(id) || {};
+            // 連線代購下單改版 第三階段：批次編輯模式下「買到幾個」一樣不能
+            // 超過訂購數量——上限要用「這筆暫存的訂購數量（如果同時也在
+            // 改），否則用已存檔的訂購數量」，不是只看 order.quantity。
+            if (field === 'purchasedQuantity' && value !== null) {
+                const effectiveMaxQty = existing.quantity !== undefined ? existing.quantity : Number(order.quantity || 0);
+                if (value > effectiveMaxQty) {
+                    value = effectiveMaxQty;
+                    showToast(`已經自動調整為訂購數量 ${effectiveMaxQty}`, 'error');
+                }
+            }
+
             existing[field] = value;
             communityLivestreamBulkEditChanges.set(id, existing);
 
