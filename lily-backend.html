@@ -2013,6 +2013,11 @@
                 </div>
                 <div class="backend-member-filterbar community-remittances-filterbar">
                     <div class="backend-member-filter-row">
+                        <div class="backend-member-filter-field" style="min-width:180px;">
+                            <select id="community-remittances-session-filter" aria-label="場次" onchange="applyCommunityRemittancesFilters()">
+                                <option value="">全部場次</option>
+                            </select>
+                        </div>
                         <div class="backend-member-filter-field" style="min-width:220px;">
                             <input id="community-remittances-search" type="search" placeholder="暱稱、LINE 名稱" aria-label="搜尋" onkeydown="handleCommunityRemittancesSearchKey(event)">
                         </div>
@@ -4136,7 +4141,7 @@
             if(name === 'community-members') loadCommunityMembers();
             if(name === 'community-livestream-sessions') loadCommunityLivestreamSessions();
             if(name === 'community-livestream-orders') { loadCommunityLivestreamSessionOptions(); loadCommunityLivestreamOrders(); }
-            if(name === 'community-livestream-remittances') loadCommunityLivestreamRemittances();
+            if(name === 'community-livestream-remittances') { loadCommunityRemittancesSessionOptions(); loadCommunityLivestreamRemittances(); }
             if(name === 'customer-orders') renderCustomerOrders();
             if(name === 'stock-products') renderStockProducts();
             if(name === 'preorder-products') renderPreorderProducts();
@@ -11445,7 +11450,11 @@
         // 訂單就不顯示這一行）。原本的未核對/已核對快篩拿掉，改成銀行
         // 篩選（中信/富邦/國泰/異常/全部）。 =====
         let communityLivestreamRemittanceCustomers = [];
-        const communityRemittancesFilters = { q: '', bank: '' };
+        const communityRemittancesFilters = { q: '', bank: '', sessionId: '' };
+        let communityRemittancesSessionOptionsLoaded = false;
+        // id → 場次名稱，給每一筆匯款紀錄顯示場次標籤用（下拉選單載入時
+        // 順便存一份，不用另外多打一支 API）。
+        let communityRemittancesSessionNameById = new Map();
         // 哪些匯款紀錄/哪些人的「未匯款」行目前展開著——跟社群連線訂單的
         // openIds 不同，這裡不用每次重繪前去 DOM 反查，直接拿這兩個 Set
         // 當唯一的狀態來源即可（渲染函式本身就是純函式，讀這兩個 Set）。
@@ -11482,6 +11491,7 @@
             const params = new URLSearchParams();
             if (communityRemittancesFilters.q) params.set('q', communityRemittancesFilters.q);
             if (communityRemittancesFilters.bank) params.set('bank', communityRemittancesFilters.bank);
+            if (communityRemittancesFilters.sessionId) params.set('sessionId', communityRemittancesFilters.sessionId);
             const qs = params.toString();
             return qs ? `?${qs}` : '';
         }
@@ -11489,7 +11499,36 @@
         function writeCommunityRemittancesFilterInputs() {
             const search = document.getElementById('community-remittances-search');
             if (search) search.value = communityRemittancesFilters.q || '';
+            const sessionSelect = document.getElementById('community-remittances-session-filter');
+            if (sessionSelect) sessionSelect.value = communityRemittancesFilters.sessionId || '';
             renderCommunityRemittanceBankFilterButtons();
+        }
+
+        // 場次下拉選單：跟 loadCommunityLivestreamSessionOptions 共用同一支
+        // 場次列表 API，但預設選項是「全部場次」不是「目前連線（自動
+        // 判斷）」——匯款紀錄本身隨時開放、不限場次，沒選任何場次時後端
+        // 不會做任何場次篩選（見 route.ts 的 sessionIdFilter）。只載入
+        // 一次，重新整理匯款紀錄列表不用重打。
+        async function loadCommunityRemittancesSessionOptions() {
+            const select = document.getElementById('community-remittances-session-filter');
+            if (!select || communityRemittancesSessionOptionsLoaded) return;
+            try {
+                const response = await fetch('/api/backend/community/livestream-sessions', { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '場次讀取失敗。');
+                const sessions = result.sessions || [];
+                communityRemittancesSessionNameById = new Map(sessions.map(session => [String(session.id), session.name]));
+                select.innerHTML = `
+                    <option value="">全部場次</option>
+                    ${sessions.map(session => `<option value="${session.id}">${escapeHtml(session.name)}</option>`).join('')}
+                    <option value="unassigned">未分場次</option>
+                `;
+                select.value = communityRemittancesFilters.sessionId || '';
+                communityRemittancesSessionOptionsLoaded = true;
+                renderCommunityLivestreamRemittances();
+            } catch (error) {
+                console.error(error);
+            }
         }
 
         async function loadCommunityLivestreamRemittances() {
@@ -11550,6 +11589,9 @@
             const mismatchBadge = remittance.mismatch
                 ? '<span class="community-remittances-mismatch-badge" title="客人回報金額跟系統計算金額不一致">⚠</span>'
                 : '';
+            const sessionLabel = remittance.sessionId
+                ? (communityRemittancesSessionNameById.get(remittance.sessionId) || '場次讀取中…')
+                : '未分場次';
             const deleteLabel = `${remittance.bankName || '銀行未填'}／${remittance.accountLast5 || '末五碼未填'}`;
             return `
                 <div class="community-remittances-row">
@@ -11560,6 +11602,7 @@
                         ${communityRemittanceBankSelectHtml(remittance.id, remittance.bankName, remittance.isBankAnomaly)}
                         <input type="text" class="community-remittances-last5-input" maxlength="5" inputmode="numeric" placeholder="末五碼" value="${escapeHtml(remittance.accountLast5 || '')}" onchange="patchCommunityLivestreamRemittance('${remittance.id}', { accountLast5: this.value })">
                         <span class="community-remittances-row-time">${storefrontDateTime(remittance.submittedAt)}</span>
+                        <span class="community-remittances-mini-pill community-remittances-tone-gray">${escapeHtml(sessionLabel)}</span>
                         <span class="community-remittances-mini-pill ${reviewed ? 'community-remittances-tone-green' : 'community-remittances-tone-gray'}">${reviewed ? '已核對' : '未核對'}</span>
                         <span class="community-remittances-row-amounts">
                             <span>系統 ${storefrontMoney(remittance.systemCalculatedTotal)}</span>
@@ -11688,12 +11731,14 @@
 
         function applyCommunityRemittancesFilters() {
             communityRemittancesFilters.q = document.getElementById('community-remittances-search')?.value.trim() || '';
+            communityRemittancesFilters.sessionId = document.getElementById('community-remittances-session-filter')?.value || '';
             loadCommunityLivestreamRemittances();
         }
 
         function clearCommunityRemittancesFilters() {
             communityRemittancesFilters.q = '';
             communityRemittancesFilters.bank = '';
+            communityRemittancesFilters.sessionId = '';
             loadCommunityLivestreamRemittances();
         }
 
@@ -13229,18 +13274,30 @@
         const COMMUNITY_LIVESTREAM_REPLY_TEMPLATE_GROUPS = [
             { label: '連線下單', keys: ['order_no_session', 'order_welcome', 'order_photo_first', 'order_photo_confirm_card', 'order_idle_closed', 'order_session_ended', 'photo_confirm_empty'] },
             { label: '查詢/管理訂單', keys: ['order_query_empty', 'order_manage_card'] },
-            { label: '匯款', keys: ['remittance_empty', 'remittance_summary', 'remittance_format_invalid', 'remittance_cancelled', 'remittance_success'] },
+            { label: '匯款', keys: [
+                'remittance_choose_kind', 'remittance_preorder_unavailable', 'remittance_empty', 'remittance_all_shortage',
+                'remittance_items_intro', 'remittance_shortage_note', 'remittance_transfer_instruction',
+                'remittance_confirm_amount_question', 'remittance_ask_custom_amount', 'remittance_custom_amount_invalid',
+                'remittance_ask_last5', 'remittance_last5_invalid', 'remittance_cancelled', 'remittance_done',
+            ] },
         ];
         const COMMUNITY_LIVESTREAM_REPLY_TEMPLATE_LABELS = {
             order_no_session: '按「我要下單」但沒有進行中的連線', order_welcome: '開始下單說明', order_photo_first: '每輪第一張照片回覆',
             order_photo_confirm_card: '「傳好了」確認卡片說明文字', order_idle_closed: '閒置 10 分鐘後下次動作提醒', order_session_ended: '連線結束後下次動作提醒',
             photo_confirm_empty: '「傳好了」但沒有暫存照片',
             order_query_empty: '查詢/取消訂單：沒有下單紀錄', order_manage_card: '查詢/取消訂單卡片說明文字',
-            remittance_empty: '沒有待匯款訂單', remittance_summary: '匯款回報格式說明', remittance_format_invalid: '匯款回報格式錯誤',
-            remittance_cancelled: '取消匯款申報成功', remittance_success: '匯款回報已收到',
+            remittance_choose_kind: '選擇匯款類型（連線／預購）說明文字', remittance_preorder_unavailable: '預購匯款尚未開放',
+            remittance_empty: '沒有待匯款訂單', remittance_all_shortage: '待匯款商品全部缺貨',
+            remittance_items_intro: '匯款商品清單說明（含應匯金額）', remittance_shortage_note: '缺貨提示附加文字',
+            remittance_transfer_instruction: '選完銀行後的轉帳說明', remittance_confirm_amount_question: '確認匯款金額是否正確',
+            remittance_ask_custom_amount: '請客人輸入實際匯款金額', remittance_custom_amount_invalid: '匯款金額格式錯誤',
+            remittance_ask_last5: '請輸入轉帳帳號末五碼', remittance_last5_invalid: '末五碼格式錯誤',
+            remittance_cancelled: '取消匯款申報成功', remittance_done: '匯款申報已收到',
         };
         const COMMUNITY_LIVESTREAM_REPLY_TEMPLATE_VARS = {
             order_idle_closed: ['數量'], order_session_ended: ['數量'],
+            remittance_all_shortage: ['數量'], remittance_items_intro: ['金額'], remittance_shortage_note: ['數量'],
+            remittance_confirm_amount_question: ['金額'], remittance_done: ['金額'],
         };
 
         let communityLivestreamReplyTemplates = {};
