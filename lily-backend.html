@@ -315,6 +315,12 @@
         .community-livestream-filter-btn.active { background: #ec4899; border-color: #ec4899; color: white; }
         .community-livestream-list { display: grid; gap: 0.75rem; margin-top: 0.35rem; }
         .community-livestream-card { display: grid; gap: 0.6rem; border: 1px solid #fbcfe8; border-radius: 1rem; background: white; padding: 0.85rem; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
+        /* 卡片改版：商品名稱＋編輯/刪除獨立成最上面一行，永遠顯示（不會
+           被展開/收合切換隱藏——舊版這兩顆按鈕原本跟在
+           .community-livestream-summary 底下，展開編輯區時連同整個摘要
+           區一起被 display:none 蓋掉，等於展開後反而找不到按鈕收合回去）。 */
+        .community-livestream-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
+        .community-livestream-card-title { flex: 1; min-width: 0; font-size: 0.86rem; font-weight: 900; color: #334155; overflow-wrap: break-word; line-height: 1.35; }
         .community-livestream-card-top { display: grid; grid-template-columns: 110px 1fr; gap: 0.75rem; align-items: stretch; }
         .community-livestream-card-main { display: grid; gap: 0.4rem; min-width: 0; }
         .community-livestream-card-header { display: flex; gap: 0.5rem; align-items: flex-start; flex-wrap: wrap; }
@@ -380,12 +386,32 @@
         .community-livestream-search-row { display: flex !important; gap: 0.5rem; align-items: stretch; }
         .community-livestream-search-row input { flex: 1 1 auto; min-width: 0; }
         .community-livestream-summary { display: grid; gap: 0.3rem; }
+        /* 卡片改版：灰色小字只顯示客人的社群暱稱（沒有綁定時退回 LINE
+           顯示名稱，見 communityLivestreamWhoText），拿掉綠色「社群暱稱」
+           標籤跟 LINE 名稱那行——跟 .community-binding-line（依客人統計／
+           匯款紀錄共用）是故意分開的獨立樣式，不要共用。 */
+        .community-livestream-who { font-size: 0.72rem; font-weight: 700; color: #94a3b8; overflow-wrap: break-word; }
         .community-livestream-summary-product { font-size: 0.82rem; font-weight: 800; color: #334155; }
         .community-livestream-summary-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; font-size: 0.8rem; font-weight: 800; color: #334155; }
         .community-livestream-summary-price-input { width: 64px; min-height: 28px; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.15rem 0.35rem; font-size: 0.8rem; font-weight: 800; color: #334155; outline: none; text-align: center; }
         .community-livestream-summary-price-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
+        /* 卡片改版：一般模式下摘要區的數量改成純文字（不可編輯，永遠顯示
+           下單數量，不受買到幾個影響；要改數量按右上角鉛筆展開編輯區）；
+           批次編輯模式下這個欄位要維持可編輯（批次調整數量本來就是在
+           摘要區直接改、不用展開每一張卡片），所以保留原本的輸入框
+           樣式，渲染時依 communityLivestreamBulkEditEnabled 二選一。 */
+        .community-livestream-summary-qty-text { min-width: 14px; text-align: center; font-size: 0.8rem; font-weight: 800; color: #334155; }
         .community-livestream-summary-qty-input { width: 46px; min-height: 28px; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.15rem 0.3rem; font-size: 0.8rem; font-weight: 800; color: #334155; outline: none; text-align: center; }
         .community-livestream-summary-qty-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
+        /* 卡片改版：✓ 全部買到／✗ 沒買到／「買到 N」自填，三顆都呼叫既有的
+           買到幾個寫入函式，不是新 API；ok/bad 是顏色基底，.active 是
+           「目前就是這個狀態」的實心高亮（見 communityLivestreamPurchasedQtyActionJs）。 */
+        .community-livestream-buy-actions-row { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+        .community-livestream-buy-btn { width: 30px; height: 30px; flex-shrink: 0; border-radius: 0.55rem; border: 1px solid #fbcfe8; background: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; cursor: pointer; padding: 0; }
+        .community-livestream-buy-btn.ok { color: #16a34a; }
+        .community-livestream-buy-btn.bad { color: #dc2626; }
+        .community-livestream-buy-btn.ok.active { background: #16a34a; border-color: #16a34a; color: #fff; }
+        .community-livestream-buy-btn.bad.active { background: #dc2626; border-color: #dc2626; color: #fff; }
         /* 批次編輯模式下，數量/單價改成先暫存、不立即送出——用邊框變色
            標示「這格有未儲存的修改」，刻意放在這兩條 :focus 規則之後，
            選擇器權重相同時靠後者覆蓋前者，所以離開焦點後 dirty 邊框
@@ -10537,6 +10563,29 @@
         // openIds 由呼叫端（renderCommunityLivestreamOrders）統一算好傳進
         // 來，不管卡片最後是平鋪還是巢狀在客人分組底下，都用同一個
         // Set 判斷展開狀態。
+        // 卡片改版：這張卡片只顯示客人的社群暱稱／IG，沒有綁定時退回 LINE
+        // 顯示名稱——跟 communityBindingLineHtml（依客人統計／匯款紀錄共用）
+        // 故意分開成獨立函式，那兩處仍然要顯示綁定標籤＋LINE 名稱，這裡的
+        // 簡化顯示不能動到共用函式。
+        function communityLivestreamWhoText(binding, lineDisplayName) {
+            if (binding) return binding.type === 'ig' ? ('@' + binding.value) : binding.value;
+            return lineDisplayName || 'LINE 使用者';
+        }
+
+        // ✓／✗／「買到 N」三個按鈕呼叫的是同一支既有的買到幾個寫入函式
+        // （一般模式 patchCommunityLivestreamPurchasedQuantity／批次編輯
+        // 模式 stageCommunityLivestreamFieldChange），只是帶的值不同：
+        // 全部買到＝訂購數量、沒買到＝0、再點一次目前已經高亮的那顆＝空字串
+        // （取消回「未採買」）。這支小函式把「組 onclick 字串」抽出來，
+        // 讓初次渲染（buildCommunityLivestreamOrderCardHtml）跟按下後的
+        // 免刷新局部更新（下面兩支 patch/stage 函式裡要重算高亮跟下一次
+        // 點擊的目標值）共用同一份邏輯，不要各自維護一份容易兩邊不同步。
+        function communityLivestreamPurchasedQtyActionJs(id, value) {
+            return communityLivestreamBulkEditEnabled
+                ? `stageCommunityLivestreamFieldChange(${quoteJs(id)}, 'purchasedQuantity', ${quoteJs(value)})`
+                : `patchCommunityLivestreamPurchasedQuantity(${quoteJs(id)}, ${quoteJs(value)})`;
+        }
+
         function buildCommunityLivestreamOrderCardHtml(order, openIds) {
             const id = escapeHtml(order.id);
             const isOpen = openIds.has(order.id);
@@ -10558,9 +10607,12 @@
             const qty = qtyDirty ? pendingEdit.quantity : Number(order.quantity || 1);
             const unitPrice = priceDirty ? pendingEdit.unitPrice : order.unitPrice;
             const purchasedQty = purchasedQtyDirty ? pendingEdit.purchasedQuantity : order.purchasedQuantity;
-            // 連線代購下單改版 第二階段：總價改用「買到幾個（還沒採買就用
-            // 訂購數量）× 單價」——還沒採買時顯示的是訂購總價，填了買到
-            // 幾個之後自然切換成實際總價，不用兩個數字並存。
+            // 卡片改版：摘要區的算式這輪起永遠用「下單數量」計算，按 ✓ ✗
+            // 或填買到幾個都不會改變這裡顯示的數量跟總價——「實際應收」
+            // （買到幾個，還沒採買就用訂購數量，× 單價）只在展開編輯區的
+            // 「總價」欄位顯示，那是唯一顯示實際應收的地方，公式維持跟
+            // 以前一樣（下面 effectiveQty/totalText 沒有改）。
+            const orderedTotalText = unitPrice === null ? '—' : storefrontMoney(unitPrice * qty);
             const effectiveQty = purchasedQty === null || purchasedQty === undefined ? qty : purchasedQty;
             const totalText = unitPrice === null ? '—' : storefrontMoney(unitPrice * effectiveQty);
             const qtyOnChange = communityLivestreamBulkEditEnabled
@@ -10572,16 +10624,36 @@
             const purchasedQtyOnChange = communityLivestreamBulkEditEnabled
                 ? `stageCommunityLivestreamFieldChange('${id}', 'purchasedQuantity', this.value)`
                 : `patchCommunityLivestreamPurchasedQuantity('${id}', this.value)`;
-            const summaryQtyInput = `<input type="number" min="1" step="1" class="community-livestream-summary-qty-input${qtyDirty ? ' community-livestream-field-dirty' : ''}" value="${qty}" onchange="${qtyOnChange}">`;
             const summaryPriceInput = `<input type="number" min="0" step="1" class="community-livestream-summary-price-input${priceDirty ? ' community-livestream-field-dirty' : ''}" value="${unitPrice === null ? '' : Number(unitPrice)}" placeholder="未輸入" onchange="${priceOnChange}">`;
+            // 卡片改版：一般模式下數量是純文字（不可編輯）；批次編輯模式要
+            // 維持原本「摘要區直接改數量、不用展開每張卡片」的既有機制，
+            // 所以批次編輯時這裡仍然是輸入框，不是文字。
+            const summaryQtyField = communityLivestreamBulkEditEnabled
+                ? `<input type="number" min="1" step="1" class="community-livestream-summary-qty-input${qtyDirty ? ' community-livestream-field-dirty' : ''}" value="${qty}" onchange="${qtyOnChange}">`
+                : `<span class="community-livestream-summary-qty-text">${qty}</span>`;
             // 連線代購下單改版 第三階段：max 屬性限制原生 spinner/鍵盤上下鍵
             // 不能超過訂購數量（防止「缺貨數 = 訂購數 - 買到幾個」出現負
             // 數）；手動輸入超過的情況交給 patchCommunityLivestreamPurchasedQuantity/
             // stageCommunityLivestreamFieldChange 的 JS clamp，後端 PATCH
             // 也有資料庫 constraint 再擋一次。
             const purchasedQtyInputHtml = (cls) => `<input type="number" min="0" max="${qty}" step="1" class="${cls}${purchasedQtyDirty ? ' community-livestream-field-dirty' : ''}" value="${purchasedQty === null || purchasedQty === undefined ? '' : Number(purchasedQty)}" placeholder="—" onchange="${purchasedQtyOnChange}">`;
+            // ✓／✗ 高亮：買到幾個剛好等於訂購數量＝全部買到；等於 0＝沒
+            // 買到；再點一次目前已經高亮的那顆，送出空字串等於重設回
+            // 「未採買」（買到幾個＝空值）。
+            const isAllBought = purchasedQty !== null && purchasedQty !== undefined && Number(purchasedQty) === qty;
+            const isNoneBought = purchasedQty !== null && purchasedQty !== undefined && Number(purchasedQty) === 0;
+            const allBoughtTarget = isAllBought ? '' : String(qty);
+            const noneBoughtTarget = isNoneBought ? '' : '0';
+            const gachaPillHtml = order.category === 'gacha' ? '<span class="community-livestream-mini-pill" style="background:#ffebf1;color:#a84b6c;margin-left:4px;">扭蛋</span>' : '';
             return `
                 <div class="community-livestream-card ${isOpen ? 'expanded' : ''}" id="community-livestream-card-${id}" data-row-id="${id}">
+                    <div class="community-livestream-card-head">
+                        <div class="community-livestream-card-title">${escapeHtml(order.productName || '')}${gachaPillHtml}</div>
+                        <div class="community-livestream-card-actions">
+                            <button class="community-livestream-icon-btn" type="button" onclick="toggleCommunityLivestreamCard('${id}')" aria-label="編輯"><i class="fa-solid fa-pen"></i></button>
+                            <button class="community-livestream-icon-btn danger" type="button" onclick="deleteCommunityLivestreamOrder(${quoteJs(order.id)}, ${quoteJs(order.productName || '')})" aria-label="刪除"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
                     <div class="community-livestream-card-top">
                         <div class="community-livestream-thumb-wrap">
                             <input type="checkbox" class="community-livestream-select-checkbox" aria-label="選取此筆社群連線訂單" ${checked} onchange="toggleCommunityLivestreamRowSelect('${id}', this.checked)">
@@ -10589,18 +10661,11 @@
                             <span class="community-livestream-thumb-time">${storefrontDateTime(order.createdAt)}</span>
                         </div>
                         <div class="community-livestream-card-main">
-                            <div class="community-livestream-card-header">
-                                <div class="community-livestream-customer-name">${communityBindingLineHtml(order.binding, order.lineDisplayName)}</div>
-                                <div class="community-livestream-purchased-qty-wrap">
-                                    <label>買到</label>
-                                    ${purchasedQtyInputHtml('community-livestream-summary-purchased-qty-input')}
-                                </div>
-                            </div>
                             ${remittanceInfo}
                             <div class="community-livestream-summary">
-                                <div class="community-livestream-summary-product">${escapeHtml(order.productName || '')}${order.category === 'gacha' ? '<span class="community-livestream-mini-pill" style="background:#ffebf1;color:#a84b6c;margin-left:4px;">扭蛋</span>' : ''}</div>
+                                <div class="community-livestream-who">${escapeHtml(communityLivestreamWhoText(order.binding, order.lineDisplayName))}</div>
                                 <div class="community-livestream-summary-line">
-                                    ${summaryQtyInput}<span>×</span>${summaryPriceInput}<span class="community-livestream-summary-total">= ${totalText}</span>
+                                    ${summaryQtyField}<span>×</span>${summaryPriceInput}<span class="community-livestream-summary-total">= ${orderedTotalText}</span>
                                 </div>
                                 <div class="community-livestream-summary-status-row">
                                     <div class="community-livestream-summary-pills">
@@ -10608,9 +10673,13 @@
                                         ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', 'community-livestream-mini-pill-payment')}
                                         ${communityLivestreamSettlementBadgeHtml(order)}
                                     </div>
-                                    <div class="community-livestream-card-actions">
-                                        <button class="community-livestream-icon-btn" type="button" onclick="toggleCommunityLivestreamCard('${id}')" aria-label="編輯"><i class="fa-solid fa-pen"></i></button>
-                                        <button class="community-livestream-icon-btn danger" type="button" onclick="deleteCommunityLivestreamOrder(${quoteJs(order.id)}, ${quoteJs(order.productName || '')})" aria-label="刪除"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                                <div class="community-livestream-buy-actions-row">
+                                    <button class="community-livestream-buy-btn ok${isAllBought ? ' active' : ''}" type="button" onclick="${communityLivestreamPurchasedQtyActionJs(order.id, allBoughtTarget)}" aria-label="全部買到" title="全部買到"><i class="fa-solid fa-check"></i></button>
+                                    <button class="community-livestream-buy-btn bad${isNoneBought ? ' active' : ''}" type="button" onclick="${communityLivestreamPurchasedQtyActionJs(order.id, noneBoughtTarget)}" aria-label="沒買到" title="沒買到"><i class="fa-solid fa-xmark"></i></button>
+                                    <div class="community-livestream-purchased-qty-wrap">
+                                        <label>買到</label>
+                                        ${purchasedQtyInputHtml('community-livestream-summary-purchased-qty-input')}
                                     </div>
                                 </div>
                                 ${order.notes ? `<div class="community-livestream-summary-notes">備註：${escapeHtml(order.notes)}</div>` : ''}
@@ -11011,10 +11080,14 @@
                 }
 
                 const totalText = order && order.totalPrice !== null ? storefrontMoney(order.totalPrice) : '—';
+                // 卡片改版：摘要區的算式永遠用「下單數量」算，跟展開編輯區
+                // 繼續用「買到幾個（還沒採買就用訂購數量）」算的 totalText
+                // 是兩個不同數字，分開算、分開更新到各自的 DOM 位置。
+                const orderedTotalText = order && value !== null ? storefrontMoney(value * Number(order.quantity || 1)) : '—';
                 const card = document.getElementById(`community-livestream-card-${id}`);
                 if (card) {
                     const summaryTotal = card.querySelector('.community-livestream-summary-total');
-                    if (summaryTotal) summaryTotal.textContent = `= ${totalText}`;
+                    if (summaryTotal) summaryTotal.textContent = `= ${orderedTotalText}`;
                     const fullTotal = card.querySelector('.community-livestream-total');
                     if (fullTotal) fullTotal.textContent = totalText;
                     const priceText = value === null ? '' : String(value);
@@ -11051,14 +11124,20 @@
                 }
 
                 const totalText = order && order.totalPrice !== null ? storefrontMoney(order.totalPrice) : '—';
+                // 卡片改版：摘要區算式永遠用「下單數量」（也就是這裡剛存檔
+                // 的 value），跟展開編輯區用「買到幾個（還沒採買就用訂購
+                // 數量）」算的 totalText 分開算。
+                const orderedTotalText = order && order.unitPrice !== null ? storefrontMoney(order.unitPrice * value) : '—';
                 const card = document.getElementById(`community-livestream-card-${id}`);
                 if (card) {
                     const summaryTotal = card.querySelector('.community-livestream-summary-total');
-                    if (summaryTotal) summaryTotal.textContent = `= ${totalText}`;
+                    if (summaryTotal) summaryTotal.textContent = `= ${orderedTotalText}`;
                     const fullTotal = card.querySelector('.community-livestream-total');
                     if (fullTotal) fullTotal.textContent = totalText;
                     const qtyText = String(value);
-                    card.querySelectorAll('.community-livestream-summary-qty-input, .community-livestream-full-qty-input').forEach(input => {
+                    const qtyTextEl = card.querySelector('.community-livestream-summary-qty-text');
+                    if (qtyTextEl) qtyTextEl.textContent = qtyText;
+                    card.querySelectorAll('.community-livestream-full-qty-input').forEach(input => {
                         if (input.value !== qtyText) input.value = qtyText;
                     });
                 }
@@ -11109,14 +11188,34 @@
                 const totalText = order && order.totalPrice !== null ? storefrontMoney(order.totalPrice) : '—';
                 const card = document.getElementById(`community-livestream-card-${id}`);
                 if (card) {
-                    const summaryTotal = card.querySelector('.community-livestream-summary-total');
-                    if (summaryTotal) summaryTotal.textContent = `= ${totalText}`;
+                    // 卡片改版：摘要區的算式/總價跟「買到幾個」無關（永遠是
+                    // 下單數量 × 單價，不會因為這裡改動而變），所以這裡不
+                    // 動 .community-livestream-summary-total，只更新展開
+                    // 編輯區「實際應收」的總價。
                     const fullTotal = card.querySelector('.community-livestream-total');
                     if (fullTotal) fullTotal.textContent = totalText;
                     const qtyText = value === null ? '' : String(value);
                     card.querySelectorAll('.community-livestream-summary-purchased-qty-input, .community-livestream-full-purchased-qty-input').forEach(input => {
                         if (input.value !== qtyText) input.value = qtyText;
                     });
+                    // ✓／✗ 高亮跟下一次點擊的目標值都要跟著新的 value
+                    // 重算，不然按過一次之後，再點同一顆會沿用舊的 onclick
+                    // 字串送出錯誤的值。
+                    const orderQty = order ? Number(order.quantity || 1) : null;
+                    if (orderQty !== null) {
+                        const isAll = value === orderQty;
+                        const isNone = value === 0;
+                        const allBtn = card.querySelector('.community-livestream-buy-btn.ok');
+                        const noneBtn = card.querySelector('.community-livestream-buy-btn.bad');
+                        if (allBtn) {
+                            allBtn.classList.toggle('active', isAll);
+                            allBtn.setAttribute('onclick', communityLivestreamPurchasedQtyActionJs(id, isAll ? '' : String(orderQty)));
+                        }
+                        if (noneBtn) {
+                            noneBtn.classList.toggle('active', isNone);
+                            noneBtn.setAttribute('onclick', communityLivestreamPurchasedQtyActionJs(id, isNone ? '' : '0'));
+                        }
+                    }
                     if (order) applyCommunityLivestreamStatusToCard(id, 'purchaseStatus', order.purchaseStatus);
                 }
                 showToast('已更新', 'success');
@@ -11267,16 +11366,35 @@
 
                 // 總價：買到幾個（暫存值優先，否則用這筆訂單已存檔的值）
                 // 還有值就用它，沒有才退回訂購數量——跟其他地方算總價的
-                // 公式一致。
+                // 公式一致。這個 effectiveQty 算出來的 totalText 只用在
+                // 展開編輯區（實際應收），摘要區的算式永遠用「下單數量」
+                // （stagedQty），兩者分開算、分開更新。
                 const stagedPurchasedQty = existing.purchasedQuantity !== undefined ? existing.purchasedQuantity : order.purchasedQuantity;
                 const stagedQty = existing.quantity !== undefined ? existing.quantity : Number(order.quantity || 1);
                 const effectiveQty = stagedPurchasedQty === null || stagedPurchasedQty === undefined ? stagedQty : stagedPurchasedQty;
                 const effectivePrice = existing.unitPrice !== undefined ? existing.unitPrice : order.unitPrice;
                 const totalText = effectivePrice === null ? '—' : storefrontMoney(effectivePrice * effectiveQty);
-                const summaryTotal = card.querySelector('.community-livestream-summary-total');
-                if (summaryTotal) summaryTotal.textContent = `= ${totalText}`;
                 const fullTotal = card.querySelector('.community-livestream-total');
                 if (fullTotal) fullTotal.textContent = totalText;
+
+                if (field === 'purchasedQuantity') {
+                    const isAll = value !== null && value === stagedQty;
+                    const isNone = value === 0;
+                    const allBtn = card.querySelector('.community-livestream-buy-btn.ok');
+                    const noneBtn = card.querySelector('.community-livestream-buy-btn.bad');
+                    if (allBtn) {
+                        allBtn.classList.toggle('active', isAll);
+                        allBtn.setAttribute('onclick', communityLivestreamPurchasedQtyActionJs(id, isAll ? '' : String(stagedQty)));
+                    }
+                    if (noneBtn) {
+                        noneBtn.classList.toggle('active', isNone);
+                        noneBtn.setAttribute('onclick', communityLivestreamPurchasedQtyActionJs(id, isNone ? '' : '0'));
+                    }
+                } else {
+                    const orderedTotalText = effectivePrice === null ? '—' : storefrontMoney(effectivePrice * stagedQty);
+                    const summaryTotal = card.querySelector('.community-livestream-summary-total');
+                    if (summaryTotal) summaryTotal.textContent = `= ${orderedTotalText}`;
+                }
                 if (field === 'unitPrice' && value !== null) card.querySelector('.community-livestream-price-warning')?.remove();
             }
 
