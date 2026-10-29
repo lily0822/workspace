@@ -1933,6 +1933,8 @@
                         <button type="button" class="community-livestream-filter-btn" data-filter="paymentStatus:unpaid" onclick="toggleCommunityLivestreamQuickFilter('paymentStatus', 'unpaid')">未付款</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="paymentStatus:confirming" onclick="toggleCommunityLivestreamQuickFilter('paymentStatus', 'confirming')">匯款確認中</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="paymentStatus:paid" onclick="toggleCommunityLivestreamQuickFilter('paymentStatus', 'paid')">已付款</button>
+                        <button type="button" class="community-livestream-filter-btn" data-filter="productCategory:general" onclick="toggleCommunityLivestreamQuickFilter('productCategory', 'general')">一般商品</button>
+                        <button type="button" class="community-livestream-filter-btn" data-filter="productCategory:gacha" onclick="toggleCommunityLivestreamQuickFilter('productCategory', 'gacha')">扭蛋</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="unrecognizedOnly:1" onclick="toggleCommunityLivestreamQuickFilter('unrecognizedOnly', '1')">無法辨識價格</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="needsTopupOnly:1" onclick="toggleCommunityLivestreamQuickFilter('needsTopupOnly', '1')">有待補款</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="hasRefundDueOnly:1" onclick="toggleCommunityLivestreamQuickFilter('hasRefundDueOnly', '1')">有應退款</button>
@@ -10182,7 +10184,7 @@
 
         // ===== 社群連線訂單 (LINE 圖片下單) — 全新獨立功能，不共用 communityOrders 資料 =====
         let communityLivestreamOrders = [];
-        const communityLivestreamFilters = { q: '', purchaseStatus: '', paymentStatus: '', unrecognizedOnly: false, needsTopupOnly: false, hasRefundDueOnly: false, sessionId: '' };
+        const communityLivestreamFilters = { q: '', purchaseStatus: '', paymentStatus: '', productCategory: '', unrecognizedOnly: false, needsTopupOnly: false, hasRefundDueOnly: false, sessionId: '' };
         // 階段二（結算模型）新增的兩個布林快篩，跟 unrecognizedOnly 共用
         // 同一套「切換開關」UI 邏輯（見 writeCommunityLivestreamFilterInputs/
         // toggleCommunityLivestreamQuickFilter）。
@@ -10267,6 +10269,7 @@
             if (communityLivestreamFilters.q) params.set('q', communityLivestreamFilters.q);
             if (communityLivestreamFilters.purchaseStatus) params.set('purchaseStatus', communityLivestreamFilters.purchaseStatus);
             if (communityLivestreamFilters.paymentStatus) params.set('paymentStatus', communityLivestreamFilters.paymentStatus);
+            if (communityLivestreamFilters.productCategory) params.set('productCategory', communityLivestreamFilters.productCategory);
             if (communityLivestreamFilters.unrecognizedOnly) params.set('unrecognizedOnly', '1');
             if (communityLivestreamFilters.needsTopupOnly) params.set('needsTopupOnly', '1');
             if (communityLivestreamFilters.hasRefundDueOnly) params.set('hasRefundDueOnly', '1');
@@ -10572,7 +10575,7 @@
                             </div>
                             ${remittanceInfo}
                             <div class="community-livestream-summary">
-                                <div class="community-livestream-summary-product">${escapeHtml(order.productName || '')}</div>
+                                <div class="community-livestream-summary-product">${escapeHtml(order.productName || '')}${order.category === 'gacha' ? '<span class="community-livestream-mini-pill" style="background:#ffebf1;color:#a84b6c;margin-left:4px;">扭蛋</span>' : ''}</div>
                                 <div class="community-livestream-summary-line">
                                     ${summaryQtyInput}<span>×</span>${summaryPriceInput}<span class="community-livestream-summary-total">= ${totalText}</span>
                                 </div>
@@ -10613,6 +10616,10 @@
                                 <div class="community-livestream-status-row">
                                     ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought', `patchCommunityLivestreamStatus('${id}', 'purchaseStatus', this.value)`, 'community-livestream-status-select-purchase')}
                                     ${communityLivestreamStatusSelect(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', `patchCommunityLivestreamStatus('${id}', 'paymentStatus', this.value)`, 'community-livestream-status-select-payment')}
+                                    <select class="community-order-status-select" aria-label="商品分類" onchange="patchCommunityLivestreamOrder('${id}', { category: this.value })">
+                                        <option value="general" ${order.category === 'gacha' ? '' : 'selected'}>一般商品</option>
+                                        <option value="gacha" ${order.category === 'gacha' ? 'selected' : ''}>扭蛋</option>
+                                    </select>
                                 </div>
                                 <input type="text" class="community-livestream-notes-input" value="${escapeHtml(order.notes || '')}" placeholder="備註" onchange="patchCommunityLivestreamOrder('${id}', { notes: this.value })">
                             </div>
@@ -11300,6 +11307,7 @@
             communityLivestreamFilters.q = '';
             communityLivestreamFilters.purchaseStatus = '';
             communityLivestreamFilters.paymentStatus = '';
+            communityLivestreamFilters.productCategory = '';
             communityLivestreamFilters.unrecognizedOnly = false;
             communityLivestreamFilters.needsTopupOnly = false;
             communityLivestreamFilters.hasRefundDueOnly = false;
