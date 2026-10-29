@@ -10681,7 +10681,10 @@
         // 篩選」，跟 202610290003 migration 新增的兩支 RPC 同一套場次解析
         // 規則（後端路由自己處理空字串/'unassigned'/明確 id 三種情況）。
         async function markCommunityLivestreamCustomerRefunded(lineUserId, label) {
-            if (!confirm(`確定要把「${label || '這位客人'}」目前應退款的項目標記為已退款嗎？`)) return;
+            // 202610290004 修正後：同一筆訂單可能被標記退款多次（標記後
+            // 賣家又調整單價/採買結果，重新出現應退款）——累計的
+            // refunded_amount 是這幾次的總和，不是只有最近一次。
+            if (!confirm(`確定要把「${label || '這位客人'}」目前應退款的項目標記為已退款嗎？若這筆之前已經標記過，這次會再累加一次退款金額。`)) return;
             try {
                 const response = await fetch('/api/backend/community/livestream-orders/mark-refunded', {
                     method: 'POST',
@@ -10700,7 +10703,10 @@
         }
 
         async function unmarkCommunityLivestreamCustomerRefunded(lineUserId, label) {
-            if (!confirm(`確定要取消「${label || '這位客人'}」的退款標記嗎？`)) return;
+            // refunded_amount 是累加值——取消標記會把全部累加的金額一次
+            // 加回 paid_amount，等於還原到「這筆訂單第一次被標記退款之前」
+            // 的狀態，不是只撤銷最近一次標記。
+            if (!confirm(`確定要取消「${label || '這位客人'}」的退款標記嗎？取消標記會還原到標記退款之前的狀態（所有累計的退款標記一併取消）。`)) return;
             try {
                 const response = await fetch('/api/backend/community/livestream-orders/unmark-refunded', {
                     method: 'POST',
