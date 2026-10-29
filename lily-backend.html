@@ -2036,6 +2036,9 @@
                             <label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.85rem;font-weight:700;color:#9a3412;white-space:nowrap;">
                                 <input type="checkbox" onchange="toggleCommunityLineIdentitiesPendingOnly(this.checked)"> 只顯示待核准
                             </label>
+                            <label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.85rem;font-weight:700;color:#4338ca;white-space:nowrap;">
+                                <input type="checkbox" onchange="toggleCommunityLineIdentitiesCollisionOnly(this.checked)"> 只顯示撞名
+                            </label>
                         </div>
                     </div>
                     <div id="community-line-identities-stats" class="community-remittances-count-line"></div>
@@ -11739,7 +11742,7 @@
         let communityLineIdentitiesTab = 'bound';
         let communityLineIdentitiesLoaded = { bound: false, unbound: false, logs: false };
         let communityLineIdentitiesCustomers = [];
-        const communityLineIdentitiesFilters = { q: '', pendingOnly: false };
+        const communityLineIdentitiesFilters = { q: '', pendingOnly: false, collisionOnly: false };
         let communityLineIdentityEditContext = null; // { mode: 'edit'|'new', lineUserId, lineDisplayName }
         let communityLineIdentityUnbindContext = null; // { lineUserId, lineDisplayName }
 
@@ -11782,25 +11785,44 @@
         function renderCommunityLineIdentitiesBound(stats) {
             const statsEl = document.getElementById('community-line-identities-stats');
             if (statsEl && stats) {
-                statsEl.innerHTML = `<span>已綁定 ${stats.total} 人</span><span style="margin-left:0.75rem;">社群暱稱 ${stats.nickname}</span><span style="margin-left:0.75rem;">IG ${stats.ig}</span>${stats.needsReview ? `<span style="margin-left:0.75rem;color:#c2410c;font-weight:900;">待核准 ${stats.needsReview}</span>` : ''}`;
+                statsEl.innerHTML = `<span>已綁定 ${stats.total} 人</span><span style="margin-left:0.75rem;">社群暱稱 ${stats.nickname}</span><span style="margin-left:0.75rem;">IG ${stats.ig}</span>${stats.needsReview ? `<span style="margin-left:0.75rem;color:#c2410c;font-weight:900;">待核准 ${stats.needsReview}</span>` : ''}${stats.collision ? `<span style="margin-left:0.75rem;color:#4338ca;font-weight:900;">撞名 ${stats.collision}</span>` : ''}`;
             }
             const list = document.getElementById('community-line-identities-list');
             if (!list) return;
-            const rows = communityLineIdentitiesFilters.pendingOnly
-                ? communityLineIdentitiesCustomers.filter(c => c.needsReview)
-                : communityLineIdentitiesCustomers;
+            let rows = communityLineIdentitiesCustomers;
+            if (communityLineIdentitiesFilters.pendingOnly) rows = rows.filter(c => c.needsReview);
+            if (communityLineIdentitiesFilters.collisionOnly) rows = rows.filter(c => c.collidesWith && c.collidesWith.length);
             if (!rows.length) {
-                list.innerHTML = `<div class="empty-state">${communityLineIdentitiesFilters.pendingOnly ? '目前沒有待核准的客人' : '目前沒有符合的客人'}</div>`;
+                const emptyMsg = communityLineIdentitiesFilters.pendingOnly ? '目前沒有待核准的客人'
+                    : communityLineIdentitiesFilters.collisionOnly ? '目前沒有撞名的客人'
+                    : '目前沒有符合的客人';
+                list.innerHTML = `<div class="empty-state">${emptyMsg}</div>`;
                 return;
             }
             // needs_review=true：客人自己綁定、撞到記事本既有客人名字，
             // 還沒核准——橘色「待核准」標籤 + 記事本對應紀錄（幫賣家判斷
-            // 是不是同一個人）+「核准」按鈕，跟一般已核准的客人用同一個
-            // 列表，用標籤跟額外的一行資訊區分，不用另外開一個分頁。
-            list.innerHTML = rows.map(c => `
+            // 是不是同一個人）+「核准」按鈕。collidesWith：這個人的綁定值
+            // 正規化後跟另一個（或多個）已綁定客人一樣（nickname 跟 ig
+            // 是分開的命名空間，本來就允許這種情況發生，但「依暱稱找人」
+            // 遇到這種歧義會直接找不到人，所以主動標出來讓賣家知道）——
+            // 藍紫色「撞名」標籤 + 列出撞到誰。兩種標籤互不排斥，可能同時
+            // 出現在同一位客人身上。
+            list.innerHTML = rows.map(c => {
+                const hasCollision = Boolean(c.collidesWith && c.collidesWith.length);
+                const badges = [
+                    c.needsReview ? '<span style="display:inline-block;margin-left:0.4rem;padding:0.1rem 0.5rem;border-radius:999px;background:#fed7aa;color:#9a3412;font-size:0.75rem;font-weight:900;">待核准</span>' : '',
+                    hasCollision ? '<span style="display:inline-block;margin-left:0.4rem;padding:0.1rem 0.5rem;border-radius:999px;background:#e0e7ff;color:#4338ca;font-size:0.75rem;font-weight:900;">撞名</span>' : '',
+                ].join('');
+                const notebookLine = c.needsReview
+                    ? `<div style="padding:0 0.6rem 0.5rem;font-size:0.8rem;color:#9a3412;">記事本裡符合的紀錄：${c.notebookMatch ? `「${escapeHtml(c.notebookMatch.notebookName)}」最近下單 ${storefrontDateTime(c.notebookMatch.lastOrderAt)}` : '沒有找到符合的記事本紀錄（可能已經核准過一次，或名字已經不在記事本裡）'}</div>`
+                    : '';
+                const collisionLine = hasCollision
+                    ? `<div style="padding:0 0.6rem 0.5rem;font-size:0.8rem;color:#4338ca;">跟這些客人目前的綁定值正規化後一樣：${c.collidesWith.map(peer => `${escapeHtml(peer.lineDisplayName)}（${peer.type === 'ig' ? 'IG' : '社群暱稱'}「${escapeHtml(peer.value)}」）`).join('、')}——依暱稱找人的功能遇到這種情況會直接找不到人，記事本通知可能送不出去。</div>`
+                    : '';
+                return `
                 <div class="community-remittances-row" style="${c.needsReview ? 'background:#fff7ed;border-radius:0.5rem;' : ''}">
                     <div class="community-remittances-row-main" style="flex-wrap:wrap;">
-                        <span style="flex:1;min-width:0;">${communityBindingLineHtml({ type: c.type, value: c.value }, c.lineDisplayName)}${c.needsReview ? ' <span style="display:inline-block;margin-left:0.4rem;padding:0.1rem 0.5rem;border-radius:999px;background:#fed7aa;color:#9a3412;font-size:0.75rem;font-weight:900;">待核准</span>' : ''}</span>
+                        <span style="flex:1;min-width:0;">${communityBindingLineHtml({ type: c.type, value: c.value }, c.lineDisplayName)}${badges}</span>
                         <span class="community-remittances-row-time">綁定於 ${storefrontDateTime(c.boundAt)}${c.editCount ? `・修改過 ${c.editCount} 次` : ''}</span>
                         <div class="community-remittances-row-actions">
                             ${c.needsReview ? `<button class="btn btn-sm btn-primary" type="button" onclick="approveCommunityLineIdentity(${quoteJs(c.lineUserId)}, this)"><i class="fa-solid fa-check"></i> 核准</button>` : ''}
@@ -11808,9 +11830,10 @@
                             <button class="community-remittances-icon-btn danger" type="button" onclick="openCommunityLineIdentityUnbindModal(${quoteJs(c.lineUserId)}, ${quoteJs(c.lineDisplayName)}, ${quoteJs(c.type)}, ${quoteJs(c.value)})" aria-label="解除綁定"><i class="fa-solid fa-link-slash"></i></button>
                         </div>
                     </div>
-                    ${c.needsReview ? `<div style="padding:0 0.6rem 0.5rem;font-size:0.8rem;color:#9a3412;">記事本裡符合的紀錄：${c.notebookMatch ? `「${escapeHtml(c.notebookMatch.notebookName)}」最近下單 ${storefrontDateTime(c.notebookMatch.lastOrderAt)}` : '沒有找到符合的記事本紀錄（可能已經核准過一次，或名字已經不在記事本裡）'}</div>` : ''}
+                    ${notebookLine}${collisionLine}
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         async function approveCommunityLineIdentity(lineUserId, button) {
@@ -11831,6 +11854,10 @@
 
         function toggleCommunityLineIdentitiesPendingOnly(checked) {
             communityLineIdentitiesFilters.pendingOnly = checked;
+            renderCommunityLineIdentitiesBound();
+        }
+        function toggleCommunityLineIdentitiesCollisionOnly(checked) {
+            communityLineIdentitiesFilters.collisionOnly = checked;
             renderCommunityLineIdentitiesBound();
         }
 
