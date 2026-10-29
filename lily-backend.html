@@ -230,8 +230,16 @@
         .community-pending-summary-item { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; padding: 0.75rem 0.6rem; border: 1px solid #fce7f3; border-radius: 0.9rem; background: #fff7fb; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
         .community-pending-summary-count { font-size: 1.6rem; font-weight: 950; color: #be185d; line-height: 1.1; }
         .community-pending-summary-label { font-size: 0.76rem; font-weight: 900; color: #64748b; }
-        .community-line-template-list { display: grid; gap: 0.5rem; }
-        .community-line-template-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.65rem 0.85rem; border: 1px solid #fce7f3; border-radius: 0.85rem; background: #fff7fb; }
+        .community-line-template-list { display: grid; gap: 0.5rem; min-width: 0; }
+        /* min-width:0 在這兩個 class 都要：.community-line-template-row 是
+           grid item，.community-line-template-row-info 是 flex item，
+           兩者預設 min-width 都是 auto——而 -preview 那欄是 white-space:
+           nowrap，min-content 寬度＝完整文案不換行的寬度，沒有這兩個
+           min-width:0，手機窄螢幕會被長文案撐寬整個 modal，變成要左右拖
+           才能看到編輯按鈕（這份 CSS 被「訊息文案設定」「LINE 通知文案
+           設定」兩個彈窗共用，一次修好兩邊）。 */
+        .community-line-template-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.65rem 0.85rem; border: 1px solid #fce7f3; border-radius: 0.85rem; background: #fff7fb; min-width: 0; }
+        .community-line-template-row-info { min-width: 0; }
         .community-line-template-row-label { font-size: 0.85rem; font-weight: 900; color: #334155; }
         .community-line-template-row-preview { margin-top: 0.15rem; font-size: 0.74rem; font-weight: 700; color: #94a3b8; max-width: 480px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .community-payment-status { display:inline-flex;align-items:center;border-radius:999px;padding:0.28rem 0.58rem;font-size:0.72rem;font-weight:900;white-space:nowrap; }
@@ -364,6 +372,13 @@
         .community-livestream-icon-btn:hover { border-color: #f472b6; color: #be185d; }
         .community-livestream-icon-btn.active { background: #ecfdf5; border-color: #86efac; color: #16a34a; }
         .community-livestream-icon-btn.danger:hover { border-color: #fca5a5; color: #dc2626; }
+        /* 搜尋輸入框＋搜尋按鈕這輪合併成同一個 .backend-member-filter-field，
+           讓兩者在手機版的 2 欄篩選 grid 裡佔同一格、水平排在一起（輸入框
+           在左、按鈕在右），不會被 grid 拆到不同格或互相擠壞；桌面版維持
+           跟以前一樣左右排列，只是外層多包了一層 div。手機版專屬的方形/
+           粉紅底樣式在下面 @media (max-width: 720px) 裡設定。 */
+        .community-livestream-search-row { display: flex !important; gap: 0.5rem; align-items: stretch; }
+        .community-livestream-search-row input { flex: 1 1 auto; min-width: 0; }
         .community-livestream-summary { display: grid; gap: 0.3rem; }
         .community-livestream-summary-product { font-size: 0.82rem; font-weight: 800; color: #334155; }
         .community-livestream-summary-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; font-size: 0.8rem; font-weight: 800; color: #334155; }
@@ -639,10 +654,18 @@
                只留圖示——文字仍留在 DOM 裡，螢幕閱讀器讀得到，不是整個拿掉。 */
             .backend-member-filter-field { min-width: 0 !important; flex: 1 1 120px; }
             .backend-member-filter-row .btn-label { display: none; }
-            /* 社群連線訂單頂部工具列（收款帳號設定/匯入/匯出/重新整理）：
-               窄螢幕下只留圖示，讓 4 顆按鈕能排在同一行，不再換行成兩排。
-               文字一樣包在 .btn-label 裡隱藏，不是整個拿掉。 */
+            /* 社群連線訂單頂部工具列（關鍵字設定/文案設定/收款帳號設定/
+               匯入/匯出/重新整理/批次編輯/依客人統計，共 8 顆）：窄螢幕下
+               只留圖示，並把預設的 2 欄 grid（.page-header .toolbar）蓋成
+               4 欄，變成每排 4 顆、共 2 排，而不是每排 2 顆、4 排。文字
+               一樣包在 .btn-label 裡隱藏，不是整個拿掉。 */
             .community-livestream-toolbar .btn-label { display: none; }
+            .page-header .toolbar.community-livestream-toolbar { grid-template-columns: repeat(4, minmax(0,1fr)) !important; }
+            /* 搜尋輸入框＋搜尋按鈕這輪合併進同一格（見上面桌面版 CSS），
+               手機上按鈕改成跟輸入框同高的圓角正方形、只留白色放大鏡圖示
+               （.btn-primary 本來就是粉紅底白字，不用再蓋顏色），不會再
+               被輸入框的寬度擠到換行或蓋住。 */
+            .community-livestream-search-btn { flex: 0 0 auto; aspect-ratio: 1 / 1; width: auto; min-width: 0; padding: 0; }
             .storefront-order-search-row { align-items: stretch; flex-direction: column; }
             .storefront-order-search-input { flex-basis: auto; width: 100%; }
             .storefront-order-filter-field, .storefront-order-filter-field input, .storefront-order-filter-field select { width: 100%; min-width: 0; }
@@ -1207,7 +1230,7 @@
             .modal-content, .modal-content.large { width: 100%; max-width: none; max-height: 94dvh; border-radius: 1.35rem 1.35rem 0 0; transform: translateY(24px); }
             .modal-header { padding: 1rem; }
             .modal-header h3 { font-size: 1.08rem; }
-            .modal-body { padding: 1rem; gap: 0.85rem; }
+            .modal-body { padding: 1rem; gap: 0.85rem; overflow-x: hidden; }
             .modal-footer { position: sticky; bottom: 0; padding: 0.8rem 1rem calc(0.8rem + env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); border-radius: 0; }
             .modal-footer .btn { width: 100%; }
             .form-row { flex-direction: column; gap: 0.75rem; }
@@ -1921,10 +1944,10 @@
                                 <option value="">載入中...</option>
                             </select>
                         </div>
-                        <div class="backend-member-filter-field" style="min-width:220px;">
+                        <div class="backend-member-filter-field community-livestream-search-row" style="min-width:220px;">
                             <input id="community-livestream-search" type="search" placeholder="LINE 名稱、暱稱、IG、商品名" aria-label="搜尋" onkeydown="handleCommunityLivestreamSearchKey(event)">
+                            <button class="btn btn-primary community-livestream-search-btn" type="button" onclick="applyCommunityLivestreamFilters()" aria-label="搜尋"><i class="fa-solid fa-magnifying-glass"></i><span class="btn-label"> 搜尋</span></button>
                         </div>
-                        <button class="btn btn-primary" type="button" onclick="applyCommunityLivestreamFilters()"><i class="fa-solid fa-magnifying-glass"></i><span class="btn-label"> 搜尋</span></button>
                         <button class="btn btn-secondary" type="button" onclick="clearCommunityLivestreamFilters()"><i class="fa-solid fa-eraser"></i><span class="btn-label"> 清除</span></button>
                     </div>
                     <div class="community-livestream-quick-filters">
@@ -2746,7 +2769,7 @@
                 <div class="mobile-dashboard-overview">
                     <button type="button" onclick="openTab('vendors', '叫貨處管理')"><span class="overview-icon blue"><i class="fa-solid fa-store"></i></span><span><strong>叫貨來源</strong><small>廠商與購物網站</small></span><b id="mobile-dashboard-source-count">0</b><i class="fa-solid fa-chevron-right"></i></button>
                     <button type="button" onclick="openTab('stall-schedules', '擺攤時程')"><span class="overview-icon green"><i class="fa-solid fa-calendar-days"></i></span><span><strong>活動行程</strong><small>擺攤與連線時程</small></span><b id="mobile-dashboard-schedule-count">0</b><i class="fa-solid fa-chevron-right"></i></button>
-                    <button type="button" onclick="openTab('community-orders', '社群訂單')"><span class="overview-icon purple"><i class="fa-solid fa-comments"></i></span><span><strong>社群管理</strong><small>訂單、名單與面交</small></span><b>進入</b><i class="fa-solid fa-chevron-right"></i></button>
+                    <button type="button" onclick="openTab('community-livestream-orders', '社群連線訂單')"><span class="overview-icon purple"><i class="fa-solid fa-comments"></i></span><span><strong>社群管理</strong><small>訂單、名單與面交</small></span><b>進入</b><i class="fa-solid fa-chevron-right"></i></button>
                 </div>
             </div>
 
@@ -4131,7 +4154,7 @@
         <button type="button" data-mobile-nav="products" onclick="openTab('stock-products', '現貨商品管理')">
             <span><i class="fa-solid fa-box"></i></span><small>商品</small>
         </button>
-        <button type="button" data-mobile-nav="community" onclick="openTab('community-orders', '社群訂單')">
+        <button type="button" data-mobile-nav="community" onclick="openTab('community-livestream-orders', '社群連線訂單')">
             <span><i class="fa-solid fa-comments"></i></span><small>社群</small>
         </button>
         <button type="button" data-mobile-nav="more" onclick="openMobileModuleSheet()">
@@ -13504,7 +13527,7 @@
                 const preview = text.replace(/\s+/g, ' ').trim();
                 return `
                     <div class="community-line-template-row">
-                        <div style="min-width:0;">
+                        <div class="community-line-template-row-info">
                             <div class="community-line-template-row-label">${escapeHtml(communityLineTemplateKindLabel(kind))}</div>
                             <div class="community-line-template-row-preview">${escapeHtml(preview)}</div>
                         </div>
@@ -13647,7 +13670,7 @@
                     const preview = text.replace(/\s+/g, ' ').trim();
                     return `
                         <div class="community-line-template-row">
-                            <div style="min-width:0;">
+                            <div class="community-line-template-row-info">
                                 <div class="community-line-template-row-label">${escapeHtml(communityLivestreamReplyTemplateLabel(key))}</div>
                                 <div class="community-line-template-row-preview">${escapeHtml(preview)}</div>
                             </div>
