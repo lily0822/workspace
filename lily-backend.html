@@ -396,6 +396,7 @@
         .community-livestream-customer-group-header { width: 100%; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding: 0.75rem 0.85rem; border: none; background: none; cursor: pointer; text-align: left; font-family: inherit; }
         .community-livestream-customer-group-name { font-size: 0.84rem; font-weight: 900; color: #334155; flex-shrink: 0; }
         .community-livestream-customer-group-amounts { display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; font-size: 0.74rem; font-weight: 800; color: #64748b; flex: 1; min-width: 0; }
+        .community-livestream-customer-group-actions { display: flex; gap: 0.5rem; padding: 0 0.85rem 0.6rem; }
         .community-livestream-customer-group-chevron { margin-left: auto; flex-shrink: 0; color: #94a3b8; transition: transform .15s ease; }
         .community-livestream-customer-group-chevron.open { transform: rotate(180deg); }
         .community-livestream-customer-group-body { display: none; padding: 0 0.85rem 0.85rem; }
@@ -1933,6 +1934,8 @@
                         <button type="button" class="community-livestream-filter-btn" data-filter="paymentStatus:confirming" onclick="toggleCommunityLivestreamQuickFilter('paymentStatus', 'confirming')">匯款確認中</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="paymentStatus:paid" onclick="toggleCommunityLivestreamQuickFilter('paymentStatus', 'paid')">已付款</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="unrecognizedOnly:1" onclick="toggleCommunityLivestreamQuickFilter('unrecognizedOnly', '1')">無法辨識價格</button>
+                        <button type="button" class="community-livestream-filter-btn" data-filter="needsTopupOnly:1" onclick="toggleCommunityLivestreamQuickFilter('needsTopupOnly', '1')">有待補款</button>
+                        <button type="button" class="community-livestream-filter-btn" data-filter="hasRefundDueOnly:1" onclick="toggleCommunityLivestreamQuickFilter('hasRefundDueOnly', '1')">有應退款</button>
                     </div>
                     <div class="community-livestream-batch-bar">
                         <div class="community-livestream-batch-group">
@@ -1947,6 +1950,7 @@
                         <button class="btn btn-sm btn-danger" type="button" id="community-livestream-batch-delete-btn" onclick="applyCommunityLivestreamBatchDelete(this)" disabled aria-label="刪除已選項目"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
+                <div id="community-livestream-settlement-stats" class="community-livestream-count-line" style="color:#9a5b1f;"></div>
                 <div id="community-livestream-result-count" class="community-livestream-count-line">
                     <span><span id="community-livestream-total-count-text">共 0 筆</span>・<span id="community-livestream-selected-count">已選 0 筆</span></span>
                     <span class="community-livestream-count-controls">
@@ -10178,7 +10182,11 @@
 
         // ===== 社群連線訂單 (LINE 圖片下單) — 全新獨立功能，不共用 communityOrders 資料 =====
         let communityLivestreamOrders = [];
-        const communityLivestreamFilters = { q: '', purchaseStatus: '', paymentStatus: '', unrecognizedOnly: false, sessionId: '' };
+        const communityLivestreamFilters = { q: '', purchaseStatus: '', paymentStatus: '', unrecognizedOnly: false, needsTopupOnly: false, hasRefundDueOnly: false, sessionId: '' };
+        // 階段二（結算模型）新增的兩個布林快篩，跟 unrecognizedOnly 共用
+        // 同一套「切換開關」UI 邏輯（見 writeCommunityLivestreamFilterInputs/
+        // toggleCommunityLivestreamQuickFilter）。
+        const COMMUNITY_LIVESTREAM_BOOLEAN_FILTER_FIELDS = new Set(['unrecognizedOnly', 'needsTopupOnly', 'hasRefundDueOnly']);
         let communityLivestreamSessionOptionsLoaded = false;
         let communityLivestreamImportRows = [];
         let communitySelectedLivestreamIds = new Set();
@@ -10260,6 +10268,8 @@
             if (communityLivestreamFilters.purchaseStatus) params.set('purchaseStatus', communityLivestreamFilters.purchaseStatus);
             if (communityLivestreamFilters.paymentStatus) params.set('paymentStatus', communityLivestreamFilters.paymentStatus);
             if (communityLivestreamFilters.unrecognizedOnly) params.set('unrecognizedOnly', '1');
+            if (communityLivestreamFilters.needsTopupOnly) params.set('needsTopupOnly', '1');
+            if (communityLivestreamFilters.hasRefundDueOnly) params.set('hasRefundDueOnly', '1');
             if (communityLivestreamFilters.sessionId) params.set('sessionId', communityLivestreamFilters.sessionId);
             const qs = params.toString();
             return qs ? `?${qs}` : '';
@@ -10431,7 +10441,7 @@
             if (search) search.value = communityLivestreamFilters.q || '';
             document.querySelectorAll('.community-livestream-filter-btn').forEach(btn => {
                 const [field, value] = (btn.dataset.filter || '').split(':');
-                const active = field === 'unrecognizedOnly'
+                const active = COMMUNITY_LIVESTREAM_BOOLEAN_FILTER_FIELDS.has(field)
                     ? Boolean(communityLivestreamFilters[field])
                     : communityLivestreamFilters[field] === value;
                 btn.classList.toggle('active', active);
@@ -10471,6 +10481,25 @@
         // （這張卡片裡購買狀態/付款狀態各有自己的一個）。
         function communityLivestreamMiniPill(options, value, fieldClass) {
             return `<span class="community-livestream-mini-pill ${fieldClass} ${communityLivestreamStatusTone(value)}">${escapeHtml(communityLivestreamStatusLabel(options, value))}</span>`;
+        }
+
+        // 階段二（結算模型）：GET .../livestream-orders 已經把每筆的
+        // paymentChip 算好回傳（label/tone），這裡只負責上色——跟客人端
+        // /live/orders、聊天室查詢訂單同一組顏色（pending 灰／paid 粉／
+        // attention 橘），跟上面既有的「未付款／確認中／已付款」三態
+        // dropdown（paymentStatus，賣家自己手動切換的審核進度）是兩個獨立
+        // 的概念，故意不共用同一個 pill 樣式，避免賣家混淆成同一件事。
+        const COMMUNITY_LIVESTREAM_SETTLEMENT_TONE_STYLE = {
+            pending: { background: '#eef0f4', color: '#6b7280' },
+            paid: { background: '#ffebf1', color: '#a84b6c' },
+            attention: { background: '#fff4e6', color: '#9a5b1f' },
+        };
+
+        function communityLivestreamSettlementBadgeHtml(order) {
+            const chip = order.paymentChip;
+            if (!chip) return '';
+            const style = COMMUNITY_LIVESTREAM_SETTLEMENT_TONE_STYLE[chip.tone] || COMMUNITY_LIVESTREAM_SETTLEMENT_TONE_STYLE.pending;
+            return `<span class="community-livestream-mini-pill" style="background:${style.background};color:${style.color};">${escapeHtml(chip.label)}</span>`;
         }
 
         function toggleCommunityLivestreamCard(id) {
@@ -10551,6 +10580,7 @@
                                     <div class="community-livestream-summary-pills">
                                         ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PURCHASE_OPTIONS, order.purchaseStatus || 'not_bought', 'community-livestream-mini-pill-purchase')}
                                         ${communityLivestreamMiniPill(COMMUNITY_LIVESTREAM_PAYMENT_OPTIONS, order.paymentStatus || 'unpaid', 'community-livestream-mini-pill-payment')}
+                                        ${communityLivestreamSettlementBadgeHtml(order)}
                                     </div>
                                     <div class="community-livestream-card-actions">
                                         <button class="community-livestream-icon-btn" type="button" onclick="toggleCommunityLivestreamCard('${id}')" aria-label="編輯"><i class="fa-solid fa-pen"></i></button>
@@ -10609,9 +10639,21 @@
             const groupList = [...groups.values()].sort((a, b) => a.lineDisplayName.localeCompare(b.lineDisplayName, 'zh-Hant'));
 
             return groupList.map(group => {
-                const summary = summaryByUserId.get(group.lineUserId) || { totalAmount: 0, confirmedRemittanceAmount: 0, pendingRemittanceAmount: 0, diffAmount: 0 };
+                const summary = summaryByUserId.get(group.lineUserId) || { totalAmount: 0, confirmedRemittanceAmount: 0, pendingRemittanceAmount: 0, diffAmount: 0, owedTotal: 0, refundDueTotal: 0 };
                 const expanded = communityLivestreamExpandedCustomerIds.has(group.lineUserId);
                 const cardsHtml = group.orders.map(order => buildCommunityLivestreamOrderCardHtml(order, openIds)).join('');
+                // 階段二（結算模型）：「標記已退款」只在這個客人（在目前的
+                // 場次篩選下）有 refundDue>0 的項目時才顯示；「取消標記」
+                // 只在已經有被標記退款的項目時才顯示——兩者可能同時出現
+                // （例如之前標記過一部分，後來賣家又改了別的項目的價格）。
+                const hasRefundDue = group.orders.some(order => Number(order.refundDue || 0) > 0);
+                const hasRefunded = group.orders.some(order => Boolean(order.refundedAt));
+                const refundActionsHtml = (hasRefundDue || hasRefunded)
+                    ? `<div class="community-livestream-customer-group-actions">
+                        ${hasRefundDue ? `<button type="button" class="btn btn-sm btn-secondary" onclick="markCommunityLivestreamCustomerRefunded(${quoteJs(group.lineUserId)}, ${quoteJs(group.lineDisplayName)})">標記已退款</button>` : ''}
+                        ${hasRefunded ? `<button type="button" class="btn btn-sm btn-secondary" onclick="unmarkCommunityLivestreamCustomerRefunded(${quoteJs(group.lineUserId)}, ${quoteJs(group.lineDisplayName)})">取消標記</button>` : ''}
+                    </div>`
+                    : '';
                 return `
                     <div class="community-livestream-customer-group">
                         <button type="button" class="community-livestream-customer-group-header" onclick="toggleCommunityLivestreamCustomerGroup(${quoteJs(group.lineUserId)})">
@@ -10621,15 +10663,59 @@
                                 <span>已核對 ${storefrontMoney(summary.confirmedRemittanceAmount)}</span>
                                 <span>未確認 ${storefrontMoney(summary.pendingRemittanceAmount)}</span>
                                 <span>差額 ${storefrontMoney(summary.diffAmount)}</span>
+                                <span style="color:#9a5b1f;">待收 ${storefrontMoney(summary.owedTotal)}</span>
+                                <span style="color:#9a5b1f;">應退 ${storefrontMoney(summary.refundDueTotal)}</span>
                             </span>
                             <i class="fa-solid fa-angle-down community-livestream-customer-group-chevron${expanded ? ' open' : ''}"></i>
                         </button>
+                        ${refundActionsHtml}
                         <div class="community-livestream-customer-group-body${expanded ? ' open' : ''}">
                             <div class="community-livestream-list">${cardsHtml}</div>
                         </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        // 標記已退款／取消標記——操作範圍是「這個客人、目前畫面上選的場次
+        // 篩選」，跟 202610290003 migration 新增的兩支 RPC 同一套場次解析
+        // 規則（後端路由自己處理空字串/'unassigned'/明確 id 三種情況）。
+        async function markCommunityLivestreamCustomerRefunded(lineUserId, label) {
+            if (!confirm(`確定要把「${label || '這位客人'}」目前應退款的項目標記為已退款嗎？`)) return;
+            try {
+                const response = await fetch('/api/backend/community/livestream-orders/mark-refunded', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lineUserId, sessionId: communityLivestreamFilters.sessionId })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '標記失敗。');
+                showToast(`已標記 ${result.count ?? 0} 筆為已退款`, 'success');
+                await Promise.all([loadCommunityLivestreamOrders(), loadCommunityLivestreamCustomerSummaries()]);
+                renderCommunityLivestreamOrders();
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '標記失敗，請稍後再試', 'error');
+            }
+        }
+
+        async function unmarkCommunityLivestreamCustomerRefunded(lineUserId, label) {
+            if (!confirm(`確定要取消「${label || '這位客人'}」的退款標記嗎？`)) return;
+            try {
+                const response = await fetch('/api/backend/community/livestream-orders/unmark-refunded', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lineUserId, sessionId: communityLivestreamFilters.sessionId })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '取消標記失敗。');
+                showToast(`已取消 ${result.count ?? 0} 筆退款標記`, 'success');
+                await Promise.all([loadCommunityLivestreamOrders(), loadCommunityLivestreamCustomerSummaries()]);
+                renderCommunityLivestreamOrders();
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '取消標記失敗，請稍後再試', 'error');
+            }
         }
 
         function toggleCommunityLivestreamCustomerGroup(lineUserId) {
@@ -10665,6 +10751,32 @@
             const countEl = document.getElementById('community-livestream-total-count-text');
             if (!list) return;
             if (countEl) countEl.textContent = `共 ${communityLivestreamOrders.length} 筆`;
+            // 階段二（結算模型）：依「目前已載入（受篩選影響）的訂單」
+            // 算出「有待補款的客人數・合計」「有應退款的客人數・合計」，
+            // GET 路由已經把每筆的 owed/refundDue 算好回傳，這裡只是按
+            // 客人分組加總。
+            const statsEl = document.getElementById('community-livestream-settlement-stats');
+            if (statsEl) {
+                const byCustomer = new Map();
+                communityLivestreamOrders.forEach(order => {
+                    const key = order.lineUserId || order.id;
+                    if (!byCustomer.has(key)) byCustomer.set(key, { topup: 0, refundDue: 0 });
+                    const agg = byCustomer.get(key);
+                    // 「待補款」＝已經付過一部分、現在還欠（需補款），跟
+                    // 「從未付款」是兩個不同的狀態——跟 GET 路由的
+                    // needsTopupOnly 快篩同一套定義。
+                    if (Number(order.owed || 0) > 0 && Number(order.paidAmount || 0) > 0) agg.topup += Number(order.owed || 0);
+                    agg.refundDue += Number(order.refundDue || 0);
+                });
+                let topupCustomers = 0, topupTotal = 0, refundCustomers = 0, refundTotal = 0;
+                byCustomer.forEach(agg => {
+                    if (agg.topup > 0) { topupCustomers += 1; topupTotal += agg.topup; }
+                    if (agg.refundDue > 0) { refundCustomers += 1; refundTotal += agg.refundDue; }
+                });
+                statsEl.textContent = (topupCustomers || refundCustomers)
+                    ? `待補款 ${topupCustomers} 位・合計 ${storefrontMoney(topupTotal)}　應退款 ${refundCustomers} 位・合計 ${storefrontMoney(refundTotal)}`
+                    : '';
+            }
             const openIds = new Set(
                 Array.from(list.querySelectorAll('.community-livestream-card.expanded'))
                     .map(el => el.dataset.rowId)
@@ -11183,6 +11295,8 @@
             communityLivestreamFilters.purchaseStatus = '';
             communityLivestreamFilters.paymentStatus = '';
             communityLivestreamFilters.unrecognizedOnly = false;
+            communityLivestreamFilters.needsTopupOnly = false;
+            communityLivestreamFilters.hasRefundDueOnly = false;
             communityLivestreamFilters.sessionId = '';
             const sessionSelect = document.getElementById('community-livestream-session-filter');
             if (sessionSelect) sessionSelect.value = '';
@@ -11190,7 +11304,7 @@
         }
 
         function toggleCommunityLivestreamQuickFilter(field, value) {
-            if (field === 'unrecognizedOnly') {
+            if (COMMUNITY_LIVESTREAM_BOOLEAN_FILTER_FIELDS.has(field)) {
                 communityLivestreamFilters[field] = !communityLivestreamFilters[field];
             } else {
                 communityLivestreamFilters[field] = communityLivestreamFilters[field] === value ? '' : value;
@@ -11445,7 +11559,13 @@
             const toggleLabel = reviewed ? '取消標記' : '標記已核對';
             const toggleIcon = reviewed ? 'fa-rotate-left' : 'fa-check';
             const mismatchBadge = remittance.mismatch
-                ? '<span class="community-remittances-mismatch-badge" title="客人回報金額跟系統計算金額不一致">⚠</span>'
+                ? '<span class="community-remittances-mismatch-badge" title="客人回報金額跟這筆匯款送出當下的系統金額不一致">⚠</span>'
+                : '';
+            // 階段二（結算模型）：這筆涵蓋的商品後來又被改價／缺貨，導致
+            // 現在跟當時不一樣（還欠錢或該退錢）——跟 mismatch（回報金額
+            // 跟送出當下系統金額不一致）是不同的提示，兩個可能同時出現。
+            const adjustmentBadge = remittance.needsAdjustment
+                ? '<span class="community-remittances-mismatch-badge" title="此筆含缺貨／改價，需退款或補款，請到採買頁處理">⟳</span>'
                 : '';
             const sessionLabel = remittance.sessionId
                 ? (communityRemittancesSessionNameById.get(remittance.sessionId) || '場次讀取中…')
@@ -11462,6 +11582,7 @@
                         <span class="community-remittances-row-time">${storefrontDateTime(remittance.submittedAt)}</span>
                         <span class="community-remittances-mini-pill community-remittances-tone-gray">${escapeHtml(sessionLabel)}</span>
                         <span class="community-remittances-mini-pill ${reviewed ? 'community-remittances-tone-green' : 'community-remittances-tone-gray'}">${reviewed ? '已核對' : '未核對'}</span>
+                        ${adjustmentBadge}
                         <span class="community-remittances-row-amounts">
                             <span>系統 ${storefrontMoney(remittance.systemCalculatedTotal)}</span>
                             <span>回報 <input type="number" min="0" step="1" class="community-remittances-amount-input" placeholder="未填寫" value="${remittance.amount === null ? '' : Number(remittance.amount)}" onchange="patchCommunityLivestreamRemittance('${remittance.id}', { amount: this.value === '' ? null : Number(this.value) })">${mismatchBadge}</span>
