@@ -11697,17 +11697,32 @@
             }
         }
 
-        async function loadCommunityLivestreamRemittances() {
+        // silent=true（打勾／改銀行／改末五碼／改金額／刪除之後用這個）：
+        // 不顯示「讀取中」、不整份清空重畫前的畫面，並且保留 .content
+        // （整個後台內容區的捲動容器）當下的捲動位置——原本的做法是重讀
+        // 之前先把 list.innerHTML 換成一行「讀取中」，畫面高度瞬間變矮，
+        // 捲動容器的 scrollTop 被瀏覽器夾到底，之後內容長回來也不會自動
+        // 恢復，造成畫面閃爍＋捲動跳回頂端。silent 模式跳過這個中間態，
+        // 抓完新資料後一次重畫、再把捲動位置設回去。
+        // 展開中的商品明細（communityLivestreamRemittanceExpandedIds／
+        // ...UnpaidIds）跟搜尋/篩選條件都是獨立於這份客人清單的全域變數，
+        // renderCommunityLivestreamRemittances() 重畫時本來就會依照這些
+        // 變數決定要不要展開，不需要額外處理就會保留。
+        async function loadCommunityLivestreamRemittances(options = {}) {
+            const silent = Boolean(options.silent);
             const list = document.getElementById('community-remittances-list');
             if (!list) return;
             writeCommunityRemittancesFilterInputs();
-            list.innerHTML = '<div class="empty-state">匯款紀錄讀取中...</div>';
+            const scrollContainer = document.querySelector('.content');
+            const preservedScrollTop = scrollContainer ? scrollContainer.scrollTop : null;
+            if (!silent) list.innerHTML = '<div class="empty-state">匯款紀錄讀取中...</div>';
             try {
                 const response = await fetch(`/api/backend/community/livestream-remittances${communityRemittancesQueryString()}`, { cache: 'no-store' });
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '匯款紀錄讀取失敗。');
                 communityLivestreamRemittanceCustomers = Array.isArray(result.customers) ? result.customers : [];
                 renderCommunityLivestreamRemittances();
+                if (silent && scrollContainer) scrollContainer.scrollTop = preservedScrollTop;
             } catch (error) {
                 console.error(error);
                 list.innerHTML = '<div class="empty-state">匯款紀錄讀取失敗，請稍後再試。</div>';
@@ -11859,9 +11874,11 @@
 
         // 編輯/刪除/標記已核對都還是對單筆匯款紀錄打原本的 PATCH/DELETE
         // 端點（後端沒有改這兩支函式本身，只是 bankName 驗證收緊成只能
-        // 填三個標準名稱）——存檔後整份重新載入，不做局部 DOM 更新，這張
-        // 表的操作頻率不像社群連線訂單的單價/數量那麼高，沒有必要為了
-        // 這裡的巢狀結構額外做一套局部更新機制。
+        // 填三個標準名稱）——存檔後用 silent 模式重新整份抓資料再重畫，
+        // 不做逐欄位的局部 DOM 更新：改回報金額可能連動 mismatch 標記跟
+        // needsAdjustment（後端算的），用最新資料整份重畫才會準，用
+        // silent 模式避免整份重畫造成的閃爍/捲動跳動（見
+        // loadCommunityLivestreamRemittances 開頭的註解）。
         async function patchCommunityLivestreamRemittance(id, patch) {
             try {
                 const response = await fetch(`/api/backend/community/livestream-remittances/${encodeURIComponent(id)}`, {
@@ -11872,11 +11889,11 @@
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '更新失敗。');
                 showToast('已更新', 'success');
-                await loadCommunityLivestreamRemittances();
+                await loadCommunityLivestreamRemittances({ silent: true });
             } catch (error) {
                 console.error(error);
                 showToast(error.message || '更新失敗，請稍後再試', 'error');
-                await loadCommunityLivestreamRemittances();
+                await loadCommunityLivestreamRemittances({ silent: true });
             }
         }
 
@@ -11891,7 +11908,8 @@
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '刪除失敗。');
                 showToast('已刪除', 'success');
-                await loadCommunityLivestreamRemittances();
+                communityLivestreamRemittanceExpandedIds.delete(id);
+                await loadCommunityLivestreamRemittances({ silent: true });
             } catch (error) {
                 console.error(error);
                 showToast(error?.message || '刪除失敗，請稍後再試', 'error');
