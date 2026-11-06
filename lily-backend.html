@@ -12141,7 +12141,13 @@
                 }
             }
             if (!filtered.length) {
-                list.innerHTML = '<div class="empty-state">沒有符合條件的匯款紀錄</div>';
+                // 切換場次後，目前選中的卡片類別可能剛好在新場次是 0 人——
+                // 不會因此自動取消選取（communityRemittancesOverviewFilter
+                // 不受場次切換影響），這裡只是把空清單的提示文字換成講
+                // 清楚是哪一類，而不是籠統的「沒有符合條件」。
+                list.innerHTML = communityRemittancesOverviewFilter
+                    ? `<div class="empty-state">${escapeHtml(communityRemittanceOverviewFilterLabel(communityRemittancesOverviewFilter))}目前沒有人</div>`
+                    : '<div class="empty-state">沒有符合條件的匯款紀錄</div>';
                 return;
             }
             list.innerHTML = filtered.map(communityRemittanceCustomerBlockHtml).join('');
