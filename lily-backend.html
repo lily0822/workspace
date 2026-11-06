@@ -43,6 +43,32 @@
             --bg-color: #fdf2f8;
             --border-color: #fbcfe8;
             --table-hover: #fce7f3;
+
+            /* 匯款紀錄頁改版：總覽卡片／狀態標籤共用色票。後台本身目前
+               沒有深色模式系統（無 prefers-color-scheme、無切換開關），
+               這組變數連同下面 @media (prefers-color-scheme: dark) 的
+               覆寫只服務這次新增的匯款紀錄元件，不影響其他既有頁面。 */
+            --cr-refund-fg: #2b7a9b; --cr-refund-bg: #e5f3f8;
+            --cr-owed-fg: #c2631a; --cr-owed-bg: #fcefe1;
+            --cr-unpaid-fg: #7b6f82; --cr-unpaid-bg: #f0eaf1;
+            --cr-anomaly-fg: #c0392b; --cr-anomaly-bg: #fbe7e4;
+            --cr-unreviewed-fg: #6b4fb3; --cr-unreviewed-bg: #eee9f9;
+            --cr-all-fg: #d9467e; --cr-all-bg: #fde6ef;
+            --cr-notbought-fg: #b4372b; --cr-notbought-bg: #fdeceb; --cr-notbought-border: #f4c9c5;
+            --cr-reviewed-fg: #2f7d4f; --cr-reviewed-bg: #e4f4ea;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --cr-refund-fg: #7fd4ff; --cr-refund-bg: #16323d;
+                --cr-owed-fg: #ffb774; --cr-owed-bg: #3c2712;
+                --cr-unpaid-fg: #cbc0d6; --cr-unpaid-bg: #2c2733;
+                --cr-anomaly-fg: #ff8c7a; --cr-anomaly-bg: #3a1c17;
+                --cr-unreviewed-fg: #c6b4ff; --cr-unreviewed-bg: #2a2140;
+                --cr-all-fg: #ff9cc3; --cr-all-bg: #3a1b2b;
+                --cr-notbought-fg: #ff9a8a; --cr-notbought-bg: #3a1e1a; --cr-notbought-border: #5c2e28;
+                --cr-reviewed-fg: #7fe0a8; --cr-reviewed-bg: #163828;
+            }
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -453,45 +479,79 @@
            兩個功能的樣式調整互相牽動（這份卡片沒有照片，版面比訂單卡片
            簡單，純文字＋三個可編輯欄位）。 */
         .community-remittances-filterbar { gap: 0.4rem; }
-        .community-remittances-quick-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
-        .community-remittances-filter-btn { border: 1px solid #fbcfe8; border-radius: 999px; background: white; color: #475569; font-size: 0.76rem; font-weight: 800; padding: 0.4rem 0.85rem; cursor: pointer; transition: all .15s ease; }
-        .community-remittances-filter-btn:hover { border-color: #f472b6; }
-        .community-remittances-filter-btn.active { background: #ec4899; border-color: #ec4899; color: white; }
-        .community-remittances-count-line { margin: 0.35rem 0; font-size: 0.78rem; font-weight: 800; color: #64748b; }
+        .community-remittances-count-line { margin: 0.35rem 0; font-size: 0.78rem; font-weight: 800; color: #64748b; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+        .community-remittances-active-filter-note { display: inline-flex; align-items: center; gap: 0.35rem; color: #be185d; }
+        .community-remittances-clear-filter-btn { border: none; background: none; color: #be185d; font-weight: 900; text-decoration: underline; cursor: pointer; font-size: inherit; padding: 0; }
         .community-remittances-list { display: grid; gap: 0.75rem; margin-top: 0.35rem; }
         .community-remittances-icon-btn { width: 30px; height: 30px; border-radius: 0.55rem; border: 1px solid #fbcfe8; background: #fff; color: #64748b; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; flex-shrink: 0; }
         .community-remittances-icon-btn:hover { border-color: #f472b6; color: #be185d; }
-        .community-remittances-icon-btn.active { background: #ecfdf5; border-color: #86efac; color: #16a34a; }
+        .community-remittances-icon-btn.active { background: var(--cr-reviewed-bg); border-color: #86efac; color: var(--cr-reviewed-fg); }
         .community-remittances-icon-btn.danger:hover { border-color: #fca5a5; color: #dc2626; }
-        .community-remittances-mini-pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.16rem 0.55rem; font-size: 0.68rem; font-weight: 900; color: #111827; flex-shrink: 0; }
-        .community-remittances-tone-gray { background: #e2e8f0; color: #334155; }
-        .community-remittances-tone-green { background: #bbf7d0; color: #166534; }
+
+        /* 總覽卡片——母體是「目前場次／銀行／搜尋篩選後的客人」，卡片
+           數字本身不會因為點選卡片而改變，點選只影響下面客人列表要不要
+           過濾（見 renderCommunityRemittancesOverview / toggle...OverviewFilter）。
+           每張卡片用 inline style 帶入 --cr-ov-fg/--cr-ov-bg，CSS 只定義
+           共用的排版，顏色交給 JS 依類別代入，不用六套幾乎一樣的顏色
+           class。 */
+        .community-remittances-overview { display: grid; gap: 0.5rem; margin: 0.5rem 0; }
+        .community-remittances-overview-row1 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 0.5rem; }
+        .community-remittances-overview-row2 { display: flex; gap: 0.5rem; }
+        .community-remittances-overview-card { display: flex; flex-direction: column; gap: 0.2rem; border: 1px solid transparent; border-radius: 0.8rem; padding: 0.55rem 0.7rem; cursor: pointer; font-family: inherit; text-align: left; color: var(--cr-ov-fg); background: var(--cr-ov-bg); transition: border-color .15s ease, opacity .15s ease; }
+        .community-remittances-overview-card.is-empty { opacity: 0.45; }
+        .community-remittances-overview-card.is-active { border-color: currentColor; }
+        .community-remittances-overview-card .cr-ov-row1 { order: 1; display: flex; align-items: baseline; gap: 0.35rem; font-size: 0.82rem; font-weight: 900; }
+        .community-remittances-overview-card .cr-ov-count { order: 2; font-size: 0.72rem; font-weight: 800; opacity: 0.85; }
+        .community-remittances-overview-card .cr-ov-count::after { content: ' 人'; }
+        .community-remittances-overview-card.cr-ov-textonly { flex: 0 0 auto; align-items: center; justify-content: center; text-align: center; font-size: 0.82rem; font-weight: 900; padding: 0.5rem 1rem; }
         /* 「人名 → 匯款紀錄」雙層結構——人名這一層永遠展開（不是手風琴），
            每一筆匯款紀錄由上往下直接列出，單筆紀錄本身才是可收合的
            （展開看商品明細）。「未匯款」固定排在這個人紀錄的最後一行，
            跟真正的匯款紀錄共用同一套 .community-remittances-row 外觀，
            只是多一個 modifier class 做顏色區分。 */
         .community-remittances-customer-block { border: 1px solid #fbcfe8; border-radius: 1rem; background: white; padding: 0.75rem 0.85rem; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
-        .community-remittances-customer-header { margin-bottom: 0.5rem; }
+        .community-remittances-customer-header { margin-bottom: 0.5rem; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem; }
         .community-remittances-customer-name { font-size: 0.84rem; font-weight: 900; color: #334155; }
+        .community-remittances-customer-paren { font-weight: 700; color: #94a3b8; margin-left: 0.3rem; }
+        .community-remittances-customer-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; }
+        .community-remittances-tag { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.18rem 0.6rem; font-size: 0.68rem; font-weight: 900; flex-shrink: 0; }
+        .community-remittances-tag-session { background: #e2e8f0; color: #334155; }
+        .community-remittances-tag-refund { color: var(--cr-refund-fg); background: var(--cr-refund-bg); }
+        .community-remittances-tag-owedpaid { color: var(--cr-owed-fg); background: var(--cr-owed-bg); }
+        .community-remittances-tag-anomaly { color: var(--cr-anomaly-fg); background: var(--cr-anomaly-bg); }
         .community-remittances-customer-body { display: grid; gap: 0.5rem; }
         .community-remittances-row { border-top: 1px dashed #fbcfe8; padding-top: 0.5rem; }
         .community-remittances-customer-body > .community-remittances-row:first-child { border-top: none; padding-top: 0; }
+        /* row-main：桌機單行（toggle/銀行/末五碼/時間在左，系統/回報金額＋
+           ✓/垃圾桶靠右）；.community-remittances-row-head 用 display:contents
+           讓裡面四個元素直接變成 row-main 的 flex item，不額外產生一層。
+           手機版（≤640px，見下方 @media）改成 grid 兩行，見該處註解。 */
         .community-remittances-row-main { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .community-remittances-row-head { display: contents; }
         .community-remittances-row-toggle { width: 26px; height: 26px; border-radius: 0.5rem; border: 1px solid #fbcfe8; background: #fff7fb; color: #be185d; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.72rem; flex-shrink: 0; }
         .community-remittances-bank-select { min-height: 32px; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.2rem 0.4rem; font-size: 0.78rem; font-weight: 800; color: #334155; }
         .community-remittances-last5-input { width: 72px; min-height: 32px; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.2rem 0.4rem; font-size: 0.78rem; font-weight: 800; color: #334155; outline: none; text-align: center; }
         .community-remittances-bank-select:focus, .community-remittances-last5-input:focus, .community-remittances-amount-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
         .community-remittances-row-time { font-size: 0.7rem; font-weight: 700; color: #94a3b8; flex-shrink: 0; }
-        .community-remittances-row-amounts { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; font-size: 0.76rem; font-weight: 800; color: #64748b; }
+        .community-remittances-row-amounts { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; font-size: 0.76rem; font-weight: 800; color: #64748b; }
         .community-remittances-amount-input { width: 76px; min-height: 32px; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.2rem 0.4rem; font-size: 0.78rem; font-weight: 800; color: #334155; outline: none; text-align: center; }
         .community-remittances-mismatch-badge { margin-left: 0.2rem; color: #d97706; }
-        .community-remittances-row-actions { display: flex; gap: 0.35rem; margin-left: auto; flex-shrink: 0; }
+        .community-remittances-row-actions { display: flex; gap: 0.35rem; flex-shrink: 0; }
         .community-remittances-row-orders { display: none; margin-top: 0.5rem; padding-left: 1.9rem; gap: 0.4rem; }
         .community-remittances-row-orders.open { display: grid; }
         .community-remittances-unpaid-row { background: #fff7fb; border-radius: 0.6rem; padding: 0.4rem 0.5rem; border-top: none; margin-top: 0.2rem; }
+        .community-remittances-unpaid-row .community-remittances-row-amounts { margin-left: 0; }
         .community-remittances-unpaid-label { font-size: 0.78rem; font-weight: 900; color: #be185d; flex-shrink: 0; }
+        /* 展開後的商品明細——左右兩欄（有買到／沒買到），手機改上下疊
+           （見下方 @media）。沒買到那欄商品用淺紅底／邊框突顯。 */
+        .community-remittances-order-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+        .community-remittances-order-col { display: grid; gap: 0.35rem; align-content: start; }
+        .community-remittances-order-col-title { font-size: 0.74rem; font-weight: 900; }
+        .community-remittances-order-col-bought .community-remittances-order-col-title { color: var(--cr-reviewed-fg); }
+        .community-remittances-order-col-notbought .community-remittances-order-col-title { color: var(--cr-notbought-fg); }
         .community-remittances-order-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.76rem; font-weight: 700; color: #475569; }
+        .community-remittances-order-item-notbought { background: var(--cr-notbought-bg); border: 1px solid var(--cr-notbought-border); border-radius: 0.5rem; padding: 0.3rem 0.45rem; }
+        .community-remittances-order-badge { margin-left: 0.3rem; color: var(--cr-notbought-fg); font-size: 0.66rem; font-weight: 900; }
         .community-remittances-order-thumb, .community-remittances-order-thumb-placeholder { width: 40px; height: 40px; border-radius: 0.5rem; object-fit: cover; flex-shrink: 0; border: 1px solid #fbcfe8; background: #fff7fb; }
         .community-remittances-order-thumb-placeholder { display: flex; align-items: center; justify-content: center; color: #f9a8d4; }
         .community-remittances-order-name { flex: 1; min-width: 0; font-weight: 800; color: #334155; }
@@ -1367,6 +1427,49 @@
             .product-tag-columns { grid-template-columns: 1fr !important; }
             .brand-setting-grid, .site-feature-flag-list { grid-template-columns: 1fr !important; }
         }
+
+        /* 場次／銀行這兩個下拉在手機也要並排同一行——蓋掉全站 720px
+           斷點既有的「filter-row 裡第一個 field 自動撐滿整行」規則（那條
+           規則是給「搜尋框在第一個」的版面設計的，這裡刻意蓋掉讓兩個
+           下拉維持 2 欄並排）。跟其他頁面的 filter-row 無關，只靠多加的
+           專屬 class 範圍住。 */
+        @media (max-width: 720px) {
+            .backend-member-filter-row .community-remittances-session-field:first-child { grid-column: auto; }
+        }
+
+        /* 匯款紀錄頁改版——這輪新增的版面只在這個頁籤生效（用
+           #section-community-livestream-remittances 或新 class 範圍住），
+           不影響其他頁面既有的手機版版面。斷點用使用者指定的 640px，
+           跟上面全站共用的 720px 斷點故意分開、各自管各自的規則。 */
+        @media (max-width: 640px) {
+            #section-community-livestream-remittances .page-header .toolbar { grid-template-columns: repeat(3, minmax(0,1fr)) !important; gap: 0.35rem; }
+            #section-community-livestream-remittances .page-header .toolbar .btn { padding: 0.4rem 0.3rem; }
+            #section-community-livestream-remittances .page-header .toolbar .btn-label { font-size: 12px; }
+
+            .community-remittances-overview-row1 { background: white; border: 1px solid #fbcfe8; border-radius: 1rem; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); padding: 0.6rem 0.4rem; }
+            .community-remittances-overview-card { background: transparent; border-radius: 0.6rem; padding: 0.3rem 0.1rem; align-items: center; text-align: center; gap: 0.05rem; }
+            .community-remittances-overview-card.is-active { background: var(--cr-ov-bg); }
+            .community-remittances-overview-card .cr-ov-count { order: -1; font-size: 1.15rem; font-weight: 900; opacity: 1; }
+            .community-remittances-overview-card .cr-ov-count::after { content: ''; }
+            .community-remittances-overview-card .cr-ov-row1 { flex-direction: column; align-items: center; gap: 0; }
+            .community-remittances-overview-card .cr-ov-title { font-size: 0.66rem; font-weight: 800; }
+            .community-remittances-overview-card .cr-ov-amount { font-size: 0.6rem; font-weight: 700; opacity: 0.8; }
+            .community-remittances-overview-row2 .community-remittances-overview-card { flex: 1; border-radius: 999px; padding: 0.42rem 0.5rem; font-size: 0.72rem; }
+
+            .community-remittances-customer-header { flex-direction: column; align-items: flex-start; }
+
+            /* row-main 兩行：第一行 toggle/銀行/末五碼/時間＋✓/垃圾桶（固定
+               最右），第二行系統/回報金額，左邊對齊銀行欄（縮排展開鈕
+               寬度＋間距）。.community-remittances-row-head 在桌機版是
+               display:contents（直接變成 row-main 的 flex item），這裡
+               改回真正的 flex 容器塞進 grid-area。 */
+            .community-remittances-row-main { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "head actions" "amounts amounts"; align-items: center; gap: 0.35rem 0.5rem; }
+            .community-remittances-row-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; grid-area: head; min-width: 0; }
+            .community-remittances-row-actions { grid-area: actions; }
+            .community-remittances-row-amounts { grid-area: amounts; margin-left: 0; padding-left: calc(26px + 0.5rem); }
+
+            .community-remittances-order-columns { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -2038,19 +2141,30 @@
                 </div>
                 <div class="backend-member-filterbar community-remittances-filterbar">
                     <div class="backend-member-filter-row">
-                        <div class="backend-member-filter-field" style="min-width:180px;">
+                        <div class="backend-member-filter-field community-remittances-session-field" style="min-width:160px;">
                             <select id="community-remittances-session-filter" aria-label="場次" onchange="applyCommunityRemittancesFilters()">
                                 <option value="">全部場次</option>
                             </select>
                         </div>
+                        <div class="backend-member-filter-field community-remittances-bank-field" style="min-width:110px;">
+                            <select id="community-remittances-bank-filter" aria-label="銀行" onchange="applyCommunityRemittancesFilters()">
+                                <option value="">全部</option>
+                                <option value="zhongxin">中信</option>
+                                <option value="fubon">富邦</option>
+                                <option value="cathay">國泰</option>
+                                <option value="anomaly">異常</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="backend-member-filter-row">
                         <div class="backend-member-filter-field" style="min-width:220px;">
                             <input id="community-remittances-search" type="search" placeholder="暱稱、IG、LINE 名稱" aria-label="搜尋" onkeydown="handleCommunityRemittancesSearchKey(event)">
                         </div>
                         <button class="btn btn-primary" type="button" onclick="applyCommunityRemittancesFilters()"><i class="fa-solid fa-magnifying-glass"></i><span class="btn-label"> 搜尋</span></button>
                         <button class="btn btn-secondary" type="button" onclick="clearCommunityRemittancesFilters()"><i class="fa-solid fa-eraser"></i><span class="btn-label"> 清除</span></button>
                     </div>
-                    <div class="community-remittances-quick-filters" id="community-remittances-bank-filters"></div>
                 </div>
+                <div id="community-remittances-overview" class="community-remittances-overview"></div>
                 <div id="community-remittances-count-line" class="community-remittances-count-line">
                     <span id="community-remittances-total-count-text">共 0 人</span>
                 </div>
@@ -11617,6 +11731,10 @@
         // 篩選（中信/富邦/國泰/異常/全部）。 =====
         let communityLivestreamRemittanceCustomers = [];
         const communityRemittancesFilters = { q: '', bank: '', sessionId: '' };
+        // 總覽卡片目前選中的類別——'' 代表沒有選取（列表顯示母體全部）。
+        // 只影響下面客人列表要不要過濾，跟 communityRemittancesFilters
+        // （場次/銀行/搜尋，會重打 API）完全獨立，純前端篩選，不重打 API。
+        let communityRemittancesOverviewFilter = '';
         let communityRemittancesSessionOptionsLoaded = false;
         // id → 場次名稱，給每一筆匯款紀錄顯示場次標籤用（下拉選單載入時
         // 順便存一份，不用另外多打一支 API）。
@@ -11627,31 +11745,11 @@
         const communityLivestreamRemittanceExpandedIds = new Set();
         const communityLivestreamRemittanceExpandedUnpaidIds = new Set();
 
-        const COMMUNITY_REMITTANCE_BANK_FILTERS = [
-            { value: '', label: '全部' },
-            { value: 'zhongxin', label: '中信' },
-            { value: 'fubon', label: '富邦' },
-            { value: 'cathay', label: '國泰' },
-            { value: 'anomaly', label: '異常' },
-        ];
         // 跟後端 livestream-bank-aliases.ts 的 LIVESTREAM_STANDARD_BANK_NAMES
         // 是同一份清單（中信/富邦/國泰），這裡沒有共用模組可以直接 import，
         // 手動保持兩邊一致——銀行下拉選單只能選這三個，異常資料靠下拉選單
         // 重新指定成正確的那個來修正。
         const COMMUNITY_REMITTANCE_STANDARD_BANKS = ['中信', '富邦', '國泰'];
-
-        function renderCommunityRemittanceBankFilterButtons() {
-            const container = document.getElementById('community-remittances-bank-filters');
-            if (!container) return;
-            container.innerHTML = COMMUNITY_REMITTANCE_BANK_FILTERS.map(filter => `
-                <button type="button" class="community-remittances-filter-btn${communityRemittancesFilters.bank === filter.value ? ' active' : ''}" onclick="setCommunityRemittancesBankFilter(${quoteJs(filter.value)})">${escapeHtml(filter.label)}</button>
-            `).join('');
-        }
-
-        function setCommunityRemittancesBankFilter(value) {
-            communityRemittancesFilters.bank = value;
-            loadCommunityLivestreamRemittances();
-        }
 
         function communityRemittancesQueryString() {
             const params = new URLSearchParams();
@@ -11667,7 +11765,8 @@
             if (search) search.value = communityRemittancesFilters.q || '';
             const sessionSelect = document.getElementById('community-remittances-session-filter');
             if (sessionSelect) sessionSelect.value = communityRemittancesFilters.sessionId || '';
-            renderCommunityRemittanceBankFilterButtons();
+            const bankSelect = document.getElementById('community-remittances-bank-filter');
+            if (bankSelect) bankSelect.value = communityRemittancesFilters.bank || '';
         }
 
         // 場次下拉選單：跟 loadCommunityLivestreamSessionOptions 共用同一支
@@ -11731,19 +11830,79 @@
 
         // 商品明細一列：縮圖＋名稱＋數量×單價＋小計，比照社群連線訂單卡片
         // 縮圖風格但尺寸更小（這裡只是輔助展示，不是主要互動對象）。匯款
-        // 紀錄底下跟「未匯款」底下的商品明細都呼叫這同一支函式。
-        function communityRemittanceOrderItemHtml(order) {
+        // 紀錄底下跟「未匯款」底下的商品明細都呼叫這同一支函式。opts 可選
+        // displayQty（覆寫數量，左右分欄用）跟 badge/notBought（沒買到那
+        // 欄的標記＋底色，見 communityRemittanceOrdersDetailHtml）。
+        function communityRemittanceOrderItemHtml(order, opts) {
+            opts = opts || {};
+            const qty = opts.displayQty !== undefined ? opts.displayQty : Number(order.quantity || 1);
             const thumb = order.photoUrl
                 ? `<img class="community-remittances-order-thumb" src="${escapeHtml(order.photoUrl)}" alt="商品照片" loading="lazy">`
                 : `<div class="community-remittances-order-thumb-placeholder"><i class="fa-regular fa-image"></i></div>`;
             const unitPriceText = order.unitPrice === null ? '—' : storefrontMoney(order.unitPrice);
-            const lineTotalText = order.lineTotal === null ? '—' : storefrontMoney(order.lineTotal);
+            const lineAmount = order.unitPrice === null ? null : order.unitPrice * qty;
+            const lineTotalText = lineAmount === null ? '—' : storefrontMoney(lineAmount);
+            const badge = opts.badge ? `<span class="community-remittances-order-badge">${escapeHtml(opts.badge)}</span>` : '';
+            const itemClass = opts.notBought ? 'community-remittances-order-item community-remittances-order-item-notbought' : 'community-remittances-order-item';
             return `
-                <div class="community-remittances-order-item">
+                <div class="${itemClass}">
                     ${thumb}
-                    <span class="community-remittances-order-name">${escapeHtml(order.productName || '商品')}</span>
-                    <span class="community-remittances-order-qty">${Number(order.quantity || 1)} × ${unitPriceText}</span>
+                    <span class="community-remittances-order-name">${escapeHtml(order.productName || '商品')}${badge}</span>
+                    <span class="community-remittances-order-qty">${qty} × ${unitPriceText}</span>
                     <span class="community-remittances-order-total">${lineTotalText}</span>
+                </div>
+            `;
+        }
+
+        // 展開後的商品明細——分左右兩欄（手機改上下疊，見 CSS）。分欄規則
+        // （用訂購數量 orderedQuantity 跟買到數量 purchasedQuantity）：
+        //   purchasedQuantity 為 null（還沒採買）→ 只進左欄，數量＝訂購數量。
+        //   purchasedQuantity = 0（缺貨）→ 只進右欄，數量＝訂購數量，標記
+        //     「沒買到」。
+        //   0 < purchasedQuantity < orderedQuantity（買到一部分）→ 左欄數量＝
+        //     買到數量，右欄數量＝差額，標記「訂 N・買 M」。
+        //   purchasedQuantity >= orderedQuantity（買齊）→ 只進左欄，數量＝
+        //     買到數量。
+        // 只給「匯款紀錄」這種有申報過的列用；「未匯款」那一行維持現有
+        // 樣式（單欄、不分有買到/沒買到），不呼叫這支函式。
+        function communityRemittanceOrdersDetailHtml(orders) {
+            const bought = [];
+            const notBought = [];
+            orders.forEach(order => {
+                const ordered = Number(order.orderedQuantity || 1);
+                const purchased = order.purchasedQuantity === null || order.purchasedQuantity === undefined ? null : Number(order.purchasedQuantity);
+                if (purchased === null) {
+                    bought.push({ order, displayQty: ordered, badge: null, notBought: false });
+                } else if (purchased === 0) {
+                    notBought.push({ order, displayQty: ordered, badge: '沒買到', notBought: true });
+                } else if (purchased < ordered) {
+                    bought.push({ order, displayQty: purchased, badge: null, notBought: false });
+                    notBought.push({ order, displayQty: ordered - purchased, badge: `訂 ${ordered}・買 ${purchased}`, notBought: true });
+                } else {
+                    bought.push({ order, displayQty: purchased, badge: null, notBought: false });
+                }
+            });
+            const lineAmount = (entry) => entry.order.unitPrice === null ? 0 : entry.order.unitPrice * entry.displayQty;
+            const boughtPieces = bought.reduce((sum, entry) => sum + entry.displayQty, 0);
+            const notBoughtPieces = notBought.reduce((sum, entry) => sum + entry.displayQty, 0);
+            const boughtTotal = bought.reduce((sum, entry) => sum + lineAmount(entry), 0);
+            const notBoughtTotal = notBought.reduce((sum, entry) => sum + lineAmount(entry), 0);
+            const boughtHtml = bought.length
+                ? bought.map(entry => communityRemittanceOrderItemHtml(entry.order, entry)).join('')
+                : '<div class="community-remittances-empty-row">沒有買到的商品</div>';
+            const notBoughtHtml = notBought.length
+                ? notBought.map(entry => communityRemittanceOrderItemHtml(entry.order, entry)).join('')
+                : '<div class="community-remittances-empty-row">全部都買到了</div>';
+            return `
+                <div class="community-remittances-order-columns">
+                    <div class="community-remittances-order-col community-remittances-order-col-bought">
+                        <div class="community-remittances-order-col-title">有買到　${boughtPieces} 件　${storefrontMoney(boughtTotal)}</div>
+                        ${boughtHtml}
+                    </div>
+                    <div class="community-remittances-order-col community-remittances-order-col-notbought">
+                        <div class="community-remittances-order-col-title">沒買到　${notBoughtPieces} 件　${storefrontMoney(notBoughtTotal)}</div>
+                        ${notBoughtHtml}
+                    </div>
                 </div>
             `;
         }
@@ -11776,33 +11935,34 @@
             const adjustmentBadge = remittance.needsAdjustment
                 ? '<span class="community-remittances-mismatch-badge" title="此筆含缺貨／改價，需退款或補款，請到採買頁處理">⟳</span>'
                 : '';
-            const sessionLabel = remittance.sessionId
-                ? (communityRemittancesSessionNameById.get(remittance.sessionId) || '場次讀取中…')
-                : '未分場次';
             const deleteLabel = `${remittance.bankName || '銀行未填'}／${remittance.accountLast5 || '末五碼未填'}`;
+            // 場次標籤改放到客人卡片標題那一層（見
+            // communityRemittanceCustomerTagsHtml），這裡不再重複顯示；
+            // 已核對／未核對文字標籤也拿掉，狀態只靠 ✓ 按鈕顏色（active）
+            // 表示。
             return `
                 <div class="community-remittances-row">
                     <div class="community-remittances-row-main">
-                        <button type="button" class="community-remittances-row-toggle" onclick="toggleCommunityRemittanceOrdersExpanded('${remittance.id}')" aria-label="展開商品明細">
-                            <i class="fa-solid fa-chevron-${expanded ? 'down' : 'right'}"></i>
-                        </button>
-                        ${communityRemittanceBankSelectHtml(remittance.id, remittance.bankName, remittance.isBankAnomaly)}
-                        <input type="text" class="community-remittances-last5-input" maxlength="5" inputmode="numeric" placeholder="末五碼" value="${escapeHtml(remittance.accountLast5 || '')}" onchange="patchCommunityLivestreamRemittance('${remittance.id}', { accountLast5: this.value })">
-                        <span class="community-remittances-row-time">${storefrontDateTime(remittance.submittedAt)}</span>
-                        <span class="community-remittances-mini-pill community-remittances-tone-gray">${escapeHtml(sessionLabel)}</span>
-                        <span class="community-remittances-mini-pill ${reviewed ? 'community-remittances-tone-green' : 'community-remittances-tone-gray'}">${reviewed ? '已核對' : '未核對'}</span>
-                        ${adjustmentBadge}
-                        <span class="community-remittances-row-amounts">
+                        <div class="community-remittances-row-head">
+                            <button type="button" class="community-remittances-row-toggle" onclick="toggleCommunityRemittanceOrdersExpanded('${remittance.id}')" aria-label="展開商品明細">
+                                <i class="fa-solid fa-chevron-${expanded ? 'down' : 'right'}"></i>
+                            </button>
+                            ${communityRemittanceBankSelectHtml(remittance.id, remittance.bankName, remittance.isBankAnomaly)}
+                            <input type="text" class="community-remittances-last5-input" maxlength="5" inputmode="numeric" placeholder="末五碼" value="${escapeHtml(remittance.accountLast5 || '')}" onchange="patchCommunityLivestreamRemittance('${remittance.id}', { accountLast5: this.value })">
+                            <span class="community-remittances-row-time">${storefrontDateTime(remittance.submittedAt)}</span>
+                            ${adjustmentBadge}
+                        </div>
+                        <div class="community-remittances-row-amounts">
                             <span>系統 ${storefrontMoney(remittance.systemCalculatedTotal)}</span>
                             <span>回報 <input type="number" min="0" step="1" class="community-remittances-amount-input" placeholder="未填寫" value="${remittance.amount === null ? '' : Number(remittance.amount)}" onchange="patchCommunityLivestreamRemittance('${remittance.id}', { amount: this.value === '' ? null : Number(this.value) })">${mismatchBadge}</span>
-                        </span>
+                        </div>
                         <div class="community-remittances-row-actions">
                             <button class="community-remittances-icon-btn${reviewed ? ' active' : ''}" type="button" onclick="toggleCommunityRemittanceReviewed('${remittance.id}', ${!reviewed})" aria-label="${toggleLabel}" title="${toggleLabel}"><i class="fa-solid ${toggleIcon}"></i></button>
                             <button class="community-remittances-icon-btn danger" type="button" onclick="deleteCommunityLivestreamRemittance('${remittance.id}', ${quoteJs(deleteLabel)})" aria-label="刪除"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
                     <div class="community-remittances-row-orders${expanded ? ' open' : ''}">
-                        ${remittance.orders.map(communityRemittanceOrderItemHtml).join('')}
+                        ${communityRemittanceOrdersDetailHtml(remittance.orders)}
                     </div>
                 </div>
             `;
@@ -11815,17 +11975,56 @@
             return `
                 <div class="community-remittances-row community-remittances-unpaid-row">
                     <div class="community-remittances-row-main">
-                        <button type="button" class="community-remittances-row-toggle" onclick="toggleCommunityRemittanceUnpaidExpanded(${quoteJs(customer.lineUserId)})" aria-label="展開未付款商品明細">
-                            <i class="fa-solid fa-chevron-${expanded ? 'down' : 'right'}"></i>
-                        </button>
-                        <span class="community-remittances-unpaid-label">未匯款</span>
+                        <div class="community-remittances-row-head">
+                            <button type="button" class="community-remittances-row-toggle" onclick="toggleCommunityRemittanceUnpaidExpanded(${quoteJs(customer.lineUserId)})" aria-label="展開未付款商品明細">
+                                <i class="fa-solid fa-chevron-${expanded ? 'down' : 'right'}"></i>
+                            </button>
+                            <span class="community-remittances-unpaid-label">未匯款</span>
+                        </div>
                         <span class="community-remittances-row-amounts"><span>系統 ${storefrontMoney(customer.unpaid.systemCalculatedTotal)}</span></span>
                     </div>
                     <div class="community-remittances-row-orders${expanded ? ' open' : ''}">
-                        ${customer.unpaid.orders.map(communityRemittanceOrderItemHtml).join('')}
+                        ${customer.unpaid.orders.map(order => communityRemittanceOrderItemHtml(order)).join('')}
                     </div>
                 </div>
             `;
+        }
+
+        // 客人標題：人名（粗體，LINE 名稱）＋括號——有 IG 顯示「(IG：xxx)」，
+        // 否則有社群暱稱顯示「(社群：xxx)」，兩個都沒有就不顯示括號。這裡
+        // 故意不呼叫共用的 communityBindingLineHtml（依客人統計／社群綁定
+        // 共用那支會多顯示綠色「社群暱稱」膠囊＋「LINE：」前綴，這個頁面
+        // 這輪改版要拿掉這兩個元素），只服務這個頁面。
+        function communityRemittanceCustomerTitleHtml(binding, lineDisplayName) {
+            const name = escapeHtml(lineDisplayName || 'LINE 使用者');
+            if (!binding || !binding.value) return `<span class="community-remittances-customer-name">${name}</span>`;
+            const label = binding.type === 'ig' ? 'IG' : '社群';
+            const value = escapeHtml(binding.type === 'ig' ? ('@' + binding.value) : binding.value);
+            return `<span class="community-remittances-customer-name">${name}<span class="community-remittances-customer-paren">(${label}：${value})</span></span>`;
+        }
+
+        // 狀態標籤：場次標籤（這個人名下所有匯款紀錄涵蓋到的場次，去重）
+        // 排最前面，然後依序待退款／待補款／金額異常（各帶金額，來自後端
+        // 算好的 customer.summary，前端不重算）。不顯示「未匯款」標籤。
+        function communityRemittanceCustomerTagsHtml(customer) {
+            const seen = new Set();
+            const sessionTags = [];
+            customer.remittances.forEach(remittance => {
+                const key = remittance.sessionId || '__unassigned__';
+                if (seen.has(key)) return;
+                seen.add(key);
+                const label = remittance.sessionId
+                    ? (communityRemittancesSessionNameById.get(remittance.sessionId) || '場次讀取中…')
+                    : '未分場次';
+                sessionTags.push(`<span class="community-remittances-tag community-remittances-tag-session">${escapeHtml(label)}</span>`);
+            });
+            const s = customer.summary || {};
+            const statusTags = [];
+            if (s.hasRefundDue) statusTags.push(`<span class="community-remittances-tag community-remittances-tag-refund">待退款 ${storefrontMoney(s.refundDueAmount)}</span>`);
+            if (s.hasOwedPaid) statusTags.push(`<span class="community-remittances-tag community-remittances-tag-owedpaid">待補款 ${storefrontMoney(s.owedPaidAmount)}</span>`);
+            if (s.hasAnomaly) statusTags.push(`<span class="community-remittances-tag community-remittances-tag-anomaly">金額異常 ${storefrontMoney(s.mismatchAmount)}</span>`);
+            if (!sessionTags.length && !statusTags.length) return '';
+            return `<div class="community-remittances-customer-tags">${sessionTags.join('')}${statusTags.join('')}</div>`;
         }
 
         function communityRemittanceCustomerBlockHtml(customer) {
@@ -11837,7 +12036,8 @@
             return `
                 <div class="community-remittances-customer-block">
                     <div class="community-remittances-customer-header">
-                        <span class="community-remittances-customer-name">${communityBindingLineHtml(customer.binding, customer.lineDisplayName)}</span>
+                        ${communityRemittanceCustomerTitleHtml(customer.binding, customer.lineDisplayName)}
+                        ${communityRemittanceCustomerTagsHtml(customer)}
                     </div>
                     <div class="community-remittances-customer-body">
                         ${remittanceRows}
@@ -11848,16 +12048,103 @@
             `;
         }
 
+        // 總覽卡片——母體永遠是「目前場次／銀行／搜尋篩選後的客人」
+        // （communityLivestreamRemittanceCustomers，API 回來那份），跟是否
+        // 選取了某張卡片無關；選取只影響 communityRemittanceFilteredCustomers()
+        // 要不要過濾列表。count/amount 全部用後端算好的 customer.summary
+        // 加總，前端不重算結算邏輯。
+        const COMMUNITY_REMITTANCE_OVERVIEW_CATEGORIES = [
+            { key: 'refundDue', label: '待退款', fg: 'var(--cr-refund-fg)', bg: 'var(--cr-refund-bg)' },
+            { key: 'owedPaid', label: '待補款', fg: 'var(--cr-owed-fg)', bg: 'var(--cr-owed-bg)' },
+            { key: 'unpaid', label: '未匯款', fg: 'var(--cr-unpaid-fg)', bg: 'var(--cr-unpaid-bg)' },
+            { key: 'anomaly', label: '金額異常', fg: 'var(--cr-anomaly-fg)', bg: 'var(--cr-anomaly-bg)' },
+        ];
+
+        function communityRemittanceOverviewCardHtml(opts) {
+            const active = communityRemittancesOverviewFilter === opts.key;
+            const style = `--cr-ov-fg:${opts.fg};--cr-ov-bg:${opts.bg};`;
+            if (opts.textOnly) {
+                return `<button type="button" class="community-remittances-overview-card cr-ov-textonly${active ? ' is-active' : ''}" style="${style}" onclick="toggleCommunityRemittancesOverviewFilter(${quoteJs(opts.key)})">${escapeHtml(opts.label)}</button>`;
+            }
+            const empty = opts.count === 0;
+            return `
+                <button type="button" class="community-remittances-overview-card${active ? ' is-active' : ''}${empty ? ' is-empty' : ''}" style="${style}" onclick="toggleCommunityRemittancesOverviewFilter(${quoteJs(opts.key)})">
+                    <span class="cr-ov-count">${opts.count}</span>
+                    <span class="cr-ov-row1"><span class="cr-ov-title">${escapeHtml(opts.label)}</span><span class="cr-ov-amount">${storefrontMoney(opts.amount)}</span></span>
+                </button>
+            `;
+        }
+
+        function renderCommunityRemittancesOverview() {
+            const el = document.getElementById('community-remittances-overview');
+            if (!el) return;
+            const totals = { refundDue: { count: 0, amount: 0 }, owedPaid: { count: 0, amount: 0 }, unpaid: { count: 0, amount: 0 }, anomaly: { count: 0, amount: 0 } };
+            communityLivestreamRemittanceCustomers.forEach(customer => {
+                const s = customer.summary || {};
+                if (s.hasRefundDue) { totals.refundDue.count += 1; totals.refundDue.amount += s.refundDueAmount || 0; }
+                if (s.hasOwedPaid) { totals.owedPaid.count += 1; totals.owedPaid.amount += s.owedPaidAmount || 0; }
+                if (s.hasUnpaid) { totals.unpaid.count += 1; totals.unpaid.amount += s.unpaidAmount || 0; }
+                if (s.hasAnomaly) { totals.anomaly.count += 1; totals.anomaly.amount += s.mismatchAmount || 0; }
+            });
+            const row1 = COMMUNITY_REMITTANCE_OVERVIEW_CATEGORIES.map(cat => communityRemittanceOverviewCardHtml({
+                key: cat.key, label: cat.label, fg: cat.fg, bg: cat.bg,
+                count: totals[cat.key].count, amount: totals[cat.key].amount,
+            })).join('');
+            const row2 = [
+                communityRemittanceOverviewCardHtml({ key: 'unreviewed', label: '未核對', fg: 'var(--cr-unreviewed-fg)', bg: 'var(--cr-unreviewed-bg)', textOnly: true }),
+                communityRemittanceOverviewCardHtml({ key: '', label: '全部', fg: 'var(--cr-all-fg)', bg: 'var(--cr-all-bg)', textOnly: true }),
+            ].join('');
+            el.innerHTML = `
+                <div class="community-remittances-overview-row1">${row1}</div>
+                <div class="community-remittances-overview-row2">${row2}</div>
+            `;
+        }
+
+        function toggleCommunityRemittancesOverviewFilter(key) {
+            communityRemittancesOverviewFilter = communityRemittancesOverviewFilter === key ? '' : key;
+            renderCommunityLivestreamRemittances();
+        }
+
+        function communityRemittanceOverviewFilterLabel(key) {
+            if (key === 'unreviewed') return '未核對';
+            const cat = COMMUNITY_REMITTANCE_OVERVIEW_CATEGORIES.find(c => c.key === key);
+            return cat ? cat.label : '';
+        }
+
+        function communityRemittanceFilteredCustomers() {
+            const key = communityRemittancesOverviewFilter;
+            if (!key) return communityLivestreamRemittanceCustomers;
+            return communityLivestreamRemittanceCustomers.filter(customer => {
+                const s = customer.summary || {};
+                if (key === 'refundDue') return Boolean(s.hasRefundDue);
+                if (key === 'owedPaid') return Boolean(s.hasOwedPaid);
+                if (key === 'unpaid') return Boolean(s.hasUnpaid);
+                if (key === 'anomaly') return Boolean(s.hasAnomaly);
+                if (key === 'unreviewed') return Boolean(s.hasUnreviewed);
+                return true;
+            });
+        }
+
         function renderCommunityLivestreamRemittances() {
             const list = document.getElementById('community-remittances-list');
             const countEl = document.getElementById('community-remittances-total-count-text');
             if (!list) return;
-            if (countEl) countEl.textContent = `共 ${communityLivestreamRemittanceCustomers.length} 人`;
-            if (!communityLivestreamRemittanceCustomers.length) {
+            renderCommunityRemittancesOverview();
+            const filtered = communityRemittanceFilteredCustomers();
+            if (countEl) {
+                const filterKey = communityRemittancesOverviewFilter;
+                if (filterKey) {
+                    const label = communityRemittanceOverviewFilterLabel(filterKey);
+                    countEl.innerHTML = `共 ${filtered.length} 人　<span class="community-remittances-active-filter-note">目前只看 ${escapeHtml(label)}　<button type="button" class="community-remittances-clear-filter-btn" onclick="toggleCommunityRemittancesOverviewFilter(${quoteJs(filterKey)})">清除篩選</button></span>`;
+                } else {
+                    countEl.textContent = `共 ${filtered.length} 人`;
+                }
+            }
+            if (!filtered.length) {
                 list.innerHTML = '<div class="empty-state">沒有符合條件的匯款紀錄</div>';
                 return;
             }
-            list.innerHTML = communityLivestreamRemittanceCustomers.map(communityRemittanceCustomerBlockHtml).join('');
+            list.innerHTML = filtered.map(communityRemittanceCustomerBlockHtml).join('');
         }
 
         function toggleCommunityRemittanceOrdersExpanded(id) {
@@ -11923,6 +12210,7 @@
         function applyCommunityRemittancesFilters() {
             communityRemittancesFilters.q = document.getElementById('community-remittances-search')?.value.trim() || '';
             communityRemittancesFilters.sessionId = document.getElementById('community-remittances-session-filter')?.value || '';
+            communityRemittancesFilters.bank = document.getElementById('community-remittances-bank-filter')?.value || '';
             loadCommunityLivestreamRemittances();
         }
 
@@ -11930,6 +12218,7 @@
             communityRemittancesFilters.q = '';
             communityRemittancesFilters.bank = '';
             communityRemittancesFilters.sessionId = '';
+            communityRemittancesOverviewFilter = '';
             loadCommunityLivestreamRemittances();
         }
 
