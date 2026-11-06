@@ -395,7 +395,6 @@
            後換成的小縮圖維持原本「約34px」的視覺大小不變。 */
         .community-livestream-gacha-badge-btn { position: absolute; left: 5px; bottom: 5px; width: 36px; height: 36px; border-radius: 50%; background: #fff; border: none; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25); display: flex; align-items: center; justify-content: center; color: #ec4899; font-size: 1rem; cursor: pointer; z-index: 2; padding: 0; }
         .community-livestream-gacha-badge-thumb { position: absolute; left: 5px; bottom: 5px; width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25); cursor: pointer; z-index: 2; }
-        .community-livestream-remittance-info { border: 1px solid #fde68a; background: #fffbeb; color: #92400e; border-radius: 0.6rem; padding: 0.5rem 0.65rem; font-size: 0.76rem; font-weight: 800; display: flex; flex-wrap: wrap; gap: 0.3rem 0.75rem; }
         .community-livestream-batch-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-top: 0.45rem; padding-top: 0.45rem; border-top: 1px dashed #fbcfe8; }
         .community-livestream-batch-group { display: flex; align-items: center; gap: 0.35rem; }
         .community-livestream-batch-group label { font-size: 0.76rem; font-weight: 800; color: #64748b; }
@@ -2088,14 +2087,9 @@
                     <div class="community-livestream-quick-filters">
                         <button type="button" class="community-livestream-filter-btn" data-filter="purchaseStatus:not_bought" onclick="toggleCommunityLivestreamQuickFilter('purchaseStatus', 'not_bought')">未購買</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="purchaseStatus:bought" onclick="toggleCommunityLivestreamQuickFilter('purchaseStatus', 'bought')">已購買</button>
-                        <button type="button" class="community-livestream-filter-btn" data-filter="paymentStatus:unpaid" onclick="toggleCommunityLivestreamQuickFilter('paymentStatus', 'unpaid')">未付款</button>
-                        <button type="button" class="community-livestream-filter-btn" data-filter="paymentStatus:confirming" onclick="toggleCommunityLivestreamQuickFilter('paymentStatus', 'confirming')">匯款確認中</button>
-                        <button type="button" class="community-livestream-filter-btn" data-filter="paymentStatus:paid" onclick="toggleCommunityLivestreamQuickFilter('paymentStatus', 'paid')">已付款</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="productCategory:general" onclick="toggleCommunityLivestreamQuickFilter('productCategory', 'general')">一般商品</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="productCategory:gacha" onclick="toggleCommunityLivestreamQuickFilter('productCategory', 'gacha')">扭蛋</button>
                         <button type="button" class="community-livestream-filter-btn" data-filter="unrecognizedOnly:1" onclick="toggleCommunityLivestreamQuickFilter('unrecognizedOnly', '1')">無法辨識價格</button>
-                        <button type="button" class="community-livestream-filter-btn" data-filter="needsTopupOnly:1" onclick="toggleCommunityLivestreamQuickFilter('needsTopupOnly', '1')">有待補款</button>
-                        <button type="button" class="community-livestream-filter-btn" data-filter="hasRefundDueOnly:1" onclick="toggleCommunityLivestreamQuickFilter('hasRefundDueOnly', '1')">有應退款</button>
                     </div>
                     <div class="community-livestream-batch-bar">
                         <div class="community-livestream-batch-group">
@@ -10374,11 +10368,11 @@
 
         // ===== 社群連線訂單 (LINE 圖片下單) — 全新獨立功能，不共用 communityOrders 資料 =====
         let communityLivestreamOrders = [];
-        const communityLivestreamFilters = { q: '', purchaseStatus: '', paymentStatus: '', productCategory: '', unrecognizedOnly: false, needsTopupOnly: false, hasRefundDueOnly: false, sessionId: '' };
+        const communityLivestreamFilters = { q: '', purchaseStatus: '', productCategory: '', unrecognizedOnly: false, sessionId: '' };
         // 階段二（結算模型）新增的兩個布林快篩，跟 unrecognizedOnly 共用
         // 同一套「切換開關」UI 邏輯（見 writeCommunityLivestreamFilterInputs/
         // toggleCommunityLivestreamQuickFilter）。
-        const COMMUNITY_LIVESTREAM_BOOLEAN_FILTER_FIELDS = new Set(['unrecognizedOnly', 'needsTopupOnly', 'hasRefundDueOnly']);
+        const COMMUNITY_LIVESTREAM_BOOLEAN_FILTER_FIELDS = new Set(['unrecognizedOnly']);
         let communityLivestreamSessionOptionsLoaded = false;
         let communityLivestreamImportRows = [];
         let communitySelectedLivestreamIds = new Set();
@@ -10458,11 +10452,8 @@
             const params = new URLSearchParams();
             if (communityLivestreamFilters.q) params.set('q', communityLivestreamFilters.q);
             if (communityLivestreamFilters.purchaseStatus) params.set('purchaseStatus', communityLivestreamFilters.purchaseStatus);
-            if (communityLivestreamFilters.paymentStatus) params.set('paymentStatus', communityLivestreamFilters.paymentStatus);
             if (communityLivestreamFilters.productCategory) params.set('productCategory', communityLivestreamFilters.productCategory);
             if (communityLivestreamFilters.unrecognizedOnly) params.set('unrecognizedOnly', '1');
-            if (communityLivestreamFilters.needsTopupOnly) params.set('needsTopupOnly', '1');
-            if (communityLivestreamFilters.hasRefundDueOnly) params.set('hasRefundDueOnly', '1');
             if (communityLivestreamFilters.sessionId) params.set('sessionId', communityLivestreamFilters.sessionId);
             const qs = params.toString();
             return qs ? `?${qs}` : '';
@@ -10734,9 +10725,6 @@
                 ? `<img class="community-livestream-thumb" src="${escapeHtml(order.photoUrl)}" alt="商品照片" loading="lazy" onclick="openCommunityLivestreamPhotoPreview(${quoteJs(order.photoUrl)})">`
                 : `<div class="community-livestream-thumb-placeholder"><i class="fa-regular fa-image"></i></div>`;
             const checked = communitySelectedLivestreamIds.has(order.id) ? 'checked' : '';
-            const remittanceInfo = order.paymentStatus === 'confirming' && (order.remittanceBankName || order.remittanceLast5 || order.remittanceAmount !== null)
-                ? `<div class="community-livestream-remittance-info"><span><i class="fa-solid fa-money-check-dollar"></i> 客人回報：${escapeHtml(order.remittanceBankName || '—')}／${order.remittanceAmount === null ? '—' : storefrontMoney(order.remittanceAmount)}／末五碼${escapeHtml(order.remittanceLast5 || '—')}</span></div>`
-                : '';
             // 批次編輯模式下，數量/單價/買到幾個顯示的是「尚未送出的暫存值」
             // (communityLivestreamBulkEditChanges)，不是 order 物件本身
             // 的值——避免存檔前整份重繪（搜尋/篩選/其他欄位觸發的
@@ -10814,7 +10802,6 @@
                             <span class="community-livestream-thumb-time">${storefrontDateTime(order.createdAt)}</span>
                         </div>
                         <div class="community-livestream-card-main">
-                            ${remittanceInfo}
                             <div class="community-livestream-summary">
                                 <div class="community-livestream-who">${escapeHtml(communityLivestreamWhoText(order.binding, order.lineDisplayName))}</div>
                                 <div class="community-livestream-summary-line">
@@ -11021,8 +11008,7 @@
                     if (!byCustomer.has(key)) byCustomer.set(key, { topup: 0, refundDue: 0 });
                     const agg = byCustomer.get(key);
                     // 「待補款」＝已經付過一部分、現在還欠（需補款），跟
-                    // 「從未付款」是兩個不同的狀態——跟 GET 路由的
-                    // needsTopupOnly 快篩同一套定義。
+                    // 「從未付款」是兩個不同的狀態。
                     if (Number(order.owed || 0) > 0 && Number(order.paidAmount || 0) > 0) agg.topup += Number(order.owed || 0);
                     agg.refundDue += Number(order.refundDue || 0);
                 });
@@ -11600,11 +11586,8 @@
         function clearCommunityLivestreamFilters() {
             communityLivestreamFilters.q = '';
             communityLivestreamFilters.purchaseStatus = '';
-            communityLivestreamFilters.paymentStatus = '';
             communityLivestreamFilters.productCategory = '';
             communityLivestreamFilters.unrecognizedOnly = false;
-            communityLivestreamFilters.needsTopupOnly = false;
-            communityLivestreamFilters.hasRefundDueOnly = false;
             communityLivestreamFilters.sessionId = '';
             const sessionSelect = document.getElementById('community-livestream-session-filter');
             if (sessionSelect) sessionSelect.value = '';
