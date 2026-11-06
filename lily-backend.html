@@ -478,6 +478,24 @@
            兩個功能的樣式調整互相牽動（這份卡片沒有照片，版面比訂單卡片
            簡單，純文字＋三個可編輯欄位）。 */
         .community-remittances-filterbar { gap: 0.4rem; }
+        /* 篩選卡照設計模板重做：白底卡片＋細邊框（不再是粉底），場次／
+           銀行兩個下拉同一行、等寬、樣式一致（含自畫箭頭，避免原生箭頭
+           在不同瀏覽器下顯示不一致）；搜尋列是輸入框＋放大鏡／✕ 兩顆
+           固定尺寸的方形圖示鈕同一行，不再是搜尋框獨佔一行、下面兩顆
+           各半寬長按鈕。刻意不沿用 .backend-member-filter-row/-field/.btn
+           （那組 class 在全站多個手機斷點有 !important 覆寫，是上一版
+           「搜尋框獨佔一行」的根因），改用這裡自己的一套 class，桌機/
+           手機共用同一份版面，不需要額外的斷點切換。顏色沿用頁面既有
+           的 --primary-color/--border-color/--text-dark 變數，沒有另外
+           寫死新顏色（自畫箭頭的 SVG data URI 用 #475569，跟既有的
+           #freight-company-filter 自畫箭頭同一個顏色）。 */
+        .community-remittances-filter-card { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.85rem; background: #fff; border: 1px solid var(--border-color); border-radius: 1rem; }
+        .community-remittances-filter-selects { display: flex; gap: 0.5rem; min-width: 0; }
+        .community-remittances-filter-select { flex: 1 1 0; min-width: 0; min-height: 34px; border: 1px solid var(--border-color); border-radius: 0.72rem; padding: 0.42rem 1.9rem 0.42rem 0.62rem; background: #fff; color: var(--text-dark); font-size: 0.82rem; font-weight: 800; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; background-repeat: no-repeat; background-position: right 0.55rem center; background-size: 18px; background-image: url('data:image/svg+xml;utf8,<svg fill=%22%23475569%22 height=%2220%22 viewBox=%220 0 24 24%22 width=%2220%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/></svg>'); }
+        .community-remittances-search-row { display: flex; gap: 0.5rem; min-width: 0; }
+        .community-remittances-search-row input { flex: 1 1 auto; min-width: 0; min-height: 34px; border: 1px solid var(--border-color); border-radius: 0.72rem; padding: 0.42rem 0.62rem; background: #fff; color: var(--text-dark); font-size: 0.82rem; font-weight: 800; outline: none; }
+        .community-remittances-search-btn { all: unset; box-sizing: border-box; flex: none; width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--border-color); border-radius: 0.72rem; background: #f8fafc; color: #64748b; font-size: 0.85rem; cursor: pointer; }
+        .community-remittances-search-btn.go { background: var(--primary-color); border-color: var(--primary-color); color: #fff; }
         .community-remittances-count-line { margin: 0.35rem 0; font-size: 0.78rem; font-weight: 800; color: #64748b; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
         .community-remittances-active-filter-note { display: inline-flex; align-items: center; gap: 0.35rem; color: #be185d; }
         .community-remittances-clear-filter-btn { border: none; background: none; color: #be185d; font-weight: 900; text-decoration: underline; cursor: pointer; font-size: inherit; padding: 0; }
@@ -1427,15 +1445,6 @@
             .brand-setting-grid, .site-feature-flag-list { grid-template-columns: 1fr !important; }
         }
 
-        /* 場次／銀行這兩個下拉在手機也要並排同一行——蓋掉全站 720px
-           斷點既有的「filter-row 裡第一個 field 自動撐滿整行」規則（那條
-           規則是給「搜尋框在第一個」的版面設計的，這裡刻意蓋掉讓兩個
-           下拉維持 2 欄並排）。跟其他頁面的 filter-row 無關，只靠多加的
-           專屬 class 範圍住。 */
-        @media (max-width: 720px) {
-            .backend-member-filter-row .community-remittances-session-field:first-child { grid-column: auto; }
-        }
-
         /* 匯款紀錄頁改版——這輪新增的版面只在這個頁籤生效（用
            #section-community-livestream-remittances 或新 class 範圍住），
            不影響其他頁面既有的手機版版面。斷點用使用者指定的 640px，
@@ -2133,29 +2142,23 @@
                         <button class="btn btn-secondary" type="button" onclick="loadCommunityLivestreamRemittances()"><i class="fa-solid fa-rotate"></i><span class="btn-label"> 重新整理</span></button>
                     </div>
                 </div>
-                <div class="backend-member-filterbar community-remittances-filterbar">
-                    <div class="backend-member-filter-row">
-                        <div class="backend-member-filter-field community-remittances-session-field" style="min-width:160px;">
-                            <select id="community-remittances-session-filter" aria-label="場次" onchange="applyCommunityRemittancesFilters()">
-                                <option value="">全部場次</option>
-                            </select>
-                        </div>
-                        <div class="backend-member-filter-field community-remittances-bank-field" style="min-width:110px;">
-                            <select id="community-remittances-bank-filter" aria-label="銀行" onchange="applyCommunityRemittancesFilters()">
-                                <option value="">全部</option>
-                                <option value="zhongxin">中信</option>
-                                <option value="fubon">富邦</option>
-                                <option value="cathay">國泰</option>
-                                <option value="anomaly">異常</option>
-                            </select>
-                        </div>
+                <div class="community-remittances-filter-card">
+                    <div class="community-remittances-filter-selects">
+                        <select id="community-remittances-session-filter" class="community-remittances-filter-select" aria-label="場次" onchange="applyCommunityRemittancesFilters()">
+                            <option value="">全部場次</option>
+                        </select>
+                        <select id="community-remittances-bank-filter" class="community-remittances-filter-select" aria-label="銀行" onchange="applyCommunityRemittancesFilters()">
+                            <option value="">全部</option>
+                            <option value="zhongxin">中信</option>
+                            <option value="fubon">富邦</option>
+                            <option value="cathay">國泰</option>
+                            <option value="anomaly">異常</option>
+                        </select>
                     </div>
-                    <div class="backend-member-filter-row">
-                        <div class="backend-member-filter-field" style="min-width:220px;">
-                            <input id="community-remittances-search" type="search" placeholder="暱稱、IG、LINE 名稱" aria-label="搜尋" onkeydown="handleCommunityRemittancesSearchKey(event)">
-                        </div>
-                        <button class="btn btn-primary" type="button" onclick="applyCommunityRemittancesFilters()"><i class="fa-solid fa-magnifying-glass"></i><span class="btn-label"> 搜尋</span></button>
-                        <button class="btn btn-secondary" type="button" onclick="clearCommunityRemittancesFilters()"><i class="fa-solid fa-eraser"></i><span class="btn-label"> 清除</span></button>
+                    <div class="community-remittances-search-row">
+                        <input id="community-remittances-search" type="search" placeholder="暱稱、IG、LINE 名稱" aria-label="搜尋" onkeydown="handleCommunityRemittancesSearchKey(event)">
+                        <button class="community-remittances-search-btn go" type="button" onclick="applyCommunityRemittancesFilters()" aria-label="搜尋"><i class="fa-solid fa-magnifying-glass"></i></button>
+                        <button class="community-remittances-search-btn" type="button" onclick="clearCommunityRemittancesFilters()" aria-label="清除"><i class="fa-solid fa-xmark"></i></button>
                     </div>
                 </div>
                 <div id="community-remittances-overview" class="community-remittances-overview"></div>
