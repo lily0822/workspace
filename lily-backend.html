@@ -355,22 +355,30 @@
             .site-feature-flag-col-maintenance { flex-direction: column; }
         }
         .community-livestream-quick-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
-        .community-livestream-filter-btn { border: 1px solid #fbcfe8; border-radius: 999px; background: white; color: #475569; font-size: 0.76rem; font-weight: 800; padding: 0.4rem 0.85rem; cursor: pointer; transition: all .15s ease; }
-        .community-livestream-filter-btn:hover { border-color: #f472b6; }
-        .community-livestream-filter-btn.active { background: #ec4899; border-color: #ec4899; color: white; }
+        /* 第3輪對齊全站模板：預設白底＋淺邊框，選中換成淡粉底＋主色字/邊框
+           （模板沒有專屬的「選中膠囊」範例，比照匯款頁總覽卡「預設白底、
+           選中才換色」的邏輯，用 --sidebar-active 這個跟模板 --accent-bg
+           同數值的既有變數）。這個 class 同時也是「社群綁定」頁籤分頁按鈕
+           在用的同一組 class（既有共用，不是這輪新增的跨頁耦合），改了
+           這裡那邊的分頁按鈕外觀會一起變，視覺上是一致的淡粉底切換效果。 */
+        .community-livestream-filter-btn { border: 1px solid var(--border-color); border-radius: 999px; background: var(--surface-color); color: var(--text-dark); font-size: 0.76rem; font-weight: 500; padding: 0.4rem 0.85rem; cursor: pointer; transition: all .15s ease; }
+        .community-livestream-filter-btn:hover { border-color: var(--primary-color); }
+        .community-livestream-filter-btn.active { background: var(--sidebar-active); border-color: var(--primary-color); color: var(--primary-color); font-weight: 700; }
         .community-livestream-list { display: grid; gap: 0.75rem; margin-top: 0.35rem; }
-        .community-livestream-card { display: grid; gap: 0.6rem; border: 1px solid #fbcfe8; border-radius: 1rem; background: white; padding: 0.85rem; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
+        /* 卡片這輪對齊模板：圓角 14px、無陰影、邊框改用共用變數（模板
+           卡片本來就不用陰影，見 backend-style.html .card）。 */
+        .community-livestream-card { display: grid; gap: 0.6rem; border: 1px solid var(--border-color); border-radius: 0.875rem; background: var(--surface-color); padding: 0.85rem; }
         /* 卡片改版：商品名稱＋編輯/刪除獨立成最上面一行，永遠顯示（不會
            被展開/收合切換隱藏——舊版這兩顆按鈕原本跟在
            .community-livestream-summary 底下，展開編輯區時連同整個摘要
            區一起被 display:none 蓋掉，等於展開後反而找不到按鈕收合回去）。 */
         .community-livestream-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
-        .community-livestream-card-title { flex: 1; min-width: 0; font-size: 0.86rem; font-weight: 900; color: #334155; overflow-wrap: break-word; line-height: 1.35; }
+        .community-livestream-card-title { flex: 1; min-width: 0; font-size: 0.86rem; font-weight: 700; color: var(--text-dark); overflow-wrap: break-word; line-height: 1.35; }
         .community-livestream-card-top { display: grid; grid-template-columns: 110px 1fr; gap: 0.75rem; align-items: stretch; }
         .community-livestream-card-main { display: grid; gap: 0.4rem; min-width: 0; }
         .community-livestream-card-header { display: flex; gap: 0.5rem; align-items: flex-start; flex-wrap: wrap; }
-        .community-livestream-thumb { display: block; width: 100%; aspect-ratio: 1 / 1; border-radius: 0.75rem; object-fit: cover; border: 1px solid #fbcfe8; background: #fff7fb; cursor: pointer; }
-        .community-livestream-thumb-placeholder { width: 100%; aspect-ratio: 1 / 1; border-radius: 0.75rem; border: 1px dashed #fbcfe8; background: #fff7fb; display: flex; align-items: center; justify-content: center; color: #f9a8d4; font-size: 1.8rem; }
+        .community-livestream-thumb { display: block; width: 100%; aspect-ratio: 1 / 1; border-radius: 0.75rem; object-fit: cover; border: 1px solid var(--border-color); background: var(--gray-bg); cursor: pointer; }
+        .community-livestream-thumb-placeholder { width: 100%; aspect-ratio: 1 / 1; border-radius: 0.75rem; border: 1px solid var(--border-color); background: var(--gray-bg); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 1.8rem; }
         /* 社群暱稱這輪拿掉不顯示（純展示用的客人身份只留 LINE 顯示
            名稱），時間移到照片下方——header 現在只剩這一行文字 +
            右側的購買勾勾按鈕，不再是「暱稱＋時間」那兩層結構，所以
@@ -389,44 +397,49 @@
         /* 「買到幾個」輸入框——取代原本二元的「標記已購買」打勾按鈕，
            放在卡片頭跟展開表單各一個（跟數量/單價同一套雙處同步手法）。 */
         .community-livestream-purchased-qty-wrap { display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0; }
-        .community-livestream-purchased-qty-wrap label { font-size: 0.68rem; font-weight: 900; color: #94a3b8; white-space: nowrap; }
-        .community-livestream-summary-purchased-qty-input { width: 60px; min-height: 28px; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.15rem 0.3rem; font-size: 0.8rem; font-weight: 800; color: #334155; outline: none; text-align: center; }
-        .community-livestream-summary-purchased-qty-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
-        .community-livestream-thumb-time { display: block; margin-top: 0.3rem; font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-align: center; }
-        .community-livestream-product-input { width: 100%; min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.35rem 0.6rem; font-size: 0.82rem; font-weight: 800; color: #334155; outline: none; }
-        .community-livestream-product-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
-        .community-livestream-unrecognized { color: #dc2626; font-size: 0.7rem; font-weight: 900; margin-top: 0.2rem; }
+        .community-livestream-purchased-qty-wrap label { font-size: 0.68rem; font-weight: 500; color: var(--text-muted); white-space: nowrap; }
+        .community-livestream-summary-purchased-qty-input { width: 60px; min-height: 28px; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.15rem 0.3rem; font-size: 0.8rem; font-weight: 500; color: var(--text-dark); outline: none; text-align: center; }
+        .community-livestream-summary-purchased-qty-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(217, 70, 126, 0.12); }
+        .community-livestream-thumb-time { display: block; margin-top: 0.3rem; font-size: 0.68rem; font-weight: 500; color: var(--text-muted); text-align: center; }
+        .community-livestream-product-input { width: 100%; min-height: 34px; border: 1px solid var(--border-color); border-radius: 0.6rem; padding: 0.35rem 0.6rem; font-size: 0.82rem; font-weight: 500; color: var(--text-dark); outline: none; }
+        .community-livestream-product-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(217, 70, 126, 0.12); }
+        /* 「尚未輸入單價」警示：這輪改成淺紅底小標籤（沿用匯款頁沒買到/
+           異常的色票 --cr-notbought-*），比照模板「異常用淺紅底」的風格，
+           不再是單純一行紅字。 */
+        .community-livestream-unrecognized { display: inline-block; color: var(--cr-notbought-fg); background: var(--cr-notbought-bg); border: 1px solid var(--cr-notbought-border); border-radius: 0.4rem; padding: 0.1rem 0.4rem; font-size: 0.7rem; font-weight: 700; margin-top: 0.2rem; }
         /* 這輪新增「買到幾個」欄位，從 3 欄改成 2x2——4 欄在窄螢幕容易
            擠在一起，這個頁籤沒有專用的窄螢幕 media query，2 欄排版在
            各種寬度都比較安全。 */
         .community-livestream-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
         .community-livestream-field { display: grid; gap: 0.2rem; }
-        .community-livestream-field label { font-size: 0.68rem; font-weight: 900; color: #94a3b8; }
-        .community-livestream-field input[type="number"] { width: 100%; min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.35rem 0.5rem; font-size: 0.82rem; font-weight: 800; color: #334155; outline: none; }
-        .community-livestream-total { font-size: 0.9rem; font-weight: 950; color: #be185d; }
+        .community-livestream-field label { font-size: 0.68rem; font-weight: 500; color: var(--text-muted); }
+        .community-livestream-field input[type="number"] { width: 100%; min-height: 34px; border: 1px solid var(--border-color); border-radius: 0.6rem; padding: 0.35rem 0.5rem; font-size: 0.82rem; font-weight: 500; color: var(--text-dark); outline: none; }
+        .community-livestream-total { font-size: 0.9rem; font-weight: 700; color: var(--primary-color); font-variant-numeric: tabular-nums; }
         .community-livestream-status-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-        .community-livestream-notes-input { width: 100%; min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.35rem 0.6rem; font-size: 0.8rem; font-weight: 700; color: #334155; outline: none; }
+        .community-livestream-notes-input { width: 100%; min-height: 34px; border: 1px solid var(--border-color); border-radius: 0.6rem; padding: 0.35rem 0.6rem; font-size: 0.8rem; font-weight: 500; color: var(--text-dark); outline: none; }
         .community-livestream-thumb-wrap { position: relative; flex-shrink: 0; align-self: start; }
-        .community-livestream-select-checkbox { position: absolute; top: 0.4rem; left: 0.4rem; width: 20px; height: 20px; z-index: 1; cursor: pointer; accent-color: #ec4899; box-shadow: 0 0 0 2px white; border-radius: 0.3rem; }
+        .community-livestream-select-checkbox { position: absolute; top: 0.4rem; left: 0.4rem; width: 20px; height: 20px; z-index: 1; cursor: pointer; accent-color: var(--primary-color); box-shadow: 0 0 0 2px white; border-radius: 0.3rem; }
         /* 扭蛋照片：商品圖左下角的相機鈕／已上傳後的小縮圖，只有扭蛋訂單
            才會出現（見 buildCommunityLivestreamOrderCardHtml 的
            gachaBadgeHtml）。按鈕本身做到 36px 觸控區（手機好點），上傳
            後換成的小縮圖維持原本「約34px」的視覺大小不變。 */
         .community-livestream-gacha-badge-btn { position: absolute; left: 5px; bottom: 5px; width: 36px; height: 36px; border-radius: 50%; background: #fff; border: none; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25); display: flex; align-items: center; justify-content: center; color: #ec4899; font-size: 1rem; cursor: pointer; z-index: 2; padding: 0; }
         .community-livestream-gacha-badge-thumb { position: absolute; left: 5px; bottom: 5px; width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25); cursor: pointer; z-index: 2; }
-        .community-livestream-batch-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-top: 0.45rem; padding-top: 0.45rem; border-top: 1px dashed #fbcfe8; }
+        .community-livestream-batch-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-top: 0.45rem; padding-top: 0.45rem; border-top: 1px solid var(--border-color); }
         .community-livestream-batch-group { display: flex; align-items: center; gap: 0.35rem; }
-        .community-livestream-batch-group label { font-size: 0.76rem; font-weight: 800; color: #64748b; }
-        .community-livestream-batch-group select { min-height: 32px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.25rem 0.4rem; font-size: 0.78rem; font-weight: 800; color: #334155; }
+        .community-livestream-batch-group label { font-size: 0.76rem; font-weight: 500; color: var(--text-muted); }
+        .community-livestream-batch-group select { min-height: 32px; border: 1px solid var(--border-color); border-radius: 0.6rem; padding: 0.25rem 0.4rem; font-size: 0.78rem; font-weight: 500; color: var(--text-dark); }
         .community-livestream-batch-group .btn { min-width: 32px; padding: 0.3rem 0.5rem; }
-        .community-livestream-count-line { margin: 0.35rem 0; font-size: 0.78rem; font-weight: 800; color: #64748b; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
+        .community-livestream-count-line { margin: 0.35rem 0; font-size: 0.78rem; font-weight: 500; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
         .community-livestream-count-controls { display: inline-flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-        .community-livestream-count-controls select { min-height: 30px; border: 1px solid #fbcfe8; border-radius: 0.6rem; padding: 0.2rem 0.4rem; font-size: 0.76rem; font-weight: 800; color: #334155; }
-        .community-livestream-select-all { display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer; color: #334155; user-select: none; }
+        .community-livestream-count-controls select { min-height: 30px; border: 1px solid var(--border-color); border-radius: 0.6rem; padding: 0.2rem 0.4rem; font-size: 0.76rem; font-weight: 500; color: var(--text-dark); }
+        .community-livestream-select-all { display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer; color: var(--text-dark); user-select: none; }
         .community-livestream-card-actions { display: flex; gap: 0.35rem; margin-left: auto; flex-shrink: 0; }
-        .community-livestream-icon-btn { width: 30px; height: 30px; border-radius: 0.55rem; border: 1px solid #fbcfe8; background: #fff; color: #64748b; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; flex-shrink: 0; }
-        .community-livestream-icon-btn:hover { border-color: #f472b6; color: #be185d; }
+        .community-livestream-icon-btn { width: 30px; height: 30px; border-radius: 0.55rem; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; flex-shrink: 0; }
+        .community-livestream-icon-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
         .community-livestream-icon-btn.active { background: #ecfdf5; border-color: #86efac; color: #16a34a; }
+        /* 刪除／危險操作維持目前的紅色辨識度，刻意不跟著這輪其他顏色
+           一起換成共用變數（使用者明確要求不要為了統一而改掉）。 */
         .community-livestream-icon-btn.danger:hover { border-color: #fca5a5; color: #dc2626; }
         /* 搜尋輸入框＋搜尋按鈕這輪合併成同一個 .backend-member-filter-field，
            讓兩者在手機版的 2 欄篩選 grid 裡佔同一格、水平排在一起（輸入框
@@ -440,24 +453,28 @@
            顯示名稱，見 communityLivestreamWhoText），拿掉綠色「社群暱稱」
            標籤跟 LINE 名稱那行——跟 .community-binding-line（依客人統計／
            匯款紀錄共用）是故意分開的獨立樣式，不要共用。 */
-        .community-livestream-who { font-size: 0.72rem; font-weight: 700; color: #94a3b8; overflow-wrap: break-word; }
-        .community-livestream-summary-product { font-size: 0.82rem; font-weight: 800; color: #334155; }
-        .community-livestream-summary-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; font-size: 0.8rem; font-weight: 800; color: #334155; }
-        .community-livestream-summary-price-input { width: 64px; min-height: 28px; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.15rem 0.35rem; font-size: 0.8rem; font-weight: 800; color: #334155; outline: none; text-align: center; }
-        .community-livestream-summary-price-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
+        .community-livestream-who { font-size: 0.72rem; font-weight: 500; color: var(--text-muted); overflow-wrap: break-word; }
+        .community-livestream-summary-product { font-size: 0.82rem; font-weight: 700; color: var(--text-dark); }
+        .community-livestream-summary-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; font-size: 0.8rem; font-weight: 500; color: var(--text-dark); }
+        .community-livestream-summary-price-input { width: 64px; min-height: 28px; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.15rem 0.35rem; font-size: 0.8rem; font-weight: 500; color: var(--text-dark); outline: none; text-align: center; }
+        .community-livestream-summary-price-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(217, 70, 126, 0.12); }
         /* 卡片改版：一般模式下摘要區的數量改成純文字（不可編輯，永遠顯示
            下單數量，不受買到幾個影響；要改數量按右上角鉛筆展開編輯區）；
            批次編輯模式下這個欄位要維持可編輯（批次調整數量本來就是在
            摘要區直接改、不用展開每一張卡片），所以保留原本的輸入框
            樣式，渲染時依 communityLivestreamBulkEditEnabled 二選一。 */
-        .community-livestream-summary-qty-text { min-width: 14px; text-align: center; font-size: 0.8rem; font-weight: 800; color: #334155; }
-        .community-livestream-summary-qty-input { width: 46px; min-height: 28px; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.15rem 0.3rem; font-size: 0.8rem; font-weight: 800; color: #334155; outline: none; text-align: center; }
-        .community-livestream-summary-qty-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
+        .community-livestream-summary-qty-text { min-width: 14px; text-align: center; font-size: 0.8rem; font-weight: 500; color: var(--text-dark); }
+        .community-livestream-summary-qty-input { width: 46px; min-height: 28px; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.15rem 0.3rem; font-size: 0.8rem; font-weight: 500; color: var(--text-dark); outline: none; text-align: center; }
+        .community-livestream-summary-qty-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(217, 70, 126, 0.12); }
         /* 卡片改版：✓ 全部買到／✗ 沒買到／「買到 N」自填，三顆都呼叫既有的
            買到幾個寫入函式，不是新 API；ok/bad 是顏色基底，.active 是
            「目前就是這個狀態」的實心高亮（見 communityLivestreamPurchasedQtyActionJs）。 */
         .community-livestream-buy-actions-row { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
-        .community-livestream-buy-btn { width: 30px; height: 30px; flex-shrink: 0; border-radius: 0.55rem; border: 1px solid #fbcfe8; background: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; cursor: pointer; padding: 0; }
+        /* ok/bad 的綠／紅這輪刻意保留原本色號，不改成 --cr-reviewed-fg／
+           --cr-notbought-fg（數值不同），理由跟上面 icon-btn.danger 一樣：
+           這是「買到／沒買到」狀態色，不是危險操作，但一樣希望保留原本
+           的辨識度，不確定是否要跟著統一，留給使用者決定。 */
+        .community-livestream-buy-btn { width: 30px; height: 30px; flex-shrink: 0; border-radius: 0.55rem; border: 1px solid var(--border-color); background: var(--surface-color); display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; cursor: pointer; padding: 0; }
         .community-livestream-buy-btn.ok { color: #16a34a; }
         .community-livestream-buy-btn.bad { color: #dc2626; }
         .community-livestream-buy-btn.ok.active { background: #16a34a; border-color: #16a34a; color: #fff; }
@@ -467,7 +484,7 @@
            選擇器權重相同時靠後者覆蓋前者，所以離開焦點後 dirty 邊框
            還是會蓋掉原本粉色邊框，不需要 !important。 */
         .community-livestream-field-dirty { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15); }
-        .community-livestream-summary-notes { font-size: 0.74rem; font-weight: 700; color: #94a3b8; }
+        .community-livestream-summary-notes { font-size: 0.74rem; font-weight: 500; color: var(--text-muted); }
         /* 總金額那行（數量×單價=總價）這輪拆出去獨立一行，不跟狀態小
            圓點擠在同一行——這條新的「第二行」左邊放兩個小圓點、右邊
            靠 .community-livestream-card-actions 既有的 margin-left:auto
@@ -476,22 +493,35 @@
            被撐出卡片外框，而是自然換行。 */
         .community-livestream-summary-status-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
         .community-livestream-summary-pills { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; min-width: 0; }
-        .community-livestream-mini-pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.16rem 0.55rem; font-size: 0.68rem; font-weight: 900; color: #111827; }
+        .community-livestream-mini-pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.16rem 0.55rem; font-size: 0.68rem; font-weight: 500; color: var(--text-dark); }
         .community-livestream-full { display: none; }
         .community-livestream-card.expanded .community-livestream-full { display: grid; gap: 0.6rem; margin-top: 0.1rem; }
         .community-livestream-card.expanded .community-livestream-summary { display: none; }
         /* 「依客人統計」手風琴——每個客人一個區塊，標頭永遠顯示、預設
            收合，點了才展開看到底下的訂單卡片（直接重用上面的
            .community-livestream-card，長得一模一樣）。 */
-        .community-livestream-customer-group { border: 1px solid #fbcfe8; border-radius: 1rem; background: white; overflow: hidden; }
+        .community-livestream-customer-group { border: 1px solid var(--border-color); border-radius: 0.875rem; background: var(--surface-color); overflow: hidden; }
         .community-livestream-customer-group-header { width: 100%; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding: 0.75rem 0.85rem; border: none; background: none; cursor: pointer; text-align: left; font-family: inherit; }
-        .community-livestream-customer-group-name { font-size: 0.84rem; font-weight: 900; color: #334155; flex-shrink: 0; }
-        .community-livestream-customer-group-amounts { display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; font-size: 0.74rem; font-weight: 800; color: #64748b; flex: 1; min-width: 0; }
+        .community-livestream-customer-group-name { font-size: 0.84rem; font-weight: 700; color: var(--text-dark); flex-shrink: 0; }
+        .community-livestream-customer-group-amounts { display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; font-size: 0.74rem; font-weight: 500; color: var(--text-muted); flex: 1; min-width: 0; font-variant-numeric: tabular-nums; }
         .community-livestream-customer-group-actions { display: flex; gap: 0.5rem; padding: 0 0.85rem 0.6rem; }
-        .community-livestream-customer-group-chevron { margin-left: auto; flex-shrink: 0; color: #94a3b8; transition: transform .15s ease; }
+        .community-livestream-customer-group-chevron { margin-left: auto; flex-shrink: 0; color: var(--text-muted); transition: transform .15s ease; }
         .community-livestream-customer-group-chevron.open { transform: rotate(180deg); }
         .community-livestream-customer-group-body { display: none; padding: 0 0.85rem 0.85rem; }
         .community-livestream-customer-group-body.open { display: block; }
+        /* 第3輪新增：頂部「待補款／應退款」統計列這輪從純文字改成白底
+           卡片＋淺底深字數字（比照模板 .stat／匯款頁總覽卡），數字/條件
+           完全不變，只是 renderCommunityLivestreamOrders 改用 innerHTML
+           組出下面這兩顆卡片而不是一行文字（見該函式）；沒有任何待補款
+           或應退款時這個區塊整個是空的，跟原來行為一樣。顏色沿用既有的
+           --status-topup-fg/bg、--status-refund-fg/bg（跟匯款頁的
+           --cr-owed-fg/bg、--cr-refund-fg/bg 是同一套數值）。 */
+        .community-livestream-settlement-stats { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.35rem 0; }
+        .community-livestream-settlement-stat { flex: 1 1 160px; min-width: 140px; display: flex; flex-direction: column; gap: 0.15rem; padding: 0.55rem 0.85rem; border: 1.5px solid var(--border-color); border-radius: 0.875rem; background: var(--surface-color); }
+        .community-livestream-settlement-stat-label { display: flex; align-items: center; gap: 0.35rem; font-size: 0.76rem; font-weight: 500; color: var(--text-muted); }
+        .community-livestream-settlement-stat-label::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex-shrink: 0; }
+        .community-livestream-settlement-stat-value { font-size: 1.05rem; font-weight: 700; color: var(--c); font-variant-numeric: tabular-nums; }
+        .community-livestream-settlement-stat-amount { font-size: 0.72rem; font-weight: 500; color: var(--c); font-variant-numeric: tabular-nums; }
         /* 匯款紀錄頁籤——獨立於上面的社群連線訂單一套 class，視覺風格
            刻意比照（粉色系卡片/快篩按鈕），但不共用同一批 class，避免
            兩個功能的樣式調整互相牽動（這份卡片沒有照片，版面比訂單卡片
@@ -1350,8 +1380,7 @@
             /* Filters and settings become stacked cards instead of squeezed desktop rows. */
             .filter-bar,
             .backend-member-filter-row,
-            .storefront-order-search-row,
-            .community-livestream-filter-grid { width: 100% !important; display: grid !important; grid-template-columns: repeat(2, minmax(0,1fr)) !important; align-items: end !important; gap: 0.65rem !important; padding: 0.8rem !important; border-radius: 1rem !important; }
+            .storefront-order-search-row { width: 100% !important; display: grid !important; grid-template-columns: repeat(2, minmax(0,1fr)) !important; align-items: end !important; gap: 0.65rem !important; padding: 0.8rem !important; border-radius: 1rem !important; }
             .filter-bar > *, .backend-member-filter-row > *, .storefront-order-search-row > * { width: 100% !important; min-width: 0 !important; max-width: none !important; margin: 0 !important; }
             .filter-bar .form-group:first-child,
             .backend-member-filter-row .backend-member-filter-field:first-child,
@@ -1442,8 +1471,7 @@
             .btn-sm { min-height: 32px; padding: 0.34rem 0.55rem; }
             .filter-bar,
             .backend-member-filter-row,
-            .storefront-order-search-row,
-            .community-livestream-filter-grid { gap: 0.5rem !important; padding: 0.65rem !important; border-radius: 0.8rem !important; }
+            .storefront-order-search-row { gap: 0.5rem !important; padding: 0.65rem !important; border-radius: 0.8rem !important; }
             .form-group { gap: 0.35rem; }
             .form-group label { font-size: 0.78rem; }
             .brand-setting-card, .appearance-list-item, .site-feature-flag-card { padding: 0.8rem !important; gap: 0.65rem !important; }
@@ -2161,7 +2189,7 @@
                         <button class="btn btn-sm btn-danger" type="button" id="community-livestream-batch-delete-btn" onclick="applyCommunityLivestreamBatchDelete(this)" disabled aria-label="刪除已選項目"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
-                <div id="community-livestream-settlement-stats" class="community-livestream-count-line" style="color:#9a5b1f;"></div>
+                <div id="community-livestream-settlement-stats" class="community-livestream-settlement-stats"></div>
                 <div id="community-livestream-result-count" class="community-livestream-count-line">
                     <span><span id="community-livestream-total-count-text">共 0 筆</span>・<span id="community-livestream-selected-count">已選 0 筆</span></span>
                     <span class="community-livestream-count-controls">
@@ -11068,9 +11096,16 @@
                     if (agg.topup > 0) { topupCustomers += 1; topupTotal += agg.topup; }
                     if (agg.refundDue > 0) { refundCustomers += 1; refundTotal += agg.refundDue; }
                 });
-                statsEl.textContent = (topupCustomers || refundCustomers)
-                    ? `待補款 ${topupCustomers} 位・合計 ${storefrontMoney(topupTotal)}　應退款 ${refundCustomers} 位・合計 ${storefrontMoney(refundTotal)}`
-                    : '';
+                // 第3輪：從純文字改成白底卡片＋淺底深字（比照模板 .stat），
+                // 數字/條件完全不變，只是把同一組字串拆進卡片的三個欄位。
+                const statTiles = [];
+                if (topupCustomers > 0) {
+                    statTiles.push(`<div class="community-livestream-settlement-stat" style="--c:var(--status-topup-fg);"><span class="community-livestream-settlement-stat-label">待補款</span><span class="community-livestream-settlement-stat-value">${topupCustomers} 位</span><span class="community-livestream-settlement-stat-amount">合計 ${storefrontMoney(topupTotal)}</span></div>`);
+                }
+                if (refundCustomers > 0) {
+                    statTiles.push(`<div class="community-livestream-settlement-stat" style="--c:var(--status-refund-fg);"><span class="community-livestream-settlement-stat-label">應退款</span><span class="community-livestream-settlement-stat-value">${refundCustomers} 位</span><span class="community-livestream-settlement-stat-amount">合計 ${storefrontMoney(refundTotal)}</span></div>`);
+                }
+                statsEl.innerHTML = statTiles.join('');
             }
             const openIds = new Set(
                 Array.from(list.querySelectorAll('.community-livestream-card.expanded'))
