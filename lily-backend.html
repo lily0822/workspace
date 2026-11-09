@@ -183,32 +183,39 @@
         .storefront-order-table th:nth-child(9), .storefront-order-table td:nth-child(9),
         .storefront-order-table th:nth-child(10), .storefront-order-table td:nth-child(10),
         .storefront-order-table th:nth-child(11), .storefront-order-table td:nth-child(11) { min-width: 104px; text-align: center; }
-        .storefront-order-table th:nth-child(12), .storefront-order-table td:nth-child(12) { min-width: 112px; text-align: right; }
+        .storefront-order-table th:nth-child(12), .storefront-order-table td:nth-child(12) { min-width: 112px; text-align: right; font-variant-numeric: tabular-nums; }
         .storefront-order-table th { position: sticky; top: 0; z-index: 2; }
-        .storefront-order-table .order-no-cell { position: sticky; left: 0; z-index: 3; background: white; min-width: 190px; box-shadow: 8px 0 12px rgba(15, 23, 42, 0.04); }
-        .storefront-order-table th.order-no-cell { background: #f8fafc; z-index: 4; }
-        .storefront-order-table .order-action-cell { position: sticky; right: 0; z-index: 3; background: white; min-width: 150px; box-shadow: -8px 0 12px rgba(15, 23, 42, 0.04); }
-        .storefront-order-table th.order-action-cell { background: #f8fafc; z-index: 4; }
+        .storefront-order-table .order-no-cell { position: sticky; left: 0; z-index: 3; background: var(--surface-color); min-width: 190px; box-shadow: 8px 0 12px rgba(15, 23, 42, 0.04); }
+        .storefront-order-table th.order-no-cell { background: var(--bg-color); z-index: 4; }
+        .storefront-order-table .order-action-cell { position: sticky; right: 0; z-index: 3; background: var(--surface-color); min-width: 150px; box-shadow: -8px 0 12px rgba(15, 23, 42, 0.04); }
+        .storefront-order-table th.order-action-cell { background: var(--bg-color); z-index: 4; }
         .storefront-order-table tr:hover .order-no-cell, .storefront-order-table tr:hover .order-action-cell { background: var(--table-hover); }
-        .storefront-order-no { display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 900; color: #334155; }
-        .copy-order-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid #fbcfe8; border-radius: 999px; background: #fff7fb; color: #be185d; cursor: pointer; transition: all 0.16s ease; flex: 0 0 auto; }
-        .copy-order-btn:hover { background: #fce7f3; transform: translateY(-1px); }
-        .copy-order-btn.copied { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
-        .storefront-order-copy-toast { position: fixed; right: 1rem; bottom: 1rem; z-index: 2000; border-radius: 999px; background: #be185d; color: white; padding: 0.55rem 0.9rem; font-size: 0.82rem; font-weight: 900; box-shadow: 0 12px 30px rgba(190, 24, 93, 0.26); opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.18s ease, transform 0.18s ease; }
+        .storefront-order-no { display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 700; color: var(--text-dark); }
+        .copy-order-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid var(--border-color); border-radius: 999px; background: var(--gray-bg); color: var(--primary-color); cursor: pointer; transition: all 0.16s ease; flex: 0 0 auto; }
+        .copy-order-btn:hover { background: var(--sidebar-active); transform: translateY(-1px); }
+        .copy-order-btn.copied { background: var(--status-success-bg); color: var(--status-success-fg); border-color: var(--status-success-fg); }
+        .storefront-order-copy-toast { position: fixed; right: 1rem; bottom: 1rem; z-index: 2000; border-radius: 999px; background: var(--primary-color); color: white; padding: 0.55rem 0.9rem; font-size: 0.82rem; font-weight: 700; box-shadow: 0 12px 30px rgba(217, 70, 126, 0.26); opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 0.18s ease, transform 0.18s ease; }
         .storefront-order-copy-toast.show { opacity: 1; transform: translateY(0); }
         .backend-toast { position: fixed; top: 1rem; left: 50%; z-index: 12000; display: flex; align-items: center; justify-content: center; gap: 0.55rem; width: max-content; max-width: min(420px, calc(100vw - 2rem)); box-sizing: border-box; padding: 0.72rem 1rem; border-radius: 0.8rem; color: white; font-size: 0.86rem; font-weight: 900; line-height: 1.4; text-align: left; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.2); opacity: 0; visibility: hidden; transform: translate(-50%, -12px); pointer-events: none; transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease; }
         .backend-toast.success { background: #15803d; }
         .backend-toast.error { background: #b91c1c; }
         .backend-toast.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
         .storefront-order-filterbar { display: grid; gap: 0.55rem; padding: 0.75rem 0.85rem; border: 1px solid var(--border-color); border-radius: 1rem; background: var(--surface-color); box-shadow: none; }
+        /* 客戶訂單明細頁專用：原本跟廠商叫貨明細／購物網站叫貨明細共用
+           .filter-bar 這個 class、外觀完全靠 inline style 寫死色碼，只有
+           這頁換成專屬 class／拿掉 inline style，另外兩頁的 .filter-bar
+           元素沒有被動到。 */
+        .customer-order-filterbar { display: flex; gap: 1rem; align-items: flex-end; flex: 1; padding: 0.85rem 1rem; border: 1px solid var(--border-color); border-radius: 1rem; background: var(--surface-color); box-shadow: none; }
+        .customer-order-source-label { color: var(--primary-color); font-weight: 700; }
+        .customer-order-meta-banner { background: var(--sidebar-active); color: var(--primary-color); padding: 0.5rem 1rem; border-radius: 0.6rem; margin-bottom: 1rem; font-size: 0.9rem; font-weight: 500; display: flex; flex-wrap: wrap; gap: 1rem; }
         .member-line-settings-card { display: grid; gap: 0.75rem; margin-bottom: 0.85rem; padding: 0.85rem 1rem; border: 1px solid var(--border-color); border-radius: 1rem; background: var(--surface-color); box-shadow: none; }
         .member-line-settings-header { display: flex; justify-content: space-between; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
-        .member-line-settings-header h3 { margin: 0; color: var(--primary-hover); font-size: 0.95rem; font-weight: 950; }
-        .member-line-settings-header p { margin: 0.2rem 0 0; color: var(--text-muted); font-size: 0.78rem; font-weight: 800; }
+        .member-line-settings-header h3 { margin: 0; color: var(--primary-color); font-size: 0.95rem; font-weight: 700; }
+        .member-line-settings-header p { margin: 0.2rem 0 0; color: var(--text-muted); font-size: 0.78rem; font-weight: 500; }
         .member-line-settings-grid { display: grid; grid-template-columns: repeat(4, minmax(130px, 1fr)); gap: 0.55rem; }
-        .member-line-toggle { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; border: 1px dashed var(--border-color); border-radius: 0.8rem; background: var(--surface-color); padding: 0.55rem 0.7rem; color: var(--text-dark); font-size: 0.82rem; font-weight: 900; }
+        .member-line-toggle { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; border: 1px dashed var(--border-color); border-radius: 0.8rem; background: var(--surface-color); padding: 0.55rem 0.7rem; color: var(--text-dark); font-size: 0.82rem; font-weight: 500; }
         .member-line-toggle input { width: 38px; height: 20px; accent-color: var(--primary-color); cursor: pointer; }
-        .member-line-settings-status { min-height: 18px; color: var(--text-muted); font-size: 0.76rem; font-weight: 900; }
+        .member-line-settings-status { min-height: 18px; color: var(--text-muted); font-size: 0.76rem; font-weight: 500; }
         .backend-member-filterbar { display: grid; gap: 0.55rem; padding: 0.75rem 0.85rem; border: 1px solid var(--border-color); border-radius: 1rem; background: var(--surface-color); box-shadow: none; }
         .backend-member-filter-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end; }
         .backend-member-filter-field { display: grid; gap: 0.22rem; min-width: 130px; position: relative; }
@@ -694,90 +701,95 @@
         .storefront-order-search-input { flex: 1 1 360px; min-width: 220px; }
         .storefront-order-filter-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end; }
         .storefront-order-filter-field { display: grid; gap: 0.22rem; min-width: 112px; position: relative; }
-        .storefront-order-filter-field label { color: #64748b; font-size: 0.72rem; font-weight: 900; }
-        .storefront-order-filter-field input, .storefront-order-filter-field select, .storefront-order-search-input { min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.72rem; padding: 0.42rem 0.62rem; background: white; color: #334155; font-size: 0.82rem; font-weight: 800; outline: none; }
+        .storefront-order-filter-field label { color: var(--text-muted); font-size: 0.72rem; font-weight: 500; }
+        .storefront-order-filter-field input, .storefront-order-filter-field select, .storefront-order-search-input { min-height: 34px; border: 1px solid var(--border-color); border-radius: 0.72rem; padding: 0.42rem 0.62rem; background: var(--surface-color); color: var(--text-dark); font-size: 0.82rem; font-weight: 500; outline: none; }
         .storefront-order-filter-field input { width: 138px; }
         .storefront-order-filter-field select { width: 118px; }
-        .storefront-order-filter-field input:focus, .storefront-order-filter-field select:focus, .storefront-order-search-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
-        .storefront-order-pagination-footer { display: flex; align-items: center; justify-content: space-between; gap: 0.85rem; flex-wrap: wrap; padding-top: 0.85rem; color: #64748b; font-size: 0.8rem; font-weight: 900; }
-        .storefront-order-result-count { color: #64748b; font-size: 0.8rem; font-weight: 900; padding: 0 0.15rem; }
+        .storefront-order-filter-field input:focus, .storefront-order-filter-field select:focus, .storefront-order-search-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(217, 70, 126, 0.12); }
+        .storefront-order-pagination-footer { display: flex; align-items: center; justify-content: space-between; gap: 0.85rem; flex-wrap: wrap; padding-top: 0.85rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 500; }
+        .storefront-order-result-count { color: var(--text-muted); font-size: 0.8rem; font-weight: 500; padding: 0 0.15rem; }
         .storefront-order-pagination-controls { display: flex; align-items: center; justify-content: flex-end; gap: 0.38rem; flex-wrap: wrap; }
-        .storefront-order-page-size-select { min-height: 32px; border: 1px solid #fbcfe8; border-radius: 999px; padding: 0.32rem 0.72rem; background: white; color: #334155; font-size: 0.8rem; font-weight: 900; outline: none; }
-        .storefront-order-pagination { display: flex; justify-content: flex-end; align-items: center; gap: 0.32rem; flex-wrap: wrap; color: #64748b; font-size: 0.8rem; font-weight: 900; }
-        .storefront-order-page-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; border: 1px solid #fbcfe8; border-radius: 999px; background: white; color: #be185d; font-size: 0.8rem; font-weight: 900; cursor: pointer; transition: all 0.16s ease; }
-        .storefront-order-page-btn:hover:not(:disabled), .storefront-order-page-btn.active { background: #fce7f3; border-color: #f472b6; color: #9d174d; }
-        .storefront-order-page-btn.active { box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.14); }
+        .storefront-order-page-size-select { min-height: 32px; border: 1px solid var(--border-color); border-radius: 999px; padding: 0.32rem 0.72rem; background: var(--surface-color); color: var(--text-dark); font-size: 0.8rem; font-weight: 500; outline: none; }
+        .storefront-order-pagination { display: flex; justify-content: flex-end; align-items: center; gap: 0.32rem; flex-wrap: wrap; color: var(--text-muted); font-size: 0.8rem; font-weight: 500; }
+        .storefront-order-page-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; border: 1px solid var(--border-color); border-radius: 999px; background: var(--surface-color); color: var(--primary-color); font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.16s ease; }
+        .storefront-order-page-btn:hover:not(:disabled), .storefront-order-page-btn.active { background: var(--sidebar-active); border-color: var(--primary-color); color: var(--primary-color); }
+        .storefront-order-page-btn.active { box-shadow: 0 0 0 3px rgba(217, 70, 126, 0.14); font-weight: 700; }
         .storefront-order-page-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-        .storefront-order-page-ellipsis { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; color: #94a3b8; }
-        .storefront-order-detail-row > td { padding: 0; background: #fff7fb; white-space: normal; border-bottom: 1px solid #fce7f3; }
+        .storefront-order-page-ellipsis { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; color: var(--text-muted); }
+        .storefront-order-detail-row > td { padding: 0; background: var(--gray-bg); white-space: normal; border-bottom: 1px solid var(--border-color); }
         .storefront-order-detail-viewport { position: sticky; left: 0; z-index: 2; width: var(--storefront-order-detail-width, 100%); max-width: var(--storefront-order-detail-width, 100%); min-width: 0; padding: 0.9rem; box-sizing: border-box; overflow-x: hidden; }
-        .storefront-order-inline-detail { width: 100%; max-width: 100%; min-width: 0; display: grid; gap: 0.75rem; padding: 0.9rem 1rem; border: 1px solid #fbcfe8; border-radius: 1rem; background: #fff; box-shadow: none; overflow: hidden; }
-        .storefront-order-inline-header { z-index: 2; display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding-bottom: 0.62rem; border-bottom: 1px dashed #f9a8d4; background: white; max-width: 100%; }
+        .storefront-order-inline-detail { width: 100%; max-width: 100%; min-width: 0; display: grid; gap: 0.75rem; padding: 0.9rem 1rem; border: 1px solid var(--border-color); border-radius: 0.875rem; background: var(--surface-color); box-shadow: none; overflow: hidden; }
+        .storefront-order-inline-header { z-index: 2; display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding-bottom: 0.62rem; border-bottom: 1px dashed var(--border-color); background: var(--surface-color); max-width: 100%; }
         .storefront-order-inline-title { display: flex; align-items: center; gap: 0.75rem; min-width: 0; flex-wrap: wrap; }
-        .storefront-order-inline-eyebrow { color: #be185d; font-size: 0.78rem; font-weight: 900; letter-spacing: 0.02em; }
-        .storefront-order-inline-no { display: inline-flex; align-items: center; gap: 0.45rem; min-width: 0; color: #334155; font-size: 0.95rem; font-weight: 950; }
-        .storefront-order-inline-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; color: #64748b; font-size: 0.78rem; font-weight: 800; }
+        .storefront-order-inline-eyebrow { color: var(--primary-color); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; }
+        .storefront-order-inline-no { display: inline-flex; align-items: center; gap: 0.45rem; min-width: 0; color: var(--text-dark); font-size: 0.95rem; font-weight: 700; }
+        .storefront-order-inline-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; color: var(--text-muted); font-size: 0.78rem; font-weight: 500; }
         .storefront-order-inline-grid { display: grid; gap: 0.7rem; }
-        .storefront-order-inline-section { display: grid; gap: 0.55rem; padding-bottom: 0.72rem; border-bottom: 1px dashed #f9a8d4; }
+        .storefront-order-inline-section { display: grid; gap: 0.55rem; padding-bottom: 0.72rem; border-bottom: 1px dashed var(--border-color); }
         .storefront-order-inline-section:last-child { padding-bottom: 0; border-bottom: 0; }
-        .storefront-order-inline-section h3 { font-size: 0.88rem; color: #be185d; margin: 0; }
+        .storefront-order-inline-section h3 { font-size: 0.88rem; color: var(--primary-color); margin: 0; }
         .storefront-order-info-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 0; row-gap: 0.7rem; align-items: start; }
-        .storefront-order-mini-section { display: grid; gap: 0.32rem; align-content: start; padding: 0 12px; border-right: 1px dashed #fbcfe8; min-width: 0; }
+        .storefront-order-mini-section { display: grid; gap: 0.32rem; align-content: start; padding: 0 12px; border-right: 1px dashed var(--border-color); min-width: 0; }
         .storefront-order-mini-section:first-child { padding-left: 0; }
         .storefront-order-mini-section:last-child { padding-right: 0; border-right: 0; }
-        .storefront-order-mini-section h4 { color: #9d174d; font-size: 0.8rem; font-weight: 950; margin: 0; }
+        .storefront-order-mini-section h4 { color: var(--primary-color); font-size: 0.8rem; font-weight: 700; margin: 0; }
         .storefront-order-status-panel { display: grid; gap: 0.5rem; }
         .storefront-order-status-row { display: grid; grid-template-columns: 50px 58px minmax(80px, 92px); gap: 0.25rem; align-items: center; min-width: 0; }
-        .storefront-order-status-heading { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; color: #64748b; font-size: 0.78rem; font-weight: 900; }
-        .storefront-order-status-label { color: #64748b; font-size: 0.78rem; font-weight: 900; white-space: nowrap; }
+        .storefront-order-status-heading { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; color: var(--text-muted); font-size: 0.78rem; font-weight: 500; }
+        .storefront-order-status-label { color: var(--text-muted); font-size: 0.78rem; font-weight: 500; white-space: nowrap; }
         .storefront-order-status-select { min-width: 0; }
         .storefront-order-status-cancel { margin-top: 0.15rem; justify-self: start; width: fit-content; }
         .storefront-order-action-buttons { display: flex; flex-wrap: wrap; gap: 0.45rem; }
         .storefront-order-action-buttons .btn { min-height: 30px; padding: 0.34rem 0.65rem; font-size: 0.76rem; border-radius: 999px; }
-        .storefront-order-status-note { color: #94a3b8; font-size: 0.76rem; font-weight: 800; }
-        .storefront-order-section { display: grid; gap: 0.5rem; padding-bottom: 1rem; border-bottom: 1px dashed #f9a8d4; }
+        .storefront-order-status-note { color: var(--text-muted); font-size: 0.76rem; font-weight: 500; }
+        .storefront-order-section { display: grid; gap: 0.5rem; padding-bottom: 1rem; border-bottom: 1px dashed var(--border-color); }
         .storefront-order-section:last-child { border-bottom: 0; padding-bottom: 0; }
-        .storefront-order-section h3 { font-size: 0.95rem; color: #be185d; }
+        .storefront-order-section h3 { font-size: 0.95rem; color: var(--primary-color); }
         .storefront-order-kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.2rem 4px; font-size: 0.79rem; line-height: 1.45; margin: 0; }
-        .storefront-order-kv dt { color: #64748b; font-weight: 800; }
-        .storefront-order-kv dd { color: #334155; font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+        .storefront-order-kv dt { color: var(--text-muted); font-weight: 500; }
+        .storefront-order-kv dd { color: var(--text-dark); font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
         .storefront-order-items { display: grid; gap: 0.55rem; }
-        .storefront-order-item { border: 1px solid #fce7f3; border-radius: 0.8rem; padding: 0.7rem; background: #fff7fb; display: grid; gap: 0.35rem; font-size: 0.82rem; }
-        .storefront-order-item-title { font-weight: 900; color: #334155; }
-        .storefront-order-item-meta { color: #64748b; font-weight: 700; }
-        .storefront-order-item-table-wrap { overflow-x: visible; max-width: 100%; border: 1px solid #fce7f3; border-radius: 0.75rem; }
-        .storefront-order-item-table { width: 100%; max-width: 100%; min-width: 0; background: white; table-layout: fixed; }
+        .storefront-order-item { border: 1px solid var(--border-color); border-radius: 0.8rem; padding: 0.7rem; background: var(--gray-bg); display: grid; gap: 0.35rem; font-size: 0.82rem; }
+        .storefront-order-item-title { font-weight: 700; color: var(--text-dark); }
+        .storefront-order-item-meta { color: var(--text-muted); font-weight: 500; }
+        .storefront-order-item-table-wrap { overflow-x: visible; max-width: 100%; border: 1px solid var(--border-color); border-radius: 0.75rem; }
+        .storefront-order-item-table { width: 100%; max-width: 100%; min-width: 0; background: var(--surface-color); table-layout: fixed; }
         .storefront-order-item-table th, .storefront-order-item-table td { padding: 9px 12px; white-space: nowrap; vertical-align: middle; height: 40px; }
-        .storefront-order-item-table th { color: #be185d; font-size: 0.78rem; }
+        .storefront-order-item-table th { color: var(--primary-color); font-size: 0.78rem; font-weight: 500; }
         .storefront-order-item-table td { font-size: 0.82rem; }
         .storefront-order-item-table th:not(:first-child), .storefront-order-item-table td:not(:first-child) { text-align: center; }
         .storefront-order-item-table th:first-child, .storefront-order-item-table td:first-child { text-align: left; }
+        .storefront-order-item-table th:last-child, .storefront-order-item-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
         .storefront-order-item-table td:first-child strong { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
-        .storefront-order-item-table tfoot td { background: #fff7fb; border-top: 1px dashed #f9a8d4; font-weight: 900; }
-        .storefront-order-item-table .summary-label { text-align: right; color: #64748b; }
-        .storefront-order-item-table .summary-qty { text-align: center; color: #334155; }
-        .storefront-order-item-table .summary-value { text-align: center; color: #334155; }
-        .storefront-order-item-table .discount-row .summary-value { color: #be185d; }
-        .storefront-order-item-table .total-row td { color: #be185d; font-size: 0.9rem; }
-        .status-pill { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; border-radius: 999px; padding: 0.24rem 0.56rem; font-size: 0.76rem; font-weight: 900; border: 1px solid transparent; white-space: nowrap; }
-        .status-pill.pending { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
-        .status-pill.processing { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
-        .status-pill.paid, .status-pill.shipped, .status-pill.completed { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
-        .status-pill.cancelled, .status-pill.failed { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
-        .status-pill.refunded, .status-pill.preparing { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
-        .order-type-pill { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0.28rem 0.66rem; font-size: 0.76rem; font-weight: 900; border: 1px solid transparent; white-space: nowrap; }
-        .order-type-pill.stock { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
-        .order-type-pill.preorder { background: #fce7f3; color: #9d174d; border-color: #f9a8d4; }
-        .order-type-pill.unknown { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+        .storefront-order-item-table tfoot td { background: var(--gray-bg); border-top: 1px dashed var(--border-color); font-weight: 700; }
+        .storefront-order-item-table .summary-label { text-align: right; color: var(--text-muted); }
+        .storefront-order-item-table .summary-qty { text-align: center; color: var(--text-dark); }
+        .storefront-order-item-table .summary-value { text-align: right; color: var(--text-dark); font-variant-numeric: tabular-nums; }
+        .storefront-order-item-table .discount-row .summary-value { color: var(--primary-color); }
+        .storefront-order-item-table .total-row td { color: var(--primary-color); font-size: 0.9rem; font-weight: 700; }
+        /* .status-pill 這組「淺底深字小膠囊」是訂單管理頁的訂單/付款/配送狀態顯示用，
+           跟下面 .product-listing-toggle-pill（原本同名 .status-pill，商品上下架按鈕）
+           因為 class 同名在這份檔案後面覆蓋掉這裡的圓角/字重/邊框，是這輪發現的既有
+           命名衝突；改成不同名字後這裡才會真的生效，商品上下架按鈕外觀不變（見下方）。 */
+        .status-pill { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; border-radius: 999px; padding: 0.24rem 0.56rem; font-size: 0.76rem; font-weight: 500; border: 1px solid transparent; white-space: nowrap; }
+        .status-pill.pending { background: var(--status-review-bg); color: var(--status-review-fg); border-color: var(--status-review-fg); }
+        .status-pill.processing, .status-pill.preparing { background: var(--status-topup-bg); color: var(--status-topup-fg); border-color: var(--status-topup-fg); }
+        .status-pill.paid, .status-pill.shipped, .status-pill.completed { background: var(--status-success-bg); color: var(--status-success-fg); border-color: var(--status-success-fg); }
+        .status-pill.cancelled, .status-pill.failed { background: var(--status-abnormal-bg); color: var(--status-abnormal-fg); border-color: var(--status-abnormal-fg); }
+        .status-pill.refunded { background: var(--status-refund-bg); color: var(--status-refund-fg); border-color: var(--status-refund-fg); }
+        .order-type-pill { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0.28rem 0.66rem; font-size: 0.76rem; font-weight: 500; border: 1px solid transparent; white-space: nowrap; }
+        .order-type-pill.stock { background: var(--status-success-bg); color: var(--status-success-fg); border-color: var(--status-success-fg); }
+        .order-type-pill.preorder { background: var(--sidebar-active); color: var(--primary-color); border-color: var(--primary-color); }
+        .order-type-pill.unknown { background: var(--gray-bg); color: var(--text-muted); border-color: var(--border-color); }
         .storefront-order-status-controls { display: grid; gap: 0.5rem; min-width: 168px; }
         .storefront-order-status-control { display: contents; }
-        .storefront-order-status-controls select, .storefront-order-status-panel select { width: 100%; min-height: 30px; border: 1px solid #fbcfe8; border-radius: 0.7rem; padding: 0.3rem 0.46rem; color: #334155; background: white; font-size: 0.76rem; font-weight: 800; }
+        .storefront-order-status-controls select, .storefront-order-status-panel select { width: 100%; min-height: 30px; border: 1px solid var(--border-color); border-radius: 0.7rem; padding: 0.3rem 0.46rem; color: var(--text-dark); background: var(--surface-color); font-size: 0.76rem; font-weight: 500; }
         .storefront-order-status-controls select:disabled, .storefront-order-status-panel select:disabled { opacity: 0.62; cursor: not-allowed; }
         .storefront-order-status-actions { display: flex; flex-wrap: nowrap; justify-content: center; gap: 0.4rem; }
-        .storefront-order-warning { border: 1px solid #fed7aa; background: #fff7ed; color: #c2410c; border-radius: 0.8rem; padding: 0.7rem; font-size: 0.82rem; font-weight: 800; line-height: 1.6; }
-        .storefront-order-feedback { border: 1px solid #bbf7d0; background: #dcfce7; color: #166534; }
-        .storefront-order-feedback.error { border-color: #fecaca; background: #fee2e2; color: #991b1b; }
-        .storefront-cancel-modal-note { border: 1px solid #fecaca; background: #fef2f2; color: #991b1b; border-radius: 0.8rem; padding: 0.75rem; font-size: 0.85rem; font-weight: 800; line-height: 1.6; }
+        .storefront-order-warning { border: 1px solid var(--status-abnormal-fg); background: var(--status-abnormal-bg); color: var(--status-abnormal-fg); border-radius: 0.8rem; padding: 0.7rem; font-size: 0.82rem; font-weight: 500; line-height: 1.6; }
+        .storefront-order-feedback { border: 1px solid var(--status-success-fg); background: var(--status-success-bg); color: var(--status-success-fg); }
+        .storefront-order-feedback.error { border-color: var(--status-abnormal-fg); background: var(--status-abnormal-bg); color: var(--status-abnormal-fg); }
+        .storefront-cancel-modal-note { border: 1px solid var(--status-abnormal-fg); background: var(--status-abnormal-bg); color: var(--status-abnormal-fg); border-radius: 0.8rem; padding: 0.75rem; font-size: 0.85rem; font-weight: 500; line-height: 1.6; }
         @media (max-width: 1100px) {
             .storefront-order-inline-detail { min-width: 0; }
             .storefront-order-info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -845,23 +857,26 @@
                （.btn-primary 本來就是粉紅底白字，不用再蓋顏色），不會再
                被輸入框的寬度擠到換行或蓋住。 */
             .community-livestream-search-btn { flex: 0 0 auto; aspect-ratio: 1 / 1; width: auto; min-width: 0; padding: 0; }
-            .storefront-order-search-row { align-items: stretch; flex-direction: column; }
-            .storefront-order-search-input { flex-basis: auto; width: 100%; }
+            /* .storefront-order-search-row／-search-input／-table 在這個斷點
+               的版面與欄寬，實際生效的是下面另一個同樣 max-width:720px 的
+               全站共用 media query（.storefront-order-search-row 的 grid
+               兩欄排列、.storefront-order-table 的 min-width:1180px）。這裡
+               原本重複宣告的 flex 直向堆疊／1280px／0.68rem padding 版本
+               一直被那段蓋掉、從未真正生效，這輪順手清掉這組死 CSS，不是
+               改變外觀。 */
             .storefront-order-filter-field, .storefront-order-filter-field input, .storefront-order-filter-field select { width: 100%; min-width: 0; }
             .storefront-order-pagination-footer { align-items: flex-start; flex-direction: column; }
             .storefront-order-pagination-controls { justify-content: flex-start; width: 100%; }
             .storefront-order-pagination { justify-content: flex-start; }
             .member-line-settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .backend-member-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .storefront-order-table { min-width: 1280px; }
-            .storefront-order-table th, .storefront-order-table td { padding: 0.68rem 0.72rem; }
             .storefront-order-kv { grid-template-columns: 82px minmax(0, 1fr); }
             .storefront-order-detail-viewport { padding: 0.75rem; }
             .storefront-order-inline-detail { min-width: 0; padding: 0.75rem; }
             .storefront-order-info-grid { grid-template-columns: 1fr; }
             .member-line-settings-grid { grid-template-columns: 1fr; }
             .backend-member-detail-grid { grid-template-columns: 1fr; }
-            .storefront-order-mini-section { padding: 0; border-right: 0; border-bottom: 1px dashed #fbcfe8; padding-bottom: 0.6rem; }
+            .storefront-order-mini-section { padding: 0; border-right: 0; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.6rem; }
             .storefront-order-mini-section:last-child { border-bottom: 0; padding-bottom: 0; }
             .storefront-order-status-row { grid-template-columns: 50px 58px minmax(80px, 1fr); }
         }
@@ -941,7 +956,7 @@
         .product-name-desc-row { display: flex; gap: 0.75rem; align-items: stretch; flex-wrap: wrap; margin-bottom: 0.9rem; }
         .product-name-desc-row .product-edit-field { flex: 1 1 220px; min-width: 0; }
         .product-name-desc-row textarea.product-edit-field { flex: 2 1 320px; resize: vertical; min-height: 44px; }
-        .product-name-desc-row .status-pill { flex-shrink: 0; align-self: center; }
+        .product-name-desc-row .product-listing-toggle-pill { flex-shrink: 0; align-self: center; }
         /* IP／商品類別：標籤文字跟選項擠在同一行，兩組也在同一行。 */
         .product-inline-tag-row { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 0.6rem 1rem; margin-bottom: 0.9rem; }
         .product-inline-tag-row .tag-group-inline { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem; }
@@ -1239,10 +1254,14 @@
         }
         .product-edit-field { width: 100%; min-width: 92px; padding: 0.55rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; background: #fff; color: #334155; font: inherit; font-size: 0.86rem; transition: border-color 0.2s, box-shadow 0.2s; }
         .product-edit-field:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1); }
-        .status-pill { display: inline-flex; align-items: center; justify-content: center; min-width: 72px; padding: 0.42rem 0.85rem; border-radius: 0.5rem; border: none; color: #fff; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
-        .status-pill:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(15, 23, 42, 0.14); }
-        .status-pill.active { background: #10b981; }
-        .status-pill.inactive { background: #ef4444; }
+        /* 原本跟訂單管理頁的 .status-pill 同名，兩邊互相蓋掉樣式（這份檔案裡
+           class 名稱衝突，不是 !important 衝突，但道理一樣：優先改掉衝突
+           來源，不要再疊樣式）。這裡改名成專屬名稱，數值完全不變，商品
+           上下架按鈕外觀不受影響。 */
+        .product-listing-toggle-pill { display: inline-flex; align-items: center; justify-content: center; min-width: 72px; padding: 0.42rem 0.85rem; border-radius: 0.5rem; border: none; color: #fff; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+        .product-listing-toggle-pill:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(15, 23, 42, 0.14); }
+        .product-listing-toggle-pill.active { background: #10b981; }
+        .product-listing-toggle-pill.inactive { background: #ef4444; }
         .product-row-actions { display: flex; gap: 0.5rem; justify-content: center; align-items: center; }
         .product-row-actions .btn { border-radius: 0.45rem; min-width: 34px; height: 30px; display: inline-flex; align-items: center; justify-content: center; }
         /* 商品列表「商品規格明細」展開區——唯讀顯示用，故意不跟
@@ -1379,10 +1398,12 @@
 
             /* Filters and settings become stacked cards instead of squeezed desktop rows. */
             .filter-bar,
+            .customer-order-filterbar,
             .backend-member-filter-row,
             .storefront-order-search-row { width: 100% !important; display: grid !important; grid-template-columns: repeat(2, minmax(0,1fr)) !important; align-items: end !important; gap: 0.65rem !important; padding: 0.8rem !important; border-radius: 1rem !important; }
-            .filter-bar > *, .backend-member-filter-row > *, .storefront-order-search-row > * { width: 100% !important; min-width: 0 !important; max-width: none !important; margin: 0 !important; }
+            .filter-bar > *, .customer-order-filterbar > *, .backend-member-filter-row > *, .storefront-order-search-row > * { width: 100% !important; min-width: 0 !important; max-width: none !important; margin: 0 !important; }
             .filter-bar .form-group:first-child,
+            .customer-order-filterbar .form-group:first-child,
             .backend-member-filter-row .backend-member-filter-field:first-child,
             .storefront-order-search-input { grid-column: 1 / -1; }
             .product-filter-card, .ledger-search-panel, .backend-member-filterbar { border-radius: 1rem; box-shadow: none; }
@@ -1397,6 +1418,12 @@
             .table-wrapper th, .table-wrapper td { padding: 0.72rem 0.8rem; font-size: 0.78rem; }
             .storefront-order-table-scroll { -webkit-overflow-scrolling: touch; }
             .storefront-order-table { min-width: 1180px; }
+            /* 複製訂單編號的提示 toast 原本固定在 bottom:1rem，手機版底部
+               還有固定的 .mobile-bottom-nav（高度 --mobile-nav-height 加安全
+               區），兩個 z-index 都在最上層，toast 會蓋在底部導覽上面。
+               這裡讓 toast 在手機寬度時往上避開導覽列，純屬這頁自己的
+               元素，不影響其他頁。 */
+            .storefront-order-copy-toast { bottom: calc(var(--mobile-nav-height) + 1rem + env(safe-area-inset-bottom)); }
             .sub-table-container { max-width: calc(100vw - 2.6rem); overflow-x: auto; margin: 0.35rem; padding: 0.7rem; border-left-width: 3px; }
             .sub-table { min-width: 680px; }
             .order-group, .brand-setting-card, .appearance-list-item, .site-feature-flag-card { border-radius: 1rem !important; }
@@ -1470,6 +1497,7 @@
             .btn { min-height: 36px; padding: 0.44rem 0.7rem; border-radius: 0.65rem; }
             .btn-sm { min-height: 32px; padding: 0.34rem 0.55rem; }
             .filter-bar,
+            .customer-order-filterbar,
             .backend-member-filter-row,
             .storefront-order-search-row { gap: 0.5rem !important; padding: 0.65rem !important; border-radius: 0.8rem !important; }
             .form-group { gap: 0.35rem; }
@@ -2429,7 +2457,7 @@
             <div id="section-customer-orders" class="section-container">
                 <div class="page-header" style="flex-wrap: wrap; gap: 1rem; border-bottom: none; padding-bottom: 0;">
                     <h2 class="page-title" style="flex: 1 1 100%;">客戶訂單明細</h2>
-                    <div class="filter-bar" style="display: flex; gap: 1rem; align-items: flex-end; background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; flex: 1;">
+                    <div class="customer-order-filterbar">
                         <div class="form-group" style="flex: initial; width: 160px;">
                             <input type="text" id="filter-c-item-name" placeholder="商品、姓名、手機..." aria-label="商品 / 客戶關鍵字">
                         </div>
@@ -6997,7 +7025,7 @@
             const id = `${type}-${mode}-active-${product.id}`;
             const productId = quoteJs(product.id);
             const toggle = mode === 'display' ? `setProductActive('${type}', ${productId}, ${!active})` : `toggleEditingProductActive('${type}', ${productId})`;
-            return `<button type="button" id="${id}" class="status-pill ${active ? 'active' : 'inactive'}" data-active="${active}" onclick="event.preventDefault(); event.stopPropagation(); closeTagFilterMenus(); ${toggle}">${active ? '上架' : '下架'}</button>`;
+            return `<button type="button" id="${id}" class="product-listing-toggle-pill ${active ? 'active' : 'inactive'}" data-active="${active}" onclick="event.preventDefault(); event.stopPropagation(); closeTagFilterMenus(); ${toggle}">${active ? '上架' : '下架'}</button>`;
         }
 
         function toggleProductVariantRow(type, id, iconCell) {
@@ -15793,7 +15821,7 @@
                         <i class="fa-solid fa-chevron-right transition-transform"></i>
                     </td>
                     <td><span class="date-link" onclick="toggleOrderRow(${o.id}, this.parentElement.previousElementSibling)">${o.date}</span></td>
-                    <td><span style="color: #ec4899; font-weight: 700;"><i class="fa-solid fa-cart-shopping" style="margin-right:0.25rem;"></i>前台客戶訂單</span></td>
+                    <td><span class="customer-order-source-label"><i class="fa-solid fa-cart-shopping" style="margin-right:0.25rem;"></i>前台客戶訂單</span></td>
                     <td>TWD</td>
                     <td>${totalItems} 件</td>
                     <td>${totalPrice.toLocaleString()}</td>
@@ -15814,7 +15842,7 @@
                 subTr.id = `sub-row-${o.id}`;
 
                 let metaHtml = `
-                    <div style="background: #fdf2f8; color: #be185d; padding: 0.5rem 1rem; border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.9rem; font-weight: 500; display: flex; flex-wrap: wrap; gap: 1rem;">
+                    <div class="customer-order-meta-banner">
                         ${o.orderNo ? `<span><i class="fa-solid fa-hashtag"></i> 訂單編號: ${o.orderNo}</span>` : ''}
                         ${customerInfo ? `<span><i class="fa-solid fa-user"></i> ${customerInfo}</span>` : ''}
                     </div>
@@ -15844,7 +15872,7 @@
                             <tbody>`;
 
                 if(o.items.length === 0) {
-                    subHtml += `<tr><td colspan="7" style="text-align:center; color:#94a3b8;">無商品明細</td></tr>`;
+                    subHtml += `<tr><td colspan="7" class="empty-state" style="padding:1rem;">無商品明細</td></tr>`;
                 } else {
                     o.items.forEach((item, index) => {
                         const itemTotal = (parseInt(item.price||0) * parseInt(item.qty||0)).toLocaleString();
