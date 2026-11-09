@@ -497,103 +497,124 @@
            兩個功能的樣式調整互相牽動（這份卡片沒有照片，版面比訂單卡片
            簡單，純文字＋三個可編輯欄位）。 */
         .community-remittances-filterbar { gap: 0.4rem; }
-        /* 篩選卡照設計模板重做：白底卡片＋細邊框（不再是粉底），場次／
-           銀行兩個下拉同一行、等寬、樣式一致（含自畫箭頭，避免原生箭頭
-           在不同瀏覽器下顯示不一致）；搜尋列是輸入框＋放大鏡／✕ 兩顆
-           固定尺寸的方形圖示鈕同一行，不再是搜尋框獨佔一行、下面兩顆
-           各半寬長按鈕。刻意不沿用 .backend-member-filter-row/-field/.btn
-           （那組 class 在全站多個手機斷點有 !important 覆寫，是上一版
-           「搜尋框獨佔一行」的根因），改用這裡自己的一套 class，桌機/
-           手機共用同一份版面，不需要額外的斷點切換。顏色沿用頁面既有
-           的 --primary-color/--border-color/--text-dark 變數，沒有另外
-           寫死新顏色（自畫箭頭的 SVG data URI 用 #475569，跟既有的
-           #freight-company-filter 自畫箭頭同一個顏色）。 */
-        .community-remittances-filter-card { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.85rem; background: #fff; border: 1px solid var(--border-color); border-radius: 1rem; }
-        .community-remittances-filter-selects { display: flex; gap: 0.5rem; min-width: 0; }
-        .community-remittances-filter-select { flex: 1 1 0; min-width: 0; min-height: 34px; border: 1px solid var(--border-color); border-radius: 0.72rem; padding: 0.42rem 1.9rem 0.42rem 0.62rem; background: #fff; color: var(--text-dark); font-size: 0.82rem; font-weight: 800; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; background-repeat: no-repeat; background-position: right 0.55rem center; background-size: 18px; background-image: url('data:image/svg+xml;utf8,<svg fill=%22%23475569%22 height=%2220%22 viewBox=%220 0 24 24%22 width=%2220%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/></svg>'); }
+        /* 篩選卡這輪對齊 remit-overview.html 模板：電腦寬度場次＋銀行
+           （3fr/2fr）與搜尋列（輸入框＋放大鏡／✕）左右並排同一行，見
+           下方 @media (min-width: 641px)；手機寬度（預設，≤640px）維持
+           上下疊，場次／銀行同一行、搜尋列下一行。圓角／邊框統一改用
+           跟全站輸入框一致的 0.625rem（10px），顏色換成共用變數，不再
+           寫死色碼；搜尋鈕尺寸從 38px 改成模板指定的 40px。 */
+        .community-remittances-filter-card { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.85rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 1rem; }
+        .community-remittances-filter-selects { display: grid; grid-template-columns: 3fr 2fr; gap: 0.5rem; min-width: 0; }
+        .community-remittances-filter-select { min-width: 0; min-height: 34px; border: 1px solid var(--border-color); border-radius: 0.625rem; padding: 0.42rem 1.9rem 0.42rem 0.62rem; background: var(--surface-color); color: var(--text-dark); font-size: 0.82rem; font-weight: 500; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; background-repeat: no-repeat; background-position: right 0.55rem center; background-size: 18px; background-image: url('data:image/svg+xml;utf8,<svg fill=%22%23475569%22 height=%2220%22 viewBox=%220 0 24 24%22 width=%2220%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/></svg>'); }
+        .community-remittances-filter-select:focus { outline: 2px solid var(--primary-color); outline-offset: 1px; }
         .community-remittances-search-row { display: flex; gap: 0.5rem; min-width: 0; }
-        .community-remittances-search-row input { flex: 1 1 auto; min-width: 0; min-height: 34px; border: 1px solid var(--border-color); border-radius: 0.72rem; padding: 0.42rem 0.62rem; background: #fff; color: var(--text-dark); font-size: 0.82rem; font-weight: 800; outline: none; }
-        .community-remittances-search-btn { all: unset; box-sizing: border-box; flex: none; width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--border-color); border-radius: 0.72rem; background: #f8fafc; color: #64748b; font-size: 0.85rem; cursor: pointer; }
+        .community-remittances-search-row input { flex: 1 1 auto; min-width: 0; min-height: 34px; border: 1px solid var(--border-color); border-radius: 0.625rem; padding: 0.42rem 0.62rem; background: var(--surface-color); color: var(--text-dark); font-size: 0.82rem; font-weight: 500; outline: none; }
+        .community-remittances-search-row input:focus { outline: 2px solid var(--primary-color); outline-offset: 1px; }
+        .community-remittances-search-btn { all: unset; box-sizing: border-box; flex: none; width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--border-color); border-radius: 0.625rem; background: var(--gray-bg); color: var(--text-muted); font-size: 0.85rem; cursor: pointer; }
         .community-remittances-search-btn.go { background: var(--primary-color); border-color: var(--primary-color); color: #fff; }
-        .community-remittances-count-line { margin: 0.35rem 0; font-size: 0.78rem; font-weight: 800; color: #64748b; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-        .community-remittances-active-filter-note { display: inline-flex; align-items: center; gap: 0.35rem; color: #be185d; }
-        .community-remittances-clear-filter-btn { border: none; background: none; color: #be185d; font-weight: 900; text-decoration: underline; cursor: pointer; font-size: inherit; padding: 0; }
+        .community-remittances-count-line { margin: 0.35rem 0; font-size: 0.78rem; font-weight: 500; color: var(--text-muted); display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+        .community-remittances-active-filter-note { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--primary-color); }
+        .community-remittances-clear-filter-btn { border: none; background: none; color: var(--primary-color); font-weight: 700; text-decoration: underline; cursor: pointer; font-size: inherit; padding: 0; }
         .community-remittances-list { display: grid; gap: 0.75rem; margin-top: 0.35rem; }
-        .community-remittances-icon-btn { width: 30px; height: 30px; border-radius: 0.55rem; border: 1px solid #fbcfe8; background: #fff; color: #64748b; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; flex-shrink: 0; }
-        .community-remittances-icon-btn:hover { border-color: #f472b6; color: #be185d; }
-        .community-remittances-icon-btn.active { background: var(--cr-reviewed-bg); border-color: #86efac; color: var(--cr-reviewed-fg); }
-        .community-remittances-icon-btn.danger:hover { border-color: #fca5a5; color: #dc2626; }
+        .community-remittances-icon-btn { width: 28px; height: 28px; border-radius: 0.5rem; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.78rem; flex-shrink: 0; }
+        .community-remittances-icon-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+        /* 核對後整顆變實心綠底＋白色勾勾（照模板 .ib.on），比對模板後
+           這輪把原本的淺綠底淺綠字淡色提示改掉。 */
+        .community-remittances-icon-btn.active { background: var(--cr-reviewed-fg); border-color: var(--cr-reviewed-fg); color: #fff; }
+        .community-remittances-icon-btn.danger:hover { border-color: var(--cr-notbought-fg); color: var(--cr-notbought-fg); }
 
         /* 總覽卡片——母體是「目前場次／銀行／搜尋篩選後的客人」，卡片
            數字本身不會因為點選卡片而改變，點選只影響下面客人列表要不要
            過濾（見 renderCommunityRemittancesOverview / toggle...OverviewFilter）。
            每張卡片用 inline style 帶入 --cr-ov-fg/--cr-ov-bg，CSS 只定義
            共用的排版，顏色交給 JS 依類別代入，不用六套幾乎一樣的顏色
-           class。 */
+           class。這輪對齊模板：預設白底＋淺邊框，只有選中時才換成淡
+           底＋同色邊框（模板 .card/.card.on），不再是「永遠都是淡底」。
+           未核對／全部兩張（cr-ov-textonly）電腦寬度這輪也改成跟上面
+           四張卡同一套白底/邊框/圓角外觀（模板電腦寬度六張卡共用同一個
+           .card 樣式），手機寬度維持下方 @media 既有的圓角膠囊樣式
+           （模板手機寬度另外切到 .pills2/.pillbtn 版面）。 */
         .community-remittances-overview { display: grid; gap: 0.5rem; margin: 0.5rem 0; }
         .community-remittances-overview-row1 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 0.5rem; }
         .community-remittances-overview-row2 { display: flex; gap: 0.5rem; }
-        .community-remittances-overview-card { display: flex; flex-direction: column; gap: 0.2rem; border: 1px solid transparent; border-radius: 0.8rem; padding: 0.55rem 0.7rem; cursor: pointer; font-family: inherit; text-align: left; color: var(--cr-ov-fg); background: var(--cr-ov-bg); transition: border-color .15s ease, opacity .15s ease; }
-        .community-remittances-overview-card.is-empty { opacity: 0.45; }
-        .community-remittances-overview-card.is-active { border-color: currentColor; }
-        .community-remittances-overview-card .cr-ov-row1 { order: 1; display: flex; align-items: baseline; gap: 0.35rem; font-size: 0.82rem; font-weight: 900; }
-        .community-remittances-overview-card .cr-ov-count { order: 2; font-size: 0.72rem; font-weight: 800; opacity: 0.85; }
+        .community-remittances-overview-card { display: flex; flex-direction: column; gap: 0.2rem; border: 1.5px solid var(--border-color); border-radius: 0.875rem; padding: 0.55rem 0.7rem; cursor: pointer; font-family: inherit; text-align: left; color: var(--cr-ov-fg); background: var(--surface-color); transition: border-color .15s ease, background-color .15s ease, opacity .15s ease; }
+        .community-remittances-overview-card.is-empty { opacity: 0.6; }
+        .community-remittances-overview-card.is-active { border-color: currentColor; background: var(--cr-ov-bg); }
+        .community-remittances-overview-card .cr-ov-row1 { order: 1; display: flex; align-items: baseline; gap: 0.35rem; font-size: 0.82rem; font-weight: 500; }
+        .community-remittances-overview-card .cr-ov-count { order: 2; font-size: 0.72rem; font-weight: 700; opacity: 0.85; }
         .community-remittances-overview-card .cr-ov-count::after { content: ' 人'; }
-        .community-remittances-overview-card.cr-ov-textonly { flex: 0 0 auto; align-items: center; justify-content: center; text-align: center; font-size: 0.82rem; font-weight: 900; padding: 0.5rem 1rem; }
+        .community-remittances-overview-card.cr-ov-textonly { flex: 1 1 0; align-items: center; justify-content: center; text-align: center; font-size: 0.82rem; font-weight: 700; }
         /* 「人名 → 匯款紀錄」雙層結構——人名這一層永遠展開（不是手風琴），
            每一筆匯款紀錄由上往下直接列出，單筆紀錄本身才是可收合的
            （展開看商品明細）。「未匯款」固定排在這個人紀錄的最後一行，
            跟真正的匯款紀錄共用同一套 .community-remittances-row 外觀，
-           只是多一個 modifier class 做顏色區分。 */
-        .community-remittances-customer-block { border: 1px solid #fbcfe8; border-radius: 1rem; background: white; padding: 0.75rem 0.85rem; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
-        .community-remittances-customer-header { margin-bottom: 0.5rem; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem; }
-        .community-remittances-customer-name { font-size: 0.84rem; font-weight: 900; color: #334155; }
-        .community-remittances-customer-paren { font-weight: 700; color: #94a3b8; margin-left: 0.3rem; }
+           只是多一個 modifier class 做顏色區分。這輪對齊模板：卡片外框
+           改成跟其他頁面一致的白底／細邊框／無陰影（模板 .cust），
+           標頭改成下面有分隔線、每一筆紀錄改成底部分隔線（原本是上面
+           虛線），卡片本身改 overflow:hidden、padding 交給標頭/清單
+           自己的 padding，不再整張卡統一留白。 */
+        .community-remittances-customer-block { border: 1px solid var(--border-color); border-radius: 0.875rem; background: var(--surface-color); padding: 0; overflow: hidden; }
+        .community-remittances-customer-header { margin-bottom: 0; padding: 0.62rem 0.85rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem; }
+        .community-remittances-customer-name { font-size: 0.84rem; font-weight: 700; color: var(--text-dark); }
+        .community-remittances-customer-paren { font-weight: 500; color: var(--text-muted); margin-left: 0.3rem; }
         .community-remittances-customer-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; }
-        .community-remittances-tag { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.18rem 0.6rem; font-size: 0.68rem; font-weight: 900; flex-shrink: 0; }
-        .community-remittances-tag-session { background: #e2e8f0; color: #334155; }
+        .community-remittances-tag { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.15rem 0.55rem; font-size: 0.72rem; font-weight: 500; flex-shrink: 0; }
+        .community-remittances-tag-session { background: var(--gray-bg); color: var(--text-muted); }
         .community-remittances-tag-refund { color: var(--cr-refund-fg); background: var(--cr-refund-bg); }
         .community-remittances-tag-owedpaid { color: var(--cr-owed-fg); background: var(--cr-owed-bg); }
         .community-remittances-tag-anomaly { color: var(--cr-anomaly-fg); background: var(--cr-anomaly-bg); }
-        .community-remittances-customer-body { display: grid; gap: 0.5rem; }
-        .community-remittances-row { border-top: 1px dashed #fbcfe8; padding-top: 0.5rem; }
-        .community-remittances-customer-body > .community-remittances-row:first-child { border-top: none; padding-top: 0; }
+        .community-remittances-customer-body { display: grid; gap: 0; padding: 0 0.85rem; }
+        .community-remittances-row { border-top: none; border-bottom: 1px solid var(--border-color); padding: 0.55rem 0; }
+        .community-remittances-customer-body > .community-remittances-row:last-child { border-bottom: none; }
         /* row-main：桌機單行（toggle/銀行/末五碼/時間在左，系統/回報金額＋
            ✓/垃圾桶靠右）；.community-remittances-row-head 用 display:contents
            讓裡面四個元素直接變成 row-main 的 flex item，不額外產生一層。
-           手機版（≤640px，見下方 @media）改成 grid 兩行，見該處註解。 */
+           手機版（≤640px，見下方 @media）改成 grid 兩行，見該處註解。
+           銀行／末五碼／回報金額這輪改成模板那種 1px 邊線＋淺底的「靜態
+           小框」外觀（圓角 6px，回報金額 8px），但維持原本的
+           select/input，照樣可以點、可以打字——只是外觀比較不像傳統
+           表單欄位，不影響原有的 onchange 互動。 */
         .community-remittances-row-main { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
         .community-remittances-row-head { display: contents; }
-        .community-remittances-row-toggle { width: 26px; height: 26px; border-radius: 0.5rem; border: 1px solid #fbcfe8; background: #fff7fb; color: #be185d; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.72rem; flex-shrink: 0; }
-        .community-remittances-bank-select { min-height: 32px; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.2rem 0.4rem; font-size: 0.78rem; font-weight: 800; color: #334155; }
-        .community-remittances-last5-input { width: 72px; min-height: 32px; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.2rem 0.4rem; font-size: 0.78rem; font-weight: 800; color: #334155; outline: none; text-align: center; }
-        .community-remittances-bank-select:focus, .community-remittances-last5-input:focus, .community-remittances-amount-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
-        .community-remittances-row-time { font-size: 0.7rem; font-weight: 700; color: #94a3b8; flex-shrink: 0; }
-        .community-remittances-row-amounts { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; font-size: 0.76rem; font-weight: 800; color: #64748b; }
-        .community-remittances-amount-input { width: 76px; min-height: 32px; border: 1px solid #fbcfe8; border-radius: 0.5rem; padding: 0.2rem 0.4rem; font-size: 0.78rem; font-weight: 800; color: #334155; outline: none; text-align: center; }
-        .community-remittances-mismatch-badge { margin-left: 0.2rem; color: #d97706; }
+        .community-remittances-row-toggle { all: unset; box-sizing: border-box; width: 24px; height: 24px; border-radius: 0.4rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.68rem; color: var(--text-muted); flex-shrink: 0; }
+        .community-remittances-bank-select { min-height: 32px; border: 1px solid var(--border-color); border-radius: 0.375rem; padding: 0.2rem 0.4rem; font-size: 0.75rem; font-weight: 500; color: var(--text-dark); background: var(--bg-color); }
+        .community-remittances-last5-input { width: 72px; min-height: 32px; border: 1px solid var(--border-color); border-radius: 0.375rem; padding: 0.2rem 0.4rem; font-size: 0.75rem; font-weight: 500; color: var(--text-dark); background: var(--bg-color); outline: none; text-align: center; }
+        .community-remittances-bank-select:focus, .community-remittances-last5-input:focus, .community-remittances-amount-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(217, 70, 126, 0.12); }
+        .community-remittances-row-time { font-size: 0.7rem; font-weight: 500; color: var(--text-muted); flex-shrink: 0; }
+        .community-remittances-row-amounts { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; font-size: 0.76rem; font-weight: 500; color: var(--text-muted); }
+        .community-remittances-amount-input { width: 76px; min-height: 32px; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.2rem 0.4rem; font-size: 0.75rem; font-weight: 500; color: var(--text-dark); background: var(--bg-color); outline: none; text-align: center; }
+        .community-remittances-mismatch-badge { margin-left: 0.2rem; color: var(--cr-anomaly-fg); }
         .community-remittances-row-actions { display: flex; gap: 0.35rem; flex-shrink: 0; }
         .community-remittances-row-orders { display: none; margin-top: 0.5rem; padding-left: 1.9rem; gap: 0.4rem; }
         .community-remittances-row-orders.open { display: grid; }
-        .community-remittances-unpaid-row { background: #fff7fb; border-radius: 0.6rem; padding: 0.4rem 0.5rem; border-top: none; margin-top: 0.2rem; }
+        .community-remittances-unpaid-row { background: transparent; border-radius: 0; padding: 0.55rem 0; margin-top: 0; }
         .community-remittances-unpaid-row .community-remittances-row-amounts { margin-left: 0; }
-        .community-remittances-unpaid-label { font-size: 0.78rem; font-weight: 900; color: #be185d; flex-shrink: 0; }
+        .community-remittances-unpaid-label { font-size: 0.78rem; font-weight: 500; color: var(--cr-owed-fg); flex-shrink: 0; }
         /* 展開後的商品明細——左右兩欄（有買到／沒買到），手機改上下疊
-           （見下方 @media）。沒買到那欄商品用淺紅底／邊框突顯。 */
+           （見下方 @media）。沒買到那欄商品用淺紅底／邊框突顯，這輪
+           對齊模板：欄位標題改成模板的「色塊標頭」（左邊文字、右邊
+           件數/金額，背景色＋圓角），沒買到商品名稱/金額改紅字＋金額
+           加刪除線，「沒買到」/「訂N・買M」兩種標籤改成不同樣式（前者
+           實心小標、後者描邊小標，比照模板 .tag / .tag.soft）。 */
         .community-remittances-order-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
         .community-remittances-order-col { display: grid; gap: 0.35rem; align-content: start; }
-        .community-remittances-order-col-title { font-size: 0.74rem; font-weight: 900; }
-        .community-remittances-order-col-bought .community-remittances-order-col-title { color: var(--cr-reviewed-fg); }
-        .community-remittances-order-col-notbought .community-remittances-order-col-title { color: var(--cr-notbought-fg); }
-        .community-remittances-order-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.76rem; font-weight: 700; color: #475569; }
-        .community-remittances-order-item-notbought { background: var(--cr-notbought-bg); border: 1px solid var(--cr-notbought-border); border-radius: 0.5rem; padding: 0.3rem 0.45rem; }
-        .community-remittances-order-badge { margin-left: 0.3rem; color: var(--cr-notbought-fg); font-size: 0.66rem; font-weight: 900; }
-        .community-remittances-order-thumb, .community-remittances-order-thumb-placeholder { width: 40px; height: 40px; border-radius: 0.5rem; object-fit: cover; flex-shrink: 0; border: 1px solid #fbcfe8; background: #fff7fb; }
-        .community-remittances-order-thumb-placeholder { display: flex; align-items: center; justify-content: center; color: #f9a8d4; }
-        .community-remittances-order-name { flex: 1; min-width: 0; font-weight: 800; color: #334155; }
-        .community-remittances-order-qty { flex-shrink: 0; }
-        .community-remittances-order-total { flex-shrink: 0; font-weight: 900; color: #be185d; }
-        .community-remittances-empty-row { font-size: 0.78rem; font-weight: 700; color: #94a3b8; }
+        .community-remittances-order-col-title { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-variant-numeric: tabular-nums; }
+        .community-remittances-order-col-bought .community-remittances-order-col-title { color: var(--cr-reviewed-fg); background: var(--cr-reviewed-bg); }
+        .community-remittances-order-col-notbought .community-remittances-order-col-title { color: var(--cr-notbought-fg); background: var(--cr-notbought-bg); border: 1px solid var(--cr-notbought-border); }
+        .community-remittances-order-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.76rem; font-weight: 500; color: var(--text-dark); padding: 0.3rem 0.4rem; border-radius: 0.5rem; }
+        .community-remittances-order-item-notbought { background: var(--cr-notbought-bg); border: 1px solid var(--cr-notbought-border); padding: 0.3rem 0.45rem; }
+        .community-remittances-order-item-notbought .community-remittances-order-name { color: var(--cr-notbought-fg); }
+        .community-remittances-order-item-notbought .community-remittances-order-total { color: var(--cr-notbought-fg); text-decoration: line-through; font-weight: 500; }
+        .community-remittances-order-badge { margin-left: 0.3rem; font-size: 0.66rem; }
+        .community-remittances-order-badge.is-full { color: var(--surface-color); background: var(--cr-notbought-fg); border-radius: 0.25rem; padding: 0 0.4rem; font-weight: 700; }
+        .community-remittances-order-badge.is-partial { color: var(--cr-notbought-fg); border: 1px solid var(--cr-notbought-border); border-radius: 999px; padding: 0.05rem 0.45rem; font-weight: 500; }
+        .community-remittances-order-thumb, .community-remittances-order-thumb-placeholder { width: 36px; height: 36px; border-radius: 0.375rem; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border-color); background: var(--gray-bg); }
+        .community-remittances-order-thumb-placeholder { display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+        .community-remittances-order-item-notbought .community-remittances-order-thumb-placeholder { background: var(--cr-notbought-border); color: var(--cr-notbought-fg); }
+        .community-remittances-order-name { flex: 1; min-width: 0; font-weight: 500; color: var(--text-dark); }
+        .community-remittances-order-qty { flex-shrink: 0; color: var(--text-muted); }
+        .community-remittances-order-total { flex-shrink: 0; font-weight: 700; color: var(--primary-color); }
+        .community-remittances-empty-row { font-size: 0.78rem; font-weight: 500; color: var(--text-muted); }
         .community-notebook-table td, .community-notebook-table th { white-space: nowrap; }
         .community-notebook-table td.community-notebook-name-cell { white-space: normal; }
         .community-notebook-toggle-row td { padding: 0.4rem 0.6rem; }
@@ -1330,8 +1351,7 @@
             .filter-bar,
             .backend-member-filter-row,
             .storefront-order-search-row,
-            .community-livestream-filter-grid,
-            .community-remittances-filter-grid { width: 100% !important; display: grid !important; grid-template-columns: repeat(2, minmax(0,1fr)) !important; align-items: end !important; gap: 0.65rem !important; padding: 0.8rem !important; border-radius: 1rem !important; }
+            .community-livestream-filter-grid { width: 100% !important; display: grid !important; grid-template-columns: repeat(2, minmax(0,1fr)) !important; align-items: end !important; gap: 0.65rem !important; padding: 0.8rem !important; border-radius: 1rem !important; }
             .filter-bar > *, .backend-member-filter-row > *, .storefront-order-search-row > * { width: 100% !important; min-width: 0 !important; max-width: none !important; margin: 0 !important; }
             .filter-bar .form-group:first-child,
             .backend-member-filter-row .backend-member-filter-field:first-child,
@@ -1423,8 +1443,7 @@
             .filter-bar,
             .backend-member-filter-row,
             .storefront-order-search-row,
-            .community-livestream-filter-grid,
-            .community-remittances-filter-grid { gap: 0.5rem !important; padding: 0.65rem !important; border-radius: 0.8rem !important; }
+            .community-livestream-filter-grid { gap: 0.5rem !important; padding: 0.65rem !important; border-radius: 0.8rem !important; }
             .form-group { gap: 0.35rem; }
             .form-group label { font-size: 0.78rem; }
             .brand-setting-card, .appearance-list-item, .site-feature-flag-card { padding: 0.8rem !important; gap: 0.65rem !important; }
@@ -1496,6 +1515,16 @@
             .community-remittances-row-amounts { grid-area: amounts; margin-left: 0; padding-left: calc(26px + 0.5rem); }
 
             .community-remittances-order-columns { grid-template-columns: 1fr; }
+        }
+
+        /* 篩選卡在電腦寬度改成模板的 2 欄並排（場次＋銀行 | 搜尋列），
+           跟上面 @media (max-width: 640px) 手機版「上下疊」分開管，兩個
+           斷點剛好互補、沒有重疊範圍（640px 以下用手機版，641px 以上
+           用這裡）。 */
+        @media (min-width: 641px) {
+            .community-remittances-filter-card { flex-direction: row; align-items: center; gap: 0.85rem; }
+            .community-remittances-filter-selects { flex: 3 1 0; }
+            .community-remittances-search-row { flex: 2 1 0; }
         }
     </style>
 </head>
@@ -11847,7 +11876,10 @@
             const unitPriceText = order.unitPrice === null ? '—' : storefrontMoney(order.unitPrice);
             const lineAmount = order.unitPrice === null ? null : order.unitPrice * qty;
             const lineTotalText = lineAmount === null ? '—' : storefrontMoney(lineAmount);
-            const badge = opts.badge ? `<span class="community-remittances-order-badge">${escapeHtml(opts.badge)}</span>` : '';
+            // 「沒買到」跟「訂N・買M」這輪改成不同小標樣式（比照模板 .tag
+            // 實心 / .tag.soft 描邊），用 opts.badge 的文字判斷是哪一種,
+            // 純粹加一個外觀用的 class，不影響文字本身的資料來源。
+            const badge = opts.badge ? `<span class="community-remittances-order-badge ${opts.badge === '沒買到' ? 'is-full' : 'is-partial'}">${escapeHtml(opts.badge)}</span>` : '';
             const itemClass = opts.notBought ? 'community-remittances-order-item community-remittances-order-item-notbought' : 'community-remittances-order-item';
             return `
                 <div class="${itemClass}">
@@ -11901,11 +11933,11 @@
             return `
                 <div class="community-remittances-order-columns">
                     <div class="community-remittances-order-col community-remittances-order-col-bought">
-                        <div class="community-remittances-order-col-title">有買到　${boughtPieces} 件　${storefrontMoney(boughtTotal)}</div>
+                        <div class="community-remittances-order-col-title"><span>有買到</span><span>${boughtPieces} 件　${storefrontMoney(boughtTotal)}</span></div>
                         ${boughtHtml}
                     </div>
                     <div class="community-remittances-order-col community-remittances-order-col-notbought">
-                        <div class="community-remittances-order-col-title">沒買到　${notBoughtPieces} 件　${storefrontMoney(notBoughtTotal)}</div>
+                        <div class="community-remittances-order-col-title"><span>沒買到</span><span>${notBoughtPieces} 件　${storefrontMoney(notBoughtTotal)}</span></div>
                         ${notBoughtHtml}
                     </div>
                 </div>
