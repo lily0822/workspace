@@ -206,6 +206,11 @@
            這頁換成專屬 class／拿掉 inline style，另外兩頁的 .filter-bar
            元素沒有被動到。 */
         .customer-order-filterbar { display: flex; gap: 1rem; align-items: flex-end; flex: 1; padding: 0.85rem 1rem; border: 1px solid var(--border-color); border-radius: 1rem; background: var(--surface-color); box-shadow: none; }
+        /* 廠商叫貨明細／購物網站叫貨明細共用的篩選列，原本外觀完全靠
+           inline style 寫死色碼（#f8fafc/#e2e8f0），這輪改成跟
+           .customer-order-filterbar 同一套白底卡片規格，兩個使用點的
+           inline style 已拿掉。 */
+        .filter-bar { display: flex; gap: 1rem; align-items: flex-end; flex: 1; padding: 0.85rem 1rem; border: 1px solid var(--border-color); border-radius: 1rem; background: var(--surface-color); box-shadow: none; }
         .customer-order-source-label { color: var(--primary-color); font-weight: 700; }
         .customer-order-meta-banner { background: var(--sidebar-active); color: var(--primary-color); padding: 0.5rem 1rem; border-radius: 0.6rem; margin-bottom: 1rem; font-size: 0.9rem; font-weight: 500; display: flex; flex-wrap: wrap; gap: 1rem; }
         .member-line-settings-card { display: grid; gap: 0.75rem; margin-bottom: 0.85rem; padding: 0.85rem 1rem; border: 1px solid var(--border-color); border-radius: 1rem; background: var(--surface-color); box-shadow: none; }
@@ -672,21 +677,28 @@
         .community-notebook-detail-row td { padding: 0.7rem; background: var(--gray-bg); border-top: 1px dashed var(--border-color); }
         .community-notebook-detail-summary { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.55rem; color: var(--text-muted); font-size: 0.75rem; font-weight: 500; }
         .community-order-row-actions { display: inline-flex; align-items: center; gap: 0.35rem; }
-        .backend-member-pill { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0.22rem 0.55rem; font-size: 0.74rem; font-weight: 900; border: 1px solid #e2e8f0; background: #f8fafc; color: #475569; }
-        .backend-member-pill.on { border-color: #bbf7d0; background: #dcfce7; color: #166534; }
-        .backend-member-pill.off { border-color: #fecaca; background: #fee2e2; color: #991b1b; }
-        .backend-member-detail-card { margin: 0.75rem 0 1rem; padding: 0.9rem; border: 1px solid #fbcfe8; border-radius: 1rem; background: #fff; display: grid; gap: 0.75rem; }
-        .backend-member-detail-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; padding-bottom: 0.55rem; border-bottom: 1px dashed #f9a8d4; }
-        .backend-member-detail-title { color: #be185d; font-size: 0.95rem; font-weight: 950; }
+        /* 會員管理：狀態/綁定膠囊、會員詳情卡原本整組寫死粉色色碼跟
+           800/900/950 字重，這輪改用共用色票與邊框/文字變數，啟用/
+           已綁定用 success、停用/未綁定用 abnormal。
+           .backend-member-pagination-footer 這個 class 同時也被「社群
+           訂單」頁（第6輪已完成）的分頁列共用，這裡只做純色值/字重代換
+           （#64748b→var(--text-muted)、900→700），不影響任何結構，兩頁
+           看起來只會更一致，不會變難看。 */
+        .backend-member-pill { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0.22rem 0.55rem; font-size: 0.74rem; font-weight: 700; border: 1px solid var(--border-color); background: var(--gray-bg); color: var(--text-muted); }
+        .backend-member-pill.on { border-color: var(--status-success-fg); background: var(--status-success-bg); color: var(--status-success-fg); }
+        .backend-member-pill.off { border-color: var(--status-abnormal-fg); background: var(--status-abnormal-bg); color: var(--status-abnormal-fg); }
+        .backend-member-detail-card { margin: 0.75rem 0 1rem; padding: 0.9rem; border: 1px solid var(--border-color); border-radius: 1rem; background: var(--surface-color); display: grid; gap: 0.75rem; }
+        .backend-member-detail-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; padding-bottom: 0.55rem; border-bottom: 1px dashed var(--border-color); }
+        .backend-member-detail-title { color: var(--primary-color); font-size: 0.95rem; font-weight: 700; }
         .backend-member-detail-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.7rem; }
         .backend-member-detail-section { display: grid; gap: 0.35rem; min-width: 0; }
-        .backend-member-detail-section h4 { margin: 0; color: #9d174d; font-size: 0.8rem; font-weight: 950; }
+        .backend-member-detail-section h4 { margin: 0; color: var(--primary-color); font-size: 0.8rem; font-weight: 700; }
         .backend-member-kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.2rem 0.4rem; font-size: 0.79rem; line-height: 1.5; }
-        .backend-member-kv dt { color: #64748b; font-weight: 800; }
-        .backend-member-kv dd { margin: 0; color: #334155; font-weight: 800; min-width: 0; overflow-wrap: anywhere; }
+        .backend-member-kv dt { color: var(--text-muted); font-weight: 700; }
+        .backend-member-kv dd { margin: 0; color: var(--text-dark); font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
         .backend-member-address-list, .backend-member-order-list { display: grid; gap: 0.45rem; }
-        .backend-member-address-item, .backend-member-order-item { border: 1px dashed #fbcfe8; border-radius: 0.75rem; padding: 0.55rem; background: #fff7fb; font-size: 0.8rem; font-weight: 800; color: #334155; }
-        .backend-member-pagination-footer { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; padding-top: 0.8rem; color: #64748b; font-size: 0.8rem; font-weight: 900; }
+        .backend-member-address-item, .backend-member-order-item { border: 1px dashed var(--border-color); border-radius: 0.75rem; padding: 0.55rem; background: var(--gray-bg); font-size: 0.8rem; font-weight: 700; color: var(--text-dark); }
+        .backend-member-pagination-footer { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; padding-top: 0.8rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 700; }
         .community-member-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
         .community-member-panel { min-width: 0; }
         .community-member-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 0.65rem; min-height: 48px; padding: 0.55rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.75rem 0.75rem 0 0; background: #f8fafc; }
@@ -894,11 +906,46 @@
         /* Sub Tables */
         .sub-row { display: none; background-color: #f8fafc; }
         .sub-row.active { display: table-row; animation: fadeIn 0.3s ease; }
-        .sub-table-container { padding: 1rem 1.5rem; border-left: 4px solid var(--primary-color); background: white; margin: 0.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .sub-table { width: 100%; margin-top: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; overflow: hidden; }
-        .sub-table th, .sub-table td { padding: 0.5rem 1rem; border-bottom: 1px solid #e2e8f0; text-align: center; }
-        .sub-table th { background-color: #f1f5f9; font-size: 0.8rem; }
+        /* 展開明細卡片，廠商叫貨明細／購物網站叫貨明細／客戶訂單明細
+           3 個頁面共用同一套 .sub-table-container/.sub-table，改成比照
+           訂單管理 .storefront-order-inline-detail 的白底/1px邊線/
+           14px圓角/無陰影，拿掉原本的粉色左側色條跟陰影。 */
+        .sub-table-container { padding: 1rem 1.25rem; border: 1px solid var(--border-color); background: var(--surface-color); margin: 0.5rem; border-radius: 0.875rem; box-shadow: none; }
+        .sub-table { width: 100%; margin-top: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.5rem; overflow: hidden; }
+        .sub-table th, .sub-table td { padding: 0.5rem 1rem; border-bottom: 1px solid var(--border-color); text-align: center; }
+        .sub-table th { background-color: var(--bg-color); font-size: 0.75rem; }
+        .sub-table th:nth-child(5), .sub-table td:nth-child(5),
+        .sub-table th:nth-child(6), .sub-table td:nth-child(6),
+        .sub-table th:nth-child(7), .sub-table td:nth-child(7) { text-align: right; font-variant-numeric: tabular-nums; }
         .sub-toolbar { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; justify-content: flex-end; }
+        /* 廠商叫貨明細「出貨狀態」切換鈕，比照第5輪商品上下架
+           .product-listing-toggle-pill 的做法，把實心按鈕換成淺底深字
+           膠囊，沿用 --status-success/-abnormal 色票，不新增色碼。
+           按鈕的 onclick/id 完全沒有變，toggleItemShipped 點了照樣切換
+           狀態；toggleItemShipped 這個函式只有這一個使用點（廠商叫貨
+           明細的展開商品列），不影響其他頁。
+           購物網站叫貨明細／客戶訂單明細的「出貨狀態」按鈕共用同一個
+           toggleOrderStatus 函式（它點擊後會自己把 className 寫回
+           btn-success/btn-danger），這個函式同時被兩頁呼叫，若在這裡
+           把它改成膠囊樣式，客戶訂單明細（已驗收頁面）點擊後也會被
+           連帶改掉，所以這輪刻意沒有動 toggleOrderStatus 跟它控制的
+           按鈕，購物網站叫貨明細的「出貨狀態」維持原本的
+           btn-success/btn-danger 實心按鈕樣式，列在待確認問題裡。 */
+        .order-shipped-pill { border: none; }
+        .order-shipped-pill.shipped { background: var(--status-success-bg); color: var(--status-success-fg); }
+        .order-shipped-pill.unshipped { background: var(--status-abnormal-bg); color: var(--status-abnormal-fg); }
+        /* 廠商叫貨明細（JS 動態建表，table.className 這輪補上
+           vendor-order-group-table）／購物網站叫貨明細（靜態表格補上
+           website-order-table）的金額/件數欄位靠右+tabular-nums。用
+           > 直接子選擇器，避免連帶選到展開明細裡巢狀的 .sub-table。 */
+        .vendor-order-group-table > thead > tr > th:nth-child(4), .vendor-order-group-table > tbody > tr > td:nth-child(4),
+        .vendor-order-group-table > thead > tr > th:nth-child(5), .vendor-order-group-table > tbody > tr > td:nth-child(5) { text-align: right; font-variant-numeric: tabular-nums; }
+        .website-order-table > thead > tr > th:nth-child(5), .website-order-table > tbody > tr > td:nth-child(5),
+        .website-order-table > thead > tr > th:nth-child(6), .website-order-table > tbody > tr > td:nth-child(6) { text-align: right; font-variant-numeric: tabular-nums; }
+        /* 擺攤時程／連線時程表格的費用欄位靠右+tabular-nums。 */
+        .schedule-table-stall th:nth-child(5), .schedule-table-stall td:nth-child(5) { text-align: right; font-variant-numeric: tabular-nums; }
+        .schedule-table-connection th:nth-child(6), .schedule-table-connection td:nth-child(6),
+        .schedule-table-connection th:nth-child(7), .schedule-table-connection td:nth-child(7) { text-align: right; font-variant-numeric: tabular-nums; }
         
         /* Modals */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(15, 23, 42, 0.5); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
@@ -919,19 +966,22 @@
         .form-group input:focus, .form-group select:focus { outline: 2px solid var(--primary-color); outline-offset: 1px; border-color: var(--primary-color); box-shadow: none; }
         .form-group textarea { padding: 0.625rem; border: 1px solid var(--border-color); border-radius: 0.625rem; font-family: inherit; font-size: 0.875rem; color: var(--text-dark); transition: border-color 0.2s; width: 100%; min-height: 80px; resize: vertical; }
         .form-group textarea:focus { outline: 2px solid var(--primary-color); outline-offset: 1px; border-color: var(--primary-color); box-shadow: none; }
-        .schedule-preview { width: 72px; height: 72px; border-radius: 0.5rem; object-fit: cover; border: 1px solid #e2e8f0; background: #f8fafc; display: block; }
-        .schedule-preview.empty { display: inline-flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 1.25rem; }
+        .schedule-preview { width: 72px; height: 72px; border-radius: 0.5rem; object-fit: cover; border: 1px solid var(--border-color); background: var(--gray-bg); display: block; }
+        .schedule-preview.empty { display: inline-flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 1.25rem; }
         .schedule-image-upload { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-        .schedule-image-preview { width: min(100%, 240px); aspect-ratio: 1 / 1; border: 1px solid #e2e8f0; border-radius: 0.75rem; background: #f8fafc; display: grid; place-items: center; overflow: hidden; color: #94a3b8; }
+        .schedule-image-preview { width: min(100%, 240px); aspect-ratio: 1 / 1; border: 1px solid var(--border-color); border-radius: 0.75rem; background: var(--gray-bg); display: grid; place-items: center; overflow: hidden; color: var(--text-muted); }
         .schedule-image-preview img { width: 100%; height: 100%; object-fit: contain; display: block; }
         .stall-day-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr 40px; gap: 0.5rem; align-items: center; }
-        .stall-day-row input { min-width: 0; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: inherit; font-size: 0.875rem; color: #334155; }
-        .schedule-time-lines { display: flex; flex-direction: column; gap: 0.25rem; color: #334155; }
-        .schedule-time-lines small { color: #64748b; font-size: 0.78rem; }
+        .stall-day-row input { min-width: 0; padding: 0.625rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-family: inherit; font-size: 0.875rem; color: var(--text-dark); }
+        .schedule-time-lines { display: flex; flex-direction: column; gap: 0.25rem; color: var(--text-dark); }
+        .schedule-time-lines small { color: var(--text-muted); font-size: 0.78rem; }
         
         .dynamic-row { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr 1fr 40px; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
         .dynamic-row input, .dynamic-row select { min-width: 0; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 0.8rem; }
-        .dynamic-header { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr 1fr 40px; gap: 0.5rem; font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; text-align: left; }
+        /* .dynamic-header 同時被叫貨/購物網站/客戶訂單明細的「批量新增」
+           彈窗跟商品批量新增共用，這裡只把表頭文字色從寫死的
+           #64748b 換成 var(--text-muted)，純色值代換，不影響其他頁。 */
+        .dynamic-header { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr 1fr 40px; gap: 0.5rem; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; text-align: left; }
         .dynamic-header span { padding-left: 0.5rem; }
         #product-batch-header { display: none; }
         .product-batch-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) 40px; gap: 0.75rem; align-items: start; border: 1px solid var(--border-color); border-radius: 1rem; background: var(--surface-color); padding: 1rem; margin-bottom: 0.75rem; }
@@ -1447,9 +1497,9 @@
                這裡讓 toast 在手機寬度時往上避開導覽列，純屬這頁自己的
                元素，不影響其他頁。 */
             .storefront-order-copy-toast { bottom: calc(var(--mobile-nav-height) + 1rem + env(safe-area-inset-bottom)); }
-            .sub-table-container { max-width: calc(100vw - 2.6rem); overflow-x: auto; margin: 0.35rem; padding: 0.7rem; border-left-width: 3px; }
+            .sub-table-container { max-width: calc(100vw - 2.6rem); overflow-x: auto; margin: 0.35rem; padding: 0.7rem; }
             .sub-table { min-width: 680px; }
-            .order-group, .brand-setting-card { border-radius: 1rem !important; }
+            .brand-setting-card { border-radius: 1rem !important; }
 
             /* Modal forms become full-height bottom sheets; every original field
                and action stays in the DOM and remains reachable. */
@@ -1471,9 +1521,13 @@
             .dynamic-header { display: none; }
             .dynamic-row, .hide-tracking.dynamic-header, .hide-tracking .dynamic-row { grid-template-columns: 1fr 1fr !important; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.85rem; background: var(--surface-color); }
             .dynamic-row .btn-icon { min-height: 36px; border-radius: 0.65rem; background: var(--sidebar-active); }
-            .stall-day-row { grid-template-columns: 1fr 1fr; padding: 0.65rem; border: 1px solid #f0e2e6; border-radius: 0.8rem; }
+            .stall-day-row { grid-template-columns: 1fr 1fr; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: 0.8rem; }
             .stall-day-row > :first-child { grid-column: 1 / -1; }
-            .stall-day-row .btn-icon { grid-column: 1 / -1; min-height: 34px; background: #fff0f4; border-radius: 0.65rem; }
+            /* 原本這裡還有一條 .stall-day-row .btn-icon 的規則，但刪除按鈕
+               實際 class 是 .btn-danger 不是 .btn-icon，從來沒套用到，是
+               死規則；拿掉後補一條對到真正 class 的，讓刪除按鈕在手機
+               2 欄版面下跟日期欄一樣滿版，不要卡成半寬。 */
+            .stall-day-row > .btn-danger { grid-column: 1 / -1; }
             .product-batch-row { grid-template-columns: 1fr !important; padding: 0.8rem; }
             .product-batch-tags, .product-batch-image-row, .product-batch-description { grid-column: 1 !important; }
             .product-default-image-control { width: 100%; margin-left: 0; justify-content: flex-start; }
@@ -1798,7 +1852,7 @@
             <div id="section-vendors-orders" class="section-container">
                 <div class="page-header" style="flex-wrap: wrap; gap: 1rem; border-bottom: none; padding-bottom: 0;">
                     <h2 class="page-title" style="flex: 1 1 100%;">廠商叫貨明細</h2>
-                    <div class="filter-bar" style="display: flex; gap: 1rem; align-items: flex-end; background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; flex: 1;">
+                    <div class="filter-bar">
                         <div class="form-group" style="flex: initial; min-width: 150px;">
                             <select id="filter-v-vendor" aria-label="廠商">
                                 <option value="">全部廠商</option>
@@ -1832,7 +1886,7 @@
             <div id="section-website-orders" class="section-container">
                 <div class="page-header" style="flex-wrap: wrap; gap: 1rem; border-bottom: none; padding-bottom: 0;">
                     <h2 class="page-title" style="flex: 1 1 100%;">購物網站叫貨明細</h2>
-                    <div class="filter-bar" style="display: flex; gap: 1rem; align-items: flex-end; background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; flex: 1;">
+                    <div class="filter-bar">
                         <div class="form-group" style="flex: initial; min-width: 150px;">
                             <select id="filter-w-vendor" aria-label="購物網站">
                                 <option value="">全部購物網站</option>
@@ -1865,7 +1919,7 @@
                 </div>
                 <div style="border-bottom: 2px solid var(--border-color); margin-bottom: 1rem; margin-top: 1rem;"></div>
                 <div class="table-wrapper">
-                    <table style="table-layout: fixed;">
+                    <table class="website-order-table" style="table-layout: fixed;">
                         <thead>
                             <tr>
                                 <th style="width: 50px; text-align: center;"><i class="fa-solid fa-chevron-down"></i></th>
@@ -2728,12 +2782,12 @@
                                 <input type="url" id="stall-default-schedule-image" placeholder="沒有圖片時顯示這張圖" oninput="previewScheduleDefaultImage('stall')">
                                 <button class="btn btn-secondary" type="button" onclick="saveScheduleDefaultImage('stall')"><i class="fa-solid fa-floppy-disk"></i> 保存</button>
                             </div>
-                            <img id="stall-default-schedule-preview" alt="擺攤預設圖片預覽" style="display:none;width:72px;height:72px;object-fit:cover;border-radius:0.5rem;border:1px solid #e2e8f0;margin-top:0.5rem;">
+                            <img id="stall-default-schedule-preview" alt="擺攤預設圖片預覽" style="display:none;width:72px;height:72px;object-fit:cover;border-radius:0.5rem;border:1px solid var(--border-color);margin-top:0.5rem;">
                         </div>
                     </div>
                 </div>
                 <div class="table-wrapper">
-                    <table>
+                    <table class="schedule-table-stall">
                         <thead>
                             <tr>
                                 <th style="width: 100px;">預告圖</th>
@@ -2771,12 +2825,12 @@
                                 <input type="url" id="connection-default-schedule-image" placeholder="沒有圖片時顯示這張圖" oninput="previewScheduleDefaultImage('connection')">
                                 <button class="btn btn-secondary" type="button" onclick="saveScheduleDefaultImage('connection')"><i class="fa-solid fa-floppy-disk"></i> 保存</button>
                             </div>
-                            <img id="connection-default-schedule-preview" alt="連線預設圖片預覽" style="display:none;width:72px;height:72px;object-fit:cover;border-radius:0.5rem;border:1px solid #e2e8f0;margin-top:0.5rem;">
+                            <img id="connection-default-schedule-preview" alt="連線預設圖片預覽" style="display:none;width:72px;height:72px;object-fit:cover;border-radius:0.5rem;border:1px solid var(--border-color);margin-top:0.5rem;">
                         </div>
                     </div>
                 </div>
                 <div class="table-wrapper">
-                    <table>
+                    <table class="schedule-table-connection">
                         <thead>
                             <tr>
                                 <th style="width: 100px;">預告圖</th>
@@ -4599,10 +4653,10 @@
                     item.shipped = item.shipped === '已出貨' ? '未出貨' : '已出貨';
                     
                     if (item.shipped === '已出貨') {
-                        btn.className = 'btn btn-sm btn-success';
+                        btn.className = 'btn btn-sm order-shipped-pill shipped';
                         btn.innerHTML = '<i class="fa-solid fa-check"></i> 已出貨';
                     } else {
-                        btn.className = 'btn btn-sm btn-danger';
+                        btn.className = 'btn btn-sm order-shipped-pill unshipped';
                         btn.innerHTML = '<i class="fa-solid fa-xmark"></i> 未出貨';
                     }
 
@@ -5318,7 +5372,7 @@
                 tbody.innerHTML += `<tr>
                     <td>${w.name}</td><td>${w.location}</td>
                     <td>${w.currency}</td>
-                    <td>${w.link ? `<a href="${w.link}" target="_blank" style="color:#ec4899;"><i class="fa-solid fa-link"></i></a>` : '-'}</td>
+                    <td>${w.link ? `<a href="${w.link}" target="_blank" style="color:var(--primary-color);"><i class="fa-solid fa-link"></i></a>` : '-'}</td>
                     <td>${w.notes}</td>
                     <td style="display: flex; gap: 0.5rem; justify-content: center;">
                         <button class="btn btn-sm btn-action-edit" onclick="openWebsiteModal(${w.id})"><i class="fa-solid fa-pen"></i></button>
@@ -10403,7 +10457,7 @@
             tbody.innerHTML = backendMembers.map(member => `
                 <tr>
                     <td>${storefrontDateTime(member.createdAt)}</td>
-                    <td><strong>${escapeHtml(member.email || '—')}</strong>${member.emailVerified ? '' : '<div style="color:#be123c;font-size:0.74rem;font-weight:900;">未驗證</div>'}</td>
+                    <td><strong>${escapeHtml(member.email || '—')}</strong>${member.emailVerified ? '' : '<div style="color:var(--status-abnormal-fg);font-size:0.74rem;font-weight:700;">未驗證</div>'}</td>
                     <td>${maskFallback(member.displayName)}</td>
                     <td>${maskFallback(member.phoneMasked)}</td>
                     <td>${backendMemberLineBadge(member.lineLinked)}</td>
@@ -10447,7 +10501,7 @@
                     <div class="backend-member-detail-header">
                         <div>
                             <div class="backend-member-detail-title">會員詳情｜${escapeHtml(user.email || '—')}</div>
-                            <div style="color:#64748b;font-size:0.78rem;font-weight:800;">${user.emailVerified ? 'Email 已驗證' : 'Email 未驗證'}・${backendMemberStatusBadge(profile.status)}</div>
+                            <div style="color:var(--text-muted);font-size:0.78rem;font-weight:700;">${user.emailVerified ? 'Email 已驗證' : 'Email 未驗證'}・${backendMemberStatusBadge(profile.status)}</div>
                         </div>
                         <div style="display:flex;gap:0.45rem;flex-wrap:wrap;">
                             <button class="btn btn-sm btn-secondary" type="button" onclick="openBackendMemberDetail('${escapeHtml(user.userId)}', ${revealed ? 'false' : 'true'})">${revealed ? '隱藏完整資料' : '顯示完整資料'}</button>
@@ -15586,16 +15640,16 @@
                 const vOrders = grouped[vendorId];
                 
                 const groupDiv = document.createElement('div');
-                groupDiv.style.border = '1px solid #e2e8f0';
-                groupDiv.style.borderRadius = '0.5rem';
+                groupDiv.style.border = '1px solid var(--border-color)';
+                groupDiv.style.borderRadius = '0.875rem';
                 groupDiv.style.overflow = 'hidden';
 
                 const header = document.createElement('div');
-                header.style.background = '#f1f5f9';
+                header.style.background = 'var(--bg-color)';
                 header.style.padding = '1rem 1.5rem';
                 header.style.fontWeight = '600';
-                header.style.color = '#334155';
-                header.innerHTML = `<i class="fa-solid fa-store" style="color: #64748b; margin-right: 0.5rem;"></i> ${vendor.name} <span style="font-size: 0.85rem; color: #94a3b8; font-weight: normal; margin-left: 0.5rem;">(共 ${vOrders.length} 筆訂單)</span>`;
+                header.style.color = 'var(--text-dark)';
+                header.innerHTML = `<i class="fa-solid fa-store" style="color: var(--text-muted); margin-right: 0.5rem;"></i> ${vendor.name} <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal; margin-left: 0.5rem;">(共 ${vOrders.length} 筆訂單)</span>`;
                 groupDiv.appendChild(header);
 
                 const tableWrapper = document.createElement('div');
@@ -15605,6 +15659,7 @@
                 tableWrapper.style.borderRadius = '0';
 
                 const table = document.createElement('table');
+                table.className = 'vendor-order-group-table';
                 table.style.tableLayout = 'fixed';
                 table.innerHTML = `
                     <thead>
@@ -15670,21 +15725,21 @@
                                 <tbody>`;
                     
                     if(o.items.length === 0) {
-                        subHtml += `<tr><td colspan="8" style="text-align:center; color:#94a3b8;">無商品明細</td></tr>`;
+                        subHtml += `<tr><td colspan="8" style="text-align:center; color:var(--text-muted);">無商品明細</td></tr>`;
                     } else {
                         o.items.forEach((item, index) => {
                             const itemTotal = (parseInt(item.price||0) * parseInt(item.qty||0)).toLocaleString();
                             const itemShipped = item.shipped || '未出貨';
                             subHtml += `<tr>
                                 <td style="text-align: center;"><input type="checkbox" class="item-chk-${o.id}" value="${item.itemId}"></td>
-                                <td style="text-align: center; color: #64748b; font-weight: 500;">${index + 1}</td>
+                                <td style="text-align: center; color: var(--text-muted); font-weight: 500;">${index + 1}</td>
                                 <td>${item.name}</td>
                                 <td>${item.link ? `<a href="${item.link}" target="_blank"><i class="fa-solid fa-link"></i></a>` : '-'}</td>
                                 <td>${item.qty}</td>
                                 <td>${item.price}</td>
                                 <td style="font-weight: 600;">${itemTotal}</td>
                                 <td style="text-align: center;">
-                                    <button class="btn btn-sm ${itemShipped === '已出貨' ? 'btn-success' : 'btn-danger'}" onclick="toggleItemShipped(${o.id}, '${item.itemId}', this)">
+                                    <button class="btn btn-sm order-shipped-pill ${itemShipped === '已出貨' ? 'shipped' : 'unshipped'}" onclick="toggleItemShipped(${o.id}, '${item.itemId}', this)">
                                         ${itemShipped === '已出貨' ? '<i class="fa-solid fa-check"></i> 已出貨' : '<i class="fa-solid fa-xmark"></i> 未出貨'}
                                     </button>
                                 </td>
@@ -15733,7 +15788,7 @@
                 
                 let sourceNameHtml = source.name;
                 if (source.link) {
-                    sourceNameHtml = `<a href="${source.link}" target="_blank" style="color: #ec4899; text-decoration: none;"><i class="fa-solid fa-link" style="margin-right:0.25rem;"></i>${source.name}</a>`;
+                    sourceNameHtml = `<a href="${source.link}" target="_blank" style="color: var(--primary-color); text-decoration: none;"><i class="fa-solid fa-link" style="margin-right:0.25rem;"></i>${source.name}</a>`;
                 }
                 
                 const tr = document.createElement('tr');
@@ -15765,7 +15820,7 @@
                 let metaHtml = '';
                 if (o.orderNo || o.trackingNo) {
                     metaHtml = `
-                        <div style="background: #fdf2f8; color: #be185d; padding: 0.5rem 1rem; border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.9rem; font-weight: 500; display: flex; gap: 1.5rem;">
+                        <div style="background: var(--sidebar-active); color: var(--primary-color); padding: 0.5rem 1rem; border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.9rem; font-weight: 500; display: flex; gap: 1.5rem;">
                             ${o.orderNo ? `<span><i class="fa-solid fa-hashtag"></i> 訂單編號: ${o.orderNo}</span>` : ''}
                             ${o.trackingNo ? `<span><i class="fa-solid fa-truck-fast"></i> 出貨單號: ${o.trackingNo}</span>` : ''}
                         </div>
@@ -15797,13 +15852,13 @@
                             <tbody>`;
                 
                 if(o.items.length === 0) {
-                    subHtml += `<tr><td colspan="7" style="text-align:center; color:#94a3b8;">無商品明細</td></tr>`;
+                    subHtml += `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">無商品明細</td></tr>`;
                 } else {
                     o.items.forEach((item, index) => {
                         const itemTotal = (parseInt(item.price||0) * parseInt(item.qty||0)).toLocaleString();
                         subHtml += `<tr>
                             <td style="text-align: center;"><input type="checkbox" class="item-chk-${o.id}" value="${item.itemId}"></td>
-                            <td style="text-align: center; color: #64748b; font-weight: 500;">${index + 1}</td>
+                            <td style="text-align: center; color: var(--text-muted); font-weight: 500;">${index + 1}</td>
                             <td>${item.name}</td>
                             <td>${item.link ? `<a href="${item.link}" target="_blank"><i class="fa-solid fa-link"></i></a>` : '-'}</td>
                             <td>${item.qty}</td>
