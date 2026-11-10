@@ -279,9 +279,9 @@
         #section-community-orders > .backend-member-filterbar { border: none; border-radius: 0; background: transparent; box-shadow: none; padding: 1.1rem 0; border-bottom: 1px solid var(--border-color); }
         #section-community-orders > .backend-member-filterbar:last-child { border-bottom: none; padding-bottom: 0; }
         .community-pending-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.65rem; margin-bottom: 0.85rem; }
-        .community-pending-summary-item { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; padding: 0.75rem 0.6rem; border: 1px solid #fce7f3; border-radius: 0.9rem; background: #fff7fb; box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05); }
-        .community-pending-summary-count { font-size: 1.6rem; font-weight: 950; color: #be185d; line-height: 1.1; }
-        .community-pending-summary-label { font-size: 0.76rem; font-weight: 900; color: #64748b; }
+        .community-pending-summary-item { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; padding: 0.75rem 0.6rem; border: 1px solid var(--border-color); border-radius: 0.9rem; background: var(--surface-color); box-shadow: none; }
+        .community-pending-summary-count { font-size: 1.6rem; font-weight: 700; color: var(--primary-color); line-height: 1.1; }
+        .community-pending-summary-label { font-size: 0.76rem; font-weight: 500; color: var(--text-muted); }
         .community-line-template-list { display: grid; gap: 0.5rem; min-width: 0; }
         /* min-width:0 在這兩個 class 都要：.community-line-template-row 是
            grid item，.community-line-template-row-info 是 flex item，
@@ -290,36 +290,43 @@
            min-width:0，手機窄螢幕會被長文案撐寬整個 modal，變成要左右拖
            才能看到編輯按鈕（這份 CSS 被「訊息文案設定」「LINE 通知文案
            設定」兩個彈窗共用，一次修好兩邊）。 */
-        .community-line-template-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.65rem 0.85rem; border: 1px solid #fce7f3; border-radius: 0.85rem; background: #fff7fb; min-width: 0; }
+        .community-line-template-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.65rem 0.85rem; border: 1px solid var(--border-color); border-radius: 0.85rem; background: var(--surface-color); min-width: 0; }
         .community-line-template-row-info { min-width: 0; }
-        .community-line-template-row-label { font-size: 0.85rem; font-weight: 900; color: #334155; }
-        .community-line-template-row-preview { margin-top: 0.15rem; font-size: 0.74rem; font-weight: 700; color: #94a3b8; max-width: 480px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .community-payment-status { display:inline-flex;align-items:center;border-radius:999px;padding:0.28rem 0.58rem;font-size:0.72rem;font-weight:900;white-space:nowrap; }
-        .community-payment-status.pending { background:#fef3c7;color:#92400e; }
-        .community-payment-status.approved { background:#dcfce7;color:#166534; }
-        .community-payment-status.rejected { background:#fee2e2;color:#991b1b; }
-        .community-payment-status.topup { background:#ffedd5;color:#9a3412; }
+        .community-line-template-row-label { font-size: 0.85rem; font-weight: 700; color: var(--text-dark); }
+        .community-line-template-row-preview { margin-top: 0.15rem; font-size: 0.74rem; font-weight: 500; color: var(--text-muted); max-width: 480px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .community-payment-status { display:inline-flex;align-items:center;border-radius:999px;padding:0.28rem 0.58rem;font-size:0.72rem;font-weight:700;white-space:nowrap; }
+        .community-payment-status.pending { background: var(--status-review-bg); color: var(--status-review-fg); }
+        .community-payment-status.approved { background: var(--status-success-bg); color: var(--status-success-fg); }
+        .community-payment-status.rejected { background: var(--status-abnormal-bg); color: var(--status-abnormal-fg); }
+        .community-payment-status.topup { background: var(--status-topup-bg); color: var(--status-topup-fg); }
+        /* overpaid（多匯待退款）這輪刻意保留原本色號：目前共用色票只有 5 組
+           （refund/topup/abnormal/review/success），refund 這組已經配給
+           refunded（退款完成）狀態、topup 配給需補款，沒有第 6 組可用，
+           不新增色碼就只能先留著，列在報告的待確認事項。 */
         .community-payment-status.overpaid { background:#dbeafe;color:#1d4ed8; }
-        .community-payment-status.refunded { background:#ede9fe;color:#6d28d9; }
-        .community-order-status-select { min-height: 30px; border: 0; border-radius: 999px; padding: 0.34rem 0.7rem; color: #111827; font-size: 0.76rem; font-weight: 900; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; text-align: center; }
+        .community-payment-status.refunded { background: var(--status-refund-bg); color: var(--status-refund-fg); }
+        .community-order-status-select { min-height: 30px; border: 0; border-radius: 999px; padding: 0.34rem 0.7rem; color: var(--text-dark); font-size: 0.76rem; font-weight: 700; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; text-align: center; }
         .community-order-status-select:focus { box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.15); }
-        .community-status-green { background: #dcfce7; }
-        .community-status-red { background: #fee2e2; }
-        .community-status-yellow { background: #fef3c7; }
-        .community-status-neutral { background: #f1f5f9; }
-        .community-order-notes-input { width: 150px; height: 34px; border: 1px solid #fbcfe8; border-radius: 999px; padding: 0.38rem 0.75rem; color: #111827; font-size: 0.78rem; font-weight: 700; line-height: 1; vertical-align: middle; }
-        .community-shipment-marketplace-input { min-width: 200px; flex: 1; height: 34px; border: 1px solid #fbcfe8; border-radius: 0.72rem; padding: 0.38rem 0.65rem; color: #111827; font-size: 0.78rem; font-weight: 700; }
-        .community-shipment-card { border: 1px solid #fce7f3; border-radius: 0.9rem; background: #fff7fb; overflow: hidden; }
-        .community-shipment-toggle-btn { background: none; border: none; cursor: pointer; color: #ec4899; font-size: 0.75rem; padding: 0.2rem; transition: transform .18s ease; }
+        .community-status-green { background: var(--status-success-bg); }
+        .community-status-red { background: var(--status-abnormal-bg); }
+        .community-status-yellow { background: var(--status-topup-bg); }
+        .community-status-neutral { background: var(--gray-bg); }
+        /* 連線場次清單的狀態（未開始／進行中／已結束）沿用同一組
+           community-status-* 色調 class，外觀統一套這顆小膠囊 class。 */
+        .community-livestream-session-status-pill { display: inline-block; padding: 0.3rem 0.7rem; border-radius: 999px; font-weight: 700; font-size: 0.76rem; color: var(--text-dark); }
+        .community-order-notes-input { width: 150px; height: 34px; border: 1px solid var(--border-color); border-radius: 999px; padding: 0.38rem 0.75rem; color: var(--text-dark); font-size: 0.78rem; font-weight: 700; line-height: 1; vertical-align: middle; }
+        .community-shipment-marketplace-input { min-width: 200px; flex: 1; height: 34px; border: 1px solid var(--border-color); border-radius: 0.72rem; padding: 0.38rem 0.65rem; color: var(--text-dark); font-size: 0.78rem; font-weight: 700; }
+        .community-shipment-card { border: 1px solid var(--border-color); border-radius: 0.9rem; background: var(--surface-color); overflow: hidden; }
+        .community-shipment-toggle-btn { background: none; border: none; cursor: pointer; color: var(--primary-color); font-size: 0.75rem; padding: 0.2rem; transition: transform .18s ease; }
         .community-shipment-toggle-btn.open { transform: rotate(180deg); }
         .community-shipment-detail-row { display: none; }
         .community-shipment-detail-row.open { display: table-row; }
-        .community-shipment-detail-row td { padding: 0.7rem; background: #fff7fb; border-top: 1px dashed #f9a8d4; }
+        .community-shipment-detail-row td { padding: 0.7rem; background: var(--gray-bg); border-top: 1px dashed var(--border-color); }
         #section-community-orders .backend-member-table .community-shipment-detail-row td { text-align: left; }
         .community-shipment-notebook-group { margin-bottom: 0.6rem; }
         .community-shipment-notebook-group:last-child { margin-bottom: 0; }
-        .community-shipment-notebook-group h4 { margin: 0 0 0.3rem; font-size: 0.8rem; font-weight: 900; color: #be185d; }
-        .community-shipment-item-row { display: flex; gap: 0.35rem; padding: 0.25rem 0; font-size: 0.78rem; font-weight: 700; color: #475569; }
+        .community-shipment-notebook-group h4 { margin: 0 0 0.3rem; font-size: 0.8rem; font-weight: 700; color: var(--primary-color); }
+        .community-shipment-item-row { display: flex; gap: 0.35rem; padding: 0.25rem 0; font-size: 0.78rem; font-weight: 500; color: var(--text-dark); }
         /* 關鍵字設定 Modal 裡每組的「啟用/停用」開關——放在該組 label
            同一行、靠右。停用時對應的 textarea 視覺上調淡（opacity），
            但不加 disabled 屬性，後台還是可以照常編輯詞庫內容，純粹是
@@ -395,12 +402,16 @@
         /* 社群綁定：暱稱／@IG＋類型標籤＋LINE 名稱，三個既有顯示客人名稱
            的地方（社群連線訂單卡片／依客人統計／匯款紀錄）共用這組樣式。 */
         .community-binding-line { display: inline-flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
-        .community-binding-value { font-weight: 900; }
-        .community-binding-badge { display: inline-block; border-radius: 999px; padding: 0.05rem 0.5rem; font-size: 0.68rem; font-weight: 800; border: 1px solid; white-space: nowrap; }
-        .community-binding-badge-nick { background: #ecfdf3; border-color: #86efac; color: #15803d; }
-        .community-binding-badge-ig { background: #f5ebff; border-color: #d8b4fe; color: #7e22ce; }
-        .community-binding-badge-none { background: #f1f5f9; border-color: #e2e8f0; color: #94a3b8; }
-        .community-binding-sub { font-size: 0.72rem; font-weight: 700; color: #94a3b8; }
+        .community-binding-value { font-weight: 700; }
+        .community-binding-badge { display: inline-block; border-radius: 999px; padding: 0.05rem 0.5rem; font-size: 0.68rem; font-weight: 700; border: 1px solid; white-space: nowrap; }
+        .community-binding-badge-nick { background: var(--status-success-bg); border-color: var(--status-success-fg); color: var(--status-success-fg); }
+        .community-binding-badge-ig { background: var(--status-review-bg); border-color: var(--status-review-fg); color: var(--status-review-fg); }
+        .community-binding-badge-none { background: var(--gray-bg); border-color: var(--border-color); color: var(--text-muted); }
+        .community-binding-sub { font-size: 0.72rem; font-weight: 500; color: var(--text-muted); }
+        /* 社群綁定清單：待核准／撞名這兩個旗標膠囊共用這組 class。 */
+        .community-identity-flag-badge { display: inline-block; margin-left: 0.4rem; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+        .community-identity-flag-badge.pending { background: var(--status-topup-bg); color: var(--status-topup-fg); }
+        .community-identity-flag-badge.collision { background: var(--status-review-bg); color: var(--status-review-fg); }
         /* 「買到幾個」輸入框——取代原本二元的「標記已購買」打勾按鈕，
            放在卡片頭跟展開表單各一個（跟數量/單價同一套雙處同步手法）。 */
         .community-livestream-purchased-qty-wrap { display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0; }
@@ -655,12 +666,12 @@
         .community-notebook-table td, .community-notebook-table th { white-space: nowrap; }
         .community-notebook-table td.community-notebook-name-cell { white-space: normal; }
         .community-notebook-toggle-row td { padding: 0.4rem 0.6rem; }
-        .community-notebook-toggle-btn { background: none; border: none; cursor: pointer; color: #ec4899; font-size: 0.75rem; padding: 0.2rem; transition: transform .18s ease; }
+        .community-notebook-toggle-btn { background: none; border: none; cursor: pointer; color: var(--primary-color); font-size: 0.75rem; padding: 0.2rem; transition: transform .18s ease; }
         .community-notebook-toggle-btn.open { transform: rotate(180deg); }
         .community-notebook-detail-row { display: none; }
         .community-notebook-detail-row.open { display: table-row; }
-        .community-notebook-detail-row td { padding: 0.7rem; background: #fff7fb; border-top: 1px dashed #f9a8d4; }
-        .community-notebook-detail-summary { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.55rem; color: #64748b; font-size: 0.75rem; font-weight: 800; }
+        .community-notebook-detail-row td { padding: 0.7rem; background: var(--gray-bg); border-top: 1px dashed var(--border-color); }
+        .community-notebook-detail-summary { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.55rem; color: var(--text-muted); font-size: 0.75rem; font-weight: 500; }
         .community-order-row-actions { display: inline-flex; align-items: center; gap: 0.35rem; }
         .backend-member-pill { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0.22rem 0.55rem; font-size: 0.74rem; font-weight: 900; border: 1px solid #e2e8f0; background: #f8fafc; color: #475569; }
         .backend-member-pill.on { border-color: #bbf7d0; background: #dcfce7; color: #166534; }
@@ -1962,7 +1973,7 @@
                 </div>
                 <div class="backend-member-filterbar">
                     <div class="page-header" style="margin-bottom:0.65rem;">
-                        <h3 style="font-size:1.05rem;font-weight:900;color:#2563eb;margin:0;">記事本管理</h3>
+                        <h3 class="page-title" style="font-size:1.05rem;margin:0;">記事本管理</h3>
                     </div>
                     <div class="backend-member-filter-row" style="margin-bottom:0.6rem;">
                         <div class="backend-member-filter-field" style="min-width:200px;">
@@ -1996,7 +2007,7 @@
                     </div>
                 </div>
                 <div class="backend-member-filterbar">
-                    <h3 style="font-size:1.05rem;font-weight:900;color:#2563eb;margin:0 0 0.5rem;">訂單明細</h3>
+                    <h3 class="page-title" style="font-size:1.05rem;margin:0 0 0.5rem;">訂單明細</h3>
                     <div class="backend-member-filter-row">
                         <div class="backend-member-filter-field" style="min-width:260px;">
                             <input id="community-order-search" type="search" placeholder="社群暱稱、記事本名稱、商品名稱" aria-label="搜尋" onkeydown="handleCommunityOrderSearchKey(event)">
@@ -2027,7 +2038,7 @@
                         </div>
                         <button class="btn btn-primary" type="button" onclick="applyCommunityOrderFilters()"><i class="fa-solid fa-magnifying-glass"></i><span class="btn-label"> 搜尋</span></button>
                         <button class="btn btn-secondary" type="button" onclick="clearCommunityOrderFilters()"><i class="fa-solid fa-eraser"></i><span class="btn-label"> 清除</span></button>
-                        <span id="community-order-selected-count" style="font-size:0.78rem;font-weight:800;color:#64748b;margin-left:auto;">已選 0 筆</span>
+                        <span id="community-order-selected-count" style="font-size:0.78rem;font-weight:500;color:var(--text-muted);margin-left:auto;">已選 0 筆</span>
                         <div class="backend-member-filter-field">
                             <label for="community-batch-field">批次修改欄位</label>
                             <select id="community-batch-field" onchange="renderCommunityBatchValueOptions()">
@@ -2095,9 +2106,9 @@
                 </div>
                 <div class="backend-member-filterbar">
                     <div class="page-header" style="margin-bottom:0.5rem;">
-                        <h3 style="font-size:1.05rem;font-weight:900;color:#2563eb;margin:0;">出貨申請</h3>
+                        <h3 class="page-title" style="font-size:1.05rem;margin:0;">出貨申請</h3>
                         <div class="toolbar" style="align-items:center;gap:0.6rem;">
-                            <span id="community-shipment-selected-count" style="font-size:0.78rem;font-weight:800;color:#64748b;">已選 0 筆</span>
+                            <span id="community-shipment-selected-count" style="font-size:0.78rem;font-weight:500;color:var(--text-muted);">已選 0 筆</span>
                             <button class="btn btn-secondary btn-sm" type="button" id="community-shipment-batch-edit-btn" onclick="openCommunityShipmentBatchLinkModal()" disabled><i class="fa-solid fa-link"></i> 一鍵編輯連結</button>
                         </div>
                     </div>
@@ -2131,7 +2142,7 @@
                 </div>
                 <div class="backend-member-filterbar">
                     <div class="page-header" style="margin-bottom:0.65rem;border-bottom:none;padding-bottom:0;">
-                        <h3 style="font-size:1.05rem;font-weight:900;color:#2563eb;margin:0;">LINE 通知紀錄</h3>
+                        <h3 class="page-title" style="font-size:1.05rem;margin:0;">LINE 通知紀錄</h3>
                         <button class="btn btn-secondary" type="button" onclick="loadCommunityLineNotifications()"><i class="fa-solid fa-rotate"></i> 重新整理</button>
                     </div>
                     <div class="table-wrapper" style="overflow-x:auto;">
@@ -2185,7 +2196,7 @@
                         <button class="btn btn-primary" type="button" onclick="openCommunityLivestreamSessionModal()"><i class="fa-solid fa-plus"></i><span class="btn-label"> 新增場次</span></button>
                     </div>
                 </div>
-                <p style="margin:0 0 0.75rem;color:#94a3b8;font-size:0.8rem;font-weight:700;">客人在場次時間內送出的訂單會自動歸到這一場；時間到了客人就不能再下單，不需要你手動關閉。同一時間只能有一個場次。</p>
+                <p style="margin:0 0 0.75rem;color:var(--text-muted);font-size:0.8rem;font-weight:700;">客人在場次時間內送出的訂單會自動歸到這一場；時間到了客人就不能再下單，不需要你手動關閉。同一時間只能有一個場次。</p>
                 <div class="table-wrapper">
                     <table>
                         <thead>
@@ -2310,7 +2321,7 @@
                         <button class="btn btn-secondary" type="button" onclick="loadCommunityLineIdentities()"><i class="fa-solid fa-rotate"></i><span class="btn-label"> 重新整理</span></button>
                     </div>
                 </div>
-                <div class="site-feature-flag-table-row" style="padding:0.75rem 0;margin-bottom:0.75rem;border-bottom:1px solid #e2e8f0;">
+                <div class="site-feature-flag-table-row" style="padding:0.75rem 0;margin-bottom:0.75rem;border-bottom:1px solid var(--border-color);">
                     <div class="site-feature-flag-col-main">
                         <label class="site-feature-flag-switch">
                             <input type="checkbox" id="community-order-gate-toggle" onchange="handleCommunityOrderGateToggle(this.checked)">
@@ -2337,10 +2348,10 @@
                             </div>
                             <button class="btn btn-primary" type="button" onclick="applyCommunityLineIdentitiesFilters()"><i class="fa-solid fa-magnifying-glass"></i><span class="btn-label"> 搜尋</span></button>
                             <button class="btn btn-secondary" type="button" onclick="clearCommunityLineIdentitiesFilters()"><i class="fa-solid fa-eraser"></i><span class="btn-label"> 清除</span></button>
-                            <label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.85rem;font-weight:700;color:#9a3412;white-space:nowrap;">
+                            <label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.85rem;font-weight:700;color:var(--status-topup-fg);white-space:nowrap;">
                                 <input type="checkbox" onchange="toggleCommunityLineIdentitiesPendingOnly(this.checked)"> 只顯示待核准
                             </label>
-                            <label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.85rem;font-weight:700;color:#4338ca;white-space:nowrap;">
+                            <label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.85rem;font-weight:700;color:var(--status-review-fg);white-space:nowrap;">
                                 <input type="checkbox" onchange="toggleCommunityLineIdentitiesCollisionOnly(this.checked)"> 只顯示撞名
                             </label>
                         </div>
@@ -3284,7 +3295,7 @@
                 <button class="close-btn" onclick="closeCommunityImportModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
-                <p id="communityImportPreviewSummary" style="font-size:0.8rem;font-weight:800;color:#64748b;margin-bottom:0.75rem;"></p>
+                <p id="communityImportPreviewSummary" style="font-size:0.8rem;font-weight:500;color:var(--text-muted);margin-bottom:0.75rem;"></p>
                 <div class="table-wrapper" style="overflow-x:auto;max-height:50vh;overflow-y:auto;">
                     <table class="backend-member-table">
                         <thead>
@@ -3818,7 +3829,7 @@
                     <div class="form-group" style="min-width:120px;"><label>數量</label><input id="community-order-add-quantity" type="number" min="1" step="1" value="1"></div>
                     <div class="form-group" style="min-width:120px;"><label>單價</label><input id="community-order-add-price" type="number" min="0" step="1" value="0"></div>
                 </div>
-                <p style="margin:0;color:#94a3b8;font-size:0.76rem;font-weight:800;">搶購／匯款／到貨／下單狀態將沿用系統預設值，不需在此設定。</p>
+                <p style="margin:0;color:var(--text-muted);font-size:0.76rem;font-weight:500;">搶購／匯款／到貨／下單狀態將沿用系統預設值，不需在此設定。</p>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" onclick="closeCommunityOrderAddModal()">取消</button>
@@ -3936,7 +3947,7 @@
                     <button class="btn btn-sm btn-secondary" type="button" onclick="insertCommunityLineTemplateVariable('{{社群訂單連結}}')">插入 {{社群訂單連結}}</button>
                     <button class="btn btn-sm btn-secondary" type="button" onclick="insertCommunityLineTemplateVariable('{{賣貨便連結}}')">插入 {{賣貨便連結}}</button>
                 </div>
-                <p style="margin:0.6rem 0 0;color:#94a3b8;font-size:0.76rem;font-weight:800;">商品清單格式：系列名稱｜商品名稱 ×數量（每項一行）</p>
+                <p style="margin:0.6rem 0 0;color:var(--text-muted);font-size:0.76rem;font-weight:500;">商品清單格式：系列名稱｜商品名稱 ×數量（每項一行）</p>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" onclick="resetCommunityLineTemplateToDefault()">恢復預設文案</button>
@@ -3994,7 +4005,7 @@
                     <label>結束時間</label>
                     <input id="community-livestream-session-ends-at" type="datetime-local">
                 </div>
-                <p id="community-livestream-session-error" style="margin:0;color:#dc2626;font-size:0.78rem;font-weight:800;min-height:1.1rem;"></p>
+                <p id="community-livestream-session-error" style="margin:0;color:var(--status-abnormal-fg);font-size:0.78rem;font-weight:500;min-height:1.1rem;"></p>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" onclick="closeCommunityLivestreamSessionModal()">取消</button>
@@ -4051,7 +4062,7 @@
                 <button class="close-btn" type="button" onclick="closeCommunityLineIdentityEditModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
-                <p id="community-line-identity-edit-line-name" style="margin:0 0 0.75rem;color:#64748b;font-size:0.8rem;font-weight:800;"></p>
+                <p id="community-line-identity-edit-line-name" style="margin:0 0 0.75rem;color:var(--text-muted);font-size:0.8rem;font-weight:500;"></p>
                 <div class="form-group">
                     <label>類型</label>
                     <select id="community-line-identity-edit-type" onchange="updateCommunityLineIdentityEditHint()">
@@ -4063,7 +4074,7 @@
                     <label id="community-line-identity-edit-value-label">社群暱稱</label>
                     <input id="community-line-identity-edit-value" type="text" maxlength="40" oninput="document.getElementById('community-line-identity-edit-error').textContent=''">
                 </div>
-                <p id="community-line-identity-edit-error" role="alert" style="margin:0;color:#dc2626;font-size:0.8rem;font-weight:800;min-height:1.2em;"></p>
+                <p id="community-line-identity-edit-error" role="alert" style="margin:0;color:var(--status-abnormal-fg);font-size:0.8rem;font-weight:500;min-height:1.2em;"></p>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" onclick="closeCommunityLineIdentityEditModal()">取消</button>
@@ -4079,8 +4090,8 @@
                 <button class="close-btn" type="button" onclick="closeCommunityLineIdentityUnbindModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
-                <p style="margin:0 0 0.75rem;color:#64748b;font-size:0.8rem;line-height:1.6;">解除後這位客人在後台會回到只顯示 LINE 名稱，他之後可以重新綁定。</p>
-                <p id="community-line-identity-unbind-target" style="margin:0;font-weight:900;color:#334155;"></p>
+                <p style="margin:0 0 0.75rem;color:var(--text-muted);font-size:0.8rem;line-height:1.6;">解除後這位客人在後台會回到只顯示 LINE 名稱，他之後可以重新綁定。</p>
+                <p id="community-line-identity-unbind-target" style="margin:0;font-weight:700;color:var(--text-dark);"></p>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" onclick="closeCommunityLineIdentityUnbindModal()">不解除</button>
@@ -10676,7 +10687,7 @@
                     <tr>
                         <td>${escapeHtml(session.name)}</td>
                         <td>${communityLivestreamFormatTaipeiRange(session.starts_at, session.ends_at)}</td>
-                        <td><span class="community-order-status-select ${status.tone}" style="display:inline-block;padding:0.3rem 0.7rem;border-radius:999px;font-weight:900;font-size:0.76rem;">${status.label}</span></td>
+                        <td><span class="community-livestream-session-status-pill ${status.tone}">${status.label}</span></td>
                         <td>${session.customerCount} 位客人・${session.productCount} 種商品</td>
                         <td>
                             <button class="btn btn-sm btn-secondary" type="button" onclick="openCommunityLivestreamSessionModal('${session.id}')"><i class="fa-solid fa-pen"></i></button>
@@ -12541,7 +12552,7 @@
         function renderCommunityLineIdentitiesBound(stats) {
             const statsEl = document.getElementById('community-line-identities-stats');
             if (statsEl && stats) {
-                statsEl.innerHTML = `<span>已綁定 ${stats.total} 人</span><span style="margin-left:0.75rem;">社群暱稱 ${stats.nickname}</span><span style="margin-left:0.75rem;">IG ${stats.ig}</span>${stats.needsReview ? `<span style="margin-left:0.75rem;color:#c2410c;font-weight:900;">待核准 ${stats.needsReview}</span>` : ''}${stats.collision ? `<span style="margin-left:0.75rem;color:#4338ca;font-weight:900;">撞名 ${stats.collision}</span>` : ''}`;
+                statsEl.innerHTML = `<span>已綁定 ${stats.total} 人</span><span style="margin-left:0.75rem;">社群暱稱 ${stats.nickname}</span><span style="margin-left:0.75rem;">IG ${stats.ig}</span>${stats.needsReview ? `<span style="margin-left:0.75rem;color:var(--status-topup-fg);font-weight:700;">待核准 ${stats.needsReview}</span>` : ''}${stats.collision ? `<span style="margin-left:0.75rem;color:var(--status-review-fg);font-weight:700;">撞名 ${stats.collision}</span>` : ''}`;
             }
             const list = document.getElementById('community-line-identities-list');
             if (!list) return;
@@ -12566,17 +12577,17 @@
             list.innerHTML = rows.map(c => {
                 const hasCollision = Boolean(c.collidesWith && c.collidesWith.length);
                 const badges = [
-                    c.needsReview ? '<span style="display:inline-block;margin-left:0.4rem;padding:0.1rem 0.5rem;border-radius:999px;background:#fed7aa;color:#9a3412;font-size:0.75rem;font-weight:900;">待核准</span>' : '',
-                    hasCollision ? '<span style="display:inline-block;margin-left:0.4rem;padding:0.1rem 0.5rem;border-radius:999px;background:#e0e7ff;color:#4338ca;font-size:0.75rem;font-weight:900;">撞名</span>' : '',
+                    c.needsReview ? '<span class="community-identity-flag-badge pending">待核准</span>' : '',
+                    hasCollision ? '<span class="community-identity-flag-badge collision">撞名</span>' : '',
                 ].join('');
                 const notebookLine = c.needsReview
-                    ? `<div style="padding:0 0.6rem 0.5rem;font-size:0.8rem;color:#9a3412;">記事本裡符合的紀錄：${c.notebookMatch ? `「${escapeHtml(c.notebookMatch.notebookName)}」最近下單 ${storefrontDateTime(c.notebookMatch.lastOrderAt)}` : '沒有找到符合的記事本紀錄（可能已經核准過一次，或名字已經不在記事本裡）'}</div>`
+                    ? `<div style="padding:0 0.6rem 0.5rem;font-size:0.8rem;color:var(--status-topup-fg);">記事本裡符合的紀錄：${c.notebookMatch ? `「${escapeHtml(c.notebookMatch.notebookName)}」最近下單 ${storefrontDateTime(c.notebookMatch.lastOrderAt)}` : '沒有找到符合的記事本紀錄（可能已經核准過一次，或名字已經不在記事本裡）'}</div>`
                     : '';
                 const collisionLine = hasCollision
-                    ? `<div style="padding:0 0.6rem 0.5rem;font-size:0.8rem;color:#4338ca;">跟這些客人目前的綁定值正規化後一樣：${c.collidesWith.map(peer => `${escapeHtml(peer.lineDisplayName)}（${peer.type === 'ig' ? 'IG' : '社群暱稱'}「${escapeHtml(peer.value)}」）`).join('、')}——依暱稱找人的功能遇到這種情況會直接找不到人，記事本通知可能送不出去。</div>`
+                    ? `<div style="padding:0 0.6rem 0.5rem;font-size:0.8rem;color:var(--status-review-fg);">跟這些客人目前的綁定值正規化後一樣：${c.collidesWith.map(peer => `${escapeHtml(peer.lineDisplayName)}（${peer.type === 'ig' ? 'IG' : '社群暱稱'}「${escapeHtml(peer.value)}」）`).join('、')}——依暱稱找人的功能遇到這種情況會直接找不到人，記事本通知可能送不出去。</div>`
                     : '';
                 return `
-                <div class="community-remittances-row" style="${c.needsReview ? 'background:#fff7ed;border-radius:0.5rem;' : ''}">
+                <div class="community-remittances-row" style="${c.needsReview ? 'background:var(--status-topup-bg);border-radius:0.5rem;' : ''}">
                     <div class="community-remittances-row-main" style="flex-wrap:wrap;">
                         <span style="flex:1;min-width:0;">${communityBindingLineHtml({ type: c.type, value: c.value }, c.lineDisplayName)}${badges}</span>
                         <span class="community-remittances-row-time">綁定於 ${storefrontDateTime(c.boundAt)}${c.editCount ? `・修改過 ${c.editCount} 次` : ''}</span>
@@ -12689,7 +12700,7 @@
                 list.innerHTML = customers.map(c => `
                     <div class="community-remittances-row">
                         <div class="community-remittances-row-main" style="flex-wrap:wrap;">
-                            <span style="flex:1;min-width:0;font-weight:900;color:#334155;">${escapeHtml(c.lineDisplayName)}</span>
+                            <span style="flex:1;min-width:0;font-weight:700;color:var(--text-dark);">${escapeHtml(c.lineDisplayName)}</span>
                             <span class="community-remittances-row-time">最近下單：${c.lastOrderAt ? storefrontDateTime(c.lastOrderAt) : '—'}</span>
                             <div class="community-remittances-row-actions">
                                 <button class="btn btn-sm btn-secondary" type="button" onclick="openCommunityLineIdentityEditModal('new', ${quoteJs(c.lineUserId)}, ${quoteJs(c.lineDisplayName)}, 'nickname', '')">幫他綁定</button>
@@ -12721,7 +12732,7 @@
                 // 被擋下（blocked）的紀錄用淡橘底色凸顯——賣家要能一眼看到
                 // 有人想搶已經被別人用掉的暱稱/IG。
                 list.innerHTML = logs.map(l => `
-                    <div class="lg" style="${l.action === 'blocked' ? 'background:#fff7ed;border-radius:0.5rem;padding:0.5rem 0.6rem;border-top:none;margin-bottom:0.3rem;' : 'padding:0.5rem 0;'}">
+                    <div class="lg" style="${l.action === 'blocked' ? 'background:var(--status-topup-bg);border-radius:0.5rem;padding:0.5rem 0.6rem;border-top:none;margin-bottom:0.3rem;' : 'padding:0.5rem 0;'}">
                         <time>${storefrontDateTime(l.createdAt)}</time>
                         <div><b>${escapeHtml(l.lineDisplayName)}</b>　${escapeHtml(l.text)}</div>
                     </div>
@@ -14016,7 +14027,7 @@
                 const batches = Array.isArray(result.batches) ? result.batches : [];
                 if (!batches.length) { el.innerHTML = '<div class="empty-state">尚無匯入紀錄</div>'; return; }
                 el.innerHTML = `
-                    <h3 style="font-size:1.05rem;font-weight:900;color:#2563eb;margin-bottom:0.5rem;">匯入紀錄</h3>
+                    <h3 class="page-title" style="font-size:1.05rem;margin-bottom:0.5rem;">匯入紀錄</h3>
                     <div class="table-wrapper" style="overflow-x:auto;">
                         <table class="backend-member-table">
                             <thead><tr><th>時間</th><th>檔名</th><th>資料列</th><th>訂單組數</th><th>商品項目</th></tr></thead>
@@ -14497,9 +14508,9 @@
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '匯款回報讀取失敗。');
                 const remittances = Array.isArray(result.remittances) ? result.remittances : [];
-                if (!remittances.length) { el.innerHTML = '<h3 style="font-size:1.05rem;font-weight:900;color:#2563eb;margin-bottom:0.5rem;">付款審核</h3><div class="empty-state">尚無付款資料</div>'; return; }
+                if (!remittances.length) { el.innerHTML = '<h3 class="page-title" style="font-size:1.05rem;margin-bottom:0.5rem;">付款審核</h3><div class="empty-state">尚無付款資料</div>'; return; }
                 el.innerHTML = `
-                    <h3 style="font-size:1.05rem;font-weight:900;color:#2563eb;margin-bottom:0.5rem;">付款審核</h3>
+                    <h3 class="page-title" style="font-size:1.05rem;margin-bottom:0.5rem;">付款審核</h3>
                     <div class="table-wrapper" style="overflow-x:auto;">
                         <table class="backend-member-table">
                             <thead><tr><th>送出時間</th><th>客人</th><th>記事本名稱</th><th>總金額</th><th>預留</th><th>匯款金額</th><th>本次匯款</th><th>銀行</th><th>匯款後 5 碼</th><th>狀態</th><th>處理時間</th><th>操作</th></tr></thead>
@@ -14546,15 +14557,15 @@
             if (Number.isNaN(date.getTime())) return escapeHtml(value);
             const datePart = date.toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
             const timePart = date.toLocaleString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
-            return `${datePart}<br><span style="color:#94a3b8;font-size:0.72rem;">${timePart}</span>`;
+            return `${datePart}<br><span style="color:var(--text-muted);font-size:0.72rem;">${timePart}</span>`;
         }
 
         function communityPaymentReviewStatus(item) {
             if (item.status === 'approved') return '<span class="community-payment-status approved">已付款</span>';
-            if (item.status === 'rejected') return `<span class="community-payment-status rejected">審核退回</span>${item.rejectionReason ? `<div style="margin-top:0.3rem;font-size:0.72rem;color:#b91c1c;">${escapeHtml(item.rejectionReason)}</div>` : ''}`;
+            if (item.status === 'rejected') return `<span class="community-payment-status rejected">審核退回</span>${item.rejectionReason ? `<div style="margin-top:0.3rem;font-size:0.72rem;color:var(--status-abnormal-fg);">${escapeHtml(item.rejectionReason)}</div>` : ''}`;
             if (item.status === 'topup_required') return '<span class="community-payment-status topup">需補款</span>';
             if (item.status === 'overpaid_pending_refund') return '<span class="community-payment-status overpaid">多匯待退款</span>';
-            if (item.status === 'refund_completed') return `<span class="community-payment-status refunded">退款完成</span>${item.refundAmount > 0 ? `<div style="margin-top:0.3rem;font-size:0.72rem;color:#6d28d9;">${storefrontMoney(item.refundAmount)}</div>` : ''}`;
+            if (item.status === 'refund_completed') return `<span class="community-payment-status refunded">退款完成</span>${item.refundAmount > 0 ? `<div style="margin-top:0.3rem;font-size:0.72rem;color:var(--status-refund-fg);">${storefrontMoney(item.refundAmount)}</div>` : ''}`;
             return '<span class="community-payment-status pending">待審核</span>';
         }
 
@@ -14697,7 +14708,7 @@
                     : `<div style="display:flex;gap:0.35rem;align-items:center;flex-wrap:wrap;">
                         <input type="text" id="community-shipment-marketplace-input-${id}" class="community-shipment-marketplace-input" value="${escapeHtml(request.marketplaceUrl || '')}" placeholder="https://...">
                         <button class="btn btn-sm btn-primary" type="button" onclick="saveCommunityShipmentMarketplaceUrl('${id}', this)">保存</button>
-                    </div>${request.marketplaceOrderRef ? `<div style="margin-top:0.25rem;font-size:0.72rem;color:#94a3b8;">${escapeHtml(request.marketplaceOrderRef)}</div>` : ''}`;
+                    </div>${request.marketplaceOrderRef ? `<div style="margin-top:0.25rem;font-size:0.72rem;color:var(--text-muted);">${escapeHtml(request.marketplaceOrderRef)}</div>` : ''}`;
                 const statusControl = request.status === 'completed'
                     ? '<span class="community-payment-status approved">已完成</span>'
                     : communityStatusSelect(COMMUNITY_SHIPMENT_STATUS_OPTIONS, request.status, `updateCommunityShipmentStatus('${id}', this.value)`);
@@ -14824,7 +14835,7 @@
                 container.innerHTML = groups.map(group => `
                     <div class="community-shipment-card">
                         <div style="padding:0.55rem 0.75rem;">
-                            <div style="font-size:0.8rem;font-weight:900;color:#334155;">${escapeHtml(group.nickname)} / ${escapeHtml(group.lineDisplayName || 'LINE 使用者')} / ${escapeHtml([...group.notebookNames].join('、') || '—')}</div>
+                            <div style="font-size:0.8rem;font-weight:700;color:var(--text-dark);">${escapeHtml(group.nickname)} / ${escapeHtml(group.lineDisplayName || 'LINE 使用者')} / ${escapeHtml([...group.notebookNames].join('、') || '—')}</div>
                             <input type="text" class="community-shipment-batch-link-input" data-request-ids="${group.requestIds.join(',')}" data-order-ref="${escapeHtml(group.existingOrderRef)}" value="${escapeHtml(group.existingUrl)}" placeholder="賣貨便連結 https://..." style="width:100%;margin-top:0.35rem;">
                         </div>
                     </div>
