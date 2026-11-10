@@ -3138,28 +3138,33 @@
             <!-- General Ledger Section -->
             <div id="section-general-ledger" class="section-container">
                 <style>
-                .ledger-search-panel { background: white; border: 1px solid #fce7f3; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 1rem; }
+                /* 後台統一新外觀 第9輪：總帳表換成共用變數／白底卡片規格，
+                   拿掉寫死粉色框線／陰影／灰藍色碼，金額/收入/支出改用
+                   跟其他頁一致的 success／abnormal 狀態色票。 */
+                .ledger-search-panel { background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 1rem; box-shadow: none; padding: 1rem; }
                 .ledger-summary { display: flex; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.9rem; }
-                .ledger-summary-item { min-width: 120px; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.55rem 0.75rem; background: #f8fafc; }
-                .ledger-summary-item span { display: block; color: #64748b; font-size: 0.72rem; font-weight: 800; }
-                .ledger-summary-item strong { display: block; margin-top: 0.2rem; color: #1e293b; font-size: 0.95rem; }
+                .ledger-summary-item { min-width: 120px; border: 1px solid var(--border-color); border-radius: 0.875rem; padding: 0.6rem 0.85rem; background: var(--surface-color); }
+                .ledger-summary-item span { display: block; color: var(--text-muted); font-size: 0.72rem; font-weight: 700; }
+                .ledger-summary-item strong { display: block; margin-top: 0.2rem; font-size: 1.375rem; font-weight: 700; color: var(--text-dark); font-variant-numeric: tabular-nums; }
+                .ledger-summary-item.expense strong { color: var(--status-abnormal-fg); }
+                .ledger-summary-item.income strong { color: var(--status-success-fg); }
                 .ledger-filter-card { display: grid; grid-template-columns: 150px 150px 150px minmax(220px, 1fr) 150px auto auto; gap: 0.75rem; align-items: end; }
                 .ledger-filter-card > div { position: relative; }
-                .ledger-filter-card input, .ledger-filter-card select { width: 100%; min-height: 34px; border: 1px solid #fbcfe8; border-radius: 0.72rem; padding: 0.42rem 0.62rem; color: #334155; font-size: 0.82rem; font-weight: 800; background: white; outline: none; }
-                .ledger-filter-card input:focus, .ledger-filter-card select:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.12); }
+                .ledger-filter-card input, .ledger-filter-card select { width: 100%; min-height: 34px; border: 1px solid var(--border-color); border-radius: 0.625rem; padding: 0.42rem 0.62rem; color: var(--text-dark); font-size: 0.82rem; font-weight: 800; background: var(--surface-color); outline: none; }
+                .ledger-filter-card input:focus, .ledger-filter-card select:focus { border-color: var(--primary-color); outline: 2px solid var(--primary-color); outline-offset: 1px; box-shadow: none; }
                 .ledger-check-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-                .ledger-check-option { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 36px; padding: 0.45rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; color: #334155; font-size: 0.85rem; font-weight: 700; cursor: pointer; background: #fff; }
+                .ledger-check-option { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 36px; padding: 0.45rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.625rem; color: var(--text-dark); font-size: 0.85rem; font-weight: 700; cursor: pointer; background: var(--surface-color); }
                 .ledger-check-option input { width: 15px; height: 15px; min-width: 15px; margin: 0; accent-color: var(--primary-color); }
-                .ledger-check-option:has(input:checked) { border-color: var(--primary-color); background: #fdf2f8; color: var(--primary-hover); }
-                .ledger-type-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 56px; border-radius: 999px; padding: 0.28rem 0.65rem; font-size: 0.78rem; font-weight: 800; }
-                .ledger-type-income { background: #dcfce7; color: #15803d; }
-                .ledger-type-expense { background: #fee2e2; color: #b91c1c; }
-                .ledger-amount-income { color: #15803d; font-weight: 800; }
-                .ledger-amount-expense { color: #b91c1c; font-weight: 800; }
-                .ledger-pagination { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 1rem; border-top: 1px solid #f1f5f9; background: #fff; color: #64748b; font-size: 0.85rem; font-weight: 700; }
+                .ledger-check-option:has(input:checked) { border-color: var(--primary-color); background: var(--sidebar-active); color: var(--primary-color); }
+                .ledger-type-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 56px; border-radius: 999px; padding: 0.28rem 0.65rem; font-size: 0.78rem; font-weight: 700; }
+                .ledger-type-income { background: var(--status-success-bg); color: var(--status-success-fg); }
+                .ledger-type-expense { background: var(--status-abnormal-bg); color: var(--status-abnormal-fg); }
+                .ledger-amount-income { color: var(--status-success-fg); font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+                .ledger-amount-expense { color: var(--status-abnormal-fg); font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+                .ledger-pagination { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 1rem; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.85rem; font-weight: 700; }
                 .ledger-pagination-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-                .ledger-pagination select { height: 36px; border: 1px solid #cbd5e1; border-radius: 0.375rem; padding: 0 0.5rem; background: #fff; color: #334155; }
-                .ledger-table-actions { display: flex; justify-content: flex-end; padding: 0.85rem 1rem; background: #fff; border-bottom: 1px solid #f1f5f9; }
+                .ledger-pagination select { height: 36px; border: 1px solid var(--border-color); border-radius: 0.625rem; padding: 0 0.5rem; background: var(--surface-color); color: var(--text-dark); }
+                .ledger-table-actions { display: flex; justify-content: flex-end; padding: 0.85rem 1rem; background: var(--surface-color); border-bottom: 1px solid var(--border-color); }
                 .ledger-select-cell { width: 44px; text-align: center; }
                 .ledger-select-cell input { width: 16px; height: 16px; accent-color: var(--primary-color); cursor: pointer; }
                 @media (max-width: 1200px) { .ledger-filter-card { grid-template-columns: repeat(2, minmax(150px, 1fr)); } }
@@ -3171,8 +3176,8 @@
                 </div>
                 <div class="ledger-search-panel">
                     <div class="ledger-summary" aria-label="總帳統計">
-                        <div class="ledger-summary-item"><span>總支出</span><strong id="ledger-total-expense">NT$ 0</strong></div>
-                        <div class="ledger-summary-item"><span>總收入</span><strong id="ledger-total-income">NT$ 0</strong></div>
+                        <div class="ledger-summary-item expense"><span>總支出</span><strong id="ledger-total-expense">NT$ 0</strong></div>
+                        <div class="ledger-summary-item income"><span>總收入</span><strong id="ledger-total-income">NT$ 0</strong></div>
                         <div class="ledger-summary-item"><span>總營利</span><strong id="ledger-total-profit">NT$ 0</strong></div>
                     </div>
                     <div class="ledger-filter-card">
@@ -3221,7 +3226,7 @@
                                 <th>日期</th>
                                 <th>內容分類</th>
                                 <th>內容說明</th>
-                                <th>金額</th>
+                                <th style="text-align: right;">金額</th>
                                 <th>支出/收入</th>
                                 <th>備註</th>
                                 <th style="text-align: center;">操作</th>
@@ -3233,7 +3238,7 @@
                         <div id="ledger-page-info">第 1 頁，共 0 筆數據</div>
                         <div class="ledger-pagination-controls">
                             <label for="ledger-page-size">顯示</label>
-                            <select id="ledger-page-size" onchange="changeLedgerPageSize()">
+                            <select id="ledger-page-size" class="storefront-order-page-size-select" onchange="changeLedgerPageSize()">
                                 <option value="10">10 筆數據</option>
                                 <option value="20">20 筆數據</option>
                                 <option value="50">50 筆數據</option>
@@ -3248,17 +3253,30 @@
             <!-- Freight Accounting Section -->
             <div id="section-freight-accounting" class="section-container">
                 <style>
-                .btn-action-square { background-color: #f59e0b; color: white; border: none; border-radius: 4px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color 0.2s; }
-                .btn-action-square:hover { background-color: #d97706; }
-                .f-tab { transition: color 0.2s; }
-                .f-tab:hover { color: #f59e0b !important; }
+                /* 後台統一新外觀 第9輪：集運帳表拿掉寫死橘色/粉色色碼。
+                   .btn-action-square 原本是實心橘色方塊，三個按鈕都是
+                   一般操作（編輯/發票/貨況查看，不是刪除等危險操作），
+                   改成淺灰底比照「一般動作淺灰底」規格；.f-tab 這個
+                   class 全檔案沒有任何元素使用，是死 CSS，這輪清掉。
+                   #freight-company-filter 原本一大段 inline style 寫死
+                   邊框粉色，改成專屬 class，邊框換共用變數；自畫箭頭
+                   SVG 的線條色也從 #475569 換成接近 --text-muted 的
+                   #7b6f82（data URI 內的顏色無法用 var()，只能换成同色
+                   系的實際色碼）。 */
+                .btn-action-square { background-color: var(--gray-bg); color: var(--text-dark); border: none; border-radius: 0.5rem; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color 0.2s; }
+                .btn-action-square:hover { background-color: var(--border-color); }
+                .freight-company-select { width: 100%; min-height: 34px; padding: 0.42rem 0.75rem; border: 1px solid var(--border-color); border-radius: 0.625rem; background-color: var(--surface-color); font-size: 1rem; color: var(--text-dark); appearance: none; cursor: pointer; background-image: url('data:image/svg+xml;utf8,<svg fill=%22%237b6f82%22 height=%2224%22 viewBox=%220 0 24 24%22 width=%2224%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/></svg>'); background-repeat: no-repeat; background-position: right 1rem center; }
+                .freight-company-select:focus { outline: 2px solid var(--primary-color); outline-offset: 1px; border-color: var(--primary-color); }
+                .freight-amount-cell { text-align: right; font-variant-numeric: tabular-nums; }
+                .freight-payment-status { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0.28rem 0.65rem; font-size: 0.78rem; font-weight: 700; }
+                .freight-payment-status.paid { background: var(--status-success-bg); color: var(--status-success-fg); }
                 </style>
                 <div class="page-header" style="flex-wrap: wrap; gap: 1rem; border-bottom: none; padding-bottom: 0;">
                     <h2 class="page-title" style="flex: 1 1 100%;">集運帳表</h2>
-                    
+
                     <!-- Top Full Width Dropdown -->
                     <div style="width: 100%; margin-bottom: 0.5rem;">
-                        <select id="freight-company-filter" aria-label="集運公司" style="width: 100%; min-height: 34px; padding: 0.42rem 0.75rem; border: 1px solid #fbcfe8; border-radius: 0.72rem; background-color: white; font-size: 1rem; color: var(--text-dark); appearance: none; cursor: pointer; background-image: url('data:image/svg+xml;utf8,<svg fill=%22%23475569%22 height=%2224%22 viewBox=%220 0 24 24%22 width=%2224%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/></svg>'); background-repeat: no-repeat; background-position: right 1rem center;">
+                        <select id="freight-company-filter" aria-label="集運公司" class="freight-company-select">
                             <option value="全部">全部集運公司</option>
                             <option value="Howgowin">Howgowin</option>
                             <option value="大陸集運">大陸集運</option>
@@ -3266,10 +3284,10 @@
                     </div>
 
                     <div style="display: flex; justify-content: flex-end; width: 100%; align-items: flex-end;">
-                        
+
                         <!-- Add Order Button -->
                         <div class="toolbar">
-                            <button class="btn btn-primary" onclick="openFreightModal()" style="background-color: #f59e0b; color: white; border: none; box-shadow: none;"><i class="fa-solid fa-plus"></i> 新增集運單</button>
+                            <button class="btn btn-primary" onclick="openFreightModal()"><i class="fa-solid fa-plus"></i> 新增集運單</button>
                         </div>
                     </div>
                 </div>
@@ -3282,7 +3300,7 @@
                             <tr>
                                 <th>集運單號</th>
                                 <th>收件人</th>
-                                <th>集運費用(TWD)</th>
+                                <th style="text-align: right;">集運費用(TWD)</th>
                                 <th>付款方式</th>
                                 <th>付款狀態</th>
                                 <th>付款時間</th>
@@ -3296,9 +3314,9 @@
                             <tr>
                                 <td>TYO1616000309</td>
                                 <td>鄧麗華</td>
-                                <td>1384</td>
+                                <td class="freight-amount-cell">1384</td>
                                 <td>系統帳單</td>
-                                <td>已付款</td>
+                                <td><span class="freight-payment-status paid">已付款</span></td>
                                 <td>2026-05-18 14:16:20</td>
                                 <td>2026-05-09 13:37:11</td>
                                 <td style="text-align: center;"><button class="btn-action-square"><i class="fa-solid fa-pen-to-square"></i></button></td>
@@ -3308,9 +3326,9 @@
                             <tr>
                                 <td>TYO6631515626</td>
                                 <td>鄧麗華</td>
-                                <td>3216</td>
+                                <td class="freight-amount-cell">3216</td>
                                 <td>系統帳單</td>
-                                <td>已付款</td>
+                                <td><span class="freight-payment-status paid">已付款</span></td>
                                 <td>2026-05-08 15:00:39</td>
                                 <td>2026-04-28 11:15:52</td>
                                 <td style="text-align: center;"><button class="btn-action-square"><i class="fa-solid fa-pen-to-square"></i></button></td>
@@ -3320,9 +3338,9 @@
                             <tr>
                                 <td>TYO2617873286</td>
                                 <td>鄧麗華</td>
-                                <td>2848</td>
+                                <td class="freight-amount-cell">2848</td>
                                 <td>系統帳單</td>
-                                <td>已付款</td>
+                                <td><span class="freight-payment-status paid">已付款</span></td>
                                 <td>2026-05-08 14:59:58</td>
                                 <td>2026-04-28 11:15:43</td>
                                 <td style="text-align: center;"><button class="btn-action-square"><i class="fa-solid fa-pen-to-square"></i></button></td>
@@ -3456,7 +3474,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeFreightModal()">取消</button>
-                <button class="btn btn-primary" onclick="closeFreightModal()" style="background-color: #f59e0b; border: none; box-shadow: none;">保存</button>
+                <button class="btn btn-primary" onclick="closeFreightModal()">保存</button>
             </div>
         </div>
     </div>
@@ -5507,7 +5525,7 @@
             if (incomeEl) incomeEl.textContent = formatLedgerSummaryAmount(income);
             if (profitEl) {
                 profitEl.textContent = `${profit < 0 ? '-' : ''}${formatLedgerSummaryAmount(Math.abs(profit))}`;
-                profitEl.style.color = profit >= 0 ? '#15803d' : '#b91c1c';
+                profitEl.style.color = profit >= 0 ? 'var(--status-success-fg)' : 'var(--status-abnormal-fg)';
             }
         }
 
