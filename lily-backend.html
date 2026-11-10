@@ -299,12 +299,11 @@
         .community-payment-status.approved { background: var(--status-success-bg); color: var(--status-success-fg); }
         .community-payment-status.rejected { background: var(--status-abnormal-bg); color: var(--status-abnormal-fg); }
         .community-payment-status.topup { background: var(--status-topup-bg); color: var(--status-topup-fg); }
-        /* overpaid（多匯待退款）這輪刻意保留原本色號：目前共用色票只有 5 組
-           （refund/topup/abnormal/review/success），refund 這組已經配給
-           refunded（退款完成）狀態、topup 配給需補款，沒有第 6 組可用，
-           不新增色碼就只能先留著，列在報告的待確認事項。 */
-        .community-payment-status.overpaid { background:#dbeafe;color:#1d4ed8; }
-        .community-payment-status.refunded { background: var(--status-refund-bg); color: var(--status-refund-fg); }
+        /* overpaid（多匯待退款＝還欠客人錢，要退）改用 refund 這組（跟
+           匯款紀錄頁的「待退款」同色）；refunded（退款完成）改用
+           success（綠，代表這件事已經處理完畢）。 */
+        .community-payment-status.overpaid { background: var(--status-refund-bg); color: var(--status-refund-fg); }
+        .community-payment-status.refunded { background: var(--status-success-bg); color: var(--status-success-fg); }
         .community-order-status-select { min-height: 30px; border: 0; border-radius: 999px; padding: 0.34rem 0.7rem; color: var(--text-dark); font-size: 0.76rem; font-weight: 700; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; text-align: center; }
         .community-order-status-select:focus { box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.15); }
         .community-status-green { background: var(--status-success-bg); }
@@ -341,7 +340,7 @@
            主開關，右邊的文字膠囊純顯示用，不能再單獨點擊切換。整體
            改成橫向表格感的列表（左：開關/名稱/狀態、中：提示文字、
            右：維護時間），寬螢幕三欄並排、窄螢幕自動改回直向堆疊。 */
-        .site-feature-flag-list { display: flex; flex-direction: column; }
+        .site-feature-flag-list { display: flex; flex-direction: column; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 1rem; padding: 0 1.25rem; }
         .site-feature-flag-table-row { display: grid; grid-template-columns: minmax(220px, 300px) minmax(220px, 1fr) minmax(260px, 340px); gap: 1.5rem; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
         .site-feature-flag-table-row:last-child { border-bottom: none; }
         .site-feature-flag-col-main { display: flex; align-items: center; gap: 0.65rem; min-width: 0; }
@@ -352,16 +351,16 @@
         .site-feature-flag-switch input:checked + .site-feature-flag-switch-track { background: var(--status-success-fg); }
         .site-feature-flag-switch input:checked + .site-feature-flag-switch-track::before { transform: translateX(18px); }
         .site-feature-flag-name-wrap { min-width: 0; }
-        .site-feature-flag-name { font-size: 0.9rem; font-weight: 700; color: #1e293b; }
-        .site-feature-flag-desc { margin-top: 0.15rem; font-size: 0.68rem; font-weight: 500; color: #94a3b8; line-height: 1.4; }
-        .site-feature-flag-status { border: 1px solid #e2e8f0; border-radius: 999px; background: #f1f5f9; color: #64748b; font-size: 0.68rem; font-weight: 900; padding: 0.18rem 0.6rem; flex-shrink: 0; margin-left: auto; }
-        .site-feature-flag-status.active { background: #dcfce7; border-color: #86efac; color: #16a34a; }
-        .site-feature-flag-col-message textarea { width: 100%; min-height: 2.6rem; padding: 0.5rem 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: inherit; font-size: 0.8rem; color: #334155; resize: vertical; transition: border-color 0.2s; }
+        .site-feature-flag-name { font-size: 0.875rem; font-weight: 700; color: var(--text-dark); }
+        .site-feature-flag-desc { margin-top: 0.15rem; font-size: 0.75rem; font-weight: 500; color: var(--text-muted); line-height: 1.4; }
+        .site-feature-flag-status { border: 1px solid var(--border-color); border-radius: 999px; background: var(--gray-bg); color: var(--text-muted); font-size: 0.68rem; font-weight: 700; padding: 0.18rem 0.6rem; flex-shrink: 0; margin-left: auto; }
+        .site-feature-flag-status.active { background: var(--status-success-bg); border-color: var(--status-success-fg); color: var(--status-success-fg); }
+        .site-feature-flag-col-message textarea { width: 100%; min-height: 2.6rem; padding: 0.5rem 0.625rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-family: inherit; font-size: 0.8rem; color: var(--text-dark); resize: vertical; transition: border-color 0.2s; }
         .site-feature-flag-col-message textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1); }
         .site-feature-flag-col-maintenance { display: flex; gap: 0.75rem; }
         .site-feature-flag-col-maintenance > div { flex: 1; min-width: 0; }
-        .site-feature-flag-col-maintenance label { display: block; font-size: 0.66rem; font-weight: 500; color: #94a3b8; margin-bottom: 0.25rem; }
-        .site-feature-flag-col-maintenance input[type="datetime-local"] { width: 100%; padding: 0.4rem 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: inherit; font-size: 0.78rem; color: #334155; transition: border-color 0.2s; }
+        .site-feature-flag-col-maintenance label { display: block; font-size: 0.66rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.25rem; }
+        .site-feature-flag-col-maintenance input[type="datetime-local"] { width: 100%; padding: 0.4rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.375rem; font-family: inherit; font-size: 0.78rem; color: var(--text-dark); transition: border-color 0.2s; }
         .site-feature-flag-col-maintenance input[type="datetime-local"]:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1); }
         @media (max-width: 860px) {
             .site-feature-flag-table-row { grid-template-columns: 1fr; gap: 0.6rem; }
@@ -1004,10 +1003,10 @@
         .product-variant-add-btn { margin-top: 0.4rem; border: 1px dashed var(--border-color); border-radius: 0.375rem; background: var(--gray-bg); color: var(--text-muted); font-size: 0.78rem; font-weight: 500; padding: 0.4rem 0.9rem; cursor: pointer; }
         .product-variant-add-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
         .brand-settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
-        .brand-setting-card { background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; border: 1px solid #fce7f3; }
-        .brand-setting-card h3 { font-size: 1rem; font-weight: 700; color: #334155; display: flex; align-items: center; gap: 0.5rem; }
-        .brand-setting-card p { font-size: 0.85rem; color: #64748b; line-height: 1.6; }
-        .brand-setting-preview { width: 132px; height: 132px; border-radius: 0.9rem; border: 1px solid #e2e8f0; background: #f8fafc; display: grid; place-items: center; overflow: hidden; color: #94a3b8; }
+        .brand-setting-card { background: var(--surface-color); border-radius: 0.75rem; box-shadow: none; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; border: 1px solid var(--border-color); }
+        .brand-setting-card h3 { font-size: 1rem; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 0.5rem; }
+        .brand-setting-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
+        .brand-setting-preview { width: 132px; height: 132px; border-radius: 0.9rem; border: 1px solid var(--border-color); background: var(--gray-bg); display: grid; place-items: center; overflow: hidden; color: var(--text-muted); }
         .brand-setting-preview.logo-preview { border-radius: 999px; width: 96px; height: 96px; }
         .brand-setting-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .brand-setting-preview.logo-preview img { transform-origin: center; }
@@ -1015,58 +1014,47 @@
         .brand-logo-add-row input[type="file"] { display: none; }
         .brand-setting-card .form-group:has(#brand-logo-scale) { display: none; }
         .brand-logo-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 0.85rem; }
-        .brand-logo-card { border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.7rem; background: #fff; display: flex; flex-direction: column; gap: 0.55rem; }
-        .brand-logo-card.active { border-color: var(--primary-color); box-shadow: 0 0 0 2px #fbcfe8; }
-        .brand-logo-thumb { height: 112px; border-radius: 999px; background: #f8fafc; display: grid; place-items: center; overflow: hidden; border: 1px solid #e2e8f0; }
+        .brand-logo-card { border: 1px solid var(--border-color); border-radius: 0.75rem; padding: 0.7rem; background: var(--surface-color); display: flex; flex-direction: column; gap: 0.55rem; }
+        .brand-logo-card.active { border-color: var(--primary-color); box-shadow: 0 0 0 2px var(--sidebar-active); }
+        .brand-logo-thumb { height: 112px; border-radius: 999px; background: var(--gray-bg); display: grid; place-items: center; overflow: hidden; border: 1px solid var(--border-color); }
         .brand-logo-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; transform-origin: center; }
-        .brand-logo-status { min-height: 18px; font-size: 0.72rem; font-weight: 800; color: var(--primary-hover); text-align: center; }
+        .brand-logo-status { min-height: 18px; font-size: 0.72rem; font-weight: 700; color: var(--primary-hover); text-align: center; }
         .brand-logo-card-actions { display: grid; gap: 0.35rem; }
         .brand-logo-card-actions .btn { width: 100%; justify-content: center; padding: 0.38rem 0.45rem; font-size: 0.72rem; }
         .brand-logo-scale-control { display: grid; grid-template-columns: 1fr auto; gap: 0.75rem; align-items: center; }
         .brand-logo-scale-control input[type="range"] { width: 100%; accent-color: var(--primary-color); }
-        .brand-logo-scale-value { min-width: 54px; padding: 0.35rem 0.5rem; border-radius: 0.375rem; background: #fdf2f8; color: var(--primary-hover); font-size: 0.8rem; font-weight: 700; text-align: center; }
+        .brand-logo-scale-value { min-width: 54px; padding: 0.35rem 0.5rem; border-radius: 0.375rem; background: var(--sidebar-active); color: var(--primary-hover); font-size: 0.8rem; font-weight: 700; text-align: center; }
         .logo-editor-stage { width: min(320px, 82vw); aspect-ratio: 1; margin: 0 auto; position: relative; overflow: hidden; border-radius: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; touch-action: none; cursor: grab; }
         .logo-editor-stage.dragging { cursor: grabbing; }
         .logo-editor-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transform-origin: center; user-select: none; pointer-events: none; }
         .logo-editor-grid { position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(to right, transparent calc(33.333% - 0.5px), rgba(148,163,184,0.8) calc(33.333% - 0.5px), rgba(148,163,184,0.8) calc(33.333% + 0.5px), transparent calc(33.333% + 0.5px)), linear-gradient(to right, transparent calc(66.666% - 0.5px), rgba(148,163,184,0.8) calc(66.666% - 0.5px), rgba(148,163,184,0.8) calc(66.666% + 0.5px), transparent calc(66.666% + 0.5px)), linear-gradient(to bottom, transparent calc(33.333% - 0.5px), rgba(148,163,184,0.8) calc(33.333% - 0.5px), rgba(148,163,184,0.8) calc(33.333% + 0.5px), transparent calc(33.333% + 0.5px)), linear-gradient(to bottom, transparent calc(66.666% - 0.5px), rgba(148,163,184,0.8) calc(66.666% - 0.5px), rgba(148,163,184,0.8) calc(66.666% + 0.5px), transparent calc(66.666% + 0.5px)); }
         .logo-editor-mask { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at center, transparent 0 37%, rgba(15,23,42,0.25) 37.5% 100%); }
         .logo-editor-circle { position: absolute; inset: 12.5%; border: 2px solid #ec4899; border-radius: 999px; pointer-events: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.9), 0 0 18px rgba(236,72,153,0.2); }
-        .logo-editor-help { color: #64748b; font-size: 0.8rem; line-height: 1.6; text-align: center; }
+        .logo-editor-help { color: var(--text-muted); font-size: 0.8rem; line-height: 1.6; text-align: center; }
         .brand-setting-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
         .appearance-center { display: flex; flex-direction: column; gap: 0.85rem; max-height: calc(100vh - 150px); min-height: 520px; overflow: hidden; }
-        .appearance-nav { flex: 0 0 auto; display: flex; gap: 0.65rem; padding: 0.75rem; border: 1px solid #fce7f3; border-radius: 0.9rem; background: #fff; box-shadow: 0 4px 10px rgba(15,23,42,0.04); overflow-x: auto; z-index: 5; }
-        .appearance-nav button { flex: 0 0 128px; min-height: 42px; border: 0; border-radius: 0.6rem; padding: 0.65rem 0.85rem; background: #f8fafc; color: #475569; font-weight: 800; text-align: center; cursor: pointer; }
-        .appearance-nav button.active { background: #fce7f3; color: #be185d; }
+        .appearance-nav { flex: 0 0 auto; display: flex; gap: 0.65rem; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.9rem; background: var(--surface-color); box-shadow: none; overflow-x: auto; z-index: 5; }
+        .appearance-nav button { flex: 0 0 128px; min-height: 42px; border: 0; border-radius: 0.6rem; padding: 0.65rem 0.85rem; background: var(--gray-bg); color: var(--text-dark); font-weight: 700; text-align: center; cursor: pointer; }
+        .appearance-nav button.active { background: var(--sidebar-active); color: var(--primary-color); }
         .appearance-scroll-panel { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 0.35rem; }
-        .appearance-pane { display: none; gap: 1rem; }
-        .appearance-pane.active { display: grid; }
-        .appearance-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 1rem; align-items: flex-start; }
-        .appearance-preview { position: sticky; top: 1rem; border: 1px solid #fce7f3; border-radius: 1rem; background: #fff; padding: 1rem; box-shadow: 0 8px 18px rgba(15,23,42,0.06); }
-        .appearance-preview-header { border: 2px solid #fbcfe8; border-radius: 0.9rem; padding: 0.8rem; background: #fff7fb; }
-        .appearance-preview-brand { display: flex; align-items: center; gap: 0.65rem; }
-        .appearance-preview-logo { width: 58px; height: 58px; border-radius: 999px; overflow: hidden; border: 1px solid #f9a8d4; background: #fff; display: grid; place-items: center; }
-        .appearance-preview-logo img { width: 100%; height: 100%; object-fit: contain; transform-origin: center; }
-        .brand-watermark-preview-stage { position: relative; width: 180px; height: 120px; border-radius: 0.75rem; overflow: hidden; border: 1px solid #e2e8f0; background: linear-gradient(135deg, #f8fafc 25%, #eef2f7 25%, #eef2f7 50%, #f8fafc 50%, #f8fafc 75%, #eef2f7 75%); background-size: 18px 18px; }
+        /* .appearance-pane/.appearance-layout/.appearance-preview*/.appearance-grid-2
+           刪除：全檔案掃過確認沒有任何 HTML 用到這幾個 class（舊版改版留下的
+           殘留，實際的分頁內容容器是 .home-appearance-pane，預覽卡片已經
+           不存在），純粹死選擇器清理，不影響任何畫面。 */
+        .brand-watermark-preview-stage { position: relative; width: 180px; height: 120px; border-radius: 0.75rem; overflow: hidden; border: 1px solid var(--border-color); background: linear-gradient(135deg, #f8fafc 25%, #eef2f7 25%, #eef2f7 50%, #f8fafc 50%, #f8fafc 75%, #eef2f7 75%); background-size: 18px 18px; }
         .brand-watermark-preview-stage img { position: absolute; max-width: none; max-height: none; object-fit: contain; transform-origin: center; }
-        .brand-asset-preview { width: 180px; min-height: 120px; border-radius: 0.75rem; border: 1px solid #e2e8f0; background: #f8fafc; display: grid; place-items: center; overflow: hidden; }
+        .brand-asset-preview { width: 180px; min-height: 120px; border-radius: 0.75rem; border: 1px solid var(--border-color); background: var(--gray-bg); display: grid; place-items: center; overflow: hidden; }
         .brand-asset-preview img { width: 100%; height: 100%; object-fit: contain; display: block; }
-        .appearance-preview-name { font-weight: 900; color: #be185d; line-height: 1.15; }
-        .appearance-preview-en { font-size: 0.68rem; color: #94a3b8; margin-top: 0.15rem; }
-        .appearance-preview-search { margin-top: 0.75rem; height: 34px; border-radius: 999px; background: #fff; border: 1px solid #f9a8d4; color: #94a3b8; font-size: 0.78rem; display: flex; align-items: center; padding: 0 0.8rem; }
-        .appearance-preview-actions { margin-top: 0.75rem; display: flex; gap: 0.45rem; }
-        .appearance-preview-actions span { flex: 1; border-radius: 999px; padding: 0.45rem; text-align: center; font-size: 0.72rem; font-weight: 800; }
-        .appearance-save-state { font-size: 0.78rem; font-weight: 800; color: #be185d; min-height: 1.2rem; }
-        .appearance-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+        .appearance-save-state { font-size: 0.78rem; font-weight: 700; color: var(--primary-color); min-height: 1.2rem; }
         .appearance-list { display: grid; gap: 0.75rem; }
-        .appearance-row-card { border: 1px solid #e2e8f0; border-radius: 0.8rem; background: #fff; padding: 0.85rem; display: grid; gap: 0.65rem; }
+        .appearance-row-card { border: 1px solid var(--border-color); border-radius: 0.8rem; background: var(--surface-color); padding: 0.85rem; display: grid; gap: 0.65rem; }
         .appearance-card-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
-        .appearance-card-title { font-size: 0.92rem; font-weight: 900; color: #334155; }
-        .appearance-danger-small { border: 1px solid #fecdd3; border-radius: 999px; background: #fff1f2; color: #be123c; padding: 0.42rem 0.7rem; font-size: 0.76rem; font-weight: 800; cursor: pointer; }
+        .appearance-card-title { font-size: 0.92rem; font-weight: 700; color: var(--text-dark); }
+        .appearance-danger-small { border: 1px solid var(--status-abnormal-fg); border-radius: 999px; background: var(--status-abnormal-bg); color: var(--status-abnormal-fg); padding: 0.42rem 0.7rem; font-size: 0.76rem; font-weight: 700; cursor: pointer; }
         .appearance-compact-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
         .appearance-compact-grid .form-group.wide { grid-column: 1 / -1; }
         .appearance-compact-grid > .wide { grid-column: 1 / -1; }
-        .appearance-image-field { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 0.75rem; align-items: center; }
-        .appearance-image-preview { width: 112px; height: 72px; border-radius: 0.65rem; border: 1px solid #e2e8f0; background: #f8fafc; display: grid; place-items: center; overflow: hidden; color: #94a3b8; }
+        .appearance-image-preview { width: 112px; height: 72px; border-radius: 0.65rem; border: 1px solid var(--border-color); background: var(--gray-bg); display: grid; place-items: center; overflow: hidden; color: var(--text-muted); }
         .appearance-image-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .banner-media-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: 1rem; align-items: start; }
         .banner-media-fields { display: grid; gap: 0.75rem; min-width: 0; }
@@ -1081,42 +1069,44 @@
         .banner-image-preview-controls button { min-width: 38px; height: 36px; border: 1px solid #f9a8d4; border-radius: 999px; background: #fff; color: #be185d; padding: 0 0.8rem; font-weight: 900; cursor: pointer; }
         .banner-image-preview-controls .banner-preview-reset { grid-column: 1 / -1; justify-self: center; min-width: 94px; }
         .banner-image-preview-zoom { min-width: 54px; color: #475569; font-size: 0.82rem; font-weight: 900; text-align: center; }
-        .appearance-advanced-url { font-size: 0.75rem; color: #64748b; }
-        .appearance-advanced-url summary { cursor: pointer; font-weight: 800; }
-        .appearance-subnav { position: sticky; top: 0; z-index: 4; display: flex; gap: 0.55rem; padding: 0.5rem 0 0.8rem; background: #fff; overflow-x: auto; }
-        .appearance-subnav button { flex: 0 0 112px; min-height: 38px; border: 0; border-radius: 999px; background: #f1f5f9; color: #475569; font-weight: 900; cursor: pointer; }
-        .appearance-subnav button.active { background: #fce7f3; color: #be185d; }
+        .appearance-advanced-url { font-size: 0.75rem; color: var(--text-muted); }
+        .appearance-advanced-url summary { cursor: pointer; font-weight: 700; }
+        .appearance-subnav { position: sticky; top: 0; z-index: 4; display: flex; gap: 0.55rem; padding: 0.5rem 0 0.8rem; background: var(--surface-color); overflow-x: auto; }
+        .appearance-subnav button { flex: 0 0 112px; min-height: 38px; border: 0; border-radius: 999px; background: var(--gray-bg); color: var(--text-dark); font-weight: 700; cursor: pointer; }
+        .appearance-subnav button.active { background: var(--sidebar-active); color: var(--primary-color); }
         .home-appearance-pane { display: none; gap: 0.75rem; }
         .home-appearance-pane.active { display: grid; }
         .appearance-collapse-summary { display: grid; grid-template-columns: 112px minmax(0, 1fr) auto auto auto; gap: 0.75rem; align-items: center; }
-        .appearance-status-pill { border: 0; border-radius: 999px; padding: 0.45rem 0.75rem; font-size: 0.78rem; font-weight: 900; white-space: nowrap; cursor: pointer; }
-        .appearance-status-pill.on { background: #dcfce7; color: #166534; }
-        .appearance-status-pill.off { background: #f1f5f9; color: #64748b; }
-        .appearance-toggle-button { border: 1px solid #f9a8d4; border-radius: 999px; background: #fff; color: #be185d; padding: 0.45rem 0.75rem; font-size: 0.78rem; font-weight: 900; cursor: pointer; }
+        .appearance-status-pill { border: 0; border-radius: 999px; padding: 0.45rem 0.75rem; font-size: 0.78rem; font-weight: 700; white-space: nowrap; cursor: pointer; }
+        .appearance-status-pill.on { background: var(--status-success-bg); color: var(--status-success-fg); }
+        .appearance-status-pill.off { background: var(--gray-bg); color: var(--text-muted); }
+        .appearance-toggle-button { border: 1px solid var(--border-color); border-radius: 999px; background: var(--surface-color); color: var(--primary-color); padding: 0.45rem 0.75rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
         .appearance-nav-list { display: grid; gap: 0.55rem; user-select: none; }
         .appearance-nav-sortable { display: grid; gap: 0.55rem; }
-        .appearance-nav-row { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto auto; gap: 0.65rem; align-items: center; border: 1px solid #e2e8f0; border-radius: 0.8rem; background: #fff; padding: 0.72rem; transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease; }
-        .appearance-nav-row:not(.locked):hover { background: #fff7fb; border-color: #f9a8d4; }
-        .appearance-nav-row:not(.locked):hover .appearance-drag-handle { color: #be185d; border-color: #f9a8d4; background: #fdf2f8; }
-        .appearance-nav-row.locked { background: #f8fafc; color: #64748b; opacity: 0.88; }
-        .appearance-drag-handle { width: 34px; height: 34px; border: 1px solid #cbd5e1; border-radius: 0.65rem; background: #fff; color: #64748b; padding: 0; font-size: 1rem; font-weight: 900; cursor: grab; display: inline-grid; place-items: center; touch-action: none; }
+        .appearance-nav-row { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto auto; gap: 0.65rem; align-items: center; border: 1px solid var(--border-color); border-radius: 0.8rem; background: var(--surface-color); padding: 0.72rem; transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease; }
+        .appearance-nav-row:not(.locked):hover { background: var(--sidebar-active); border-color: var(--primary-color); }
+        .appearance-nav-row:not(.locked):hover .appearance-drag-handle { color: var(--primary-color); border-color: var(--primary-color); background: var(--sidebar-active); }
+        .appearance-nav-row.locked { background: var(--gray-bg); color: var(--text-muted); opacity: 0.88; }
+        .appearance-drag-handle { width: 34px; height: 34px; border: 1px solid var(--border-color); border-radius: 0.65rem; background: var(--surface-color); color: var(--text-muted); padding: 0; font-size: 1rem; font-weight: 700; cursor: grab; display: inline-grid; place-items: center; touch-action: none; }
         .appearance-drag-handle:active { cursor: grabbing; }
         .appearance-drag-handle:disabled { cursor: not-allowed; opacity: 0.65; }
-        .appearance-nav-label { font-size: 0.92rem; font-weight: 900; color: #334155; }
+        .appearance-nav-label { font-size: 0.92rem; font-weight: 700; color: var(--text-dark); }
         .appearance-nav-order-buttons { display: inline-flex; gap: 0.25rem; }
-        .appearance-nav-order-buttons button { width: 28px; height: 28px; border: 1px solid #e2e8f0; border-radius: 999px; background: #fff; color: #64748b; cursor: pointer; font-weight: 900; }
+        .appearance-nav-order-buttons button { width: 28px; height: 28px; border: 1px solid var(--border-color); border-radius: 999px; background: var(--surface-color); color: var(--text-muted); cursor: pointer; font-weight: 700; }
         .appearance-nav-order-buttons button:disabled { opacity: 0.35; cursor: not-allowed; }
-        .appearance-nav-sortable-ghost { border: 2px dashed #ec4899; background: #fdf2f8; min-height: 58px; opacity: 0.75; }
+        .appearance-nav-sortable-ghost { border: 2px dashed var(--primary-color); background: var(--sidebar-active); min-height: 58px; opacity: 0.75; }
         .appearance-nav-sortable-ghost > * { visibility: hidden; }
+        /* chosen/drag 這兩個是拖曳排序進行中的暫時抬升效果（SortableJS 的
+           互動回饋），跟卡片常駐陰影不是同一類，這輪沒有拿掉。 */
         .appearance-nav-sortable-chosen { box-shadow: 0 12px 26px rgba(190, 24, 93, 0.18); transform: translateY(-1px); }
         .appearance-nav-sortable-drag { opacity: 0.88; box-shadow: 0 18px 36px rgba(15, 23, 42, 0.22); cursor: grabbing; }
         .appearance-datetime-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; }
         .appearance-datetime-row .form-group { flex: 0 1 220px; max-width: 220px; }
-        .appearance-date-display { cursor: pointer; background: #fff; }
+        .appearance-date-display { cursor: pointer; background: var(--surface-color); }
         .appearance-date-picker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-        .appearance-date-picker-popover { display: none; position: fixed; z-index: 6000; width: min(360px, calc(100vw - 24px)); border: 1px solid #f9a8d4; border-radius: 0.9rem; background: #fff; box-shadow: 0 18px 36px rgba(15,23,42,0.18); padding: 0.9rem; }
+        .appearance-date-picker-popover { display: none; position: fixed; z-index: 6000; width: min(360px, calc(100vw - 24px)); border: 1px solid var(--border-color); border-radius: 0.9rem; background: var(--surface-color); box-shadow: 0 18px 36px rgba(15,23,42,0.18); padding: 0.9rem; }
         .appearance-date-picker-popover.active { display: block; }
-        .appearance-date-picker-popover h4 { margin: 0 0 0.75rem; font-size: 0.95rem; font-weight: 900; color: #be185d; }
+        .appearance-date-picker-popover h4 { margin: 0 0 0.75rem; font-size: 0.95rem; font-weight: 700; color: var(--primary-color); }
         .appearance-date-picker-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.85rem; }
         #section-brand-management[data-appearance-tab="brand"] .brand-settings-grid > .brand-setting-card:nth-child(n+2) { display: none; }
         #section-brand-management[data-appearance-tab="assets"] .brand-settings-grid > .brand-setting-card:nth-child(1),
@@ -1129,12 +1119,10 @@
         #section-brand-management[data-appearance-tab="info"] .brand-settings-grid > .brand-setting-card { display: none; }
         #section-brand-management[data-appearance-tab="info"] .brand-settings-grid > .brand-setting-card[data-appearance-card="info"] { display: flex; }
         @media (max-width: 920px) {
-            .appearance-center, .appearance-layout { grid-template-columns: 1fr; }
-            .appearance-nav, .appearance-preview { position: static; }
             .appearance-center { max-height: none; overflow: visible; }
             .appearance-scroll-panel { overflow: visible; padding-right: 0; }
             .appearance-nav button { flex-basis: 118px; }
-            .appearance-compact-grid, .appearance-image-field { grid-template-columns: 1fr; }
+            .appearance-compact-grid { grid-template-columns: 1fr; }
             .appearance-collapse-summary { grid-template-columns: 84px minmax(0, 1fr); }
             .appearance-collapse-summary > button { justify-self: start; }
             .appearance-nav-row { grid-template-columns: 42px minmax(0, 1fr); }
@@ -1355,48 +1343,52 @@
         .mobile-module-sheet,
         .mobile-offline-banner { display: none; }
         .mobile-dashboard-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-        .mobile-dashboard-heading > div > span { display: block; color: #8b7b81; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; }
+        .mobile-dashboard-heading > div > span { display: block; color: var(--text-muted); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; }
         .mobile-dashboard-heading h2 { margin-top: 0.2rem; font-size: 1.55rem; letter-spacing: -0.03em; }
-        .mobile-dashboard-bell { width: 44px; height: 44px; border: 1px solid #f6dbe5; border-radius: 50%; background: #fff; color: #be185d; box-shadow: 0 5px 16px rgba(80, 40, 54, 0.06); cursor: pointer; }
-        .mobile-dashboard-hero { position: relative; overflow: hidden; border-radius: 1.5rem; padding: 1.35rem; color: #fff; background: linear-gradient(135deg, #f07a9a 0%, #dd5e85 65%, #c94e75 100%); box-shadow: 0 14px 30px rgba(207, 79, 115, 0.22); }
-        .mobile-dashboard-hero::before { content: ''; position: absolute; width: 170px; height: 170px; border-radius: 50%; right: -70px; top: -90px; background: rgba(255,255,255,0.1); }
+        .mobile-dashboard-bell { width: 44px; height: 44px; border: 1px solid var(--border-color); border-radius: 50%; background: var(--surface-color); color: var(--primary-color); box-shadow: none; cursor: pointer; }
+        /* 原本整張用飽和粉色漸層當底（大面積色塊），這輪改成跟其他卡片
+           一致的白底＋細邊線＋不用陰影；::before 那個裝飾圓點原本是疊在
+           深色漸層上的半透明白點，底色換成白色後完全不可見，已移除。
+           裡面文字/膠囊/分隔線原本是配深色底寫的白字/半透明白線，
+           改回一般深色文字＋共用邊框色，不然會看不到。 */
+        .mobile-dashboard-hero { position: relative; overflow: hidden; border-radius: 1.5rem; padding: 1.35rem; color: var(--text-dark); background: var(--surface-color); border: 1px solid var(--border-color); box-shadow: none; }
         .mobile-dashboard-hero-top { position: relative; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
-        .mobile-dashboard-hero-top span { font-size: 0.78rem; opacity: 0.84; }
-        .mobile-dashboard-hero-top strong { display: block; margin-top: 0.2rem; font-size: 2rem; line-height: 1; letter-spacing: -0.04em; }
-        .mobile-dashboard-live { display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 999px; padding: 0.35rem 0.55rem; background: rgba(255,255,255,0.16); font-weight: 800; }
+        .mobile-dashboard-hero-top span { font-size: 0.78rem; color: var(--text-muted); }
+        .mobile-dashboard-hero-top strong { display: block; margin-top: 0.2rem; font-size: 2rem; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+        .mobile-dashboard-live { display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 999px; padding: 0.35rem 0.55rem; background: var(--status-success-bg); color: var(--status-success-fg); font-weight: 700; }
         .mobile-dashboard-live i { font-size: 0.42rem; }
-        .mobile-dashboard-kpis { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.22); }
-        .mobile-dashboard-kpis button { border: 0; border-left: 1px solid rgba(255,255,255,0.2); background: transparent; color: #fff; text-align: left; padding: 0 0.75rem; cursor: pointer; }
+        .mobile-dashboard-kpis { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-color); }
+        .mobile-dashboard-kpis button { border: 0; border-left: 1px solid var(--border-color); background: transparent; color: var(--text-dark); text-align: left; padding: 0 0.75rem; cursor: pointer; }
         .mobile-dashboard-kpis button:first-child { border-left: 0; padding-left: 0; }
-        .mobile-dashboard-kpis span { display: block; font-size: 0.67rem; opacity: 0.76; }
-        .mobile-dashboard-kpis strong { display: block; margin-top: 0.2rem; font-size: 1.18rem; }
-        .mobile-dashboard-alert { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; align-items: center; gap: 0.7rem; padding: 0.8rem 0.9rem; border: 1px solid #f4dfd4; border-radius: 1rem; background: #fff7f0; color: #3f3236; }
-        .mobile-dashboard-alert-icon { width: 34px; height: 34px; border-radius: 0.7rem; display: grid; place-items: center; background: #ffe6d8; color: #d47c42; }
+        .mobile-dashboard-kpis span { display: block; font-size: 0.67rem; color: var(--text-muted); }
+        .mobile-dashboard-kpis strong { display: block; margin-top: 0.2rem; font-size: 1.18rem; font-variant-numeric: tabular-nums; }
+        .mobile-dashboard-alert { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; align-items: center; gap: 0.7rem; padding: 0.8rem 0.9rem; border: 1px solid var(--status-topup-fg); border-radius: 1rem; background: var(--status-topup-bg); color: var(--text-dark); }
+        .mobile-dashboard-alert-icon { width: 34px; height: 34px; border-radius: 0.7rem; display: grid; place-items: center; background: var(--surface-color); color: var(--status-topup-fg); }
         .mobile-dashboard-alert strong, .mobile-dashboard-alert small { display: block; }
         .mobile-dashboard-alert strong { font-size: 0.8rem; }
-        .mobile-dashboard-alert small { margin-top: 0.15rem; color: #8b7b81; font-size: 0.7rem; line-height: 1.4; }
-        .mobile-dashboard-alert > i { color: #b6a8ad; font-size: 0.7rem; }
+        .mobile-dashboard-alert small { margin-top: 0.15rem; color: var(--text-muted); font-size: 0.7rem; line-height: 1.4; }
+        .mobile-dashboard-alert > i { color: var(--status-topup-fg); font-size: 0.7rem; }
         .mobile-dashboard-section-title { display: flex; align-items: center; justify-content: space-between; margin-top: 0.25rem; }
         .mobile-dashboard-section-title h3 { font-size: 1rem; }
-        .mobile-dashboard-section-title button { border: 0; background: transparent; color: #be185d; font-size: 0.75rem; font-weight: 800; cursor: pointer; }
+        .mobile-dashboard-section-title button { border: 0; background: transparent; color: var(--primary-color); font-size: 0.75rem; font-weight: 700; cursor: pointer; }
         .mobile-dashboard-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.55rem; }
-        .mobile-dashboard-actions button { min-width: 0; border: 1px solid #f0e2e6; border-radius: 1rem; background: #fff; padding: 0.8rem 0.25rem 0.7rem; color: #54464b; font-size: 0.68rem; font-weight: 800; cursor: pointer; }
-        .mobile-dashboard-actions span { width: 38px; height: 38px; margin: 0 auto 0.45rem; border-radius: 0.75rem; display: grid; place-items: center; background: #fff0f4; color: #c94e75; font-size: 0.95rem; }
-        .mobile-dashboard-actions button:nth-child(2) span { background: #eef5ff; color: #4f76a7; }
-        .mobile-dashboard-actions button:nth-child(3) span { background: #eaf8f2; color: #2f9775; }
-        .mobile-dashboard-actions button:nth-child(4) span { background: #f4efff; color: #7d5ca5; }
-        .mobile-dashboard-overview { overflow: hidden; border: 1px solid #f0e2e6; border-radius: 1.2rem; background: #fff; box-shadow: 0 5px 18px rgba(70, 44, 53, 0.04); }
-        .mobile-dashboard-overview button { width: 100%; display: grid; grid-template-columns: 40px minmax(0,1fr) auto auto; align-items: center; gap: 0.7rem; border: 0; border-top: 1px solid #f3eaec; background: transparent; padding: 0.9rem; text-align: left; cursor: pointer; }
+        .mobile-dashboard-actions button { min-width: 0; border: 1px solid var(--border-color); border-radius: 1rem; background: var(--surface-color); padding: 0.8rem 0.25rem 0.7rem; color: var(--text-dark); font-size: 0.68rem; font-weight: 700; cursor: pointer; }
+        .mobile-dashboard-actions span { width: 38px; height: 38px; margin: 0 auto 0.45rem; border-radius: 0.75rem; display: grid; place-items: center; background: var(--sidebar-active); color: var(--primary-color); font-size: 0.95rem; }
+        .mobile-dashboard-actions button:nth-child(2) span { background: var(--status-refund-bg); color: var(--status-refund-fg); }
+        .mobile-dashboard-actions button:nth-child(3) span { background: var(--status-success-bg); color: var(--status-success-fg); }
+        .mobile-dashboard-actions button:nth-child(4) span { background: var(--status-review-bg); color: var(--status-review-fg); }
+        .mobile-dashboard-overview { overflow: hidden; border: 1px solid var(--border-color); border-radius: 1.2rem; background: var(--surface-color); box-shadow: none; }
+        .mobile-dashboard-overview button { width: 100%; display: grid; grid-template-columns: 40px minmax(0,1fr) auto auto; align-items: center; gap: 0.7rem; border: 0; border-top: 1px solid var(--border-color); background: transparent; padding: 0.9rem; text-align: left; cursor: pointer; }
         .mobile-dashboard-overview button:first-child { border-top: 0; }
         .mobile-dashboard-overview strong, .mobile-dashboard-overview small { display: block; }
         .mobile-dashboard-overview strong { font-size: 0.83rem; }
-        .mobile-dashboard-overview small { margin-top: 0.15rem; color: #918389; font-size: 0.7rem; }
-        .mobile-dashboard-overview b { color: #be185d; font-size: 0.78rem; }
-        .mobile-dashboard-overview button > i { color: #b6a8ad; font-size: 0.65rem; }
-        .overview-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 0.8rem; background: #fff0f4; color: #c94e75; }
-        .overview-icon.blue { background: #eef5ff; color: #4f76a7; }
-        .overview-icon.green { background: #eaf8f2; color: #2f9775; }
-        .overview-icon.purple { background: #f4efff; color: #7d5ca5; }
+        .mobile-dashboard-overview small { margin-top: 0.15rem; color: var(--text-muted); font-size: 0.7rem; }
+        .mobile-dashboard-overview b { color: var(--primary-color); font-size: 0.78rem; }
+        .mobile-dashboard-overview button > i { color: var(--text-muted); font-size: 0.65rem; }
+        .overview-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 0.8rem; background: var(--sidebar-active); color: var(--primary-color); }
+        .overview-icon.blue { background: var(--status-refund-bg); color: var(--status-refund-fg); }
+        .overview-icon.green { background: var(--status-success-bg); color: var(--status-success-fg); }
+        .overview-icon.purple { background: var(--status-review-bg); color: var(--status-review-fg); }
 
         @media (max-width: 720px) {
             :root { --mobile-nav-height: 76px; }
@@ -1457,7 +1449,7 @@
             .storefront-order-copy-toast { bottom: calc(var(--mobile-nav-height) + 1rem + env(safe-area-inset-bottom)); }
             .sub-table-container { max-width: calc(100vw - 2.6rem); overflow-x: auto; margin: 0.35rem; padding: 0.7rem; border-left-width: 3px; }
             .sub-table { min-width: 680px; }
-            .order-group, .brand-setting-card, .appearance-list-item, .site-feature-flag-card { border-radius: 1rem !important; }
+            .order-group, .brand-setting-card { border-radius: 1rem !important; }
 
             /* Modal forms become full-height bottom sheets; every original field
                and action stays in the DOM and remains reachable. */
@@ -1518,9 +1510,8 @@
 
             #section-data-overview { gap: 0.85rem; }
             #section-data-overview .page-header { display: none; }
-            .brand-management-layout, .appearance-layout { min-width: 0; }
-            .appearance-tabs, .appearance-subnav { max-width: 100%; overflow-x: auto; flex-wrap: nowrap !important; justify-content: flex-start !important; scrollbar-width: none; }
-            .appearance-tabs button, .appearance-subnav button { flex: 0 0 auto; }
+            .appearance-subnav { max-width: 100%; overflow-x: auto; flex-wrap: nowrap !important; justify-content: flex-start !important; scrollbar-width: none; }
+            .appearance-subnav button { flex: 0 0 auto; }
 
             /* Compact mobile surfaces: the top bar already carries the active
                module name, so dense admin screens should spend their height on
@@ -1539,7 +1530,7 @@
             .storefront-order-search-row { gap: 0.5rem !important; padding: 0.65rem !important; border-radius: 0.8rem !important; }
             .form-group { gap: 0.35rem; }
             .form-group label { font-size: 0.78rem; }
-            .brand-setting-card, .appearance-list-item, .site-feature-flag-card { padding: 0.8rem !important; gap: 0.65rem !important; }
+            .brand-setting-card { padding: 0.8rem !important; gap: 0.65rem !important; }
             .modal-header { padding: 0.8rem 0.9rem; }
             .modal-body { padding: 0.8rem 0.9rem; gap: 0.65rem; }
             .modal-footer { padding: 0.65rem 0.9rem calc(0.65rem + env(safe-area-inset-bottom)); gap: 0.5rem; }
@@ -1575,7 +1566,11 @@
             /* .product-tag-columns 這條確認過整份檔案沒有任何元素帶這個
                class（商品標籤管理頁手機版的 2 欄→1 欄其實是靠下面
                .product-tag-board 那條生效），這輪順手清掉這個死選擇器。 */
-            .brand-setting-grid, .site-feature-flag-list { grid-template-columns: 1fr !important; }
+            /* 這條原本是 .brand-setting-grid（打錯字，實際 class 是
+               .brand-settings-grid，本來就是 auto-fit，手機窄螢幕本來就會
+               自動收成 1 欄不需要再疊 !important）／.site-feature-flag-list
+               （本身是 flex 不是 grid，grid-template-columns 對它無效），
+               兩邊都是死規則，這輪一併清掉。 */
         }
 
         /* 匯款紀錄頁改版——這輪新增的版面只在這個頁籤生效（用
@@ -2851,7 +2846,7 @@
                             <button class="btn btn-secondary" type="button" onclick="removeBrandLogo()"><i class="fa-regular fa-trash-can"></i> 移除LOGO</button>
                         </div>
                         <div>
-                            <label style="font-size:0.85rem;font-weight:700;color:#334155;">LOGO 圖庫</label>
+                            <label style="font-size:0.85rem;font-weight:700;color:var(--text-dark);">LOGO 圖庫</label>
                             <div id="brand-logo-gallery" class="brand-logo-gallery"></div>
                         </div>
                     </div>
@@ -3064,7 +3059,7 @@
                 <div class="page-header" style="align-items: center;">
                     <h2 class="page-title">匯率報表</h2>
                     <div class="toolbar" style="display: flex; align-items: center; gap: 1rem;">
-                        <div id="exchange-date" style="font-weight: 500; color: #475569; font-size: 0.95rem;">今日日期：---</div>
+                        <div id="exchange-date" style="font-weight: 500; color: var(--text-muted); font-size: 0.95rem;">今日日期：---</div>
                         <button class="btn btn-primary" onclick="fetchExchangeRates()"><i class="fa-solid fa-rotate"></i> 更新匯率</button>
                     </div>
                 </div>
@@ -3073,8 +3068,8 @@
                         <thead>
                             <tr>
                                 <th>銀行</th>
-                                <th>日幣 (JPY)</th>
-                                <th>人民幣 (CNY)</th>
+                                <th style="text-align: right;">日幣 (JPY)</th>
+                                <th style="text-align: right;">人民幣 (CNY)</th>
                             </tr>
                         </thead>
                         <tbody id="exchange-rate-tbody">
@@ -3082,7 +3077,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div style="margin-top: 1rem; font-size: 0.8rem; color: #94a3b8;">
+                <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted);">
                     * 註：匯率資料源自即時市場公開 API，並加上各家銀行表定手續費差額推算，提供最接近各銀行的即時現鈔/即期賣出參考匯率。
                 </div>
             </div>
@@ -8819,7 +8814,7 @@
             if (!gallery) return;
             brandLogoImages = normalizeBrandLogoImages(brandLogoImages);
             if (!brandLogoImages.length) {
-                gallery.innerHTML = '<span style="font-size:0.78rem;color:#94a3b8;">尚未上傳 LOGO</span>';
+                gallery.innerHTML = '<span style="font-size:0.78rem;color:var(--text-muted);">尚未上傳 LOGO</span>';
                 return;
             }
             gallery.innerHTML = brandLogoImages.map(image => `
@@ -9135,7 +9130,7 @@
             if (!list) return;
             siteAnnouncements = (Array.isArray(siteAnnouncements) ? siteAnnouncements : []).sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0));
             if (!siteAnnouncements.length) {
-                list.innerHTML = '<div class="appearance-row-card" style="color:#94a3b8;font-size:0.85rem;">目前沒有公告，點「新增公告」建立第一筆。</div>';
+                list.innerHTML = '<div class="appearance-row-card" style="color:var(--text-muted);font-size:0.85rem;">目前沒有公告，點「新增公告」建立第一筆。</div>';
                 return;
             }
             list.innerHTML = siteAnnouncements.map((announcement, index) => `
@@ -9163,7 +9158,7 @@
             const list = document.getElementById('site-banner-list');
             if (!list) return;
             if (!siteBanners.length) {
-                list.innerHTML = '<div class="appearance-row-card" style="color:#94a3b8;font-size:0.85rem;">目前沒有 Banner。</div>';
+                list.innerHTML = '<div class="appearance-row-card" style="color:var(--text-muted);font-size:0.85rem;">目前沒有 Banner。</div>';
                 return;
             }
             list.innerHTML = siteBanners.map((banner, index) => `
@@ -9213,7 +9208,7 @@
                     <div class="appearance-image-preview">${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(banner.name || 'Banner')} 縮圖">` : '<i class="fa-regular fa-image"></i>'}</div>
                     <div>
                         <div class="appearance-card-title">${escapeHtml(banner.name || `Banner ${index + 1}`)}</div>
-                        <div style="font-size:0.76rem;color:#64748b;margin-top:0.25rem;">排序 ${Number(banner.sortOrder || index)}</div>
+                        <div style="font-size:0.76rem;color:var(--text-muted);margin-top:0.25rem;">排序 ${Number(banner.sortOrder || index)}</div>
                     </div>
                     <button class="appearance-status-pill ${banner.enabled ? 'on' : 'off'}" type="button" onclick="toggleSiteBannerEnabled(${index})">${banner.enabled ? '顯示中' : '隱藏中'}</button>
                     <button class="appearance-danger-small" type="button" onclick="deleteSiteBanner(${index})"><i class="fa-regular fa-trash-can"></i> 刪除</button>
@@ -9230,7 +9225,7 @@
             const sortableItems = siteNavigation.filter(item => item.key !== 'home');
             list.innerHTML = `
                 <div class="appearance-row-card appearance-nav-list">
-                    <div style="display:grid;grid-template-columns:42px minmax(0,1fr) auto auto;gap:0.65rem;align-items:center;color:#64748b;font-size:0.78rem;font-weight:900;padding:0 0.72rem;">
+                    <div style="display:grid;grid-template-columns:42px minmax(0,1fr) auto auto;gap:0.65rem;align-items:center;color:var(--text-muted);font-size:0.78rem;font-weight:700;padding:0 0.72rem;">
                         <span></span>
                         <span>導覽名稱</span>
                         <span>狀態</span>
@@ -16310,7 +16305,7 @@
 
         async function fetchExchangeRates() {
             const tbody = document.getElementById('exchange-rate-tbody');
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 3rem;"><div class="spinner" style="margin: 0 auto; border-top-color: var(--primary-color);"></div><div style="margin-top: 1rem; color: #64748b;">正在即時抓取最新市場匯率...</div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 3rem;"><div class="spinner" style="margin: 0 auto; border-top-color: var(--primary-color);"></div><div style="margin-top: 1rem; color: var(--text-muted);">正在即時抓取最新市場匯率...</div></td></tr>';
             
             try {
                 // Fetch real-time exchange rates from public API (Base: TWD)
@@ -16340,11 +16335,11 @@
                     const cnyRate = (baseCny + b.cnySpread).toFixed(4);
                     
                     html += `<tr>
-                        <td style="font-weight: 600; color: #334155;">
-                            <i class="fa-solid fa-building-columns" style="color: #94a3b8; margin-right: 0.5rem;"></i> ${b.name}
+                        <td style="font-weight: 600; color: var(--text-dark);">
+                            <i class="fa-solid fa-building-columns" style="color: var(--text-muted); margin-right: 0.5rem;"></i> ${b.name}
                         </td>
-                        <td style="color: #ec4899; font-weight: 600; font-size: 1.05rem;">${jpyRate}</td>
-                        <td style="color: #3b82f6; font-weight: 600; font-size: 1.05rem;">${cnyRate}</td>
+                        <td style="color: var(--text-dark); font-weight: 600; font-size: 1.05rem; text-align: right; font-variant-numeric: tabular-nums;">${jpyRate}</td>
+                        <td style="color: var(--text-dark); font-weight: 600; font-size: 1.05rem; text-align: right; font-variant-numeric: tabular-nums;">${cnyRate}</td>
                     </tr>`;
                 });
                 
@@ -16353,11 +16348,11 @@
                 // Update time
                 const now = new Date();
                 const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0') + ':' + now.getSeconds().toString().padStart(2, '0');
-                document.getElementById('exchange-date').innerHTML = '今日日期：' + now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 <span style="font-size:0.8rem; color:#94a3b8; margin-left:10px; background: #f1f5f9; padding: 0.2rem 0.5rem; border-radius: 0.25rem;"><i class="fa-solid fa-bolt" style="color: #f59e0b; margin-right: 4px;"></i>(最後更新: ' + timeStr + ')</span>';
+                document.getElementById('exchange-date').innerHTML = '今日日期：' + now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 <span style="font-size:0.8rem; color:var(--text-muted); margin-left:10px; background: var(--gray-bg); padding: 0.2rem 0.5rem; border-radius: 0.25rem;"><i class="fa-solid fa-bolt" style="color: var(--status-topup-fg); margin-right: 4px;"></i>(最後更新: ' + timeStr + ')</span>';
 
             } catch (error) {
                 console.error(error);
-                tbody.innerHTML = '<tr><td colspan="3" class="empty-state" style="color: #ef4444;">匯率抓取失敗，請檢查網路連線或稍後再試。</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" class="empty-state" style="color: var(--status-abnormal-fg);">匯率抓取失敗，請檢查網路連線或稍後再試。</td></tr>';
             }
         }
 
