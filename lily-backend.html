@@ -1691,6 +1691,7 @@
                     <div class="submenu-item" data-module-item-key="exchange-rates" onclick="openTab('exchange-rates', '匯率報表')">匯率報表</div>
                     <div class="submenu-item" data-module-item-key="brand-management" onclick="openTab('brand-management', '品牌管理')">品牌管理</div>
                     <div class="submenu-item" data-module-item-key="site-feature-flags" onclick="openTab('site-feature-flags', '網站功能開關')">網站功能開關</div>
+                    <div class="submenu-item" data-module-item-key="shipping-settings" onclick="openTab('shipping-settings', '運費設定')">運費設定</div>
                 </div>
             </div>
             <div class="menu-group" data-module-key="purchasing">
@@ -3060,6 +3061,35 @@
                 <div class="brand-setting-actions">
                     <button class="btn btn-primary" type="button" onclick="saveSiteFeatureFlags(this)"><i class="fa-solid fa-floppy-disk"></i> 儲存</button>
                     <span id="site-feature-flags-save-state" class="appearance-save-state"></span>
+                </div>
+            </div>
+
+            <!-- Shipping Settings Section -->
+            <div id="section-shipping-settings" class="section-container">
+                <div class="page-header">
+                    <h2 class="page-title">運費設定</h2>
+                </div>
+                <div class="brand-setting-card" style="max-width:420px;">
+                    <h3><i class="fa-solid fa-truck" style="color: var(--primary-color);"></i> 現貨訂單運費</h3>
+                    <p>只影響前台購物網站「現貨」訂單；預購訂單運費維持現狀，不受這裡的設定影響。</p>
+                    <div class="form-group">
+                        <label>運費金額（NT$，整數）</label>
+                        <input type="number" id="shipping-fee-amount" min="0" step="1" placeholder="60">
+                    </div>
+                    <div class="form-group">
+                        <label>免運門檻（NT$，整數）</label>
+                        <input type="number" id="shipping-free-threshold" min="0" step="1" placeholder="1000">
+                    </div>
+                    <div class="form-group">
+                        <label style="flex-direction:row;align-items:center;gap:0.5rem;cursor:pointer;">
+                            <input type="checkbox" id="shipping-free-enabled" style="width:auto;">
+                            <span>啟用免運（關閉時任何金額都收運費）</span>
+                        </label>
+                    </div>
+                    <div class="brand-setting-actions">
+                        <button class="btn btn-primary" type="button" onclick="saveShippingSettings(this)"><i class="fa-solid fa-floppy-disk"></i> 儲存</button>
+                        <span id="shipping-settings-save-state" class="appearance-save-state"></span>
+                    </div>
                 </div>
             </div>
 
@@ -4616,6 +4646,7 @@
             if(name === 'exchange-rates') initExchangeRates();
             if(name === 'brand-management') renderBrandManagement();
             if(name === 'site-feature-flags') loadSiteFeatureFlags();
+            if(name === 'shipping-settings') loadShippingSettings();
             if(name === 'data-overview') renderMobileDashboard();
             syncMobileAdminNav(name);
         }
@@ -13215,6 +13246,62 @@
                 const result = await response.json().catch(() => null);
                 if (!response.ok || !result?.ok) throw new Error(result?.error || '儲存失敗。');
                 showToast('已儲存網站功能開關', 'success');
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '儲存失敗，請稍後再試', 'error');
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        async function loadShippingSettings() {
+            const feeEl = document.getElementById('shipping-fee-amount');
+            const thresholdEl = document.getElementById('shipping-free-threshold');
+            const enabledEl = document.getElementById('shipping-free-enabled');
+            try {
+                const response = await fetch('/api/backend/shipping-settings', { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '讀取失敗。');
+                if (feeEl) feeEl.value = result.settings?.feeAmount ?? 60;
+                if (thresholdEl) thresholdEl.value = result.settings?.freeShippingThreshold ?? 0;
+                if (enabledEl) enabledEl.checked = Boolean(result.settings?.freeShippingEnabled);
+            } catch (error) {
+                console.error(error);
+                if (feeEl) feeEl.value = 60;
+                if (thresholdEl) thresholdEl.value = 0;
+                if (enabledEl) enabledEl.checked = false;
+                showToast(error.message || '運費設定讀取失敗，顯示預設值', 'error');
+            }
+        }
+
+        async function saveShippingSettings(button) {
+            const feeEl = document.getElementById('shipping-fee-amount');
+            const thresholdEl = document.getElementById('shipping-free-threshold');
+            const enabledEl = document.getElementById('shipping-free-enabled');
+            const feeAmount = Number(feeEl?.value);
+            const freeShippingThreshold = Number(thresholdEl?.value);
+            if (feeEl?.value === '' || !Number.isInteger(feeAmount) || feeAmount < 0) {
+                showToast('運費金額必須是不小於 0 的整數。', 'error');
+                return;
+            }
+            if (thresholdEl?.value === '' || !Number.isInteger(freeShippingThreshold) || freeShippingThreshold < 0) {
+                showToast('免運門檻必須是不小於 0 的整數。', 'error');
+                return;
+            }
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch('/api/backend/shipping-settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        feeAmount,
+                        freeShippingThreshold,
+                        freeShippingEnabled: Boolean(enabledEl?.checked)
+                    })
+                });
+                const result = await response.json().catch(() => null);
+                if (!response.ok || !result?.ok) throw new Error(result?.error || '儲存失敗。');
+                showToast('已儲存運費設定', 'success');
             } catch (error) {
                 console.error(error);
                 showToast(error.message || '儲存失敗，請稍後再試', 'error');
